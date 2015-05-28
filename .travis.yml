@@ -2,6 +2,14 @@ language: java
 sudo: false
 install: true
 
+env:
+  - GRADLE_VERSION=2.3
+  - GRADLE_VERSION=2.4
+
+install: ./gradlew wrapper --gradle-version $GRADLE_VERSION
+
+before_script: ./gradlew --version
+
 jdk:
   - oraclejdk8
 
