@@ -242,7 +242,8 @@ class SonarQubePluginTest extends Specification {
     def properties = parentSonarRunnerTask().sonarProperties
 
     then:
-    properties["sonar.modules"] == "group:child,group:child2"
+    properties["sonar.modules"].contains("group:child")
+    properties["sonar.modules"].contains("group:child2")
     properties["group:child.sonar.modules"] == "group:leaf"
     !properties.containsKey("group:child2.sonar.modules")
     !properties.containsKey("group:child.group:leaf.sonar.modules")
