@@ -47,9 +47,7 @@ import static org.gradle.util.CollectionUtils.nonEmptyOrNull;
 
 /**
  * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
- * <p/>
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
- * <p/>
  * Please see the “SonarQube Runner Plugin” chapter of the Gradle User Guide for more information.
  */
 public class SonarQubePlugin implements Plugin<Project> {

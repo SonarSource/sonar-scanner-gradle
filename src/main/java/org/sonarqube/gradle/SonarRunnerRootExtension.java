@@ -27,7 +27,7 @@ import org.gradle.process.JavaForkOptions;
  * and therefore is used for the project (typically the root) that the plugin is applied too.
  * <p>
  * Example usage:
- * <pre autoTested=''>
+ * <pre>
  * sonarRunner {
  *   forkOptions {
  *     maxHeapSize = '1024m'

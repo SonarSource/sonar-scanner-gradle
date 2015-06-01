@@ -27,7 +27,7 @@ import org.gradle.listener.ActionBroadcast;
  * which also allows configuration of the Sonar Runner process.
  * <p>
  * Example usage:
- * <pre autoTested=''>
+ * <pre>
  * sonarRunner {
  *   skipProject = false // this is the default
  *   sonarProperties {
