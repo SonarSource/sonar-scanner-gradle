@@ -19,7 +19,7 @@ public class GradleTest {
   public void testSimpleProject() throws Exception {
     File out = temp.newFile();
     File projectBaseDir = new File(this.getClass().getResource("/java-gradle-simple").toURI());
-    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "sonarRunner", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
+    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarRunner", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
       .directory(projectBaseDir)
       .inheritIO();
     Process p = pb.start();
