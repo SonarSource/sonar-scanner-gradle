@@ -1,0 +1,41 @@
+buildscript {
+    repositories { 
+      mavenCentral()
+      mavenLocal()
+    }
+    dependencies { classpath 'org.ajoberstar:gradle-jacoco:0.1.0' }
+    dependencies { classpath 'org.sonarqube.gradle:gradle-sonarqube-plugin:${sonarqubeGradlePlugin.version}' }
+}
+
+apply plugin: 'java'
+apply plugin: 'jacoco'
+apply plugin: 'org.sonarqube'
+
+
+allprojects {  
+  ext.baseVersion = "0.1"
+  ext.snapshotVersion = true
+  
+  group = "org.sonar.tests"
+  version = "$baseVersion" + (snapshotVersion ? "-SNAPSHOT" : "")
+}
+
+sonarRunner {
+    sonarProperties {
+        property "sonar.projectName", "Simple Java Gradle Project"
+        property "sonar.projectKey", "org.codehaus.sonar:example-java-gradle"
+        property "sonar.jacoco.reportPath", "${project.buildDir}/jacoco/test.exec"
+    }
+}
+
+test {
+  ignoreFailures = true
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.10'
+}
+
+repositories {
+    mavenCentral()
+}

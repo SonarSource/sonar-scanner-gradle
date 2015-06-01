@@ -103,7 +103,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private SonarRunnerTask createTask(final Project project, final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
     SonarRunnerTask sonarRunnerTask = project.getTasks().create(SonarRunnerExtension.SONAR_RUNNER_TASK_NAME, SonarRunnerTask.class);
-    sonarRunnerTask.setDescription("Analyzes " + project + " and its subprojects with Sonar Runner.");
+    sonarRunnerTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube Runner.");
 
     ConventionMapping conventionMapping = new DslObject(sonarRunnerTask).getConventionMapping();
     conventionMapping.map("sonarProperties", new Callable<Object>() {

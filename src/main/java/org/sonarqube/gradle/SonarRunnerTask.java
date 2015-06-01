@@ -58,18 +58,9 @@ public class SonarRunnerTask extends DefaultTask {
   @TaskAction
   public void run() {
     Map<String, Object> properties = getSonarProperties();
-    if (getProject().file("sonar-project.properties").exists()) {
-      LOGGER.warn("Found 'sonar-project.properties' in project directory: SonarQube Runner may read this file to override the Gradle 'sonarRunner' configuration.");
-    }
-
-    if (LOGGER.isInfoEnabled()) {
-      LOGGER.info("Executing SonarQube Runner with properties:\n[{}]", Joiner.on(", ").withKeyValueSeparator(": ").join(properties));
-    }
 
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
-    File propertyFile = new File(getTemporaryDir(), "sonar-project.properties");
-    GUtil.saveProperties(propertiesObject, propertyFile);
 
     ForkedRunner.create()
         .setApp("Gradle", getProject().getGradle().getGradleVersion())
@@ -93,7 +84,7 @@ public class SonarRunnerTask extends DefaultTask {
   }
 
   /**
-   * The String key/value pairs to be passed to the Sonar Runner.
+   * The String key/value pairs to be passed to the SonarQube Runner.
    * <p/>
    * {@code null} values are not permitted.
    */
