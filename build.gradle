@@ -13,175 +13,52 @@ buildscript {
 }
 
 apply plugin: 'java-gradle-plugin'
-apply plugin: 'idea'
-apply plugin: 'maven'
-apply plugin: 'signing'
-apply plugin: 'com.gradle.plugin-publish'
 apply plugin: 'java'
 apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'com.gradle.plugin-publish'
+
+group = 'org.sonarqube.gradle'
+version = '1.0-rc1'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
-group = 'org.sonarqube.gradle'
-archivesBaseName = 'sonarqube-gradle-plugin'
-version = '1.0-SNAPSHOT'
-ext.isSnapshot = version.endsWith('SNAPSHOT')
-
-if ( isSnapshot ) {
-  println 'using snapshot'
-  ext.mavenCentralUploadUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-} else {
-  println 'using staging'
-  ext.mavenCentralUploadUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-}
-
-configurations {
-  archives
-}
-
 repositories {
+  jcenter()
   mavenLocal()
   mavenCentral()
 }
 
 dependencies {
   compile gradleApi()
-  compile "org.codehaus.sonar.runner:sonar-runner-api:2.4@jar"
-  compile "com.google.guava:guava:17.0"
+  compile 'org.codehaus.sonar.runner:sonar-runner-api:2.4'
+  compile 'com.google.guava:guava:17.0'
   testCompile localGroovy()
-  testCompile "junit:junit:4.11"
-  testCompile "org.hamcrest:hamcrest-all:1.3"
-  testCompile("org.spockframework:spock-core:1.0-groovy-2.3") {
-    exclude group: "org.codehaus.groovy"
+  testCompile 'junit:junit:4.11'
+  testCompile 'org.hamcrest:hamcrest-all:1.3'
+  testCompile('org.spockframework:spock-core:1.0-groovy-2.3') {
+    exclude group: 'org.codehaus.groovy'
   }
 }
 
-task sourceJar(type: Jar) {
-  description = 'An archive of the source code for Maven Central'
-  classifier = 'sources'
-  from sourceSets.main.allSource
-}
-
-artifacts {
-  archives jar, sourceJar
-}
-
-signing {
-  sign configurations.archives
-}
-
-// Only *Require* signing if we are uploading a non snapshot version.  If we
-// do need to sign, make sure we've got the properties we need to do the
-// signing.
-import org.gradle.plugins.signing.Sign
-gradle.taskGraph.whenReady { taskGraph ->
-  tasks.withType(org.gradle.plugins.signing.Sign).all {
-    required = taskGraph.hasTask(':uploadArchives') && !isSnapshot
-	  if ( required ) {
-	    // Use Java's console to read from the console (no good for a CI
-	    // environment)
-	    Console console = System.console()
-	    console.printf '\n\nWe have to sign some things in this build...\n\n'
-
-      if ( !project.hasProperty('signing.keyId') ) {
-        def id = console.readLine('PGP Public Key Id: ')
-        allprojects { ext.'signing.keyId' = id }
-      }
-
-	    if ( !project.hasProperty('signing.secretKeyRingFile') ) {
-	      def file = console.readLine('PGP Secret Key Ring File (absolute path): ')
-	      allprojects { ext.'signing.secretKeyRingFile' = file }
-	    }
-
-		  if ( !project.hasProperty('signing.password') ) {
-			  def password = console.readPassword('PGP Private Key Password: ')
-			  allprojects { ext.'signing.password' = password }
-	    }
-
-		  console.printf '\nThanks.\n\n'
-	  }
-  }
-}
-
-uploadArchives {
-  // We can't use taskGraph.whenReady because it doesn't resolve until after
-  // configuration.  The startParameter is not as good, but it probably
-  // good enough for our purposes.
-  if ( gradle.startParameter.taskNames.contains('uploadArchives') ) {
-    // Use Java's console to read from the console (no good for a CI
-    // environment)
-    Console console = System.console()
-    console.printf '\n\nWe have to upload some things in this build...\n\n'
-
-    if ( !project.hasProperty('mavenCentralUsername') ) {
-      def mavenCentralUsername = console.readLine('Maven Central Username: ')
-      allprojects { ext.'mavenCentralUsername' = mavenCentralUsername }
-    }
-
-    if ( !project.hasProperty('mavenCentralPassword') ) {
-      def mavenCentralPassword = console.readLine('Maven Central Password: ')
-      allprojects { ext.'mavenCentralPassword' = mavenCentralPassword }
-    }
-
-    repositories {
-      mavenDeployer {
-        if ( signing.signatory ) {
-          beforeDeployment { signing.signPom(it) }
-        }
-        configuration = configurations.archives
-        //repository(url: 'file://$buildDir/m2repo')
-        repository(url: mavenCentralUploadUrl) {
-          authentication(userName: mavenCentralUsername,
-                  password: mavenCentralPassword)
-          releases(updatePolicy: 'always')
-          snapshots(updatePolicy: 'always')
-        }
-        pom.project(pomConfiguration)
-      }
-    }
-  }
-}
-
-def getPomConfiguration() {
-  return {
-    name('Gradle SonarQube Plugin')
-    packaging 'jar'
-    description('A Gradle plugin for running SonarQube analysis.')
-    url('https://github.com/SonarCommunity/sonar-gradle')
-    licenses {
-      license {
-        name 'The Apache Software License, Version 2.0'
-        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-        distribution 'repo'
-      }
-    }
-    developers {
-	    developer {
-		    id 'henryju'
-		    name 'Julien Henry'
-		    email 'julien.henry@sonarsource.com'
-	    }
-    }
-    scm {
-      connection('scm:git:https://github.com/SonarCommunity/sonar-gradle')
-      developerConnection('scm:git:https://github.com/SonarCommunity/sonar-gradle.git')
-      url('https://github.com/SonarCommunity/sonar-gradle')
-    }
-  }
-}
-
-// configuration for publishing to the Gradle plugins portal
 pluginBundle {
-  website = 'https://github.com/SonarCommunity/sonar-gradle'
-	vcsUrl = 'https://github.com/SonarCommunity/sonar-gradle.git'
-	description = 'A Gradle plugin for running SonarQube analysis.'
-	tags = [ 'gradle', 'sonarqube', 'analysis' ]
+  website = 'http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle'
+  vcsUrl = 'https://github.com/SonarCommunity/sonar-gradle'
 
-	plugins {
-		gradleSonarQubePlugin {
-			id = 'org.sonarqube.gradle'
-			displayName = 'Gradle SonarQube plugin'
-		}
-	}
+  description = 'Gradle plugin for running SonarQube analysis.'
+  tags = ['sonarqube']
+
+  plugins {
+
+    sonarqubePlugin {
+      id = 'org.sonarqube'
+      displayName = 'Gradle SonarQube plugin'
+    }
+  }
+
+  mavenCoordinates {
+    groupId = "org.sonarqube.gradle"
+    artifactId = "gradle-sonarqube-plugin"
+  }
 }
