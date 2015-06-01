@@ -20,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -42,8 +43,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-
-import static org.gradle.util.CollectionUtils.nonEmptyOrNull;
 
 /**
  * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
@@ -313,6 +312,12 @@ public class SonarQubePlugin implements Plugin<Project> {
     } else {
       return value.toString();
     }
+  }
+
+  @Nullable
+  public static <T> List<T> nonEmptyOrNull(Iterable<T> iterable) {
+    ImmutableList<T> list = ImmutableList.copyOf(iterable);
+    return list.isEmpty() ? null : list;
   }
 
 }
