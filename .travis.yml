@@ -10,7 +10,7 @@ env:
   - GRADLE_VERSION=2.4
 
 script:
-  - ./gradlew install
+  - ./gradlew clean build install
   - cd integrationTests
   - mvn clean verify -Dgradle.version=$GRADLE_VERSION
 
