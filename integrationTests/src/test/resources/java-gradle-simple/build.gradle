@@ -3,7 +3,6 @@ buildscript {
       mavenCentral()
       mavenLocal()
     }
-    dependencies { classpath 'org.ajoberstar:gradle-jacoco:0.1.0' }
     dependencies { classpath 'org.sonarqube.gradle:gradle-sonarqube-plugin:${sonarqubeGradlePlugin.version}' }
 }
 
@@ -11,6 +10,7 @@ apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'org.sonarqube'
 
+sourceComatiblity="1.7"
 
 allprojects {  
   ext.baseVersion = "0.1"
@@ -30,6 +30,10 @@ sonarRunner {
 
 test {
   ignoreFailures = true
+}
+
+jacoco {
+  toolVersion = "0.7.0.201403182114"
 }
 
 dependencies {

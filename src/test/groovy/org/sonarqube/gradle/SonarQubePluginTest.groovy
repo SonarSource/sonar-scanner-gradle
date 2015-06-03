@@ -51,7 +51,7 @@ class SonarQubePluginTest extends Specification {
   def "adds a sonarRunner extension to the target project (i.e. the project to which the plugin is applied) and its subprojects"() {
     expect:
     rootProject.extensions.findByName("sonarRunner") == null
-    parentProject.extensions.findByName("sonarRunner") instanceof SonarRunnerRootExtension
+    parentProject.extensions.findByName("sonarRunner") instanceof SonarRunnerExtension
     childProject.extensions.findByName("sonarRunner") instanceof SonarRunnerExtension
   }
 
@@ -372,24 +372,6 @@ class SonarQubePluginTest extends Specification {
 
     then:
     !properties.any { key, value -> key.startsWith("child.sonar.") }
-  }
-
-
-  def "root extension can configure task fork options"() {
-
-    parentProject.sonarRunner {
-      forkOptions {
-        maxHeapSize = '1024m'
-        jvmArgs '-XX:MaxPermSize=128m'
-      }
-    }
-
-    when:
-    JavaForkOptions forkOptions = parentSonarRunnerTask().forkOptions
-
-    then:
-    forkOptions.allJvmArgs.contains('-Xmx1024m')
-    forkOptions.allJvmArgs.contains('-XX:MaxPermSize=128m')
   }
 
   private SonarRunnerTask parentSonarRunnerTask() {

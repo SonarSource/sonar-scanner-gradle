@@ -88,8 +88,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         project.getExtensions().create(SonarRunnerExtension.SONAR_RUNNER_EXTENSION_NAME, SonarRunnerExtension.class, actionBroadcast);
       }
     });
-    SonarRunnerRootExtension rootExtension = project.getExtensions().create(SonarRunnerExtension.SONAR_RUNNER_EXTENSION_NAME, SonarRunnerRootExtension.class, actionBroadcast);
-    rootExtension.setForkOptions(sonarRunnerTask.getForkOptions());
+    project.getExtensions().create(SonarRunnerExtension.SONAR_RUNNER_EXTENSION_NAME, SonarRunnerExtension.class, actionBroadcast);
   }
 
   private ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {

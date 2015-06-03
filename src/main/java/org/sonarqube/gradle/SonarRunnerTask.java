@@ -16,24 +16,14 @@
 
 package org.sonarqube.gradle;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.process.JavaForkOptions;
-import org.gradle.process.internal.DefaultJavaForkOptions;
-import org.gradle.process.internal.streams.SafeStreams;
-import org.gradle.util.GUtil;
-import org.sonar.runner.api.ForkedRunner;
-import org.sonar.runner.api.PrintStreamConsumer;
+import org.sonar.runner.api.EmbeddedRunner;
 
-import javax.inject.Inject;
-import java.io.File;
-import java.io.PrintStream;
 import java.util.Map;
 import java.util.Properties;
 
@@ -50,7 +40,6 @@ public class SonarRunnerTask extends DefaultTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarRunnerTask.class);
 
-  private JavaForkOptions forkOptions;
   private Map<String, Object> sonarProperties;
 
   @TaskAction
@@ -60,25 +49,10 @@ public class SonarRunnerTask extends DefaultTask {
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
 
-    ForkedRunner.create()
+    EmbeddedRunner.create()
         .setApp("Gradle", getProject().getGradle().getGradleVersion())
         .addProperties(propertiesObject)
-        .addJvmArguments(getForkOptions().getAllJvmArgs())
-        .setStdOut(new PrintStreamConsumer(new PrintStream(SafeStreams.systemOut())))
-        .setStdErr(new PrintStreamConsumer(new PrintStream(SafeStreams.systemErr())))
         .execute();
-
-  }
-
-  /**
-   * Options for the analysis process. Configured via {@link org.gradle.sonar.runner.SonarRunnerRootExtension#forkOptions}.
-   */
-  public JavaForkOptions getForkOptions() {
-    if (forkOptions == null) {
-      forkOptions = new DefaultJavaForkOptions(getFileResolver());
-    }
-
-    return forkOptions;
   }
 
   /**
@@ -92,11 +66,6 @@ public class SonarRunnerTask extends DefaultTask {
     }
 
     return sonarProperties;
-  }
-
-  @Inject
-  protected FileResolver getFileResolver() {
-    throw new UnsupportedOperationException();
   }
 
 }
