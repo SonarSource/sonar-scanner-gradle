@@ -20,6 +20,7 @@ jdk:
 
 before_cache:
   - rm -rf $HOME/.m2/repository/org/sonarqube/gradle/gradle-sonarqube-plugin
+  - rm -rf $HOME/.gradle/**/*.lock
 
 cache:
   directories:
