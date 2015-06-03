@@ -14,7 +14,7 @@ apply plugin: 'idea'
 apply plugin: 'maven'
 
 group = 'org.sonarqube.gradle'
-version = '1.0-rc1'
+version = '1.0-rc2'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
