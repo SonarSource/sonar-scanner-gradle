@@ -3,6 +3,7 @@ sudo: false
 install: true
 
 env:
+  - GRADLE_VERSION=1.12
   - GRADLE_VERSION=2.0
   - GRADLE_VERSION=2.1
   - GRADLE_VERSION=2.2.1
