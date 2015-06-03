@@ -10,7 +10,8 @@ apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'org.sonarqube'
 
-sourceComatiblity="1.7"
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 allprojects {  
   ext.baseVersion = "0.1"

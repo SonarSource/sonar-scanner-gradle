@@ -31,7 +31,7 @@ import java.util.Properties;
  * Analyses one or more projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
  * Can be used with or without the {@code "sonar-gradle"} plugin.
  * If used together with the plugin, {@code sonarProperties} will be populated with defaults based on Gradle's object model and user-defined
- * values configured via {@link org.sonarqube.gradle.SonarRunnerExtension} and {@link org.sonarqube.gradle.SonarRunnerRootExtension}.
+ * values configured via {@link org.sonarqube.gradle.SonarRunnerExtension}.
  * If used without the plugin, all properties have to be configured manually.
  * For more information on how to configure the SonarQube Runner, and on which properties are available, see the
  * <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner documentation</a>.

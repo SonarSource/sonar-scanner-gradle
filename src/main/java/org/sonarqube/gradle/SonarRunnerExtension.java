@@ -23,8 +23,6 @@ import org.gradle.listener.ActionBroadcast;
  * An extension for configuring the <a href="http://docs.codehaus.org/display/SONAR/Analyzing+with+SonarQube+Runner">Sonar Runner</a> integration.
  * <p>
  * The extension is added to all projects that have the {@code "sonar-gradle"} plugin applied, and all of their subprojects.
- * The extension of the project that actually applies the {@code "sonar-gradle"} plugin is a subclass of this type, {@link SonarRunnerRootExtension},
- * which also allows configuration of the Sonar Runner process.
  * <p>
  * Example usage:
  * <pre>
