@@ -79,16 +79,16 @@ public class SonarQubePlugin implements Plugin<Project> {
     targetProject = project;
 
     final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = Maps.newHashMap();
-    SonarRunnerTask sonarRunnerTask = createTask(project, actionBroadcastMap);
+    SonarQubeTask sonarQubeTask = createTask(project, actionBroadcastMap);
 
     ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
     project.subprojects(new Action<Project>() {
       public void execute(Project project) {
         ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
-        project.getExtensions().create(SonarRunnerExtension.SONAR_RUNNER_EXTENSION_NAME, SonarRunnerExtension.class, actionBroadcast);
+        project.getExtensions().create(SonarQubeExtension.SONAR_RUNNER_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
       }
     });
-    project.getExtensions().create(SonarRunnerExtension.SONAR_RUNNER_EXTENSION_NAME, SonarRunnerExtension.class, actionBroadcast);
+    project.getExtensions().create(SonarQubeExtension.SONAR_RUNNER_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
   }
 
   private ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
@@ -97,12 +97,12 @@ public class SonarQubePlugin implements Plugin<Project> {
     return actionBroadcast;
   }
 
-  private SonarRunnerTask createTask(final Project project, final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
-    SonarRunnerTask sonarRunnerTask = project.getTasks().create(SonarRunnerExtension.SONAR_RUNNER_TASK_NAME, SonarRunnerTask.class);
-    sonarRunnerTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube Runner.");
+  private SonarQubeTask createTask(final Project project, final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
+    SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONAR_RUNNER_TASK_NAME, SonarQubeTask.class);
+    sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
 
-    ConventionMapping conventionMapping = new DslObject(sonarRunnerTask).getConventionMapping();
-    conventionMapping.map("sonarProperties", new Callable<Object>() {
+    ConventionMapping conventionMapping = new DslObject(sonarQubeTask).getConventionMapping();
+    conventionMapping.map("properties", new Callable<Object>() {
       public Object call() throws Exception {
         Map<String, Object> properties = Maps.newLinkedHashMap();
         computeSonarProperties(project, properties, actionBroadcastMap, "");
@@ -110,12 +110,12 @@ public class SonarQubePlugin implements Plugin<Project> {
       }
     });
 
-    sonarRunnerTask.dependsOn(new Callable<Iterable<? extends Task>>() {
+    sonarQubeTask.dependsOn(new Callable<Iterable<? extends Task>>() {
       public Iterable<? extends Task> call() throws Exception {
         Iterable<Project> applicableProjects = Iterables.filter(project.getAllprojects(), new Predicate<Project>() {
           public boolean apply(Project input) {
             return input.getPlugins().hasPlugin(JavaPlugin.class)
-                && !input.getExtensions().getByType(SonarRunnerExtension.class).isSkipProject();
+                && !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject();
           }
         });
 
@@ -128,11 +128,11 @@ public class SonarQubePlugin implements Plugin<Project> {
       }
     });
 
-    return sonarRunnerTask;
+    return sonarQubeTask;
   }
 
   public void computeSonarProperties(Project project, Map<String, Object> properties, Map<Project, ActionBroadcast<SonarQubeProperties>> sonarPropertiesActionBroadcastMap, String prefix) {
-    SonarRunnerExtension extension = project.getExtensions().getByType(SonarRunnerExtension.class);
+    SonarQubeExtension extension = project.getExtensions().getByType(SonarQubeExtension.class);
     if (extension.isSkipProject()) {
       return;
     }
@@ -148,7 +148,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     List<Project> enabledChildProjects = Lists.newLinkedList(Iterables.filter(project.getChildProjects().values(), new Predicate<Project>() {
       public boolean apply(Project input) {
-        return !input.getExtensions().getByType(SonarRunnerExtension.class).isSkipProject();
+        return !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject();
       }
     }));
 

@@ -28,7 +28,7 @@ import org.gradle.listener.ActionBroadcast;
  * <pre>
  * sonarRunner {
  *   skipProject = false // this is the default
- *   sonarProperties {
+ *   properties {
  *     property "sonar.host.url", "http://my.sonar.server" // adding a single property
  *     properties mapOfProperties // adding multiple properties at once
  *     properties["sonar.sources"] += sourceSets.other.java.srcDirs // manipulating an existing property }
@@ -37,7 +37,7 @@ import org.gradle.listener.ActionBroadcast;
  * </pre>
  * <h3>Sonar Properties</h3>
  * <p>
- * The SonarQube configuration is provided by using the {@link #sonarProperties(org.gradle.api.Action)} method and specifying properties.
+ * The SonarQube configuration is provided by using the {@link #properties(org.gradle.api.Action)} method and specifying properties.
  * Certain properties are required, such as {@code "sonar.host.url"} which provides the address of the SonarQube server.
  * For details on what properties are available, see <a href="http://docs.sonarqube.org/display/SONAR/Analysis+Parameters">Analysis Parameters</a> in the SonarQube documentation.
  * <p>
@@ -46,15 +46,15 @@ import org.gradle.listener.ActionBroadcast;
  * <p>
  * Please see the {@link SonarQubeProperties} class for more information on the mechanics of setting SonarQube properties, including laziness and property types.
  */
-public class SonarRunnerExtension {
+public class SonarQubeExtension {
 
-    public static final String SONAR_RUNNER_EXTENSION_NAME = "sonarRunner";
-    public static final String SONAR_RUNNER_TASK_NAME = "sonarRunner";
+    public static final String SONAR_RUNNER_EXTENSION_NAME = "sonarqube";
+    public static final String SONAR_RUNNER_TASK_NAME = "sonarqube";
 
     private boolean skipProject;
     private final ActionBroadcast<SonarQubeProperties> propertiesActions;
 
-    public SonarRunnerExtension(ActionBroadcast<SonarQubeProperties> propertiesActions) {
+    public SonarQubeExtension(ActionBroadcast<SonarQubeProperties> propertiesActions) {
         this.propertiesActions = propertiesActions;
     }
 
@@ -65,17 +65,17 @@ public class SonarRunnerExtension {
      * This is the project that has the {@code sonar-gradle} plugin applied.
      * <p>
      * The action is passed an instance of {@code SonarQubeProperties}.
-     * Evaluation of the action is deferred until {@code sonarRunner.sonarProperties} is requested.
+     * Evaluation of the action is deferred until {@code sonarqube.properties} is requested.
      * Hence it is safe to reference other Gradle model properties from inside the action.
      * <p>
-     * Sonar properties can also be set via system properties (and therefore from the command line).
+     * SonarQube properties can also be set via system properties (and therefore from the command line).
      * This is mainly useful for global SonarQube properties like database credentials.
      * Every system property starting with {@code "sonar."} is automatically set on the "root" project of the SonarQube run (i.e. the project that has the {@code sonar-gradle} plugin applied).
      * System properties take precedence over properties declared in build scripts.
      *
-     * @param action an action that configures Sonar properties for the associated Gradle project
+     * @param action an action that configures SonarQube properties for the associated Gradle project
      */
-    public void sonarProperties(Action<? super SonarQubeProperties> action) {
+    public void properties(Action<? super SonarQubeProperties> action) {
         propertiesActions.add(action);
     }
 

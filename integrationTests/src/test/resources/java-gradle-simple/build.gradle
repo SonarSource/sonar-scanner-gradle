@@ -21,8 +21,8 @@ allprojects {
   version = "$baseVersion" + (snapshotVersion ? "-SNAPSHOT" : "")
 }
 
-sonarRunner {
-    sonarProperties {
+sonarqube {
+    properties {
         property "sonar.projectName", "Simple Java Gradle Project"
         property "sonar.projectKey", "org.codehaus.sonar:example-java-gradle"
         property "sonar.jacoco.reportPath", "${project.buildDir}/jacoco/test.exec"

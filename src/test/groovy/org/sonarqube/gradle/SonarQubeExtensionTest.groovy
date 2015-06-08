@@ -18,20 +18,20 @@ package org.sonarqube.gradle
 import org.gradle.listener.ActionBroadcast
 import spock.lang.Specification
 
-class SonarRunnerExtensionTest extends Specification {
+class SonarQubeExtensionTest extends Specification {
 
     def "evaluate properties blocks"() {
         def actionBroadcast = new ActionBroadcast<SonarQubeProperties>()
-        def extension = new SonarRunnerExtension(actionBroadcast)
+        def extension = new SonarQubeExtension(actionBroadcast)
         def props = ["key.1": "value 1"]
 
         when:
-        extension.sonarProperties {
+        extension.properties {
             it.property "key.2", ["value 2"]
             it.properties(["key.3": "value 3", "key.4": "value 4"])
         }
 
-        extension.sonarProperties {
+        extension.properties {
             it.property "key.5", "value 5"
             it.properties["key.2"] << "value 6"
             it.properties.remove("key.3")

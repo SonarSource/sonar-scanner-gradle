@@ -30,21 +30,21 @@ import java.util.Properties;
 /**
  * Analyses one or more projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
  * Can be used with or without the {@code "sonar-gradle"} plugin.
- * If used together with the plugin, {@code sonarProperties} will be populated with defaults based on Gradle's object model and user-defined
- * values configured via {@link org.sonarqube.gradle.SonarRunnerExtension}.
+ * If used together with the plugin, {@code properties} will be populated with defaults based on Gradle's object model and user-defined
+ * values configured via {@link SonarQubeExtension}.
  * If used without the plugin, all properties have to be configured manually.
  * For more information on how to configure the SonarQube Runner, and on which properties are available, see the
  * <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner documentation</a>.
  */
-public class SonarRunnerTask extends DefaultTask {
+public class SonarQubeTask extends DefaultTask {
 
-  private static final Logger LOGGER = Logging.getLogger(SonarRunnerTask.class);
+  private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
 
   private Map<String, Object> sonarProperties;
 
   @TaskAction
   public void run() {
-    Map<String, Object> properties = getSonarProperties();
+    Map<String, Object> properties = getProperties();
 
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
@@ -60,7 +60,7 @@ public class SonarRunnerTask extends DefaultTask {
    * {@code null} values are not permitted.
    */
   @Input
-  public Map<String, Object> getSonarProperties() {
+  public Map<String, Object> getProperties() {
     if (sonarProperties == null) {
       sonarProperties = Maps.newLinkedHashMap();
     }
