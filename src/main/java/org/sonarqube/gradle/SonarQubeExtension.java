@@ -20,13 +20,13 @@ import org.gradle.api.Action;
 import org.gradle.listener.ActionBroadcast;
 
 /**
- * An extension for configuring the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+SonarQube+Runner">Sonar Runner</a> integration.
+ * An extension for configuring the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">SonarQube</a> analysis.
  * <p>
  * The extension is added to all projects that have the {@code "sonar-gradle"} plugin applied, and all of their subprojects.
  * <p>
  * Example usage:
  * <pre>
- * sonarRunner {
+ * sonarqube {
  *   skipProject = false // this is the default
  *   properties {
  *     property "sonar.host.url", "http://my.sonar.server" // adding a single property
@@ -35,21 +35,21 @@ import org.gradle.listener.ActionBroadcast;
  *   }
  * }
  * </pre>
- * <h3>Sonar Properties</h3>
+ * <h3>SonarQube Properties</h3>
  * <p>
  * The SonarQube configuration is provided by using the {@link #properties(org.gradle.api.Action)} method and specifying properties.
  * Certain properties are required, such as {@code "sonar.host.url"} which provides the address of the SonarQube server.
  * For details on what properties are available, see <a href="http://docs.sonarqube.org/display/SONAR/Analysis+Parameters">Analysis Parameters</a> in the SonarQube documentation.
  * <p>
- * The {@code "sonar-gradle"} plugin adds default values for several plugins dependening on the nature of the project.
+ * The {@code "sonar-gradle"} plugin adds default values for several plugins depending on the nature of the project.
  * Please see the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">SonarQube Gradle documentation</a> for details on which properties are set and their values.
  * <p>
  * Please see the {@link SonarQubeProperties} class for more information on the mechanics of setting SonarQube properties, including laziness and property types.
  */
 public class SonarQubeExtension {
 
-    public static final String SONAR_RUNNER_EXTENSION_NAME = "sonarqube";
-    public static final String SONAR_RUNNER_TASK_NAME = "sonarqube";
+    public static final String SONARQUBE_EXTENSION_NAME = "sonarqube";
+    public static final String SONARQUBE_TASK_NAME = "sonarqube";
 
     private boolean skipProject;
     private final ActionBroadcast<SonarQubeProperties> propertiesActions;

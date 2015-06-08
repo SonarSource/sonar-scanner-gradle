@@ -85,10 +85,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     project.subprojects(new Action<Project>() {
       public void execute(Project project) {
         ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
-        project.getExtensions().create(SonarQubeExtension.SONAR_RUNNER_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
+        project.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
       }
     });
-    project.getExtensions().create(SonarQubeExtension.SONAR_RUNNER_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
+    project.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
   }
 
   private ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
@@ -98,7 +98,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private SonarQubeTask createTask(final Project project, final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
-    SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONAR_RUNNER_TASK_NAME, SonarQubeTask.class);
+    SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
     sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
 
     ConventionMapping conventionMapping = new DslObject(sonarQubeTask).getConventionMapping();
