@@ -9,6 +9,7 @@ plugins {
 
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'java'
+apply plugin: 'jacoco'
 apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'maven'
