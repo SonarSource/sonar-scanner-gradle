@@ -12,6 +12,7 @@ apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'groovy'
 apply plugin: 'idea'
+apply plugin: 'eclipse'
 apply plugin: 'maven'
 
 group = 'org.sonarqube.gradle'

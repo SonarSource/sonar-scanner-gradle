@@ -15,8 +15,9 @@
  */
 
 /**
- * Integration with Sonar.
+ * Integration with SonarQube.
  * <p>
- * Please see <a href="http://gradle.org/current/docs/userguide/sonar_runner_plugin.html">Sonar Runner Plugin</a>
+ * Please see <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">Analyzing with Gradle</a>
  */
 package org.sonarqube.gradle;
+

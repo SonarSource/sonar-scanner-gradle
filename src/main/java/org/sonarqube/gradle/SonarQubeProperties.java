@@ -31,36 +31,36 @@ import java.util.Map;
  */
 public class SonarQubeProperties {
 
-    public SonarQubeProperties(Map<String, Object> properties) {
-        this.properties = properties;
-    }
+  public SonarQubeProperties(Map<String, Object> properties) {
+    this.properties = properties;
+  }
 
-    private Map<String, Object> properties = new LinkedHashMap<String, Object>();
+  private Map<String, Object> properties = new LinkedHashMap<String, Object>();
 
-    /**
-     * Convenience method for setting a single property.
-     *
-     * @param key the key of the property to be added
-     * @param value the value of the property to be added
-     */
-    public void property(String key, Object value) {
-        properties.put(key, value);
-    }
+  /**
+   * Convenience method for setting a single property.
+   *
+   * @param key the key of the property to be added
+   * @param value the value of the property to be added
+   */
+  public void property(String key, Object value) {
+    properties.put(key, value);
+  }
 
-    /**
-     * Convenience method for setting multiple properties.
-     *
-     * @param properties the properties to be added
-     */
-    public void properties(Map<String, ?> properties) {
-        this.properties.putAll(properties);
-    }
+  /**
+   * Convenience method for setting multiple properties.
+   *
+   * @param properties the properties to be added
+   */
+  public void properties(Map<String, ?> properties) {
+    this.properties.putAll(properties);
+  }
 
-    /**
-     * The Sonar properties for the current Gradle project that are to be passed to the Sonar gradle.
-     */
-    public Map<String, Object> getProperties() {
-        return properties;
-    }
+  /**
+   * The Sonar properties for the current Gradle project that are to be passed to the Sonar gradle.
+   */
+  public Map<String, Object> getProperties() {
+    return properties;
+  }
 
 }

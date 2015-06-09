@@ -31,3 +31,4 @@ Desktop.ini
 .gradle
 build/
 out/
+/bin/

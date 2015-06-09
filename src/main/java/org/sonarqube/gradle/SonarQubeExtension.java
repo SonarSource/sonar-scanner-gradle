@@ -48,48 +48,48 @@ import org.gradle.listener.ActionBroadcast;
  */
 public class SonarQubeExtension {
 
-    public static final String SONARQUBE_EXTENSION_NAME = "sonarqube";
-    public static final String SONARQUBE_TASK_NAME = "sonarqube";
+  public static final String SONARQUBE_EXTENSION_NAME = "sonarqube";
+  public static final String SONARQUBE_TASK_NAME = "sonarqube";
 
-    private boolean skipProject;
-    private final ActionBroadcast<SonarQubeProperties> propertiesActions;
+  private boolean skipProject;
+  private final ActionBroadcast<SonarQubeProperties> propertiesActions;
 
-    public SonarQubeExtension(ActionBroadcast<SonarQubeProperties> propertiesActions) {
-        this.propertiesActions = propertiesActions;
-    }
+  public SonarQubeExtension(ActionBroadcast<SonarQubeProperties> propertiesActions) {
+    this.propertiesActions = propertiesActions;
+  }
 
-    /**
-     * Adds an action that configures SonarQube properties for the associated Gradle project.
-     * <p>
-     * <em>Global</em> SonarQube properties (e.g. database connection settings) have to be set on the "root" project of the Sonar run.
-     * This is the project that has the {@code sonar-gradle} plugin applied.
-     * <p>
-     * The action is passed an instance of {@code SonarQubeProperties}.
-     * Evaluation of the action is deferred until {@code sonarqube.properties} is requested.
-     * Hence it is safe to reference other Gradle model properties from inside the action.
-     * <p>
-     * SonarQube properties can also be set via system properties (and therefore from the command line).
-     * This is mainly useful for global SonarQube properties like database credentials.
-     * Every system property starting with {@code "sonar."} is automatically set on the "root" project of the SonarQube run (i.e. the project that has the {@code sonar-gradle} plugin applied).
-     * System properties take precedence over properties declared in build scripts.
-     *
-     * @param action an action that configures SonarQube properties for the associated Gradle project
-     */
-    public void properties(Action<? super SonarQubeProperties> action) {
-        propertiesActions.add(action);
-    }
+  /**
+   * Adds an action that configures SonarQube properties for the associated Gradle project.
+   * <p>
+   * <em>Global</em> SonarQube properties (e.g. database connection settings) have to be set on the "root" project of the Sonar run.
+   * This is the project that has the {@code sonar-gradle} plugin applied.
+   * <p>
+   * The action is passed an instance of {@code SonarQubeProperties}.
+   * Evaluation of the action is deferred until {@code sonarqube.properties} is requested.
+   * Hence it is safe to reference other Gradle model properties from inside the action.
+   * <p>
+   * SonarQube properties can also be set via system properties (and therefore from the command line).
+   * This is mainly useful for global SonarQube properties like database credentials.
+   * Every system property starting with {@code "sonar."} is automatically set on the "root" project of the SonarQube run (i.e. the project that has the {@code sonar-gradle} plugin applied).
+   * System properties take precedence over properties declared in build scripts.
+   *
+   * @param action an action that configures SonarQube properties for the associated Gradle project
+   */
+  public void properties(Action<? super SonarQubeProperties> action) {
+    propertiesActions.add(action);
+  }
 
-    /**
-     * If the project should be excluded from analysis.
-     * <p>
-     * Defaults to {@code false}.
-     */
-    public boolean isSkipProject() {
-        return skipProject;
-    }
+  /**
+   * If the project should be excluded from analysis.
+   * <p>
+   * Defaults to {@code false}.
+   */
+  public boolean isSkipProject() {
+    return skipProject;
+  }
 
-    public void setSkipProject(boolean skipProject) {
-        this.skipProject = skipProject;
-    }
+  public void setSkipProject(boolean skipProject) {
+    this.skipProject = skipProject;
+  }
 
 }

@@ -17,15 +17,12 @@
 package org.sonarqube.gradle;
 
 import com.google.common.collect.Maps;
+import java.util.Map;
+import java.util.Properties;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
 import org.sonar.runner.api.EmbeddedRunner;
-
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * Analyses one or more projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
@@ -38,8 +35,6 @@ import java.util.Properties;
  */
 public class SonarQubeTask extends DefaultTask {
 
-  private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
-
   private Map<String, Object> sonarProperties;
 
   @TaskAction
@@ -50,9 +45,9 @@ public class SonarQubeTask extends DefaultTask {
     propertiesObject.putAll(properties);
 
     EmbeddedRunner.create()
-        .setApp("Gradle", getProject().getGradle().getGradleVersion())
-        .addProperties(propertiesObject)
-        .execute();
+      .setApp("Gradle", getProject().getGradle().getGradleVersion())
+      .addProperties(propertiesObject)
+      .execute();
   }
 
   /**
