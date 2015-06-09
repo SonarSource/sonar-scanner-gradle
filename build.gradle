@@ -45,7 +45,7 @@ pluginBundle {
   vcsUrl = 'https://github.com/SonarCommunity/sonar-gradle'
 
   description = 'Gradle plugin for running SonarQube analysis.'
-  tags = ['sonarqube']
+  tags = ['sonarqube', 'sonar', 'quality', 'qa']
 
   plugins {
 
