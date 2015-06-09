@@ -99,7 +99,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     project.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
   }
 
-  private ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
+  private static ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
     ActionBroadcast<SonarQubeProperties> actionBroadcast = new ActionBroadcast<SonarQubeProperties>();
     actionBroadcastMap.put(project, actionBroadcast);
     return actionBroadcast;
@@ -175,7 +175,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     for (Project childProject : enabledChildProjects) {
       String moduleId = getProjectKey(childProject);
       moduleIds.add(moduleId);
-      String modulePrefix = prefix.length() > 0 ? prefix + "." + moduleId : moduleId;
+      String modulePrefix = (prefix.length() > 0) ? (prefix + "." + moduleId) : moduleId;
       computeSonarProperties(childProject, properties, sonarPropertiesActionBroadcastMap, modulePrefix);
     }
     properties.put(convertKey("sonar.modules", prefix), COMMA_JOINER.join(moduleIds));
@@ -266,7 +266,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
   }
 
-  private String getProjectKey(Project project) {
+  private static String getProjectKey(Project project) {
     // SonarQube uses project keys in URL parameters without internally URL-encoding them.
     // According to my manual tests with sonar-gradle plugin based on Sonar Runner 2.0 and Sonar 3.4.1,
     // the current defaults will only cause a problem if project.group or project.name of
@@ -274,10 +274,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     // (':' works, ' ' doesn't.) In such a case, sonar.projectKey can be overridden manually.
     String name = project.getName();
     String group = project.getGroup().toString();
-    return group.isEmpty() ? name : group + ":" + name;
+    return group.isEmpty() ? name : (group + ":" + name);
   }
 
-  private void addSystemProperties(Map<String, Object> properties) {
+  private static void addSystemProperties(Map<String, Object> properties) {
     for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
       String key = entry.getKey().toString();
       if (key.startsWith("sonar")) {
@@ -286,7 +286,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
   }
 
-  private Collection<File> getLibraries(SourceSet main) {
+  private static Collection<File> getLibraries(SourceSet main) {
     List<File> libraries = Lists.newLinkedList(Iterables.filter(main.getRuntimeClasspath(), IS_FILE));
     File runtimeJar = Jvm.current().getRuntimeJar();
     if (runtimeJar != null) {
@@ -296,7 +296,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return libraries;
   }
 
-  private void convertProperties(Map<String, Object> rawProperties, final String projectPrefix, final Map<String, Object> properties) {
+  private static void convertProperties(Map<String, Object> rawProperties, final String projectPrefix, final Map<String, Object> properties) {
     for (Map.Entry<String, Object> entry : rawProperties.entrySet()) {
       String value = convertValue(entry.getValue());
       if (value != null) {
@@ -305,11 +305,11 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
   }
 
-  private String convertKey(String key, final String projectPrefix) {
-    return projectPrefix.isEmpty() ? key : projectPrefix + "." + key;
+  private static String convertKey(String key, final String projectPrefix) {
+    return projectPrefix.isEmpty() ? key : (projectPrefix + "." + key);
   }
 
-  private String convertValue(Object value) {
+  private static String convertValue(Object value) {
     if (value == null) {
       return null;
     }

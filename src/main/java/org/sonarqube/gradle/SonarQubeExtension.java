@@ -39,12 +39,15 @@ import org.gradle.listener.ActionBroadcast;
  * <p>
  * The SonarQube configuration is provided by using the {@link #properties(org.gradle.api.Action)} method and specifying properties.
  * Certain properties are required, such as {@code "sonar.host.url"} which provides the address of the SonarQube server.
- * For details on what properties are available, see <a href="http://docs.sonarqube.org/display/SONAR/Analysis+Parameters">Analysis Parameters</a> in the SonarQube documentation.
+ * For details on what properties are available, see <a href="http://docs.sonarqube.org/display/SONAR/Analysis+Parameters">Analysis Parameters</a>
+ * in the SonarQube documentation.
  * <p>
  * The {@code "sonar-gradle"} plugin adds default values for several plugins depending on the nature of the project.
- * Please see the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">SonarQube Gradle documentation</a> for details on which properties are set and their values.
+ * Please see the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">SonarQube Gradle documentation</a>
+ * for details on which properties are set and their values.
  * <p>
- * Please see the {@link SonarQubeProperties} class for more information on the mechanics of setting SonarQube properties, including laziness and property types.
+ * Please see the {@link SonarQubeProperties} class for more information on the mechanics of setting SonarQube properties,
+ * including laziness and property types.
  */
 public class SonarQubeExtension {
 
@@ -61,7 +64,7 @@ public class SonarQubeExtension {
   /**
    * Adds an action that configures SonarQube properties for the associated Gradle project.
    * <p>
-   * <em>Global</em> SonarQube properties (e.g. database connection settings) have to be set on the "root" project of the Sonar run.
+   * <em>Global</em> SonarQube properties (e.g. server connection settings) have to be set on the "root" project of the SonarQube run.
    * This is the project that has the {@code sonar-gradle} plugin applied.
    * <p>
    * The action is passed an instance of {@code SonarQubeProperties}.
@@ -70,7 +73,8 @@ public class SonarQubeExtension {
    * <p>
    * SonarQube properties can also be set via system properties (and therefore from the command line).
    * This is mainly useful for global SonarQube properties like database credentials.
-   * Every system property starting with {@code "sonar."} is automatically set on the "root" project of the SonarQube run (i.e. the project that has the {@code sonar-gradle} plugin applied).
+   * Every system property starting with {@code "sonar."} is automatically set on the "root" project of the SonarQube run 
+   * (i.e. the project that has the {@code sonar-gradle} plugin applied).
    * System properties take precedence over properties declared in build scripts.
    *
    * @param action an action that configures SonarQube properties for the associated Gradle project
