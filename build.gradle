@@ -16,7 +16,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 
 group = 'org.sonarqube.gradle'
-version = '1.0-SNAPSHOT'
+version = '1.0'
 description = 'Gradle plugin to help analyzing projects with SonarQube'
 
 sourceCompatibility = 1.7

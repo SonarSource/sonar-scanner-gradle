@@ -10,7 +10,7 @@
   
   <properties>
     <gradle.version>2.4</gradle.version>
-    <sonarqubeGradlePlugin.version>1.0-SNAPSHOT</sonarqubeGradlePlugin.version>
+    <sonarqubeGradlePlugin.version>1.0</sonarqubeGradlePlugin.version>
   </properties>
 
   <build>
