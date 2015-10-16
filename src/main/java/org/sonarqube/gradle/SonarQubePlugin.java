@@ -193,7 +193,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     properties.put("sonar.projectDescription", project.getDescription());
     properties.put("sonar.projectVersion", project.getVersion());
     properties.put("sonar.projectBaseDir", project.getProjectDir());
-    properties.put("sonar.dynamicAnalysis", "reuseReports");
 
     if (project.equals(targetProject)) {
       // Root project

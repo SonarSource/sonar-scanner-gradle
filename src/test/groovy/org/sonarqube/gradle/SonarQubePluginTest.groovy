@@ -98,7 +98,6 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.projectVersion"] == "1.3"
     properties["sonar.projectBaseDir"] == parentProject.projectDir as String
     properties["sonar.working.directory"] == new File(parentProject.buildDir, "sonar") as String
-    properties["sonar.dynamicAnalysis"] == "reuseReports"
 
     and:
     properties["group:child.sonar.sources"] == ""
@@ -106,7 +105,6 @@ class SonarQubePluginTest extends Specification {
     properties["group:child.sonar.projectDescription"] == "description"
     properties["group:child.sonar.projectVersion"] == "1.3"
     properties["group:child.sonar.projectBaseDir"] == childProject.projectDir as String
-    properties["group:child.sonar.dynamicAnalysis"] == "reuseReports"
   }
 
   def "adds additional default properties for target project"() {
