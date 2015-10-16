@@ -5,6 +5,7 @@ plugins {
   id "com.gradle.plugin-publish" version "0.9.0"
   // Eat your own dog food :)
   id "org.sonarqube" version "1.0"
+  id "com.github.hierynomus.license" version "0.11.0"
 }
 
 apply plugin: 'java-gradle-plugin'
@@ -65,4 +66,8 @@ sonarqube {
   properties {
     property 'sonar.projectName', 'Gradle SonarQube Plugin'
   }
+}
+
+license {
+  strictCheck true
 }
