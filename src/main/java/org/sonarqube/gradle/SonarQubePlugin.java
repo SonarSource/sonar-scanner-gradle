@@ -44,6 +44,7 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.jvm.Jvm;
 import org.gradle.listener.ActionBroadcast;
@@ -103,7 +104,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
-    ActionBroadcast<SonarQubeProperties> actionBroadcast = new ActionBroadcast<SonarQubeProperties>();
+    ActionBroadcast<SonarQubeProperties> actionBroadcast = new ActionBroadcast<>();
     actionBroadcastMap.put(project, actionBroadcast);
     return actionBroadcast;
   }
@@ -129,7 +130,7 @@ public class SonarQubePlugin implements Plugin<Project> {
           @Override
           public boolean apply(Project input) {
             return input.getPlugins().hasPlugin(JavaPlugin.class)
-              && !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject();
+                && !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject();
           }
         });
 
@@ -173,7 +174,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       return;
     }
 
-    List<String> moduleIds = new ArrayList<String>();
+    List<String> moduleIds = new ArrayList<>();
 
     for (Project childProject : enabledChildProjects) {
       String moduleId = getProjectKey(childProject);
@@ -202,6 +203,14 @@ public class SonarQubePlugin implements Plugin<Project> {
       properties.put("sonar.moduleKey", getProjectKey(project));
     }
 
+    configureForJava(project, properties);
+
+    if (properties.get("sonar.sources") == null) {
+      properties.put("sonar.sources", "");
+    }
+  }
+
+  private void configureForJava(final Project project, final Map<String, Object> properties) {
     project.getPlugins().withType(JavaBasePlugin.class, new Action<JavaBasePlugin>() {
       @Override
       public void execute(JavaBasePlugin javaBasePlugin) {
@@ -249,6 +258,15 @@ public class SonarQubePlugin implements Plugin<Project> {
           properties.put("sonar.junit.reportsPath", testResultsDir);
         }
 
+        project.getTasks().withType(JavaCompile.class, new Action<JavaCompile>() {
+          public void execute(final JavaCompile compile) {
+            String encoding = compile.getOptions().getEncoding();
+            if (encoding != null) {
+              properties.put("sonar.sourceEncoding", encoding);
+            }
+          }
+        });
+
         project.getPlugins().withType(JacocoPlugin.class, new Action<JacocoPlugin>() {
           @Override
           public void execute(JacocoPlugin jacocoPlugin) {
@@ -261,12 +279,6 @@ public class SonarQubePlugin implements Plugin<Project> {
         });
       }
     });
-
-    if (properties.get("sonar.sources") == null) {
-      // Should be able to remove this after upgrading to Sonar Runner 2.1 (issue is already marked as fixed),
-      // if we can live with the fact that leaf projects w/o source dirs will still cause a failure.
-      properties.put("sonar.sources", "");
-    }
   }
 
   private static String getProjectKey(Project project) {

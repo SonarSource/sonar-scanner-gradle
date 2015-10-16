@@ -168,6 +168,7 @@ class SonarQubePluginTest extends Specification {
     project.sourceSets.test.output.classesDir = "$project.buildDir/test-out"
     project.sourceSets.test.output.resourcesDir = "$project.buildDir/test-out"
     project.sourceSets.test.runtimeClasspath += project.files("lib/junit.jar")
+    project.compileJava.options.encoding = 'ISO-8859-1'
 
     when:
     def properties = project.tasks.sonarqube.properties
@@ -183,6 +184,7 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
     properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results") as String
     properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results") as String
+    properties["sonar.sourceEncoding"] == "ISO-8859-1"
   }
 
   def "only adds existing directories"() {
