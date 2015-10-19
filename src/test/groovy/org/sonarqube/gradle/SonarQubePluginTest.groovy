@@ -19,10 +19,13 @@
  */
 package org.sonarqube.gradle
 
+import org.gradle.api.plugins.GroovyBasePlugin
+import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.internal.jvm.Jvm
 import org.gradle.testfixtures.ProjectBuilder
+import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import spock.lang.Specification
 
 import static org.hamcrest.Matchers.contains
@@ -150,6 +153,24 @@ class SonarQubePluginTest extends Specification {
     properties["group:child.sonar.java.target"] == "1.7"
   }
 
+  def "adds additional default properties for 'groovy-base' projects"() {
+    parentProject.pluginManager.apply(GroovyBasePlugin)
+    childProject.pluginManager.apply(GroovyBasePlugin)
+    parentProject.sourceCompatibility = 1.5
+    parentProject.targetCompatibility = 1.6
+    childProject.sourceCompatibility = 1.6
+    childProject.targetCompatibility = 1.7
+
+    when:
+    def properties = parentSonarQubeTask().properties
+
+    then:
+    properties["sonar.java.source"] == "1.5"
+    properties["sonar.java.target"] == "1.6"
+    properties["group:child.sonar.java.source"] == "1.6"
+    properties["group:child.sonar.java.target"] == "1.7"
+  }
+
   def "adds additional default properties for 'java' projects"() {
     def rootProject = ProjectBuilder.builder().withName("root").build()
     def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-project")).build()
@@ -183,6 +204,75 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results") as String
     properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results") as String
     properties["sonar.sourceEncoding"] == "ISO-8859-1"
+  }
+
+  def "adds coverage properties for 'java' projects"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-project")).build()
+
+    project.pluginManager.apply(SonarQubePlugin)
+    project.pluginManager.apply(JavaPlugin)
+    project.pluginManager.apply(JacocoPlugin)
+
+    project.sourceSets.main.java.srcDirs = ["src"]
+
+    when:
+    def properties = project.tasks.sonarqube.properties
+
+    then:
+    properties["sonar.jacoco.reportPath"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
+  }
+
+  def "adds additional default properties for 'groovy' projects"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-project")).build()
+
+    project.pluginManager.apply(SonarQubePlugin)
+
+    project.pluginManager.apply(GroovyPlugin)
+
+    project.sourceSets.main.groovy.srcDirs = ["src"]
+    project.sourceSets.test.groovy.srcDirs = ["test"]
+    project.sourceSets.main.output.classesDir = "$project.buildDir/out"
+    project.sourceSets.main.output.resourcesDir = "$project.buildDir/out"
+    project.sourceSets.main.runtimeClasspath += project.files("lib/SomeLib.jar")
+    project.sourceSets.test.output.classesDir = "$project.buildDir/test-out"
+    project.sourceSets.test.output.resourcesDir = "$project.buildDir/test-out"
+    project.sourceSets.test.runtimeClasspath += project.files("lib/junit.jar")
+    project.compileJava.options.encoding = 'ISO-8859-1'
+
+    when:
+    def properties = project.tasks.sonarqube.properties
+
+    then:
+    properties["sonar.sources"] == new File(project.projectDir, "src") as String
+    properties["sonar.tests"] == new File(project.projectDir, "test") as String
+    properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
+    properties["sonar.java.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
+    properties["sonar.java.test.binaries"].contains(new File(project.buildDir, "test-out") as String)
+    properties["sonar.java.test.libraries"].contains(new File(project.projectDir, "lib/junit.jar") as String)
+    properties["sonar.binaries"].contains(new File(project.buildDir, "out") as String)
+    properties["sonar.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
+    properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results") as String
+    properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results") as String
+    properties["sonar.sourceEncoding"] == "ISO-8859-1"
+  }
+
+  def "adds coverage properties for 'groovy' projects"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-project")).build()
+
+    project.pluginManager.apply(SonarQubePlugin)
+    project.pluginManager.apply(GroovyPlugin)
+    project.pluginManager.apply(JacocoPlugin)
+
+    project.sourceSets.main.java.srcDirs = ["src"]
+
+    when:
+    def properties = project.tasks.sonarqube.properties
+
+    then:
+    properties["sonar.groovy.jacoco.reportPath"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
   }
 
   def "only adds existing directories"() {

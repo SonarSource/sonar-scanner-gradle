@@ -16,7 +16,7 @@ public class GradleTest {
   public TemporaryFolder temp = new TemporaryFolder();
 
   @Test
-  public void testSimpleProject() throws Exception {
+  public void testSimpleJavaProject() throws Exception {
     File out = temp.newFile();
     File projectBaseDir = new File(this.getClass().getResource("/java-gradle-simple").toURI());
     ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
@@ -34,5 +34,31 @@ public class GradleTest {
       entry("sonar.projectKey", "org.codehaus.sonar:example-java-gradle"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/java");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
+  }
+
+
+  @Test
+  public void mixJavaGroovyProject() throws Exception {
+    File out = temp.newFile();
+    File projectBaseDir = new File(this.getClass().getResource("/java-groovy-tests-gradle").toURI());
+    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
+        .directory(projectBaseDir)
+        .inheritIO();
+    Process p = pb.start();
+    p.waitFor();
+
+    Properties props = new Properties();
+    try (FileReader fr = new FileReader(out)) {
+      props.load(fr);
+    }
+
+    assertThat(props).contains(
+        entry("sonar.projectKey", "groovy-java-gradle-mixed-tests"));
+    assertThat(props.get("sonar.sources").toString()).contains("src/main/groovy");
+    assertThat(props.get("sonar.tests").toString()).contains("src/test/groovy");
+
+    assertThat(props.get("sonar.junit.reportsPath").toString()).contains("java-groovy-tests-gradle/build/test-results");
+    assertThat(props.get("sonar.groovy.jacoco.reportPath").toString()).contains("java-groovy-tests-gradle/build/jacoco/test.exec");
+    assertThat(props.get("sonar.jacoco.reportPath").toString()).contains("java-groovy-tests-gradle/build/jacoco/test.exec");
   }
 }

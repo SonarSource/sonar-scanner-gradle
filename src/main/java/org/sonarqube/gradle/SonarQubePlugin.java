@@ -28,6 +28,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,6 +42,8 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.internal.ConventionMapping;
 import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.plugins.GroovyBasePlugin;
+import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -77,6 +81,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
   };
   private static final Joiner COMMA_JOINER = Joiner.on(",");
+  public static final String SONAR_SOURCES_PROP = "sonar.sources";
 
   private Project targetProject;
 
@@ -203,9 +208,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
 
     configureForJava(project, properties);
+    configureForGroovy(project, properties);
 
-    if (properties.get("sonar.sources") == null) {
-      properties.put("sonar.sources", "");
+    if (properties.get(SONAR_SOURCES_PROP) == null) {
+      properties.put(SONAR_SOURCES_PROP, "");
     }
   }
 
@@ -213,71 +219,122 @@ public class SonarQubePlugin implements Plugin<Project> {
     project.getPlugins().withType(JavaBasePlugin.class, new Action<JavaBasePlugin>() {
       @Override
       public void execute(JavaBasePlugin javaBasePlugin) {
-        JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
-        properties.put("sonar.java.source", javaPluginConvention.getSourceCompatibility());
-        properties.put("sonar.java.target", javaPluginConvention.getTargetCompatibility());
+        configureJdkSourceAndTarget(project, properties);
       }
     });
 
     project.getPlugins().withType(JavaPlugin.class, new Action<JavaPlugin>() {
       @Override
       public void execute(JavaPlugin javaPlugin) {
-        JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
-
-        SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
-        List<File> sourceDirectories = nonEmptyOrNull(Iterables.filter(main.getAllSource().getSrcDirs(), FILE_EXISTS));
-        properties.put("sonar.sources", sourceDirectories);
-        SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
-        List<File> testDirectories = nonEmptyOrNull(Iterables.filter(test.getAllSource().getSrcDirs(), FILE_EXISTS));
-        properties.put("sonar.tests", testDirectories);
-
-        List<File> mainClasspath = nonEmptyOrNull(Iterables.filter(main.getRuntimeClasspath(), IS_DIRECTORY));
-        Collection<File> mainLibraries = getLibraries(main);
-        properties.put("sonar.java.binaries", mainClasspath);
-        properties.put("sonar.java.libraries", mainLibraries);
-        List<File> testClasspath = nonEmptyOrNull(Iterables.filter(test.getRuntimeClasspath(), IS_DIRECTORY));
-        Collection<File> testLibraries = getLibraries(test);
-        properties.put("sonar.java.test.binaries", testClasspath);
-        properties.put("sonar.java.test.libraries", testLibraries);
-
-        // Populate deprecated properties for backward compatibility
-        properties.put("sonar.binaries", mainClasspath);
-        properties.put("sonar.libraries", mainLibraries);
-
-        final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
-
-        if (sourceDirectories != null || testDirectories != null) {
-          File testResultsDir = testTask.getReports().getJunitXml().getDestination();
-          // create the test results folder to prevent SonarQube from emitting
-          // a warning if a project does not contain any tests
-          testResultsDir.mkdirs();
-
-          properties.put("sonar.surefire.reportsPath", testResultsDir);
-          // added due to https://issues.gradle.org/browse/GRADLE-3005
-          properties.put("sonar.junit.reportsPath", testResultsDir);
+        boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
+        if (hasSourceOrTest) {
+          configureSourceEncoding(project, properties);
+          final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
+          configureTestReports(testTask, properties);
+          configureJaCoCoCoverageReport(testTask, false, project, properties);
         }
-
-        project.getTasks().withType(JavaCompile.class, new Action<JavaCompile>() {
-          public void execute(final JavaCompile compile) {
-            String encoding = compile.getOptions().getEncoding();
-            if (encoding != null) {
-              properties.put("sonar.sourceEncoding", encoding);
-            }
-          }
-        });
-
-        project.getPlugins().withType(JacocoPlugin.class, new Action<JacocoPlugin>() {
-          @Override
-          public void execute(JacocoPlugin jacocoPlugin) {
-            JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
-            File destinationFile = jacocoTaskExtension.getDestinationFile();
-            if (destinationFile.exists()) {
-              properties.put("sonar.jacoco.reportPath", destinationFile);
-            }
-          }
-        });
       }
     });
+  }
+
+  /**
+   * Groovy projects support joint compilation of a mix of Java and Groovy classes. That's why we set both
+   * sonar.java.* and sonar.groovy.* properties.
+   */
+  private void configureForGroovy(final Project project, final Map<String, Object> properties) {
+    project.getPlugins().withType(GroovyBasePlugin.class, new Action<GroovyBasePlugin>() {
+      @Override
+      public void execute(GroovyBasePlugin groovyBasePlugin) {
+        configureJdkSourceAndTarget(project, properties);
+      }
+    });
+
+    project.getPlugins().withType(GroovyPlugin.class, new Action<GroovyPlugin>() {
+      @Override
+      public void execute(GroovyPlugin groovyPlugin) {
+        boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
+        if (hasSourceOrTest) {
+          configureSourceEncoding(project, properties);
+          final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
+          configureTestReports(testTask, properties);
+          configureJaCoCoCoverageReport(testTask, true, project, properties);
+        }
+      }
+    });
+  }
+
+  private void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
+    project.getPlugins().withType(JacocoPlugin.class, new Action<JacocoPlugin>() {
+      @Override
+      public void execute(JacocoPlugin jacocoPlugin) {
+        JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
+        File destinationFile = jacocoTaskExtension.getDestinationFile();
+        if (destinationFile.exists()) {
+          properties.put("sonar.jacoco.reportPath", destinationFile);
+          if (addForGroovy) {
+            properties.put("sonar.groovy.jacoco.reportPath", destinationFile);
+          }
+        }
+      }
+    });
+  }
+
+  private static void configureTestReports(Test testTask, Map<String, Object> properties) {
+    File testResultsDir = testTask.getReports().getJunitXml().getDestination();
+    // create the test results folder to prevent SonarQube from emitting
+    // a warning if a project does not contain any tests
+    try {
+      Files.createDirectories(testResultsDir.toPath());
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to create test report directory", e);
+    }
+
+    properties.put("sonar.junit.reportsPath", testResultsDir);
+    // For backward compatibility
+    properties.put("sonar.surefire.reportsPath", testResultsDir);
+  }
+
+  private boolean configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties) {
+    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+
+    SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
+    List<File> sourceDirectories = nonEmptyOrNull(Iterables.filter(main.getAllSource().getSrcDirs(), FILE_EXISTS));
+    properties.put(SONAR_SOURCES_PROP, sourceDirectories);
+    SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
+    List<File> testDirectories = nonEmptyOrNull(Iterables.filter(test.getAllSource().getSrcDirs(), FILE_EXISTS));
+    properties.put("sonar.tests", testDirectories);
+
+    List<File> mainClasspath = nonEmptyOrNull(Iterables.filter(main.getRuntimeClasspath(), IS_DIRECTORY));
+    Collection<File> mainLibraries = getLibraries(main);
+    properties.put("sonar.java.binaries", mainClasspath);
+    properties.put("sonar.java.libraries", mainLibraries);
+    List<File> testClasspath = nonEmptyOrNull(Iterables.filter(test.getRuntimeClasspath(), IS_DIRECTORY));
+    Collection<File> testLibraries = getLibraries(test);
+    properties.put("sonar.java.test.binaries", testClasspath);
+    properties.put("sonar.java.test.libraries", testLibraries);
+
+    // Populate deprecated properties for backward compatibility
+    properties.put("sonar.binaries", mainClasspath);
+    properties.put("sonar.libraries", mainLibraries);
+
+    return sourceDirectories != null || testDirectories != null;
+  }
+
+  private void configureSourceEncoding(Project project, final Map<String, Object> properties) {
+    project.getTasks().withType(JavaCompile.class, new Action<JavaCompile>() {
+      public void execute(final JavaCompile compile) {
+        String encoding = compile.getOptions().getEncoding();
+        if (encoding != null) {
+          properties.put("sonar.sourceEncoding", encoding);
+        }
+      }
+    });
+  }
+
+  private void configureJdkSourceAndTarget(Project project, Map<String, Object> properties) {
+    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+    properties.put("sonar.java.source", javaPluginConvention.getSourceCompatibility());
+    properties.put("sonar.java.target", javaPluginConvention.getTargetCompatibility());
   }
 
   private static String getProjectKey(Project project) {
