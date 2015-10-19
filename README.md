@@ -1,5 +1,5 @@
 # SonarQube Gradle Plugin
-[![Build Status](https://travis-ci.org/SonarCommunity/sonar-gradle.svg)](https://travis-ci.org/SonarCommunity/sonar-gradle)
+[![Build Status](https://travis-ci.org/SonarCommunity/sonar-gradle.svg?branch=master)](https://travis-ci.org/SonarCommunity/sonar-gradle)
 
 ## How to install in local Maven repository:
 `./gradlew install`
