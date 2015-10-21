@@ -3,14 +3,15 @@ sudo: false
 install: true
 
 env:
-  - GRADLE_VERSION=1.12
-  - GRADLE_VERSION=2.0
-  - GRADLE_VERSION=2.7
+  matrix:
+    - RUN_ITS=false
+    - RUN_ITS=true GRADLE_VERSION=1.12
+    - RUN_ITS=true GRADLE_VERSION=2.0
+    - RUN_ITS=true GRADLE_VERSION=2.7
+    - RUN_ITS=false PR_ANALYSIS=true
 
 script:
-  - ./gradlew clean build install
-  - cd integrationTests
-  - mvn clean verify -Dgradle.version=$GRADLE_VERSION
+  - ./travis.sh
 
 jdk:
   - oraclejdk8
