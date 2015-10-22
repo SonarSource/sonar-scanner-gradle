@@ -9,7 +9,7 @@
   <inceptionYear>2015</inceptionYear>
   
   <properties>
-    <gradle.version>2.4</gradle.version>
+    <gradle.version>2.14.1</gradle.version>
   </properties>
 
   <build>

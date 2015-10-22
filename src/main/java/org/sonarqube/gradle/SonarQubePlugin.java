@@ -33,7 +33,6 @@ import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.sonarsource.scanner.api.Utils;
 import org.gradle.api.Nullable;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -51,6 +50,7 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.listener.ActionBroadcast;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
+import org.sonarsource.scanner.api.Utils;
 
 /**
  * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
@@ -59,10 +59,12 @@ import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
  */
 public class SonarQubePlugin implements Plugin<Project> {
 
-  private static final Predicate<File> FILE_EXISTS = File::exists;
-  private static final Predicate<File> IS_DIRECTORY = File::isDirectory;
+  static final Predicate<File> FILE_EXISTS = File::exists;
   private static final Predicate<File> IS_FILE = File::isFile;
-  private static final String SONAR_SOURCES_PROP = "sonar.sources";
+  static final String SONAR_SOURCES_PROP = "sonar.sources";
+  static final String SONAR_TESTS_PROP = "sonar.tests";
+  static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
+  static final String SONAR_JAVA_TARGET_PROP = "sonar.java.target";
 
   private Project targetProject;
 
@@ -103,13 +105,22 @@ public class SonarQubePlugin implements Plugin<Project> {
       return properties;
     });
 
-    Callable<Iterable<? extends Task>> callable = () ->
-      project.getAllprojects().stream()
-        .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-        .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
-        .collect(Collectors.toList());
+    Callable<Iterable<? extends Task>> testTask = () -> project.getAllprojects().stream()
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
+      .collect(Collectors.toList());
+    sonarQubeTask.dependsOn(testTask);
+
+    Callable<Iterable<? extends Task>> callable = () -> project.getAllprojects().stream()
+            .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+            .map(p -> p.getTasks().getByName("compile" + capitalize(AndroidUtils.RELEASE) + "JavaWithJavac"))
+            .collect(Collectors.toList());
     sonarQubeTask.dependsOn(callable);
     return sonarQubeTask;
+  }
+
+  private static String capitalize(final String word) {
+    return Character.toUpperCase(word.charAt(0)) + word.substring(1);
   }
 
   private void computeSonarProperties(Project project, Map<String, Object> properties, Map<Project, ActionBroadcast<SonarQubeProperties>> sonarPropertiesActionBroadcastMap,
@@ -168,7 +179,15 @@ public class SonarQubePlugin implements Plugin<Project> {
     configureForJava(project, properties);
     configureForGroovy(project, properties);
 
+    if (isAndroidProject(project)) {
+      AndroidUtils.configureForAndroid(project, properties);
+    }
+
     properties.putIfAbsent(SONAR_SOURCES_PROP, "");
+  }
+
+  private static boolean isAndroidProject(Project project) {
+    return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.library")|| project.getPlugins().hasPlugin("com.android.test");
   }
 
   private void configureForJava(final Project project, final Map<String, Object> properties) {
@@ -239,25 +258,34 @@ public class SonarQubePlugin implements Plugin<Project> {
     properties.put(SONAR_SOURCES_PROP, sourceDirectories);
     SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
     List<File> testDirectories = nonEmptyOrNull(test.getAllSource().getSrcDirs().stream().filter(FILE_EXISTS).collect(Collectors.toList()));
-    properties.put("sonar.tests", testDirectories);
+    properties.put(SONAR_TESTS_PROP, testDirectories);
 
     File mainClassDir = main.getOutput().getClassesDir();
     Collection<File> mainLibraries = getLibraries(main);
+    setMainClasspathProps(properties, addForGroovy, mainClassDir, mainLibraries);
+
+    File testClassDir = test.getOutput().getClassesDir();
+    Collection<File> testLibraries = getLibraries(test);
+    setTestClasspathProps(properties, testClassDir, testLibraries);
+
+    return sourceDirectories != null || testDirectories != null;
+  }
+
+  static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, File mainClassDir, Collection<File> mainLibraries) {
     properties.put("sonar.java.binaries", mainClassDir);
     if (addForGroovy) {
       properties.put("sonar.groovy.binaries", mainClassDir);
     }
     properties.put("sonar.java.libraries", mainLibraries);
-    File testClassDir = test.getOutput().getClassesDir();
-    Collection<File> testLibraries = getLibraries(test);
-    properties.put("sonar.java.test.binaries", testClassDir);
-    properties.put("sonar.java.test.libraries", testLibraries);
 
     // Populate deprecated properties for backward compatibility
     properties.put("sonar.binaries", mainClassDir);
     properties.put("sonar.libraries", mainLibraries);
+  }
 
-    return sourceDirectories != null || testDirectories != null;
+  static void setTestClasspathProps(Map<String, Object> properties, File testClassDir, Collection<File> testLibraries) {
+    properties.put("sonar.java.test.binaries", testClassDir);
+    properties.put("sonar.java.test.libraries", testLibraries);
   }
 
   private static void configureSourceEncoding(Project project, final Map<String, Object> properties) {
@@ -271,8 +299,8 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static void configureJdkSourceAndTarget(Project project, Map<String, Object> properties) {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
-    properties.put("sonar.java.source", javaPluginConvention.getSourceCompatibility());
-    properties.put("sonar.java.target", javaPluginConvention.getTargetCompatibility());
+    properties.put(SONAR_JAVA_SOURCE_PROP, javaPluginConvention.getSourceCompatibility());
+    properties.put(SONAR_JAVA_TARGET_PROP, javaPluginConvention.getTargetCompatibility());
   }
 
   private static String getProjectKey(Project project) {
