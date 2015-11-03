@@ -18,5 +18,10 @@ buildscript {
 apply plugin: 'org.sonarqube'
 ```
 
-## How to deploy on Gradle plugin repository:
+## How to release and deploy on Gradle plugin repository:
 https://plugins.gradle.org/docs/publish-plugin
+
+`./gradlew release`
+
+(See issue with credentials: https://github.com/researchgate/gradle-release/issues/147)
+
