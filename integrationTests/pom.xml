@@ -10,10 +10,12 @@
   
   <properties>
     <gradle.version>2.4</gradle.version>
-    <sonarqubeGradlePlugin.version>1.1-SNAPSHOT</sonarqubeGradlePlugin.version>
   </properties>
 
   <build>
+    <filters>
+      <filter>../gradle.properties</filter>
+    <filters>
     <testResources>
       <testResource>
         <directory>src/test/resources</directory>

@@ -3,7 +3,7 @@ buildscript {
       mavenCentral()
       mavenLocal()
     }
-    dependencies { classpath 'org.sonarqube.gradle:gradle-sonarqube-plugin:${sonarqubeGradlePlugin.version}' }
+    dependencies { classpath 'org.sonarqube.gradle:gradle-sonarqube-plugin:${version}' }
 }
 
 apply plugin: 'java'
