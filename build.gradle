@@ -2,10 +2,11 @@
 // The above triggers groovy syntax highlighting in vim
 
 plugins {
-  id "com.gradle.plugin-publish" version "0.9.0"
+  id "com.gradle.plugin-publish" version "0.9.1"
   // Eat your own dog food :)
   id "org.sonarqube" version "1.0"
   id "com.github.hierynomus.license" version "0.11.0"
+  id "net.researchgate.release" version "2.3.1"
 }
 
 apply plugin: 'java-gradle-plugin'
@@ -16,8 +17,8 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
 
+
 group = 'org.sonarqube.gradle'
-version = '1.1-SNAPSHOT'
 description = 'Gradle plugin to help analyzing projects with SonarQube'
 
 sourceCompatibility = 1.7
@@ -71,3 +72,5 @@ sonarqube {
 license {
   strictCheck true
 }
+
+afterReleaseBuild.dependsOn publishPlugins
