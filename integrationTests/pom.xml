@@ -15,7 +15,7 @@
   <build>
     <filters>
       <filter>../gradle.properties</filter>
-    <filters>
+    </filters>
     <testResources>
       <testResource>
         <directory>src/test/resources</directory>
