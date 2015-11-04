@@ -44,7 +44,7 @@ dependencies {
 
 pluginBundle {
   website = 'http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle'
-  vcsUrl = 'https://github.com/SonarCommunity/sonar-gradle'
+  vcsUrl = 'https://github.com/SonarSource/sonar-gradle'
 
   description = 'Gradle plugin for running SonarQube analysis.'
   tags = ['sonarqube', 'sonar', 'quality', 'qa']
