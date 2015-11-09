@@ -322,6 +322,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private void configureSourceEncoding(Project project, final Map<String, Object> properties) {
     project.getTasks().withType(JavaCompile.class, new Action<JavaCompile>() {
+      @Override
       public void execute(final JavaCompile compile) {
         String encoding = compile.getOptions().getEncoding();
         if (encoding != null) {
