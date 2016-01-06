@@ -18,7 +18,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven'
 
 
-group = 'org.sonarqube.gradle'
+group = 'org.sonarsource.scanner.gradle'
 description = 'Gradle plugin to help analyzing projects with SonarQube'
 
 sourceCompatibility = 1.7
@@ -53,19 +53,19 @@ pluginBundle {
 
     sonarqubePlugin {
       id = 'org.sonarqube'
-      displayName = 'Gradle SonarQube plugin'
+      displayName = 'SonarQube Scanner for Gradle'
     }
   }
 
   mavenCoordinates {
-    groupId = "org.sonarqube.gradle"
-    artifactId = "gradle-sonarqube-plugin"
+    groupId = "org.sonarsource.scanner.gradle"
+    artifactId = "sonarqube-gradle-plugin"
   }
 }
 
 sonarqube {
   properties {
-    property 'sonar.projectName', 'Gradle SonarQube Plugin'
+    property 'sonar.projectName', 'SonarQube Scanner for Gradle'
   }
 }
 
