@@ -4,11 +4,10 @@ install: true
 
 env:
   matrix:
-    - RUN_ITS=false
-    - RUN_ITS=true GRADLE_VERSION=1.12
-    - RUN_ITS=true GRADLE_VERSION=2.0
-    - RUN_ITS=true GRADLE_VERSION=2.8
-    - RUN_ITS=false PR_ANALYSIS=true
+    - TARGET=CI
+    - TARGET=IT GRADLE_VERSION=1.12
+    - TARGET=IT GRADLE_VERSION=2.0
+    - TARGET=IT GRADLE_VERSION=2.8
 
 script:
   - ./travis.sh
@@ -25,6 +24,7 @@ cache:
     - '$HOME/.m2/repository'
     - '$HOME/.gradle'
     - '.gradle'
+    - '$HOME/.sonar'
 
 notifications:
   email: false

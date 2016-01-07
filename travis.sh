@@ -2,36 +2,56 @@
 
 set -euo pipefail
 
-if [ -n "${PR_ANALYSIS:-}" ] && [ "${PR_ANALYSIS}" == true ]
-then
-  if [ "$TRAVIS_PULL_REQUEST" != "false" ]
-  then
+function strongEcho {
+  echo ""
+  echo "================ $1 ================="
+}
+
+case "$TARGET" in
+
+CI)
+  if [ "${TRAVIS_BRANCH}" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+    strongEcho 'Build and analyze commit in master'
+    # this commit is master must be built and analyzed (with upload of report)
+
+    ./gradlew sonarqube \
+        -Dsonar.host.url=$SONAR_HOST_URL \
+        -Dsonar.login=$SONAR_TOKEN
+
+  elif [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ -n "$GITHUB_TOKEN" ]; then
     # For security reasons environment variables are not available on the pull requests
     # coming from outside repositories
-    # http://docs.travis-ci.com/user/pull-requests/#Security-Restrictions-when-testing-Pull-Requests
-    if [ -n "$SONAR_GITHUB_OAUTH" ]; then
-      # PR analysis
-      ./gradlew sonarqube \
+    # http://docs.travis-ci.com/user/pull-requests/#Security-Restrictions-when-testing-Pull-Requests                                                                         
+    # That's why the analysis does not need to be executed if the variable SONAR_GITHUB_OAUTH is not defined.                                                                
+                                                                                                                                                                             
+    strongEcho 'Build and analyze pull request'                                                                                                                              
+
+    ./gradlew sonarqube \
         -Dsonar.analysis.mode=issues \
         -Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST \
         -Dsonar.github.repository=$TRAVIS_REPO_SLUG \
-        -Dsonar.github.login=$SONAR_GITHUB_LOGIN \
-        -Dsonar.github.oauth=$SONAR_GITHUB_OAUTH \
+        -Dsonar.github.oauth=$GITHUB_TOKEN \
         -Dsonar.host.url=$SONAR_HOST_URL \
-        -Dsonar.login=$SONAR_LOGIN \
-        -Dsonar.password=$SONAR_PASSWD  
-    fi
-  fi
-else
-  # Regular CI
-  ./gradlew build install
-fi
+        -Dsonar.login=$SONAR_TOKEN
 
-# ITs
-if [ -n "${RUN_ITS:-}" ] && [ "${RUN_ITS}" == true ]
-then
+  else
+    strongEcho 'Build, no analysis'
+    # Build branch, without any analysis
+
+    ./gradlew build install 
+  fi
+  ;;
+
+IT)
+  ./gradlew build install
+
   cd integrationTests
   mvn clean verify -Dgradle.version=$GRADLE_VERSION
-fi
+  ;;
 
+*)
+  echo "Unexpected TARGET value: $TARGET"
+  exit 1
+  ;;
 
+esac
