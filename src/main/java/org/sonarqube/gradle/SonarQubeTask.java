@@ -1,6 +1,6 @@
 /**
  * SonarQube Gradle Plugin
- * Copyright (C) 2015 SonarSource
+ * Copyright (C) 2015-2016 SonarSource
  * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
@@ -23,9 +23,12 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.Properties;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
 import org.sonar.runner.api.EmbeddedRunner;
+import org.sonar.runner.api.LogOutput;
 
 /**
  * Analyses one or more projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
@@ -38,6 +41,33 @@ import org.sonar.runner.api.EmbeddedRunner;
  */
 public class SonarQubeTask extends DefaultTask {
 
+  private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
+
+  public static final LogOutput LOG_OUTPUT = new LogOutput() {
+    @Override
+    public void log(String formattedMessage, Level level) {
+      switch (level) {
+        case TRACE:
+          LOGGER.trace(formattedMessage);
+          return;
+        case DEBUG:
+          LOGGER.debug(formattedMessage);
+          return;
+        case INFO:
+          LOGGER.info(formattedMessage);
+          return;
+        case WARN:
+          LOGGER.warn(formattedMessage);
+          return;
+        case ERROR:
+          LOGGER.error(formattedMessage);
+          return;
+        default:
+          throw new IllegalArgumentException(level.name());
+      }
+    }
+  };
+
   private Map<String, Object> sonarProperties;
 
   @TaskAction
@@ -47,14 +77,16 @@ public class SonarQubeTask extends DefaultTask {
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
 
-    EmbeddedRunner.create()
+    EmbeddedRunner runner = EmbeddedRunner.create(LOG_OUTPUT)
       .setApp("Gradle", getProject().getGradle().getGradleVersion())
-      .addProperties(propertiesObject)
-      .execute();
+      .addGlobalProperties(propertiesObject);
+    runner.start();
+    runner.runAnalysis(propertiesObject);
+    runner.stop();
   }
 
   /**
-   * The String key/value pairs to be passed to the SonarQube Runner.
+   * @return The String key/value pairs to be passed to the SonarQube Runner.
    * {@code null} values are not permitted.
    */
   @Input

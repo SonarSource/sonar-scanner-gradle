@@ -1,6 +1,6 @@
 /**
  * SonarQube Gradle Plugin
- * Copyright (C) 2015 SonarSource
+ * Copyright (C) 2015-2016 SonarSource
  * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
@@ -87,9 +87,8 @@ public class SonarQubeExtension {
   }
 
   /**
-   * If the project should be excluded from analysis.
-   * <p>
    * Defaults to {@code false}.
+   * @return true if the project should be excluded from analysis.
    */
   public boolean isSkipProject() {
     return skipProject;

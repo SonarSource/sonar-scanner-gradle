@@ -1,6 +1,6 @@
 /**
  * SonarQube Gradle Plugin
- * Copyright (C) 2015 SonarSource
+ * Copyright (C) 2015-2016 SonarSource
  * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ public class SonarQubeProperties {
   }
 
   /**
-   * The Sonar properties for the current Gradle project that are to be passed to the Sonar gradle.
+   * @return The Sonar properties for the current Gradle project that are to be passed to the Sonar gradle.
    */
   public Map<String, Object> getProperties() {
     return properties;

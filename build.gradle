@@ -32,7 +32,7 @@ repositories {
 
 dependencies {
   compile gradleApi()
-  compile 'org.codehaus.sonar.runner:sonar-runner-api:2.4'
+  compile 'org.sonarsource.sonar-runner:sonar-runner-api:2.5'
   compile 'com.google.guava:guava:17.0'
   testCompile localGroovy()
   testCompile 'junit:junit:4.11'

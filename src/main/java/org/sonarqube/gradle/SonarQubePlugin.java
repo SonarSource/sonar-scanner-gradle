@@ -1,6 +1,6 @@
 /**
  * SonarQube Gradle Plugin
- * Copyright (C) 2015 SonarSource
+ * Copyright (C) 2015-2016 SonarSource
  * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ public class SonarQubePlugin implements Plugin<Project> {
           @Override
           public boolean apply(Project input) {
             return input.getPlugins().hasPlugin(JavaPlugin.class)
-                && !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject();
+              && !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject();
           }
         });
 
