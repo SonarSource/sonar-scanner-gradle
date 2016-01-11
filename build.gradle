@@ -74,3 +74,8 @@ license {
 }
 
 afterReleaseBuild.dependsOn publishPlugins
+
+// Workaround for GRADLE-3281
+System.setProperty('gradle.publish.key', project.properties['gradle.publish.key'] ?: '')
+System.setProperty('gradle.publish.secret', project.properties['gradle.publish.secret'] ?: '')
+
