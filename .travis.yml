@@ -13,7 +13,7 @@ script:
   - ./travis.sh
 
 jdk:
-  - oraclejdk8
+  - oraclejdk7
 
 before_cache:
   - rm -rf $HOME/.m2/repository/org/sonarqube/gradle/gradle-sonarqube-plugin

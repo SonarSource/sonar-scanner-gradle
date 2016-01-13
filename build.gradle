@@ -4,7 +4,7 @@
 plugins {
   id "com.gradle.plugin-publish" version "0.9.1"
   // Eat your own dog food :)
-  id "org.sonarqube" version "1.1"
+  id "org.sonarqube" version "1.2-rc1"
   id "com.github.hierynomus.license" version "0.11.0"
   id "net.researchgate.release" version "2.3.1"
 }
@@ -71,6 +71,10 @@ sonarqube {
 
 license {
   strictCheck true
+}
+
+jacoco {
+  toolVersion = "0.7.5.201505241946"
 }
 
 afterReleaseBuild.dependsOn publishPlugins
