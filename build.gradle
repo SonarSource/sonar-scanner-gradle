@@ -2,7 +2,7 @@
 // The above triggers groovy syntax highlighting in vim
 
 plugins {
-  id "com.gradle.plugin-publish" version "0.9.1"
+  id "com.gradle.plugin-publish" version "0.9.3"
   // Eat your own dog food :)
   id "org.sonarqube" version "1.2-rc1"
   id "com.github.hierynomus.license" version "0.11.0"
@@ -78,8 +78,4 @@ jacoco {
 }
 
 afterReleaseBuild.dependsOn publishPlugins
-
-// Workaround for GRADLE-3281
-System.setProperty('gradle.publish.key', project.properties['gradle.publish.key'] ?: '')
-System.setProperty('gradle.publish.secret', project.properties['gradle.publish.secret'] ?: '')
 

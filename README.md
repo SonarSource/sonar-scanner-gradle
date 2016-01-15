@@ -23,5 +23,3 @@ https://plugins.gradle.org/docs/publish-plugin
 
 `./gradlew release`
 
-(See issue with credentials: https://github.com/researchgate/gradle-release/issues/147)
-
