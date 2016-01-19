@@ -43,7 +43,7 @@ dependencies {
 }
 
 pluginBundle {
-  website = 'http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle'
+  website = 'http://redirect.sonarsource.com/doc/gradle.html'
   vcsUrl = 'https://github.com/SonarSource/sonar-gradle'
 
   description = 'Gradle plugin for running SonarQube analysis.'
