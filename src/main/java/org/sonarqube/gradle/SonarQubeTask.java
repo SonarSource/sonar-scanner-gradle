@@ -27,8 +27,8 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
-import org.sonar.runner.api.EmbeddedRunner;
-import org.sonar.runner.api.LogOutput;
+import org.sonarsource.scanner.api.EmbeddedScanner;
+import org.sonarsource.scanner.api.LogOutput;
 
 /**
  * Analyses one or more projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
@@ -77,12 +77,12 @@ public class SonarQubeTask extends DefaultTask {
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
 
-    EmbeddedRunner runner = EmbeddedRunner.create(LOG_OUTPUT)
+    EmbeddedScanner scanner = EmbeddedScanner.create(LOG_OUTPUT)
       .setApp("Gradle", getProject().getGradle().getGradleVersion())
       .addGlobalProperties(propertiesObject);
-    runner.start();
-    runner.runAnalysis(propertiesObject);
-    runner.stop();
+    scanner.start();
+    scanner.runAnalysis(propertiesObject);
+    scanner.stop();
   }
 
   /**

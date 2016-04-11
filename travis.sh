@@ -7,6 +7,15 @@ function strongEcho {
   echo "================ $1 ================="
 }
 
+function configureTravis {
+  mkdir -p ~/.local
+  curl -sSL https://github.com/SonarSource/travis-utils/tarball/v27 | tar zx --strip-components 1 -C ~/.local
+  source ~/.local/bin/install
+}
+configureTravis
+
+build_snapshot SonarSource/sonar-scanner-api
+
 case "$TARGET" in
 
 CI)
