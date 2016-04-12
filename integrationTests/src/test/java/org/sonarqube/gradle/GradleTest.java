@@ -80,13 +80,13 @@ public class GradleTest {
     assertThat(props).contains(entry("sonar.projectKey", "com.mygroup:root_project"));
     assertThat(props.get("sonar.modules").toString().split(",")).containsOnly(":toplevel1", ":toplevel2");
 
-    assertThat(props).contains(entry(":toplevel1.sonar.moduleKey", "com.mygroup:toplevel1"));
-    assertThat(props).contains(entry(":toplevel2.sonar.moduleKey", "com.mygroup:toplevel2"));
+    assertThat(props).contains(entry(":toplevel1.sonar.moduleKey", "com.mygroup:root_project:toplevel1"));
+    assertThat(props).contains(entry(":toplevel2.sonar.moduleKey", "com.mygroup:root_project:toplevel2"));
 
     assertThat(props).contains(entry(":toplevel1.sonar.modules", ":toplevel1:plugins"));
     assertThat(props).contains(entry(":toplevel2.sonar.modules", ":toplevel2:plugins"));
 
-    assertThat(props).contains(entry(":toplevel1:plugins.sonar.moduleKey", "com.mygroup:plugins"));
-    assertThat(props).contains(entry(":toplevel2:plugins.sonar.moduleKey", "com.mygroup:plugins"));
+    assertThat(props).contains(entry(":toplevel1:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel1:plugins"));
+    assertThat(props).contains(entry(":toplevel2:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel2:plugins"));
   }
 }

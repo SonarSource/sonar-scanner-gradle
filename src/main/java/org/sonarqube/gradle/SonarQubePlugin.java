@@ -338,10 +338,14 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static String getProjectKey(Project project) {
-    String path = project.getPath();
-    String name = project.getName();
-    String group = project.getGroup().toString();
-    return group.isEmpty() ? name : (group + ":" + name);
+    Project rootProject = project.getRootProject();
+    String rootProjectName = rootProject.getName();
+    String rootGroup = rootProject.getGroup().toString();
+    String rootKey = rootGroup.isEmpty() ? rootProjectName : (rootGroup + ":" + rootProjectName);
+    if (project == rootProject) {
+      return rootKey;
+    }
+    return rootKey + project.getPath();
   }
 
   private static void addSystemProperties(Map<String, Object> properties) {

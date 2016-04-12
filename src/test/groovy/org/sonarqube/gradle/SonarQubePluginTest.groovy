@@ -115,7 +115,7 @@ class SonarQubePluginTest extends Specification {
         def properties = parentSonarQubeTask().properties
 
         then:
-        properties["sonar.projectKey"] == "group:parent"
+        properties["sonar.projectKey"] == "group:root:parent"
         properties["sonar.working.directory"] == new File(parentProject.buildDir, "sonar") as String
 
         and:
@@ -126,13 +126,13 @@ class SonarQubePluginTest extends Specification {
     }
 
     def "defaults projectKey to project.name if project.group isn't set"() {
-        parentProject.group = "" // or null, but only rootProject.group can effectively be set to null
+        rootProject.group = null
 
         when:
         def properties = parentSonarQubeTask().properties
 
         then:
-        properties["sonar.projectKey"] == "parent"
+        properties["sonar.projectKey"] == "root:parent"
     }
 
     def "adds additional default properties for 'java-base' projects"() {
