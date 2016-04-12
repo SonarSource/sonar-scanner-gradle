@@ -182,10 +182,9 @@ public class SonarQubePlugin implements Plugin<Project> {
     List<String> moduleIds = new ArrayList<>();
 
     for (Project childProject : enabledChildProjects) {
-      String moduleId = getProjectKey(childProject);
+      String moduleId = childProject.getPath();
       moduleIds.add(moduleId);
-      String modulePrefix = (prefix.length() > 0) ? (prefix + "." + moduleId) : moduleId;
-      computeSonarProperties(childProject, properties, sonarPropertiesActionBroadcastMap, modulePrefix);
+      computeSonarProperties(childProject, properties, sonarPropertiesActionBroadcastMap, moduleId);
     }
     properties.put(convertKey("sonar.modules", prefix), COMMA_JOINER.join(moduleIds));
   }
@@ -339,11 +338,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static String getProjectKey(Project project) {
-    // SonarQube uses project keys in URL parameters without internally URL-encoding them.
-    // According to my manual tests with sonar-gradle plugin based on Sonar Runner 2.0 and Sonar 3.4.1,
-    // the current defaults will only cause a problem if project.group or project.name of
-    // the Gradle project to which the plugin is applied contains special characters.
-    // (':' works, ' ' doesn't.) In such a case, sonar.projectKey can be overridden manually.
+    String path = project.getPath();
     String name = project.getName();
     String group = project.getGroup().toString();
     return group.isEmpty() ? name : (group + ":" + name);

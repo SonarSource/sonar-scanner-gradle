@@ -1,0 +1,4 @@
+rootProject.name = 'root_project'
+
+include 'toplevel1:plugins:leaf1'
+include 'toplevel2:plugins:leaf2'

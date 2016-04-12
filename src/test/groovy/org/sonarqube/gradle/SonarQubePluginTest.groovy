@@ -103,11 +103,11 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.working.directory"] == new File(parentProject.buildDir, "sonar") as String
 
         and:
-        properties["group:child.sonar.sources"] == ""
-        properties["group:child.sonar.projectName"] == "child"
-        properties["group:child.sonar.projectDescription"] == "description"
-        properties["group:child.sonar.projectVersion"] == "1.3"
-        properties["group:child.sonar.projectBaseDir"] == childProject.projectDir as String
+        properties[":parent:child.sonar.sources"] == ""
+        properties[":parent:child.sonar.projectName"] == "child"
+        properties[":parent:child.sonar.projectDescription"] == "description"
+        properties[":parent:child.sonar.projectVersion"] == "1.3"
+        properties[":parent:child.sonar.projectBaseDir"] == childProject.projectDir as String
     }
 
     def "adds additional default properties for target project"() {
@@ -119,10 +119,10 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.working.directory"] == new File(parentProject.buildDir, "sonar") as String
 
         and:
-        !properties.containsKey("group:child.sonar.projectKey") // default left to Sonar
-        !properties.containsKey("group:child.sonar.environment.information.key")
-        !properties.containsKey("group:child.sonar.environment.information.version")
-        !properties.containsKey('group:child.sonar.working.directory')
+        !properties.containsKey(":parent:child.sonar.projectKey") // default left to Sonar
+        !properties.containsKey(":parent:child.sonar.environment.information.key")
+        !properties.containsKey(":parent:child.sonar.environment.information.version")
+        !properties.containsKey(':parent:child.sonar.working.directory')
     }
 
     def "defaults projectKey to project.name if project.group isn't set"() {
@@ -149,8 +149,8 @@ class SonarQubePluginTest extends Specification {
         then:
         properties["sonar.java.source"] == "1.5"
         properties["sonar.java.target"] == "1.6"
-        properties["group:child.sonar.java.source"] == "1.6"
-        properties["group:child.sonar.java.target"] == "1.7"
+        properties[":parent:child.sonar.java.source"] == "1.6"
+        properties[":parent:child.sonar.java.target"] == "1.7"
     }
 
     def "adds additional default properties for 'groovy-base' projects"() {
@@ -167,8 +167,8 @@ class SonarQubePluginTest extends Specification {
         then:
         properties["sonar.java.source"] == "1.5"
         properties["sonar.java.target"] == "1.6"
-        properties["group:child.sonar.java.source"] == "1.6"
-        properties["group:child.sonar.java.target"] == "1.7"
+        properties[":parent:child.sonar.java.source"] == "1.6"
+        properties[":parent:child.sonar.java.target"] == "1.7"
     }
 
     def "adds additional default properties for 'java' projects"() {
@@ -297,9 +297,9 @@ class SonarQubePluginTest extends Specification {
 
         then:
         properties["sonar.sources"] == ""
-        properties["group:child.sonar.sources"] == ""
-        properties["group:child2.sonar.sources"] == ""
-        properties["group:child.group:leaf.sonar.sources"] == ""
+        properties[":parent:child.sonar.sources"] == ""
+        properties[":parent:child2.sonar.sources"] == ""
+        properties[":parent:child:leaf.sonar.sources"] == ""
     }
 
     def "allows to configure Sonar properties via 'sonarqube' extension"() {
@@ -326,8 +326,8 @@ class SonarQubePluginTest extends Specification {
         def properties = parentSonarQubeTask().properties
 
         then:
-        properties["group:child.sonar.some.key"] == "other value"
-        properties["group:child.group:leaf.sonar.some.key"] == "other value"
+        properties[":parent:child.sonar.some.key"] == "other value"
+        properties[":parent:child:leaf.sonar.some.key"] == "other value"
     }
 
     def "adds 'modules' properties declaring (prefixes of) subprojects"() {
@@ -335,11 +335,11 @@ class SonarQubePluginTest extends Specification {
         def properties = parentSonarQubeTask().properties
 
         then:
-        properties["sonar.modules"].contains("group:child")
-        properties["sonar.modules"].contains("group:child2")
-        properties["group:child.sonar.modules"] == "group:leaf"
-        !properties.containsKey("group:child2.sonar.modules")
-        !properties.containsKey("group:child.group:leaf.sonar.modules")
+        properties["sonar.modules"].contains(":parent:child")
+        properties["sonar.modules"].contains(":parent:child2")
+        properties[":parent:child.sonar.modules"] == ":parent:child:leaf"
+        !properties.containsKey(":parent:child2.sonar.modules")
+        !properties.containsKey(":parent:child:leaf.sonar.modules")
     }
 
     def "handles 'modules' properties correctly if plugin is applied to root project"() {
@@ -354,10 +354,10 @@ class SonarQubePluginTest extends Specification {
         def properties = rootProject.tasks.sonarqube.properties
 
         then:
-        properties["sonar.modules"] == "root:parent,root:parent2"
-        properties["root:parent.sonar.modules"] == "root.parent:child"
-        !properties.containsKey("root:parent2.sonar.modules")
-        !properties.containsKey("root:parent.root.parent:child.sonar.modules")
+        properties["sonar.modules"] == ":parent,:parent2"
+        properties[":parent.sonar.modules"] == ":parent:child"
+        !properties.containsKey(":parent2.sonar.modules")
+        !properties.containsKey(":parent:child.sonar.modules")
 
     }
 
@@ -419,8 +419,8 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.projectVersion"] == "3.2"
 
         and:
-        !properties.containsKey("group:child.sonar.some.key")
-        properties["group:child.sonar.projectVersion"] == "1.3"
+        !properties.containsKey(":parent:child.sonar.some.key")
+        properties[":parent:child.sonar.projectVersion"] == "1.3"
     }
 
     def "handles system properties correctly if plugin is applied to root project"() {
@@ -440,8 +440,8 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.projectVersion"] == "3.2"
 
         and:
-        !properties.containsKey("group:parent.sonar.some.key")
-        properties["root:parent.sonar.projectVersion"] == "1.3"
+        !properties.containsKey(":parent.sonar.some.key")
+        properties[":parent.sonar.projectVersion"] == "1.3"
     }
 
     def "system properties win over values set in build script"() {
