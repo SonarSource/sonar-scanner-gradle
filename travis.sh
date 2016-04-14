@@ -14,7 +14,7 @@ function configureTravis {
 }
 configureTravis
 
-build_snapshot SonarSource/sonar-scanner-api
+#build_snapshot SonarSource/sonar-scanner-api
 
 case "$TARGET" in
 
