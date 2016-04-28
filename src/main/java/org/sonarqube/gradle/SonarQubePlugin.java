@@ -184,7 +184,8 @@ public class SonarQubePlugin implements Plugin<Project> {
     for (Project childProject : enabledChildProjects) {
       String moduleId = childProject.getPath();
       moduleIds.add(moduleId);
-      computeSonarProperties(childProject, properties, sonarPropertiesActionBroadcastMap, moduleId);
+      String modulePrefix = (prefix.length() > 0) ? (prefix + "." + moduleId) : moduleId;
+      computeSonarProperties(childProject, properties, sonarPropertiesActionBroadcastMap, modulePrefix);
     }
     properties.put(convertKey("sonar.modules", prefix), COMMA_JOINER.join(moduleIds));
   }

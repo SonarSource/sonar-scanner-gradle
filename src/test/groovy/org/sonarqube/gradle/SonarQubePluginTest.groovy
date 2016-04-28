@@ -299,7 +299,7 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.sources"] == ""
         properties[":parent:child.sonar.sources"] == ""
         properties[":parent:child2.sonar.sources"] == ""
-        properties[":parent:child:leaf.sonar.sources"] == ""
+        properties[":parent:child.:parent:child:leaf.sonar.sources"] == ""
     }
 
     def "allows to configure Sonar properties via 'sonarqube' extension"() {
@@ -319,7 +319,7 @@ class SonarQubePluginTest extends Specification {
             property "sonar.some.key", "other value"
         }
         leafProject.sonarqube.properties {
-            property "sonar.some.key", "other value"
+            property "sonar.some.key", "other value leaf"
         }
 
         when:
@@ -327,7 +327,7 @@ class SonarQubePluginTest extends Specification {
 
         then:
         properties[":parent:child.sonar.some.key"] == "other value"
-        properties[":parent:child:leaf.sonar.some.key"] == "other value"
+        properties[":parent:child.:parent:child:leaf.sonar.some.key"] == "other value leaf"
     }
 
     def "adds 'modules' properties declaring (prefixes of) subprojects"() {

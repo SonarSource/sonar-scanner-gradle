@@ -86,7 +86,7 @@ public class GradleTest {
     assertThat(props).contains(entry(":toplevel1.sonar.modules", ":toplevel1:plugins"));
     assertThat(props).contains(entry(":toplevel2.sonar.modules", ":toplevel2:plugins"));
 
-    assertThat(props).contains(entry(":toplevel1:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel1:plugins"));
-    assertThat(props).contains(entry(":toplevel2:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel2:plugins"));
+    assertThat(props).contains(entry(":toplevel1.:toplevel1:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel1:plugins"));
+    assertThat(props).contains(entry(":toplevel2.:toplevel2:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel2:plugins"));
   }
 }
