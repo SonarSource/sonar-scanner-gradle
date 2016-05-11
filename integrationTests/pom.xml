@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.sonarsource.scanner.gradle</groupId>
   <artifactId>it-gradle</artifactId>
-  <version>2.1-SNAPSHOT</version>
+  <version>1.0-SNAPSHOT</version>
   <name>Gradle Plugin :: Integration Tests</name>
   <inceptionYear>2015</inceptionYear>
   
@@ -70,38 +70,17 @@
           <value>true</value>
         </property>
       </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.10</version>
-            <executions>
-              <execution>
-                <id>copy-plugin</id>
-                <phase>generate-test-resources</phase>
-                <goals>
-                  <goal>copy</goal>
-                </goals>
-                <configuration>
-                  <artifactItems>
-                    <artifactItem>
-                      <groupId>${project.groupId}</groupId>
-                      <artifactId>sonarqube-gradle-plugin</artifactId>
-                      <version>${project.version}</version>
-                      <type>jar</type>
-                      <overWrite>true</overWrite>
-                    </artifactItem>
-                  </artifactItems>
-                  <outputDirectory>../build/libs</outputDirectory>
-                  <overWriteReleases>true</overWriteReleases>
-                  <overWriteSnapshots>true</overWriteSnapshots>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
+      <!--
+        Use a dependency to retrieve the plugin with the associated build number
+      -->
+      <dependencies>
+        <dependency>
+          <groupId>org.sonarsource.scanner.gradle</groupId>
+          <artifactId>sonarqube-gradle-plugin</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>      
     </profile>
   </profiles>
 </project>
