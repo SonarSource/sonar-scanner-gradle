@@ -7,6 +7,7 @@ plugins {
   id "org.sonarqube" version "1.2"
   id "com.github.hierynomus.license" version "0.11.0"
   id "net.researchgate.release" version "2.3.1"
+  id "com.jfrog.artifactory" version "4.0.0"
 }
 
 apply plugin: 'java-gradle-plugin'
@@ -16,6 +17,8 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'maven-publish'
 
 
 group = 'org.sonarsource.scanner.gradle'
@@ -75,6 +78,23 @@ license {
 
 jacoco {
   toolVersion = "0.7.5.201505241946"
+}
+
+
+artifactory {
+  contextUrl = System.getenv('ARTIFACTORY_URL')
+  publish {    
+    repository {
+      repoKey = System.getenv('ARTIFACTORY_DEPLOY_REPO')
+      username = System.getenv('ARTIFACTORY_DEPLOY_USERNAME')
+      password = System.getenv('ARTIFACTORY_DEPLOY_PASSWORD')      
+    }
+    defaults {
+      publishConfigs('archives', 'published')
+      publishPom = true // Publish generated POM files to Artifactory (true by default)
+      publishIvy = false // Publish generated Ivy descriptor files to Artifactory (true by default)
+    }
+  }  
 }
 
 afterReleaseBuild.dependsOn publishPlugins
