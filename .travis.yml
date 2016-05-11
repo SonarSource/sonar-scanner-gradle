@@ -2,13 +2,6 @@ language: java
 sudo: false
 install: true
 
-env:
-  matrix:
-    - TARGET=CI
-    - TARGET=IT GRADLE_VERSION=1.12
-    - TARGET=IT GRADLE_VERSION=2.0
-    - TARGET=IT GRADLE_VERSION=2.8
-
 script:
   - ./travis.sh
 
