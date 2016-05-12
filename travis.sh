@@ -29,7 +29,7 @@ if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; th
   echo buildInfo.build.name=sonar-gradle >> gradle.properties 
   echo buildInfo.build.number=$TRAVIS_BUILD_NUMBER >> gradle.properties 
 
-  ./gradlew build check sonarqube \  
+  ./gradlew build check sonarqube \
       -Dsonar.projectVersion=$CURRENT_VERSION \
       -Dsonar.host.url=$SONAR_HOST_URL \
       -Dsonar.login=$SONAR_TOKEN
