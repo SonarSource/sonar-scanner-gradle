@@ -6,7 +6,7 @@ script:
   - ./travis.sh
 
 jdk:
-  - oraclejdk7
+  - oraclejdk8
 
 before_cache:
   - rm -rf $HOME/.m2/repository/org/sonarqube/gradle/gradle-sonarqube-plugin
@@ -23,3 +23,10 @@ notifications:
   email: false
   webhooks:
     - secure: "cqHeh2xCY4DbE1Z28NiC/TreEEKoirtWxRbWu6SVtip4VAymL6CX1ys6hxQZ3/zKrA9ciZsiAgIW8YZdo1ycB7ImuqhaIFWfGr95YbxCGsPeKx/7FbZyc+6d729USyvVWzuzTvRZuGwE24ZR3pK5cjuX8fsdWt61iL/n3ciK1oE8PS64pVYPpCJlIGOtwBfe+q1f0Tkf8kGmVzzDtFz+s833UIiDSlJuKO4+Tc2DoteaIEXam9bpGzZKUcL6n5MX8oWQvHQkundqld9xTs47ZojJOdJXg672g16IusP2pd3Dzqpao2l6f/pFpoHk9dKzJDdz6bUKOoeHJWoZFRv8oTvym9GCyRcioTJmH4dAymz56zLKoBvzmfhRjOZNCrUs2pZWWmVUY5kUp2IFTt/CAzyCanpPNYIJp5jS1nrcVQ4SitMyR9a7LP4nQw+MlU252nZP/PnyWfXLjOT+nnxTN17gaUdPcQ9hPVHkgafienL4uwkFGFuy76Px3TuGg0KniqDX4i+sLN1ty8pdwxkjL7dxeEQ/vZ+PhhulkJqSCpzkVwJ0993MAaW2A31Xa8Ht6pkBZ6kr0VfyXoMcOkWNHigsbQ413LJYCVo/UEgpEiZ4odZ0u0NZiBJLymNV63gQW2sH1xOibwt8K1x5dnsk0Rk/Ko2UdPoUjV9BxiyD29E="
+
+addons:
+  apt:
+    packages:
+      # upgrade java 8 as the default version 1.8.0_31 prevents from compiling sources
+      # https://github.com/travis-ci/travis-ci/issues/4042
+      - oracle-java8-installer
