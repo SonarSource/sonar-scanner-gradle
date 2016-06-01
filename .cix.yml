@@ -3,6 +3,6 @@
 GRADLE_VERSION: 
   - 1.12
   - 2.0
-  - 2.8
+  - 2.13
 
 exclude:
