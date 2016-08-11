@@ -47,7 +47,6 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
-import org.gradle.internal.jvm.Jvm;
 import org.gradle.listener.ActionBroadcast;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
@@ -296,13 +295,29 @@ public class SonarQubePlugin implements Plugin<Project> {
       .filter(IS_FILE)
       .collect(Collectors.toList());
 
-    File runtimeJar = Jvm.current().getRuntimeJar();
+    File runtimeJar = getRuntimeJar();
     if (runtimeJar != null) {
       libraries.add(runtimeJar);
     }
 
     return libraries;
   }
+
+  private static File getRuntimeJar() {
+    try{
+      final File javaBase =  new File(System.getProperty("java.home")).getCanonicalFile();
+      File runtimeJar = new File(javaBase, "lib/rt.jar");
+      if (runtimeJar.exists()) {
+        return runtimeJar;
+      }
+      runtimeJar = new File(javaBase, "jre/lib/rt.jar");
+      return runtimeJar.exists() ? runtimeJar : null;
+    } catch(IOException e){
+      throw new RuntimeException(e);
+    }
+
+  }
+
 
   private static void convertProperties(Map<String, Object> rawProperties, final String projectPrefix, final Map<String, Object> properties) {
     for (Map.Entry<String, Object> entry : rawProperties.entrySet()) {
