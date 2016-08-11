@@ -19,7 +19,6 @@
  */
 package org.sonarqube.gradle;
 
-import aQute.bnd.build.Run;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
