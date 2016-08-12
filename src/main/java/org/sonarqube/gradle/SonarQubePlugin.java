@@ -80,8 +80,8 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
     project.subprojects(p -> {
-        ActionBroadcast<SonarQubeProperties> action = addBroadcaster(actionBroadcastMap, p);
-        p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, action);
+      ActionBroadcast<SonarQubeProperties> action = addBroadcaster(actionBroadcastMap, p);
+      p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, action);
     });
     project.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
   }
@@ -98,9 +98,9 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     ConventionMapping conventionMapping = new DslObject(sonarQubeTask).getConventionMapping();
     conventionMapping.map("properties", () -> {
-        Map<String, Object> properties = new LinkedHashMap<>();
-        computeSonarProperties(project, properties, actionBroadcastMap, "");
-        return properties;
+      Map<String, Object> properties = new LinkedHashMap<>();
+      computeSonarProperties(project, properties, actionBroadcastMap, "");
+      return properties;
     });
 
     Callable<Iterable<? extends Task>> callable = () ->
@@ -176,14 +176,14 @@ public class SonarQubePlugin implements Plugin<Project> {
     project.getPlugins().withType(JavaBasePlugin.class, javaBasePlugin -> configureJdkSourceAndTarget(project, properties));
 
     project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
-        boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
-        if (hasSourceOrTest) {
-          configureSourceEncoding(project, properties);
-          final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
-          configureTestReports(testTask, properties);
-          configureJaCoCoCoverageReport(testTask, false, project, properties);
-        }
-      });
+      boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
+      if (hasSourceOrTest) {
+        configureSourceEncoding(project, properties);
+        final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
+        configureTestReports(testTask, properties);
+        configureJaCoCoCoverageReport(testTask, false, project, properties);
+      }
+    });
   }
 
   /**
@@ -194,27 +194,27 @@ public class SonarQubePlugin implements Plugin<Project> {
     project.getPlugins().withType(GroovyBasePlugin.class, groovyBasePlugin -> configureJdkSourceAndTarget(project, properties));
 
     project.getPlugins().withType(GroovyPlugin.class, groovyPlugin -> {
-        boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
-        if (hasSourceOrTest) {
-          configureSourceEncoding(project, properties);
-          final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
-          configureTestReports(testTask, properties);
-          configureJaCoCoCoverageReport(testTask, true, project, properties);
-        }
-      });
+      boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
+      if (hasSourceOrTest) {
+        configureSourceEncoding(project, properties);
+        final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
+        configureTestReports(testTask, properties);
+        configureJaCoCoCoverageReport(testTask, true, project, properties);
+      }
+    });
   }
 
   private void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
     project.getPlugins().withType(JacocoPlugin.class, jacocoPlugin -> {
-        JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
-        File destinationFile = jacocoTaskExtension.getDestinationFile();
-        if (destinationFile.exists()) {
-          properties.put("sonar.jacoco.reportPath", destinationFile);
-          if (addForGroovy) {
-            properties.put("sonar.groovy.jacoco.reportPath", destinationFile);
-          }
+      JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
+      File destinationFile = jacocoTaskExtension.getDestinationFile();
+      if (destinationFile.exists()) {
+        properties.put("sonar.jacoco.reportPath", destinationFile);
+        if (addForGroovy) {
+          properties.put("sonar.groovy.jacoco.reportPath", destinationFile);
         }
-      });
+      }
+    });
   }
 
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
@@ -260,11 +260,11 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private void configureSourceEncoding(Project project, final Map<String, Object> properties) {
     project.getTasks().withType(JavaCompile.class, compile -> {
-        String encoding = compile.getOptions().getEncoding();
-        if (encoding != null) {
-          properties.put("sonar.sourceEncoding", encoding);
-        }
-      });
+      String encoding = compile.getOptions().getEncoding();
+      if (encoding != null) {
+        properties.put("sonar.sourceEncoding", encoding);
+      }
+    });
   }
 
   private void configureJdkSourceAndTarget(Project project, Map<String, Object> properties) {
