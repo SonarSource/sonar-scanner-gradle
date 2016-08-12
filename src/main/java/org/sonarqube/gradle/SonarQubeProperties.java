@@ -38,7 +38,7 @@ public class SonarQubeProperties {
     this.properties = properties;
   }
 
-  private Map<String, Object> properties = new LinkedHashMap<String, Object>();
+  private Map<String, Object> properties = new LinkedHashMap<>();
 
   /**
    * Convenience method for setting a single property.

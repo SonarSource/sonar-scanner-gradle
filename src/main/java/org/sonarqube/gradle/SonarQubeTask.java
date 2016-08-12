@@ -44,24 +44,24 @@ public class SonarQubeTask extends DefaultTask {
   private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
 
   public static final LogOutput LOG_OUTPUT = (formattedMessage, level) -> {
-      switch (level) {
-        case TRACE:
-          LOGGER.trace(formattedMessage);
-          return;
-        case DEBUG:
-          LOGGER.debug(formattedMessage);
-          return;
-        case INFO:
-          LOGGER.info(formattedMessage);
-          return;
-        case WARN:
-          LOGGER.warn(formattedMessage);
-          return;
-        case ERROR:
-          LOGGER.error(formattedMessage);
-          return;
-        default:
-          throw new IllegalArgumentException(level.name());
+    switch (level) {
+      case TRACE:
+        LOGGER.trace(formattedMessage);
+        return;
+      case DEBUG:
+        LOGGER.debug(formattedMessage);
+        return;
+      case INFO:
+        LOGGER.info(formattedMessage);
+        return;
+      case WARN:
+        LOGGER.warn(formattedMessage);
+        return;
+      case ERROR:
+        LOGGER.error(formattedMessage);
+        return;
+      default:
+        throw new IllegalArgumentException(level.name());
     }
   };
 
