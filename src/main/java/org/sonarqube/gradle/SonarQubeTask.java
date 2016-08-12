@@ -19,7 +19,7 @@
  */
 package org.sonarqube.gradle;
 
-import com.google.common.collect.Maps;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.gradle.api.DefaultTask;
@@ -43,9 +43,7 @@ public class SonarQubeTask extends DefaultTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
 
-  public static final LogOutput LOG_OUTPUT = new LogOutput() {
-    @Override
-    public void log(String formattedMessage, Level level) {
+  public static final LogOutput LOG_OUTPUT = (formattedMessage, level) -> {
       switch (level) {
         case TRACE:
           LOGGER.trace(formattedMessage);
@@ -64,7 +62,6 @@ public class SonarQubeTask extends DefaultTask {
           return;
         default:
           throw new IllegalArgumentException(level.name());
-      }
     }
   };
 
@@ -86,13 +83,13 @@ public class SonarQubeTask extends DefaultTask {
   }
 
   /**
-   * @return The String key/value pairs to be passed to the SonarQube Runner.
+   * @return The String key/value pairs to be passed to the SonarQube Scanner.
    * {@code null} values are not permitted.
    */
   @Input
   public Map<String, Object> getProperties() {
     if (sonarProperties == null) {
-      sonarProperties = Maps.newLinkedHashMap();
+      sonarProperties = new LinkedHashMap<>();
     }
 
     return sonarProperties;

@@ -24,8 +24,8 @@ apply plugin: 'maven-publish'
 group = 'org.sonarsource.scanner.gradle'
 description = 'Gradle plugin to help analyzing projects with SonarQube'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 compileJava {
   options.encoding = 'UTF-8'
@@ -44,7 +44,6 @@ repositories {
 dependencies {
   compile gradleApi()
   compile 'org.sonarsource.scanner.api:sonar-scanner-api:2.6'
-  compile 'com.google.guava:guava:17.0'
   testCompile localGroovy()
   testCompile 'junit:junit:4.11'
   testCompile 'org.hamcrest:hamcrest-all:1.3'

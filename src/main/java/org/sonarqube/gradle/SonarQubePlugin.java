@@ -19,23 +19,20 @@
  */
 package org.sonarqube.gradle;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import org.gradle.api.Action;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.gradle.api.Nullable;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -62,25 +59,9 @@ import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
  */
 public class SonarQubePlugin implements Plugin<Project> {
 
-  private static final Predicate<File> FILE_EXISTS = new Predicate<File>() {
-    @Override
-    public boolean apply(File input) {
-      return input.exists();
-    }
-  };
-  private static final Predicate<File> IS_DIRECTORY = new Predicate<File>() {
-    @Override
-    public boolean apply(File input) {
-      return input.isDirectory();
-    }
-  };
-  private static final Predicate<File> IS_FILE = new Predicate<File>() {
-    @Override
-    public boolean apply(File input) {
-      return input.isFile();
-    }
-  };
-  private static final Joiner COMMA_JOINER = Joiner.on(",");
+  private static final Predicate<File> FILE_EXISTS = input -> input.exists();
+  private static final Predicate<File> IS_DIRECTORY = input -> input.isDirectory();
+  private static final Predicate<File> IS_FILE = input -> input.isFile();
   public static final String SONAR_SOURCES_PROP = "sonar.sources";
 
   private Project targetProject;
@@ -94,16 +75,13 @@ public class SonarQubePlugin implements Plugin<Project> {
   public void apply(Project project) {
     targetProject = project;
 
-    final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = Maps.newHashMap();
+    final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
     createTask(project, actionBroadcastMap);
 
     ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
-    project.subprojects(new Action<Project>() {
-      @Override
-      public void execute(Project project) {
-        ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
-        project.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
-      }
+    project.subprojects(p -> {
+        ActionBroadcast<SonarQubeProperties> action = addBroadcaster(actionBroadcastMap, p);
+        p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, action);
     });
     project.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
   }
@@ -119,36 +97,18 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
 
     ConventionMapping conventionMapping = new DslObject(sonarQubeTask).getConventionMapping();
-    conventionMapping.map("properties", new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        Map<String, Object> properties = Maps.newLinkedHashMap();
+    conventionMapping.map("properties", () -> {
+        Map<String, Object> properties = new LinkedHashMap<>();
         computeSonarProperties(project, properties, actionBroadcastMap, "");
         return properties;
-      }
     });
 
-    sonarQubeTask.dependsOn(new Callable<Iterable<? extends Task>>() {
-      @Override
-      public Iterable<? extends Task> call() throws Exception {
-        Iterable<Project> applicableProjects = Iterables.filter(project.getAllprojects(), new Predicate<Project>() {
-          @Override
-          public boolean apply(Project input) {
-            return input.getPlugins().hasPlugin(JavaPlugin.class)
-              && !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject();
-          }
-        });
-
-        return Iterables.transform(applicableProjects, new Function<Project, Task>() {
-          @Nullable
-          @Override
-          public Task apply(Project input) {
-            return input.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
-          }
-        });
-      }
-    });
-
+    Callable<Iterable<? extends Task>> callable = () ->
+      project.getAllprojects().stream()
+        .filter(input -> input.getPlugins().hasPlugin(JavaPlugin.class) && !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+        .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
+        .collect(Collectors.toList());
+    sonarQubeTask.dependsOn(callable);
     return sonarQubeTask;
   }
 
@@ -159,7 +119,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       return;
     }
 
-    Map<String, Object> rawProperties = Maps.newLinkedHashMap();
+    Map<String, Object> rawProperties = new LinkedHashMap<>();
     addGradleDefaults(project, rawProperties);
     evaluateSonarPropertiesBlocks(sonarPropertiesActionBroadcastMap.get(project), rawProperties);
     if (project.equals(targetProject)) {
@@ -168,12 +128,9 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     convertProperties(rawProperties, prefix, properties);
 
-    List<Project> enabledChildProjects = Lists.newLinkedList(Iterables.filter(project.getChildProjects().values(), new Predicate<Project>() {
-      @Override
-      public boolean apply(Project input) {
-        return !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject();
-      }
-    }));
+    List<Project> enabledChildProjects = project.getChildProjects().values().stream()
+      .filter(input -> !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .collect(Collectors.toList());
 
     if (enabledChildProjects.isEmpty()) {
       return;
@@ -187,7 +144,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       String modulePrefix = (prefix.length() > 0) ? (prefix + "." + moduleId) : moduleId;
       computeSonarProperties(childProject, properties, sonarPropertiesActionBroadcastMap, modulePrefix);
     }
-    properties.put(convertKey("sonar.modules", prefix), COMMA_JOINER.join(moduleIds));
+    properties.put(convertKey("sonar.modules", prefix), moduleIds.stream().collect(Collectors.joining(",")));
   }
 
   private void addGradleDefaults(final Project project, final Map<String, Object> properties) {
@@ -216,16 +173,9 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private void configureForJava(final Project project, final Map<String, Object> properties) {
-    project.getPlugins().withType(JavaBasePlugin.class, new Action<JavaBasePlugin>() {
-      @Override
-      public void execute(JavaBasePlugin javaBasePlugin) {
-        configureJdkSourceAndTarget(project, properties);
-      }
-    });
+    project.getPlugins().withType(JavaBasePlugin.class, javaBasePlugin -> configureJdkSourceAndTarget(project, properties));
 
-    project.getPlugins().withType(JavaPlugin.class, new Action<JavaPlugin>() {
-      @Override
-      public void execute(JavaPlugin javaPlugin) {
+    project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
         boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
         if (hasSourceOrTest) {
           configureSourceEncoding(project, properties);
@@ -233,8 +183,7 @@ public class SonarQubePlugin implements Plugin<Project> {
           configureTestReports(testTask, properties);
           configureJaCoCoCoverageReport(testTask, false, project, properties);
         }
-      }
-    });
+      });
   }
 
   /**
@@ -242,16 +191,9 @@ public class SonarQubePlugin implements Plugin<Project> {
    * sonar.java.* and sonar.groovy.* properties.
    */
   private void configureForGroovy(final Project project, final Map<String, Object> properties) {
-    project.getPlugins().withType(GroovyBasePlugin.class, new Action<GroovyBasePlugin>() {
-      @Override
-      public void execute(GroovyBasePlugin groovyBasePlugin) {
-        configureJdkSourceAndTarget(project, properties);
-      }
-    });
+    project.getPlugins().withType(GroovyBasePlugin.class, groovyBasePlugin -> configureJdkSourceAndTarget(project, properties));
 
-    project.getPlugins().withType(GroovyPlugin.class, new Action<GroovyPlugin>() {
-      @Override
-      public void execute(GroovyPlugin groovyPlugin) {
+    project.getPlugins().withType(GroovyPlugin.class, groovyPlugin -> {
         boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
         if (hasSourceOrTest) {
           configureSourceEncoding(project, properties);
@@ -259,14 +201,11 @@ public class SonarQubePlugin implements Plugin<Project> {
           configureTestReports(testTask, properties);
           configureJaCoCoCoverageReport(testTask, true, project, properties);
         }
-      }
-    });
+      });
   }
 
   private void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
-    project.getPlugins().withType(JacocoPlugin.class, new Action<JacocoPlugin>() {
-      @Override
-      public void execute(JacocoPlugin jacocoPlugin) {
+    project.getPlugins().withType(JacocoPlugin.class, jacocoPlugin -> {
         JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
         File destinationFile = jacocoTaskExtension.getDestinationFile();
         if (destinationFile.exists()) {
@@ -275,8 +214,7 @@ public class SonarQubePlugin implements Plugin<Project> {
             properties.put("sonar.groovy.jacoco.reportPath", destinationFile);
           }
         }
-      }
-    });
+      });
   }
 
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
@@ -298,17 +236,17 @@ public class SonarQubePlugin implements Plugin<Project> {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
-    List<File> sourceDirectories = nonEmptyOrNull(Iterables.filter(main.getAllSource().getSrcDirs(), FILE_EXISTS));
+    List<File> sourceDirectories = nonEmptyOrNull(main.getAllSource().getSrcDirs().stream().filter(FILE_EXISTS).collect(Collectors.toList()));
     properties.put(SONAR_SOURCES_PROP, sourceDirectories);
     SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
-    List<File> testDirectories = nonEmptyOrNull(Iterables.filter(test.getAllSource().getSrcDirs(), FILE_EXISTS));
+    List<File> testDirectories = nonEmptyOrNull(test.getAllSource().getSrcDirs().stream().filter(FILE_EXISTS).collect(Collectors.toList()));
     properties.put("sonar.tests", testDirectories);
 
-    List<File> mainClasspath = nonEmptyOrNull(Iterables.filter(main.getRuntimeClasspath(), IS_DIRECTORY));
+    List<File> mainClasspath = nonEmptyOrNull(main.getRuntimeClasspath().getFiles().stream().filter(IS_DIRECTORY).collect(Collectors.toList()));
     Collection<File> mainLibraries = getLibraries(main);
     properties.put("sonar.java.binaries", mainClasspath);
     properties.put("sonar.java.libraries", mainLibraries);
-    List<File> testClasspath = nonEmptyOrNull(Iterables.filter(test.getRuntimeClasspath(), IS_DIRECTORY));
+    List<File> testClasspath = nonEmptyOrNull(test.getRuntimeClasspath().getFiles().stream().filter(IS_DIRECTORY).collect(Collectors.toList()));
     Collection<File> testLibraries = getLibraries(test);
     properties.put("sonar.java.test.binaries", testClasspath);
     properties.put("sonar.java.test.libraries", testLibraries);
@@ -321,15 +259,12 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private void configureSourceEncoding(Project project, final Map<String, Object> properties) {
-    project.getTasks().withType(JavaCompile.class, new Action<JavaCompile>() {
-      @Override
-      public void execute(final JavaCompile compile) {
+    project.getTasks().withType(JavaCompile.class, compile -> {
         String encoding = compile.getOptions().getEncoding();
         if (encoding != null) {
           properties.put("sonar.sourceEncoding", encoding);
         }
-      }
-    });
+      });
   }
 
   private void configureJdkSourceAndTarget(Project project, Map<String, Object> properties) {
@@ -359,7 +294,10 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static Collection<File> getLibraries(SourceSet main) {
-    List<File> libraries = Lists.newLinkedList(Iterables.filter(main.getRuntimeClasspath(), IS_FILE));
+    List<File> libraries = main.getRuntimeClasspath().getFiles().stream()
+      .filter(IS_FILE)
+      .collect(Collectors.toList());
+
     File runtimeJar = Jvm.current().getRuntimeJar();
     if (runtimeJar != null) {
       libraries.add(runtimeJar);
@@ -386,15 +324,10 @@ public class SonarQubePlugin implements Plugin<Project> {
       return null;
     }
     if (value instanceof Iterable<?>) {
-      Iterable<String> flattened = Iterables.transform((Iterable<?>) value, new Function<Object, String>() {
-        @Override
-        public String apply(Object input) {
-          return convertValue(input);
-        }
-      });
-
-      Iterable<String> filtered = Iterables.filter(flattened, Predicates.notNull());
-      String joined = COMMA_JOINER.join(filtered);
+      String joined = StreamSupport.stream(((Iterable<Object>) value).spliterator(), false)
+        .map(SonarQubePlugin::convertValue)
+        .filter(v -> v != null)
+        .collect(Collectors.joining(","));
       return joined.isEmpty() ? null : joined;
     } else {
       return value.toString();
@@ -402,8 +335,8 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   @Nullable
-  public static <T> List<T> nonEmptyOrNull(Iterable<T> iterable) {
-    ImmutableList<T> list = ImmutableList.copyOf(iterable);
+  public static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
+    List<T> list = Collections.unmodifiableList(new ArrayList<>(collection));
     return list.isEmpty() ? null : list;
   }
 
