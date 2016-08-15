@@ -33,6 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.sonarsource.scanner.api.Utils;
 import org.gradle.api.Nullable;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -58,9 +59,9 @@ import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
  */
 public class SonarQubePlugin implements Plugin<Project> {
 
-  private static final Predicate<File> FILE_EXISTS = input -> input.exists();
-  private static final Predicate<File> IS_DIRECTORY = input -> input.isDirectory();
-  private static final Predicate<File> IS_FILE = input -> input.isFile();
+  private static final Predicate<File> FILE_EXISTS = File::exists;
+  private static final Predicate<File> IS_DIRECTORY = File::isDirectory;
+  private static final Predicate<File> IS_FILE = File::isFile;
   public static final String SONAR_SOURCES_PROP = "sonar.sources";
 
   private Project targetProject;
@@ -104,7 +105,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     Callable<Iterable<? extends Task>> callable = () ->
       project.getAllprojects().stream()
-        .filter(input -> input.getPlugins().hasPlugin(JavaPlugin.class) && !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+        .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
         .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
         .collect(Collectors.toList());
     sonarQubeTask.dependsOn(callable);
@@ -123,12 +124,13 @@ public class SonarQubePlugin implements Plugin<Project> {
     evaluateSonarPropertiesBlocks(sonarPropertiesActionBroadcastMap.get(project), rawProperties);
     if (project.equals(targetProject)) {
       addSystemProperties(rawProperties);
+      addEnvironmentProperties(rawProperties);
     }
 
     convertProperties(rawProperties, prefix, properties);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
-      .filter(input -> !input.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .filter(p -> !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
       .collect(Collectors.toList());
 
     if (enabledChildProjects.isEmpty()) {
@@ -279,6 +281,12 @@ public class SonarQubePlugin implements Plugin<Project> {
       return rootKey;
     }
     return rootKey + project.getPath();
+  }
+
+  private static void addEnvironmentProperties(Map<String, Object> properties) {
+    for(Map.Entry<Object, Object> e : Utils.loadEnvironmentProperties(System.getenv()).entrySet()) {
+        properties.put(e.getKey().toString(), e.getValue().toString());
+    }
   }
 
   private static void addSystemProperties(Map<String, Object> properties) {

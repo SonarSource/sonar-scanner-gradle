@@ -63,6 +63,28 @@ public class GradleTest {
   }
 
   @Test
+  public void loadSonarScannerPropertiesEnv() throws Exception {
+    File out = temp.newFile();
+    File projectBaseDir = new File(this.getClass().getResource("/java-gradle-simple").toURI());
+    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
+      .directory(projectBaseDir)
+      .inheritIO();
+    pb.environment().put("SONARQUBE_SCANNER_PARAMS", "{\"sonar.host.url\" : \"myhost\" }");
+    Process p = pb.start();
+    p.waitFor();
+
+    Properties props = new Properties();
+    try (FileReader fr = new FileReader(out)) {
+      props.load(fr);
+    }
+
+    assertThat(props).contains(entry("sonar.projectKey", "org.codehaus.sonar:example-java-gradle"));
+    assertThat(props).contains(entry("sonar.host.url", "myhost"));
+    assertThat(props.get("sonar.sources").toString()).contains("src/main/java");
+    assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
+  }
+
+  @Test
   public void module_inclusion_duplicate_key() throws Exception {
     File out = temp.newFile();
     File projectBaseDir = new File(this.getClass().getResource("/module-inclusion").toURI());
