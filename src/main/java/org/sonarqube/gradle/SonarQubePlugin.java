@@ -112,7 +112,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return sonarQubeTask;
   }
 
-  public void computeSonarProperties(Project project, Map<String, Object> properties, Map<Project, ActionBroadcast<SonarQubeProperties>> sonarPropertiesActionBroadcastMap,
+  private void computeSonarProperties(Project project, Map<String, Object> properties, Map<Project, ActionBroadcast<SonarQubeProperties>> sonarPropertiesActionBroadcastMap,
     String prefix) {
     SonarQubeExtension extension = project.getExtensions().getByType(SonarQubeExtension.class);
     if (extension.isSkipProject()) {
@@ -123,8 +123,8 @@ public class SonarQubePlugin implements Plugin<Project> {
     addGradleDefaults(project, rawProperties);
     evaluateSonarPropertiesBlocks(sonarPropertiesActionBroadcastMap.get(project), rawProperties);
     if (project.equals(targetProject)) {
-      addSystemProperties(rawProperties);
       addEnvironmentProperties(rawProperties);
+      addSystemProperties(rawProperties);
     }
 
     convertProperties(rawProperties, prefix, properties);
