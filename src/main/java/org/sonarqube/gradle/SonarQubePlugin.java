@@ -167,9 +167,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     configureForJava(project, properties);
     configureForGroovy(project, properties);
 
-    if (properties.get(SONAR_SOURCES_PROP) == null) {
-      properties.put(SONAR_SOURCES_PROP, "");
-    }
+    properties.putIfAbsent(SONAR_SOURCES_PROP, "");
   }
 
   private void configureForJava(final Project project, final Map<String, Object> properties) {
