@@ -1,5 +1,5 @@
-# SonarQube Gradle Plugin
-[![Build Status](https://travis-ci.org/SonarSource/sonar-gradle.svg?branch=master)](https://travis-ci.org/SonarSource/sonar-gradle)
+# SonarQube Scanner for Gradle
+[![Build Status](https://travis-ci.org/SonarSource/sonar-scanner-gradle.svg?branch=master)](https://travis-ci.org/SonarSource/sonar-scanner-gradle)
 
 ## User documentation
 
