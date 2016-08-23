@@ -423,6 +423,17 @@ class SonarQubePluginTest extends Specification {
         properties[":parent:child.sonar.projectVersion"] == "1.3"
     }
 
+    def "handles invalid java home"() {
+        System.setProperty("java.home", "invalid")
+
+        when:
+        def properties = parentSonarQubeTask().properties
+
+        then:
+        !properties.any { key, value -> value.contains("invalid") }
+        !properties.any { key, value -> value.contains("rt.jar") }
+    }
+
     def "handles system properties correctly if plugin is applied to root project"() {
         def rootProject = ProjectBuilder.builder().withName("root").build()
         def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).build()
