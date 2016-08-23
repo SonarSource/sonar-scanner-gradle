@@ -203,7 +203,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     });
   }
 
-  private void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
+  private static void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
     project.getPlugins().withType(JacocoPlugin.class, jacocoPlugin -> {
       JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
       File destinationFile = jacocoTaskExtension.getDestinationFile();
@@ -257,7 +257,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return sourceDirectories != null || testDirectories != null;
   }
 
-  private void configureSourceEncoding(Project project, final Map<String, Object> properties) {
+  private static void configureSourceEncoding(Project project, final Map<String, Object> properties) {
     project.getTasks().withType(JavaCompile.class, compile -> {
       String encoding = compile.getOptions().getEncoding();
       if (encoding != null) {
@@ -266,7 +266,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     });
   }
 
-  private void configureJdkSourceAndTarget(Project project, Map<String, Object> properties) {
+  private static void configureJdkSourceAndTarget(Project project, Map<String, Object> properties) {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
     properties.put("sonar.java.source", javaPluginConvention.getSourceCompatibility());
     properties.put("sonar.java.target", javaPluginConvention.getTargetCompatibility());
@@ -284,8 +284,8 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static void addEnvironmentProperties(Map<String, Object> properties) {
-    for(Map.Entry<Object, Object> e : Utils.loadEnvironmentProperties(System.getenv()).entrySet()) {
-        properties.put(e.getKey().toString(), e.getValue().toString());
+    for (Map.Entry<Object, Object> e : Utils.loadEnvironmentProperties(System.getenv()).entrySet()) {
+      properties.put(e.getKey().toString(), e.getValue().toString());
     }
   }
 
@@ -312,20 +312,19 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static File getRuntimeJar() {
-    try{
-      final File javaBase =  new File(System.getProperty("java.home")).getCanonicalFile();
+    try {
+      final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
       File runtimeJar = new File(javaBase, "lib/rt.jar");
       if (runtimeJar.exists()) {
         return runtimeJar;
       }
       runtimeJar = new File(javaBase, "jre/lib/rt.jar");
       return runtimeJar.exists() ? runtimeJar : null;
-    } catch(IOException e){
-      throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     }
 
   }
-
 
   private static void convertProperties(Map<String, Object> rawProperties, final String projectPrefix, final Map<String, Object> properties) {
     for (Map.Entry<String, Object> entry : rawProperties.entrySet()) {
