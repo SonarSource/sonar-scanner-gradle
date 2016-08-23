@@ -62,7 +62,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static final Predicate<File> FILE_EXISTS = File::exists;
   private static final Predicate<File> IS_DIRECTORY = File::isDirectory;
   private static final Predicate<File> IS_FILE = File::isFile;
-  public static final String SONAR_SOURCES_PROP = "sonar.sources";
+  private static final String SONAR_SOURCES_PROP = "sonar.sources";
 
   private Project targetProject;
 

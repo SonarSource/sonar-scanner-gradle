@@ -457,7 +457,7 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.some.key"] == "win"
     }
 
-    def "doesn't add SonarQube properties for skipped projects"() {
+    def "doesn't add SonarQube properties for skipped child projects"() {
         childProject.sonarqube.skipProject = true
 
         when:
@@ -465,6 +465,18 @@ class SonarQubePluginTest extends Specification {
 
         then:
         !properties.any { key, value -> key.startsWith("child.sonar.") }
+        !properties.any { key, value -> key.startsWith(":parent:child.") }
+    }
+
+    def "doesn't add SonarQube properties for skipped projects"() {
+        parentProject.sonarqube.skipProject = true
+
+        when:
+        def properties = parentSonarQubeTask().properties
+
+        then:
+        !properties.any { key, value -> key.startsWith("sonar.") }
+        !properties.any { key, value -> key.startsWith(":parent.") }
     }
 
     private SonarQubeTask parentSonarQubeTask() {
