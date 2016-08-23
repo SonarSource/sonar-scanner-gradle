@@ -424,10 +424,19 @@ class SonarQubePluginTest extends Specification {
     }
 
     def "handles invalid java home"() {
+        def rootProject = ProjectBuilder.builder().withName("root").build()
+        def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-project")).build()
+
+        project.pluginManager.apply(SonarQubePlugin)
+        project.pluginManager.apply(JavaPlugin)
+        project.pluginManager.apply(JacocoPlugin)
+
+        project.sourceSets.main.java.srcDirs = ["src"]
+
         System.setProperty("java.home", "invalid")
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = project.tasks.sonarqube.properties
 
         then:
         !properties.any { key, value -> value.contains("invalid") }
