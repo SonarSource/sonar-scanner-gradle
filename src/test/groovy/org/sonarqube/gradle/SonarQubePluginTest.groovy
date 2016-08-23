@@ -248,6 +248,7 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.sources"] == new File(project.projectDir, "src") as String
         properties["sonar.tests"] == new File(project.projectDir, "test") as String
         properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
+        properties["sonar.groovy.binaries"].contains(new File(project.buildDir, "out") as String)
         properties["sonar.java.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
         properties["sonar.java.test.binaries"].contains(new File(project.buildDir, "test-out") as String)
         properties["sonar.java.test.libraries"].contains(new File(project.projectDir, "lib/junit.jar") as String)

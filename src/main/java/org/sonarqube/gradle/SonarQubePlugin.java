@@ -175,7 +175,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     project.getPlugins().withType(JavaBasePlugin.class, javaBasePlugin -> configureJdkSourceAndTarget(project, properties));
 
     project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
-      boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
+      boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, false);
       if (hasSourceOrTest) {
         configureSourceEncoding(project, properties);
         final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
@@ -193,7 +193,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     project.getPlugins().withType(GroovyBasePlugin.class, groovyBasePlugin -> configureJdkSourceAndTarget(project, properties));
 
     project.getPlugins().withType(GroovyPlugin.class, groovyPlugin -> {
-      boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties);
+      boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, true);
       if (hasSourceOrTest) {
         configureSourceEncoding(project, properties);
         final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
@@ -231,7 +231,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     properties.put("sonar.surefire.reportsPath", testResultsDir);
   }
 
-  private boolean configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties) {
+  private boolean configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, final boolean addForGroovy) {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
@@ -244,6 +244,9 @@ public class SonarQubePlugin implements Plugin<Project> {
     File mainClassDir = main.getOutput().getClassesDir();
     Collection<File> mainLibraries = getLibraries(main);
     properties.put("sonar.java.binaries", mainClassDir);
+    if (addForGroovy) {
+      properties.put("sonar.groovy.binaries", mainClassDir);
+    }
     properties.put("sonar.java.libraries", mainLibraries);
     File testClassDir = test.getOutput().getClassesDir();
     Collection<File> testLibraries = getLibraries(test);
