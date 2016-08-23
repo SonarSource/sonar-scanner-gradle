@@ -39,6 +39,7 @@ jacoco {
 
 dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
+    compileOnly group: 'commons-lang', name: 'commons-lang', version: '2.6'
     testCompile group: 'junit', name: 'junit', version: '4.10'
 }
 

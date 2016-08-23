@@ -183,10 +183,10 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.test.java.srcDirs = ["test"]
         project.sourceSets.main.output.classesDir = "$project.buildDir/out"
         project.sourceSets.main.output.resourcesDir = "$project.buildDir/out"
-        project.sourceSets.main.runtimeClasspath += project.files("lib/SomeLib.jar")
+        project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
         project.sourceSets.test.output.classesDir = "$project.buildDir/test-out"
         project.sourceSets.test.output.resourcesDir = "$project.buildDir/test-out"
-        project.sourceSets.test.runtimeClasspath += project.files("lib/junit.jar")
+        project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 
         when:
@@ -235,10 +235,10 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.test.groovy.srcDirs = ["test"]
         project.sourceSets.main.output.classesDir = "$project.buildDir/out"
         project.sourceSets.main.output.resourcesDir = "$project.buildDir/out"
-        project.sourceSets.main.runtimeClasspath += project.files("lib/SomeLib.jar")
+        project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
         project.sourceSets.test.output.classesDir = "$project.buildDir/test-out"
         project.sourceSets.test.output.resourcesDir = "$project.buildDir/test-out"
-        project.sourceSets.test.runtimeClasspath += project.files("lib/junit.jar")
+        project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 
         when:
@@ -283,7 +283,6 @@ class SonarQubePluginTest extends Specification {
 
         then:
         !properties.containsKey("sonar.tests")
-        !properties.containsKey("sonar.binaries")
         properties.containsKey("sonar.libraries") == (Jvm.current().getRuntimeJar() != null)
         !properties.containsKey("sonar.surefire.reportsPath")
         !properties.containsKey("sonar.junit.reportsPath")

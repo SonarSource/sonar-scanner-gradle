@@ -241,17 +241,17 @@ public class SonarQubePlugin implements Plugin<Project> {
     List<File> testDirectories = nonEmptyOrNull(test.getAllSource().getSrcDirs().stream().filter(FILE_EXISTS).collect(Collectors.toList()));
     properties.put("sonar.tests", testDirectories);
 
-    List<File> mainClasspath = nonEmptyOrNull(main.getRuntimeClasspath().getFiles().stream().filter(IS_DIRECTORY).collect(Collectors.toList()));
+    File mainClassDir = main.getOutput().getClassesDir();
     Collection<File> mainLibraries = getLibraries(main);
-    properties.put("sonar.java.binaries", mainClasspath);
+    properties.put("sonar.java.binaries", mainClassDir);
     properties.put("sonar.java.libraries", mainLibraries);
-    List<File> testClasspath = nonEmptyOrNull(test.getRuntimeClasspath().getFiles().stream().filter(IS_DIRECTORY).collect(Collectors.toList()));
+    File testClassDir = test.getOutput().getClassesDir();
     Collection<File> testLibraries = getLibraries(test);
-    properties.put("sonar.java.test.binaries", testClasspath);
+    properties.put("sonar.java.test.binaries", testClassDir);
     properties.put("sonar.java.test.libraries", testLibraries);
 
     // Populate deprecated properties for backward compatibility
-    properties.put("sonar.binaries", mainClasspath);
+    properties.put("sonar.binaries", mainClassDir);
     properties.put("sonar.libraries", mainLibraries);
 
     return sourceDirectories != null || testDirectories != null;
@@ -299,7 +299,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static Collection<File> getLibraries(SourceSet main) {
-    List<File> libraries = main.getRuntimeClasspath().getFiles().stream()
+    List<File> libraries = main.getCompileClasspath().getFiles().stream()
       .filter(IS_FILE)
       .collect(Collectors.toList());
 
