@@ -26,7 +26,7 @@ if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; th
   # Do not deploy a SNAPSHOT version but the release version related to this build
   sed -i.bak "s/-SNAPSHOT/-build$TRAVIS_BUILD_NUMBER/g" gradle.properties    
   # set the build name with travis build number
-  echo buildInfo.build.name=sonar-gradle >> gradle.properties 
+  echo buildInfo.build.name=sonar-scanner-gradle >> gradle.properties 
   echo buildInfo.build.number=$TRAVIS_BUILD_NUMBER >> gradle.properties 
 
   ./gradlew build check sonarqube artifactory \
@@ -42,7 +42,7 @@ elif [[ "${TRAVIS_BRANCH}" == "branch-"* ]] && [ "$TRAVIS_PULL_REQUEST" == "fals
     # Do not deploy a SNAPSHOT version but the release version related to this build
     sed -i.bak "s/-SNAPSHOT/-build$TRAVIS_BUILD_NUMBER/g" gradle.properties    
     # set the build name with travis build number
-    echo buildInfo.build.name=sonar-gradle >> gradle.properties 
+    echo buildInfo.build.name=sonar-scanner-gradle >> gradle.properties 
     echo buildInfo.build.number=$TRAVIS_BUILD_NUMBER >> gradle.properties 
   else
     echo "======= Found RELEASE version ======="
@@ -62,7 +62,7 @@ elif [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_SECURE_ENV_VARS" == "tr
     # Do not deploy a SNAPSHOT version but the release version related to this build
     sed -i.bak "s/-SNAPSHOT/-build$TRAVIS_BUILD_NUMBER/g" gradle.properties    
     # set the build name with travis build number
-    echo buildInfo.build.name=sonar-gradle >> gradle.properties 
+    echo buildInfo.build.name=sonar-scanner-gradle >> gradle.properties 
     echo buildInfo.build.number=$TRAVIS_BUILD_NUMBER >> gradle.properties 
     
     ./gradlew build check sonarqube artifactory \
