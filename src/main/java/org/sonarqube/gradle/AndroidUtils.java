@@ -32,11 +32,16 @@ import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.compile.AbstractCompile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 class AndroidUtils {
 
   static final String RELEASE = "release";
+  private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
 
   private AndroidUtils() {
   }
@@ -93,8 +99,8 @@ class AndroidUtils {
 
       List<File> testLibraries = new ArrayList<>();
       testLibraries.addAll(bootClassPath);
-      testLibraries.addAll(unitTestVariant.getJavaCompiler().getClasspath().getFiles());
-      SonarQubePlugin.setTestClasspathProps(properties, unitTestVariant.getJavaCompiler().getDestinationDir(), testLibraries);
+      testLibraries.addAll(getJavaCompiler(unitTestVariant).getClasspath().getFiles());
+      SonarQubePlugin.setTestClasspathProps(properties, getJavaCompiler(unitTestVariant).getDestinationDir(), testLibraries);
     }
   }
 
@@ -106,14 +112,25 @@ class AndroidUtils {
       ArrayList::addAll);
     properties.put(SonarQubePlugin.SONAR_SOURCES_PROP, SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList())));
 
-    properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, releaseVariant.getJavaCompiler().getSourceCompatibility());
-    properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, releaseVariant.getJavaCompiler().getTargetCompatibility());
+    properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, getJavaCompiler(releaseVariant).getSourceCompatibility());
+    properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, getJavaCompiler(releaseVariant).getTargetCompatibility());
 
     List<File> libraries = new ArrayList<>();
     libraries.addAll(bootClassPath);
-    libraries.addAll(releaseVariant.getJavaCompiler().getClasspath().getFiles());
-    SonarQubePlugin.setMainClasspathProps(properties, false, releaseVariant.getJavaCompiler().getDestinationDir(), libraries);
+    libraries.addAll(getJavaCompiler(releaseVariant).getClasspath().getFiles());
+    SonarQubePlugin.setMainClasspathProps(properties, false, getJavaCompiler(releaseVariant).getDestinationDir(), libraries);
     return bootClassPath;
+  }
+
+  private static AbstractCompile getJavaCompiler(BaseVariant variant) {
+    // Need to use reflection because of breaking compatibility between android-gradle 2.1.3 and 2.2.0-beta2. 2.1.3 returns AbstractCompile while 2.2.0-beta2 returns Task.
+    try {
+      Method m = variant.getClass().getMethod("getJavaCompiler");
+      return (AbstractCompile) m.invoke(variant);
+    } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+      LOGGER.debug("Unable to call getJavaCompiler, fallback on deprecated getJavaCompile", e);
+      return variant.getJavaCompile();
+    }
   }
 
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
