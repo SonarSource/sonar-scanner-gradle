@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle;
 
+import com.android.build.gradle.api.BaseVariant;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +38,7 @@ import org.gradle.api.Nullable;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.ConventionMapping;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.GroovyBasePlugin;
@@ -113,7 +115,15 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     Callable<Iterable<? extends Task>> callable = () -> project.getAllprojects().stream()
             .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-            .map(p -> p.getTasks().getByName("compile" + capitalize(AndroidUtils.RELEASE) + "JavaWithJavac"))
+            .map(p -> {
+              BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
+              try {
+                return p.getTasks().getByName("compile" + capitalize(variant.getName()) + "JavaWithJavac");
+              } catch (UnknownTaskException e) {
+                return null;
+              }
+            })
+            .filter(t -> t != null)
             .collect(Collectors.toList());
     sonarQubeTask.dependsOn(callable);
     return sonarQubeTask;
@@ -132,6 +142,12 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     Map<String, Object> rawProperties = new LinkedHashMap<>();
     addGradleDefaults(project, rawProperties);
+    if (isAndroidProject(project)) {
+      AndroidUtils.configureForAndroid(project, extension.getAndroidVariant(), rawProperties);
+    }
+
+    rawProperties.putIfAbsent(SONAR_SOURCES_PROP, "");
+
     evaluateSonarPropertiesBlocks(sonarPropertiesActionBroadcastMap.get(project), rawProperties);
     if (project.equals(targetProject)) {
       addEnvironmentProperties(rawProperties);
@@ -160,9 +176,6 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private void addGradleDefaults(final Project project, final Map<String, Object> properties) {
-
-    // IMPORTANT: Whenever changing the properties/values here, ensure that the Gradle User Guide chapter on this is still in sync.
-
     properties.put("sonar.projectName", project.getName());
     properties.put("sonar.projectDescription", project.getDescription());
     properties.put("sonar.projectVersion", project.getVersion());
@@ -178,12 +191,6 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     configureForJava(project, properties);
     configureForGroovy(project, properties);
-
-    if (isAndroidProject(project)) {
-      AndroidUtils.configureForAndroid(project, properties);
-    }
-
-    properties.putIfAbsent(SONAR_SOURCES_PROP, "");
   }
 
   private static boolean isAndroidProject(Project project) {

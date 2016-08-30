@@ -25,9 +25,8 @@ import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.LibraryPlugin;
 import com.android.build.gradle.TestExtension;
 import com.android.build.gradle.TestPlugin;
-import com.android.build.gradle.api.ApplicationVariant;
 import com.android.build.gradle.api.BaseVariant;
-import com.android.build.gradle.api.LibraryVariant;
+import com.android.build.gradle.api.TestVariant;
 import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
 import com.android.builder.model.SourceProvider;
@@ -37,10 +36,13 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import org.gradle.api.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,75 +57,125 @@ class AndroidUtils {
   private AndroidUtils() {
   }
 
-  static void configureForAndroid(Project project, final Map<String, Object> properties) {
-    project.getPlugins().withType(AppPlugin.class, appPlugin -> {
-      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      if (androidExtension != null) {
-        List<File> bootClassPath = androidExtension.getBootClasspath();
-        ApplicationVariant releaseVariant = androidExtension.getApplicationVariants().stream().filter(v -> RELEASE.equals(v.getName())).findFirst().orElse(null);
-        populateMainPropsForAndroid(properties, bootClassPath, releaseVariant);
-
-        populateTestPropsForAndroid(properties, bootClassPath, releaseVariant);
+  static void configureForAndroid(Project project, String variantName, final Map<String, Object> properties) {
+    BaseVariant variant = findVariant(project, variantName);
+    if (variant != null) {
+      List<File> bootClassPath = getBootClasspath(project);
+      populateSonarQubeProps(properties, bootClassPath, variant, false);
+      if (variant instanceof TestVariant) {
+        populateSonarQubeProps(properties, bootClassPath, variant, true);
+      } else {
+        populateSonarQubeProps(properties, bootClassPath, variant, false);
+        if (variant instanceof TestedVariant) {
+          UnitTestVariant unitTestVariant = ((TestedVariant) variant).getUnitTestVariant();
+          if (unitTestVariant != null) {
+            populateSonarQubeProps(properties, bootClassPath, unitTestVariant, true);
+          }
+        }
       }
-    });
-    project.getPlugins().withType(LibraryPlugin.class, appPlugin -> {
-      LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      if (androidExtension != null) {
-        List<File> bootClassPath = androidExtension.getBootClasspath();
-        LibraryVariant releaseVariant = androidExtension.getLibraryVariants().stream().filter(v -> RELEASE.equals(v.getName())).findFirst().orElse(null);
-        populateMainPropsForAndroid(properties, bootClassPath, releaseVariant);
-
-        populateTestPropsForAndroid(properties, bootClassPath, releaseVariant);
-      }
-    });
-    project.getPlugins().withType(TestPlugin.class, appPlugin -> {
-      TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
-      if (androidExtension != null) {
-        List<File> bootClassPath = androidExtension.getBootClasspath();
-        ApplicationVariant releaseVariant = androidExtension.getApplicationVariants().stream().filter(v -> RELEASE.equals(v.getName())).findFirst().orElse(null);
-        populateMainPropsForAndroid(properties, bootClassPath, releaseVariant);
-
-        populateTestPropsForAndroid(properties, bootClassPath, releaseVariant);
-      }
-    });
-  }
-
-  private static void populateTestPropsForAndroid(Map<String, Object> properties, List<File> bootClassPath, TestedVariant releaseVariant) {
-    UnitTestVariant unitTestVariant = releaseVariant.getUnitTestVariant();
-    if (unitTestVariant != null) {
-      List<File> testDirs = unitTestVariant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
-        ArrayList::new,
-        ArrayList::addAll,
-        ArrayList::addAll);
-      properties.put(SonarQubePlugin.SONAR_TESTS_PROP, SonarQubePlugin.nonEmptyOrNull(testDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList())));
-
-      List<File> testLibraries = new ArrayList<>();
-      testLibraries.addAll(bootClassPath);
-      testLibraries.addAll(getJavaCompiler(unitTestVariant).getClasspath().getFiles());
-      SonarQubePlugin.setTestClasspathProps(properties, getJavaCompiler(unitTestVariant).getDestinationDir(), testLibraries);
     }
   }
 
+  @Nullable
+  static List<File> getBootClasspath(Project project) {
+    PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
+    if (!appPlugins.isEmpty()) {
+      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
+      if (androidExtension != null) {
+        return androidExtension.getBootClasspath();
+      }
+    }
+    PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
+    if (!libPlugins.isEmpty()) {
+      LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
+      if (androidExtension != null) {
+        return androidExtension.getBootClasspath();
+      }
+    }
+    PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
+    if (!testPlugins.isEmpty()) {
+      TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
+      if (androidExtension != null) {
+        return androidExtension.getBootClasspath();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  static BaseVariant findVariant(Project project, @Nullable String variant) {
+    PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
+    if (!appPlugins.isEmpty()) {
+      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
+      if (androidExtension != null) {
+        return findVariant(androidExtension.getApplicationVariants().stream().collect(Collectors.toList()), variant);
+      }
+    }
+    PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
+    if (!libPlugins.isEmpty()) {
+      LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
+      if (androidExtension != null) {
+        return findVariant(androidExtension.getLibraryVariants().stream().collect(Collectors.toList()), variant);
+      }
+    }
+    PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
+    if (!testPlugins.isEmpty()) {
+      TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
+      if (androidExtension != null) {
+        return findVariant(androidExtension.getApplicationVariants().stream().collect(Collectors.toList()), variant);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  static BaseVariant findVariant(List<BaseVariant> candidates, @Nullable String variant) {
+    if (candidates.isEmpty()) {
+      return null;
+    }
+    if (variant == null) {
+      // Take first "release" buildType when there is provided variant name
+      Optional<BaseVariant> result = candidates.stream().filter(v -> RELEASE.equals(v.getBuildType().getName())).findFirst();
+      if (result.isPresent()) {
+        LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.get().getName());
+        return result.get();
+      }
+    } else {
+      Optional<BaseVariant> result = candidates.stream().filter(v -> variant.equals(v.getName())).findFirst();
+      if (result.isPresent()) {
+        return result.get();
+      } else {
+        LOGGER.warn("Unable to find variant '{}' to use in SonarQube configuration", variant);
+      }
+    }
+    return null;
+  }
+
   @NotNull
-  private static List<File> populateMainPropsForAndroid(Map<String, Object> properties, List<File> bootClassPath, BaseVariant releaseVariant) {
+  private static void populateSonarQubeProps(Map<String, Object> properties, List<File> bootClassPath, BaseVariant releaseVariant, boolean isTest) {
     List<File> srcDirs = releaseVariant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
       ArrayList::new,
       ArrayList::addAll,
       ArrayList::addAll);
-    properties.put(SonarQubePlugin.SONAR_SOURCES_PROP, SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList())));
+    properties.put(isTest ? SonarQubePlugin.SONAR_TESTS_PROP : SonarQubePlugin.SONAR_SOURCES_PROP,
+      SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList())));
 
-    properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, getJavaCompiler(releaseVariant).getSourceCompatibility());
-    properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, getJavaCompiler(releaseVariant).getTargetCompatibility());
+    properties.putIfAbsent(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, getJavaCompiler(releaseVariant).getSourceCompatibility());
+    properties.putIfAbsent(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, getJavaCompiler(releaseVariant).getTargetCompatibility());
 
     List<File> libraries = new ArrayList<>();
     libraries.addAll(bootClassPath);
     libraries.addAll(getJavaCompiler(releaseVariant).getClasspath().getFiles());
-    SonarQubePlugin.setMainClasspathProps(properties, false, getJavaCompiler(releaseVariant).getDestinationDir(), libraries);
-    return bootClassPath;
+    if (isTest) {
+      SonarQubePlugin.setTestClasspathProps(properties, getJavaCompiler(releaseVariant).getDestinationDir(), libraries);
+    } else {
+      SonarQubePlugin.setMainClasspathProps(properties, false, getJavaCompiler(releaseVariant).getDestinationDir(), libraries);
+    }
   }
 
   private static AbstractCompile getJavaCompiler(BaseVariant variant) {
-    // Need to use reflection because of breaking compatibility between android-gradle 2.1.3 and 2.2.0-beta2. 2.1.3 returns AbstractCompile while 2.2.0-beta2 returns Task.
+    // Need to use reflection because of breaking compatibility between android-gradle 2.1.3 and 2.2.0-beta2. 2.1.3 returns AbstractCompile
+    // while 2.2.0-beta2 returns Task.
     try {
       Method m = variant.getClass().getMethod("getJavaCompiler");
       return (AbstractCompile) m.invoke(variant);

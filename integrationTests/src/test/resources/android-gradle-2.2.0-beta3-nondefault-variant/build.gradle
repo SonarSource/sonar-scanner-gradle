@@ -1,0 +1,53 @@
+buildscript {
+  repositories {
+    mavenCentral()
+    mavenLocal()
+    jcenter()
+  }
+  dependencies {
+    classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}'
+    classpath 'com.android.tools.build:gradle:2.2.0-beta3'
+  }
+}
+
+apply plugin: 'jacoco'
+apply plugin: 'com.android.application'
+apply plugin: 'org.sonarqube'
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  compile 'joda-time:joda-time:2.7'
+  testCompile 'junit:junit:4.12'
+}
+
+android {
+  compileSdkVersion 23
+  buildToolsVersion "23.0.1"
+  buildTypes {
+    release {
+      testCoverageEnabled true
+    }
+  }
+  productFlavors {
+    demo {
+      applicationId "com.example.myapp.demo"
+      versionName "1.0-demo"
+    }
+    full {
+      applicationId "com.example.myapp.full"
+      versionName "1.0-full"
+    }
+  }
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "Simple Android Gradle Project"
+        property "sonar.projectKey", "org.sonarqube:example-android-gradle"
+    }
+    androidVariant 'fullDebug'
+}
+

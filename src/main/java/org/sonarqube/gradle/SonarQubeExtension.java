@@ -59,6 +59,7 @@ public class SonarQubeExtension {
 
   private boolean skipProject;
   private final ActionBroadcast<SonarQubeProperties> propertiesActions;
+  private String androidVariant;
 
   public SonarQubeExtension(ActionBroadcast<SonarQubeProperties> propertiesActions) {
     this.propertiesActions = propertiesActions;
@@ -98,4 +99,14 @@ public class SonarQubeExtension {
     this.skipProject = skipProject;
   }
 
+  /**
+   * @return Name of the variant to analyze. If null we'll take the first release variant
+   */
+  public String getAndroidVariant() {
+    return androidVariant;
+  }
+
+  public void setAndroidVariant(String androidVariant) {
+    this.androidVariant = androidVariant;
+  }
 }
