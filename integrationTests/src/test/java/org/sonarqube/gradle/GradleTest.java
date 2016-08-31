@@ -1,38 +1,21 @@
 package org.sonarqube.gradle;
 
-import java.io.File;
-import java.io.FileReader;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.junit.Assume.assumeTrue;
 
-public class GradleTest {
-
-  @Rule
-  public TemporaryFolder temp = new TemporaryFolder();
+public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testSimpleJavaProject() throws Exception {
-    File out = temp.newFile();
-    File projectBaseDir = new File(this.getClass().getResource("/java-gradle-simple").toURI());
-    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
-      .directory(projectBaseDir)
-      .inheritIO();
-    Process p = pb.start();
-    p.waitFor();
+    Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-simple");
 
-    Properties props = new Properties();
-    try (FileReader fr = new FileReader(out)) {
-      props.load(fr);
-    }
-
-    assertThat(props).contains(
-      entry("sonar.projectKey", "org.codehaus.sonar:example-java-gradle"));
+    assertThat(props).contains(entry("sonar.projectKey", "org.codehaus.sonar:example-java-gradle"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/java");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
     assertThat(props.get("sonar.java.binaries").toString()).contains("java-gradle-simple/build/classes/main");
@@ -49,18 +32,8 @@ public class GradleTest {
     String gradleVersion = System.getProperty("gradle.version");
     assumeTrue(
       gradleVersion.startsWith("2.12") || gradleVersion.startsWith("2.13") || gradleVersion.startsWith("2.14") || gradleVersion.startsWith("3.") || gradleVersion.startsWith("4."));
-    File out = temp.newFile();
-    File projectBaseDir = new File(this.getClass().getResource("/java-compile-only").toURI());
-    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
-      .directory(projectBaseDir)
-      .inheritIO();
-    Process p = pb.start();
-    p.waitFor();
 
-    Properties props = new Properties();
-    try (FileReader fr = new FileReader(out)) {
-      props.load(fr);
-    }
+    Properties props = runGradlewSonarQubeSimulationMode("/java-compile-only");
 
     assertThat(props.get("sonar.java.libraries").toString()).contains("commons-io-2.5.jar");
     assertThat(props.get("sonar.java.libraries").toString()).contains("commons-lang-2.6.jar");
@@ -73,21 +46,9 @@ public class GradleTest {
 
   @Test
   public void mixJavaGroovyProject() throws Exception {
-    File out = temp.newFile();
-    File projectBaseDir = new File(this.getClass().getResource("/java-groovy-tests-gradle").toURI());
-    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
-      .directory(projectBaseDir)
-      .inheritIO();
-    Process p = pb.start();
-    p.waitFor();
+    Properties props = runGradlewSonarQubeSimulationMode("/java-groovy-tests-gradle");
 
-    Properties props = new Properties();
-    try (FileReader fr = new FileReader(out)) {
-      props.load(fr);
-    }
-
-    assertThat(props).contains(
-      entry("sonar.projectKey", "groovy-java-gradle-mixed-tests"));
+    assertThat(props).contains(entry("sonar.projectKey", "groovy-java-gradle-mixed-tests"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/groovy");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/groovy");
 
@@ -98,19 +59,9 @@ public class GradleTest {
 
   @Test
   public void loadSonarScannerPropertiesEnv() throws Exception {
-    File out = temp.newFile();
-    File projectBaseDir = new File(this.getClass().getResource("/java-gradle-simple").toURI());
-    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
-      .directory(projectBaseDir)
-      .inheritIO();
-    pb.environment().put("SONARQUBE_SCANNER_PARAMS", "{\"sonar.host.url\" : \"myhost\" }");
-    Process p = pb.start();
-    p.waitFor();
-
-    Properties props = new Properties();
-    try (FileReader fr = new FileReader(out)) {
-      props.load(fr);
-    }
+    Map<String, String> env = new HashMap<>();
+    env.put("SONARQUBE_SCANNER_PARAMS", "{\"sonar.host.url\" : \"myhost\" }");
+    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-simple", env);
 
     assertThat(props).contains(entry("sonar.projectKey", "org.codehaus.sonar:example-java-gradle"));
     assertThat(props).contains(entry("sonar.host.url", "myhost"));
@@ -120,18 +71,7 @@ public class GradleTest {
 
   @Test
   public void module_inclusion_duplicate_key() throws Exception {
-    File out = temp.newFile();
-    File projectBaseDir = new File(this.getClass().getResource("/module-inclusion").toURI());
-    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
-      .directory(projectBaseDir)
-      .inheritIO();
-    Process p = pb.start();
-    p.waitFor();
-
-    Properties props = new Properties();
-    try (FileReader fr = new FileReader(out)) {
-      props.load(fr);
-    }
+    Properties props = runGradlewSonarQubeSimulationMode("/module-inclusion");
 
     assertThat(props).contains(entry("sonar.projectKey", "com.mygroup:root_project"));
     assertThat(props.get("sonar.modules").toString().split(",")).containsOnly(":toplevel1", ":toplevel2");
