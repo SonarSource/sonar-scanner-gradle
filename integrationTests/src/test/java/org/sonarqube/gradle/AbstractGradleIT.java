@@ -23,6 +23,7 @@ public abstract class AbstractGradleIT {
     ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "--no-daemon", "sonarqube", "-DsonarRunner.dumpToFile=" + out.getAbsolutePath())
       .directory(projectBaseDir)
       .inheritIO();
+    pb.environment().put("GRADLE_OPTS", "-Xmx1024m");
     pb.environment().putAll(env);
     Process p = pb.start();
     p.waitFor();
