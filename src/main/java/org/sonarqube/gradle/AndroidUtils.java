@@ -31,8 +31,6 @@ import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,13 +62,10 @@ class AndroidUtils {
       populateSonarQubeProps(properties, bootClassPath, variant, false);
       if (variant instanceof TestVariant) {
         populateSonarQubeProps(properties, bootClassPath, variant, true);
-      } else {
-        populateSonarQubeProps(properties, bootClassPath, variant, false);
-        if (variant instanceof TestedVariant) {
-          UnitTestVariant unitTestVariant = ((TestedVariant) variant).getUnitTestVariant();
-          if (unitTestVariant != null) {
-            populateSonarQubeProps(properties, bootClassPath, unitTestVariant, true);
-          }
+      } else if (variant instanceof TestedVariant) {
+        UnitTestVariant unitTestVariant = ((TestedVariant) variant).getUnitTestVariant();
+        if (unitTestVariant != null) {
+          populateSonarQubeProps(properties, bootClassPath, unitTestVariant, true);
         }
       }
     }
@@ -154,14 +149,14 @@ class AndroidUtils {
   @NotNull
   private static void populateSonarQubeProps(Map<String, Object> properties, List<File> bootClassPath, BaseVariant releaseVariant, boolean isTest) {
     List<File> srcDirs = releaseVariant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
-      ArrayList::new,
-      ArrayList::addAll,
-      ArrayList::addAll);
+        ArrayList::new,
+        ArrayList::addAll,
+        ArrayList::addAll);
     properties.put(isTest ? SonarQubePlugin.SONAR_TESTS_PROP : SonarQubePlugin.SONAR_SOURCES_PROP,
-      SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList())));
+        SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList())));
 
-    properties.putIfAbsent(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, getJavaCompiler(releaseVariant).getSourceCompatibility());
-    properties.putIfAbsent(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, getJavaCompiler(releaseVariant).getTargetCompatibility());
+    properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, getJavaCompiler(releaseVariant).getSourceCompatibility());
+    properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, getJavaCompiler(releaseVariant).getTargetCompatibility());
 
     List<File> libraries = new ArrayList<>();
     libraries.addAll(bootClassPath);

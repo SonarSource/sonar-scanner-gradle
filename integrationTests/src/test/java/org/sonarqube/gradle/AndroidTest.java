@@ -84,4 +84,21 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
   }
+
+  @Test
+  public void testMultiModule() throws Exception {
+    Properties props = runGradlewSonarQubeSimulationMode("/multi-module-android-studio");
+
+    assertThat(props.get(":app.sonar.moduleKey").toString()).isEqualTo("com.test.app:multi-module-android-studio:app");
+    assertThat(props.get(":app.sonar.sources").toString()).contains("multi-module-android-studio/app/src/main/java",
+      "multi-module-android-studio/app/src/main/AndroidManifest.xml");
+    assertThat(props.get(":app.sonar.tests").toString()).contains("multi-module-android-studio/app/src/test/java");
+    assertThat(props.get(":app.sonar.java.binaries").toString()).contains("multi-module-android-studio/app/build/intermediates/classes/release");
+    assertThat(props.get(":app.sonar.java.test.binaries").toString()).contains("multi-module-android-studio/app/build/intermediates/classes/test/release");
+    assertThat(props.get(":app.sonar.java.libraries").toString()).contains("android.jar");
+    assertThat(props.get(":app.sonar.java.libraries").toString()).doesNotContain("hamcrest-core-1.3.jar");
+    assertThat(props.get(":app.sonar.java.test.libraries").toString()).contains("hamcrest-core-1.3.jar");
+    assertThat(props.get(":app.sonar.java.source").toString()).isEqualTo("1.7");
+    assertThat(props.get(":app.sonar.java.target").toString()).isEqualTo("1.7");
+  }
 }
