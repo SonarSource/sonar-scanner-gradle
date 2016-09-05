@@ -26,6 +26,15 @@ dependencies {
 android {
   compileSdkVersion 23
   buildToolsVersion "23.0.1"
+  defaultConfig {
+    jackOptions {
+      enabled true
+    }
+  }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
   buildTypes {
     release {
       testCoverageEnabled true

@@ -25,6 +25,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get("sonar.java.libraries").toString()).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
+    assertThat(props.get("sonar.java.source").toString()).isEqualTo("1.7");
+    assertThat(props.get("sonar.java.target").toString()).isEqualTo("1.7");
   }
 
   @Test
@@ -43,6 +45,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get("sonar.java.libraries").toString()).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
+    assertThat(props.get("sonar.java.source").toString()).isEqualTo("1.8");
+    assertThat(props.get("sonar.java.target").toString()).isEqualTo("1.8");
   }
 
   @Test

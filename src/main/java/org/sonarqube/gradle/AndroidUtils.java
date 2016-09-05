@@ -174,15 +174,7 @@ class AndroidUtils {
   }
 
   private static AbstractCompile getJavaCompiler(BaseVariant variant) {
-    // Need to use reflection because of breaking compatibility between android-gradle 2.1.3 and 2.2.0-beta2. 2.1.3 returns AbstractCompile
-    // while 2.2.0-beta2 returns Task.
-    try {
-      Method m = variant.getClass().getMethod("getJavaCompiler");
-      return (AbstractCompile) m.invoke(variant);
-    } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-      LOGGER.debug("Unable to call getJavaCompiler, fallback on deprecated getJavaCompile", e);
-      return variant.getJavaCompile();
-    }
+    return variant.getJavaCompile();
   }
 
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
