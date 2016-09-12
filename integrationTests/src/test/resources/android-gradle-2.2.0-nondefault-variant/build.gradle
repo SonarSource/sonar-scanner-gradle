@@ -6,7 +6,7 @@ buildscript {
   }
   dependencies {
     classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}'
-    classpath 'com.android.tools.build:gradle:2.2.0-beta2'
+    classpath 'com.android.tools.build:gradle:2.2.0-rc2'
   }
 }
 
@@ -26,18 +26,19 @@ dependencies {
 android {
   compileSdkVersion 23
   buildToolsVersion "23.0.1"
-  defaultConfig {
-    jackOptions {
-      enabled true
-    }
-  }
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
-  }
   buildTypes {
     release {
       testCoverageEnabled true
+    }
+  }
+  productFlavors {
+    demo {
+      applicationId "com.example.myapp.demo"
+      versionName "1.0-demo"
+    }
+    full {
+      applicationId "com.example.myapp.full"
+      versionName "1.0-full"
     }
   }
 }
@@ -47,5 +48,6 @@ sonarqube {
         property "sonar.projectName", "Simple Android Gradle Project"
         property "sonar.projectKey", "org.sonarqube:example-android-gradle"
     }
+    androidVariant 'fullRelease'
 }
 

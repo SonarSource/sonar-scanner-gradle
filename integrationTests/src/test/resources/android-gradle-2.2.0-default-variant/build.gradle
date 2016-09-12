@@ -6,7 +6,7 @@ buildscript {
   }
   dependencies {
     classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}'
-    classpath 'com.android.tools.build:gradle:2.2.0-beta3'
+    classpath 'com.android.tools.build:gradle:2.2.0-rc2'
   }
 }
 
@@ -48,6 +48,5 @@ sonarqube {
         property "sonar.projectName", "Simple Android Gradle Project"
         property "sonar.projectKey", "org.sonarqube:example-android-gradle"
     }
-    androidVariant 'fullRelease'
 }
 

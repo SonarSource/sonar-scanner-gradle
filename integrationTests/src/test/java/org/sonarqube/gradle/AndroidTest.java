@@ -10,7 +10,7 @@ import static org.junit.Assume.assumeTrue;
 public class AndroidTest extends AbstractGradleIT {
 
   @Test
-  public void testAndroidProject() throws Exception {
+  public void testAndroidProject2_1_3() throws Exception {
     // android plugin 2.1.3 requires Gradle 2.14.1 but fails with Gradle 3
     String gradleVersion = System.getProperty("gradle.version");
     assumeTrue(gradleVersion.startsWith("2.14"));
@@ -31,17 +31,15 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testAndroidProjectGradle3() throws Exception {
-    // android plugin requires Gradle 2.14.1
-    String gradleVersion = System.getProperty("gradle.version");
-    assumeTrue(gradleVersion.startsWith("2.14") || gradleVersion.startsWith("3.") || gradleVersion.startsWith("4."));
+    assumeGradle2_14_1();
 
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-beta2");
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0");
 
     assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/java", "src/main/AndroidManifest.xml");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
-    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta2/build/intermediates/classes/debug");
-    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta2/build/intermediates/classes/test/debug");
+    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0/build/intermediates/classes/debug");
+    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0/build/intermediates/classes/test/debug");
     assertThat(props.get("sonar.java.libraries").toString()).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
@@ -49,19 +47,23 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get("sonar.java.target").toString()).isEqualTo("1.8");
   }
 
-  @Test
-  public void testUsingDefaultVariant() throws Exception {
-    // android plugin requires Gradle 2.14.1
+  private void assumeGradle2_14_1() {
+    // android plugin 2.2.x requires Gradle 2.14.1
     String gradleVersion = System.getProperty("gradle.version");
     assumeTrue(gradleVersion.startsWith("2.14") || gradleVersion.startsWith("3.") || gradleVersion.startsWith("4."));
+  }
 
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-beta3-default-variant");
+  @Test
+  public void testUsingDefaultVariant() throws Exception {
+    assumeGradle2_14_1();
+
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-default-variant");
 
     assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/java", "src/main/AndroidManifest.xml");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
-    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta3-default-variant/build/intermediates/classes/demo/debug");
-    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta3-default-variant/build/intermediates/classes/test/demo/debug");
+    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-default-variant/build/intermediates/classes/demo/debug");
+    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-default-variant/build/intermediates/classes/test/demo/debug");
     assertThat(props.get("sonar.java.libraries").toString()).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
@@ -69,17 +71,15 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testSpecifyVariant() throws Exception {
-    // android plugin requires Gradle 2.14.1
-    String gradleVersion = System.getProperty("gradle.version");
-    assumeTrue(gradleVersion.startsWith("2.14") || gradleVersion.startsWith("3.") || gradleVersion.startsWith("4."));
+    assumeGradle2_14_1();
 
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-beta3-nondefault-variant");
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-nondefault-variant");
 
     assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/java", "src/main/AndroidManifest.xml");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
-    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta3-nondefault-variant/build/intermediates/classes/full/release");
-    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta3-nondefault-variant/build/intermediates/classes/test/full/release");
+    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-nondefault-variant/build/intermediates/classes/full/release");
+    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-nondefault-variant/build/intermediates/classes/test/full/release");
     assertThat(props.get("sonar.java.libraries").toString()).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
@@ -87,6 +87,8 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testMultiModule() throws Exception {
+    assumeGradle2_14_1();
+
     Properties props = runGradlewSonarQubeSimulationMode("/multi-module-android-studio");
 
     assertThat(props.get(":app.sonar.moduleKey").toString()).isEqualTo("com.test.app:multi-module-android-studio:app");
