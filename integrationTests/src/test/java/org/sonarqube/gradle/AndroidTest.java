@@ -1,7 +1,6 @@
 package org.sonarqube.gradle;
 
 import java.util.Properties;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +29,6 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get("sonar.java.target").toString()).isEqualTo("1.7");
   }
 
-  @Ignore
   @Test
   public void testAndroidProjectGradle3() throws Exception {
     assumeGradle2_14_1();
@@ -49,7 +47,6 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get("sonar.java.target").toString()).isEqualTo("1.8");
   }
 
-  @Ignore
   @Test
   public void testUsingDefaultVariant() throws Exception {
     assumeGradle2_14_1();
@@ -66,7 +63,6 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
   }
 
-  @Ignore
   @Test
   public void testSpecifyVariant() throws Exception {
     assumeGradle2_14_1();
@@ -83,7 +79,6 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
   }
 
-  @Ignore
   @Test
   public void testMultiModule() throws Exception {
     assumeGradle2_14_1();
