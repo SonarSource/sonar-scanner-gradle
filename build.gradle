@@ -17,7 +17,6 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
-apply plugin: 'com.jfrog.artifactory'
 apply plugin: 'maven-publish'
 
 
