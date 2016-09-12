@@ -5,17 +5,15 @@ plugins {
   id "com.gradle.plugin-publish" version "0.9.5"
   // Eat your own dog food :)
   id "org.sonarqube" version "2.1-rc3"
-  id "com.github.hierynomus.license" version "0.11.0"
+  id "com.jfrog.artifactory" version "4.4.4"
+  id "com.github.hierynomus.license" version "0.13.1"
   id "net.researchgate.release" version "2.3.1"
-  id "com.jfrog.artifactory" version "4.4.0"
 }
 
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'groovy'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
@@ -43,7 +41,7 @@ repositories {
 dependencies {
   compile gradleApi()
   compile 'org.sonarsource.scanner.api:sonar-scanner-api:2.7'
-  compileOnly 'com.android.tools.build:gradle:2.2.0-beta2'
+  compileOnly 'com.android.tools.build:gradle:2.2.0-rc2'
   testCompile localGroovy()
   testCompile 'junit:junit:4.11'
   testCompile 'org.hamcrest:hamcrest-all:1.3'
@@ -90,7 +88,7 @@ jacoco {
 
 artifactory {
   // TODO we should exclude sensitive env var like in the Maven plugin but I can't find a way with Gradle
-  clientConfig.setIncludeEnvVars(true)
+  //clientConfig.setIncludeEnvVars(true)
   contextUrl = System.getenv('ARTIFACTORY_URL')
   publish {    
     repository {
