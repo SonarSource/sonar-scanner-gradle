@@ -88,7 +88,7 @@ jacoco {
 
 artifactory {
   // TODO we should exclude sensitive env var like in the Maven plugin but I can't find a way with Gradle
-  //clientConfig.setIncludeEnvVars(true)
+  clientConfig.setIncludeEnvVars(true)
   contextUrl = System.getenv('ARTIFACTORY_URL')
   publish {    
     repository {
