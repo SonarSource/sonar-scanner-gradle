@@ -48,6 +48,6 @@ sonarqube {
         property "sonar.projectName", "Simple Android Gradle Project"
         property "sonar.projectKey", "org.sonarqube:example-android-gradle"
     }
-    androidVariant 'fullDebug'
+    androidVariant 'fullRelease'
 }
 

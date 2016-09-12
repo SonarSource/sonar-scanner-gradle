@@ -49,7 +49,10 @@ import org.jetbrains.annotations.NotNull;
  */
 class AndroidUtils {
 
-  static final String RELEASE = "release";
+  /**
+   * We should use debug by default. Release variant may be obfuscated using proguard. Also unit tests and coverage reports are usually collected in debug mode.
+   */
+  static final String DEFAULT_BUILD_TYPE = "debug";
   private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
 
   private AndroidUtils() {
@@ -130,7 +133,7 @@ class AndroidUtils {
     }
     if (variant == null) {
       // Take first "release" buildType when there is provided variant name
-      Optional<BaseVariant> result = candidates.stream().filter(v -> RELEASE.equals(v.getBuildType().getName())).findFirst();
+      Optional<BaseVariant> result = candidates.stream().filter(v -> DEFAULT_BUILD_TYPE.equals(v.getBuildType().getName())).findFirst();
       if (result.isPresent()) {
         LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.get().getName());
         return result.get();

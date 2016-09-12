@@ -40,8 +40,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/java", "src/main/AndroidManifest.xml");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
-    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta2/build/intermediates/classes/release");
-    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta2/build/intermediates/classes/test/release");
+    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta2/build/intermediates/classes/debug");
+    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta2/build/intermediates/classes/test/debug");
     assertThat(props.get("sonar.java.libraries").toString()).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
@@ -60,8 +60,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/java", "src/main/AndroidManifest.xml");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
-    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta3-default-variant/build/intermediates/classes/demo/release");
-    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta3-default-variant/build/intermediates/classes/test/demo/release");
+    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta3-default-variant/build/intermediates/classes/demo/debug");
+    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta3-default-variant/build/intermediates/classes/test/demo/debug");
     assertThat(props.get("sonar.java.libraries").toString()).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
@@ -78,8 +78,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
     assertThat(props.get("sonar.sources").toString()).contains("src/main/java", "src/main/AndroidManifest.xml");
     assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
-    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta3-nondefault-variant/build/intermediates/classes/full/debug");
-    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta3-nondefault-variant/build/intermediates/classes/test/full/debug");
+    assertThat(props.get("sonar.java.binaries").toString()).contains("android-gradle-2.2.0-beta3-nondefault-variant/build/intermediates/classes/full/release");
+    assertThat(props.get("sonar.java.test.binaries").toString()).contains("android-gradle-2.2.0-beta3-nondefault-variant/build/intermediates/classes/test/full/release");
     assertThat(props.get("sonar.java.libraries").toString()).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.12.jar");
     assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.12.jar");
@@ -93,8 +93,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.get(":app.sonar.sources").toString()).contains("multi-module-android-studio/app/src/main/java",
       "multi-module-android-studio/app/src/main/AndroidManifest.xml");
     assertThat(props.get(":app.sonar.tests").toString()).contains("multi-module-android-studio/app/src/test/java");
-    assertThat(props.get(":app.sonar.java.binaries").toString()).contains("multi-module-android-studio/app/build/intermediates/classes/release");
-    assertThat(props.get(":app.sonar.java.test.binaries").toString()).contains("multi-module-android-studio/app/build/intermediates/classes/test/release");
+    assertThat(props.get(":app.sonar.java.binaries").toString()).contains("multi-module-android-studio/app/build/intermediates/classes/debug");
+    assertThat(props.get(":app.sonar.java.test.binaries").toString()).contains("multi-module-android-studio/app/build/intermediates/classes/test/debug");
     assertThat(props.get(":app.sonar.java.libraries").toString()).contains("android.jar");
     assertThat(props.get(":app.sonar.java.libraries").toString()).doesNotContain("hamcrest-core-1.3.jar");
     assertThat(props.get(":app.sonar.java.test.libraries").toString()).contains("hamcrest-core-1.3.jar");
