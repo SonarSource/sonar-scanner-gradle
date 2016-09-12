@@ -2,12 +2,12 @@
 // The above triggers groovy syntax highlighting in vim
 
 plugins {
-  id "com.gradle.plugin-publish" version "0.9.3"
+  id "com.gradle.plugin-publish" version "0.9.5"
   // Eat your own dog food :)
   id "org.sonarqube" version "2.1-rc3"
   id "com.github.hierynomus.license" version "0.11.0"
   id "net.researchgate.release" version "2.3.1"
-  id "com.jfrog.artifactory" version "4.0.0"
+  id "com.jfrog.artifactory" version "4.4.0"
 }
 
 apply plugin: 'java-gradle-plugin'
@@ -90,6 +90,8 @@ jacoco {
 
 
 artifactory {
+  // TODO we should exclude sensitive env var like in the Maven plugin but I can't find a way with Gradle
+  clientConfig.setIncludeEnvVars(true)
   contextUrl = System.getenv('ARTIFACTORY_URL')
   publish {    
     repository {
@@ -98,6 +100,12 @@ artifactory {
       password = System.getenv('ARTIFACTORY_DEPLOY_PASSWORD')      
     }
     defaults {
+      properties = [
+        'vcs.revision': (System.getenv('GIT_COMMIT') ?: System.getenv('TRAVIS_COMMIT')),
+        'vcs.branch': (System.getenv('GIT_BRANCH') ?: System.getenv('TRAVIS_BRANCH')),
+        'build.name': 'sonar-scanner-gradle',
+        'build.number': (System.getenv('BUILD_ID') ?: System.getenv('TRAVIS_BUILD_NUMBER'))
+      ]
       publishConfigs('archives', 'published')
       publishPom = true // Publish generated POM files to Artifactory (true by default)
       publishIvy = false // Publish generated Ivy descriptor files to Artifactory (true by default)
