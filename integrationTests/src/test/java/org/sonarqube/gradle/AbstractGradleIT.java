@@ -2,6 +2,7 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.FileReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
@@ -36,5 +37,42 @@ public abstract class AbstractGradleIT {
       props.load(fr);
     }
     return props;
+  }
+
+  protected RunResult runGradlewSonarQubeWithEnv(String project, Map<String, String> env) throws Exception {
+    File projectBaseDir = new File(this.getClass().getResource(project).toURI());
+    File tempProjectDir = temp.newFolder(project);
+    File outputFile = temp.newFile();
+    FileUtils.copyDirectory(projectBaseDir, tempProjectDir);
+    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "gradlew", "--stacktrace", "--no-daemon", "sonarqube")
+      .directory(tempProjectDir)
+      .redirectOutput(outputFile)
+      .redirectErrorStream(true);
+    pb.environment().put("GRADLE_OPTS", "-Xmx1024m");
+    pb.environment().putAll(env);
+    Process p = pb.start();
+    p.waitFor();
+
+    String output = FileUtils.readFileToString(outputFile, StandardCharsets.UTF_8);
+
+    return new RunResult(output, p.exitValue());
+  }
+
+  protected static class RunResult {
+    private String log;
+    private int exitValue;
+
+    RunResult(String log, int exitValue) {
+      this.log = log;
+      this.exitValue = exitValue;
+    }
+
+    public String getLog() {
+      return log;
+    }
+
+    public int getExitValue() {
+      return exitValue;
+    }
   }
 }

@@ -29,6 +29,7 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
 import org.sonarsource.scanner.api.EmbeddedScanner;
 import org.sonarsource.scanner.api.LogOutput;
+import org.sonarsource.scanner.api.ScanProperties;
 
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
@@ -78,12 +79,24 @@ public class SonarQubeTask extends DefaultTask {
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
 
+    if(isSkip(propertiesObject)) {
+      return;
+    }
+
     EmbeddedScanner scanner = EmbeddedScanner.create(LOG_OUTPUT)
       .setApp("Gradle", getProject().getGradle().getGradleVersion())
       .addGlobalProperties(propertiesObject);
     scanner.start();
     scanner.runAnalysis(propertiesObject);
     scanner.stop();
+  }
+
+  private static boolean isSkip(Properties properties) {
+    if ("true".equalsIgnoreCase(properties.getProperty(ScanProperties.SKIP))) {
+      LOGGER.warn("SonarQube Scanner analysis skipped");
+      return true;
+    }
+    return false;
   }
 
   /**

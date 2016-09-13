@@ -27,6 +27,17 @@ public class GradleTest extends AbstractGradleIT {
   }
 
   @Test
+  public void testSkip() throws Exception {
+    Map<String, String> env = new HashMap<>();
+    env.put("SONARQUBE_SCANNER_PARAMS", "{\"sonar.scanner.skip\" : \"true\" }");
+    RunResult result = runGradlewSonarQubeWithEnv("/java-gradle-simple", env);
+
+    System.out.println(result.getLog());
+    assertThat(result.getExitValue()).isEqualTo(0);
+    assertThat(result.getLog()).contains("SonarQube Scanner analysis skipped");
+  }
+
+  @Test
   public void testCompileOnly() throws Exception {
     // compileOnly introduced with Gradle 2.12
     String gradleVersion = System.getProperty("gradle.version");
