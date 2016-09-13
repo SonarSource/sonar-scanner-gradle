@@ -34,11 +34,11 @@ import java.util.Map;
  */
 public class SonarQubeProperties {
 
+  private Map<String, Object> properties = new LinkedHashMap<>();
+
   public SonarQubeProperties(Map<String, Object> properties) {
     this.properties = properties;
   }
-
-  private Map<String, Object> properties = new LinkedHashMap<>();
 
   /**
    * Convenience method for setting a single property.

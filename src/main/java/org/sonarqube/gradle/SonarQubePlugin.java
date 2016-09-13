@@ -114,17 +114,17 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarQubeTask.dependsOn(testTask);
 
     Callable<Iterable<? extends Task>> callable = () -> project.getAllprojects().stream()
-            .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-            .map(p -> {
-              BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
-              try {
-                return p.getTasks().getByName("compile" + capitalize(variant.getName()) + "JavaWithJavac");
-              } catch (UnknownTaskException e) {
-                return null;
-              }
-            })
-            .filter(t -> t != null)
-            .collect(Collectors.toList());
+      .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .map(p -> {
+        BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
+        try {
+          return p.getTasks().getByName("compile" + capitalize(variant.getName()) + "JavaWithJavac");
+        } catch (UnknownTaskException e) {
+          return null;
+        }
+      })
+      .filter(t -> t != null)
+      .collect(Collectors.toList());
     sonarQubeTask.dependsOn(callable);
     return sonarQubeTask;
   }
@@ -194,7 +194,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static boolean isAndroidProject(Project project) {
-    return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.library")|| project.getPlugins().hasPlugin("com.android.test");
+    return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.library") || project.getPlugins().hasPlugin("com.android.test");
   }
 
   private void configureForJava(final Project project, final Map<String, Object> properties) {
