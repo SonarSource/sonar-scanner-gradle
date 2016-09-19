@@ -43,7 +43,7 @@ repositories {
 
 dependencies {
   compile gradleApi()
-  compile 'org.sonarsource.scanner.api:sonar-scanner-api:2.8-build684'
+  compile 'org.sonarsource.scanner.api:sonar-scanner-api:2.8'
   compileOnly 'com.android.tools.build:gradle:2.2.0-rc2'
   testCompile localGroovy()
   testCompile 'junit:junit:4.11'
