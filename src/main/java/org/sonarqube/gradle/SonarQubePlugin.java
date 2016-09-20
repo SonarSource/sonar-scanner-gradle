@@ -345,6 +345,11 @@ public class SonarQubePlugin implements Plugin<Project> {
     if (runtimeJar != null) {
       libraries.add(runtimeJar);
     }
+    
+    File fxRuntimeJar = getFxRuntimeJar();
+    if (fxRuntimeJar != null) {
+      libraries.add(fxRuntimeJar);
+    }
 
     return libraries;
   }
@@ -357,6 +362,21 @@ public class SonarQubePlugin implements Plugin<Project> {
         return runtimeJar;
       }
       runtimeJar = new File(javaBase, "jre/lib/rt.jar");
+      return runtimeJar.exists() ? runtimeJar : null;
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+
+  }
+  
+  private static File getFxRuntimeJar() {
+    try {
+      final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
+      File runtimeJar = new File(javaBase, "lib/ext/jfxrt.jar");
+      if (runtimeJar.exists()) {
+        return runtimeJar;
+      }
+      runtimeJar = new File(javaBase, "jre/lib/ext/jfxrt.jar");
       return runtimeJar.exists() ? runtimeJar : null;
     } catch (IOException e) {
       throw new IllegalStateException(e);
