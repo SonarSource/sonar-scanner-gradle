@@ -8,6 +8,7 @@ plugins {
   id "com.jfrog.artifactory" version "4.4.4"
   id "com.github.hierynomus.license" version "0.13.1"
   id "net.researchgate.release" version "2.4.1"
+  id "com.jfrog.bintray" version "1.7"
 }
 
 apply plugin: 'java-gradle-plugin'
@@ -69,7 +70,7 @@ pluginBundle {
   }
 
   mavenCoordinates {
-    groupId = "org.sonarsource.scanner.gradle"
+    groupId = project.group
     artifactId = "sonarqube-gradle-plugin"
   }
 }
@@ -113,5 +114,23 @@ artifactory {
   }  
 }
 
+bintray {
+  user = System.getenv('BINTRAY_USER')
+  key = System.getenv('BINTRAY_KEY')
+  pkg {
+    repo = 'SonarQube'
+    name = project.group
+    userOrg = 'sonarsource'
+    version {
+      name = project.version
+      desc = "${project.description} ${project.version}"
+      released  = new Date()
+      vcsTag = project.version
+    }
+    configurations = ['archives']
+  }
+}
+
+publishPlugins.dependsOn bintrayUpload
 afterReleaseBuild.dependsOn publishPlugins
 
