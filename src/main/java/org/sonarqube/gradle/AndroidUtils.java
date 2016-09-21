@@ -150,24 +150,24 @@ class AndroidUtils {
   }
 
   @NotNull
-  private static void populateSonarQubeProps(Map<String, Object> properties, List<File> bootClassPath, BaseVariant releaseVariant, boolean isTest) {
-    List<File> srcDirs = releaseVariant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
+  private static void populateSonarQubeProps(Map<String, Object> properties, List<File> bootClassPath, BaseVariant variant, boolean isTest) {
+    List<File> srcDirs = variant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
         ArrayList::new,
         ArrayList::addAll,
         ArrayList::addAll);
     properties.put(isTest ? SonarQubePlugin.SONAR_TESTS_PROP : SonarQubePlugin.SONAR_SOURCES_PROP,
         SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList())));
 
-    properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, getJavaCompiler(releaseVariant).getSourceCompatibility());
-    properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, getJavaCompiler(releaseVariant).getTargetCompatibility());
+    properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, getJavaCompiler(variant).getSourceCompatibility());
+    properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, getJavaCompiler(variant).getTargetCompatibility());
 
     List<File> libraries = new ArrayList<>();
     libraries.addAll(bootClassPath);
-    libraries.addAll(getJavaCompiler(releaseVariant).getClasspath().getFiles());
+    libraries.addAll(getJavaCompiler(variant).getClasspath().getFiles());
     if (isTest) {
-      SonarQubePlugin.setTestClasspathProps(properties, getJavaCompiler(releaseVariant).getDestinationDir(), libraries);
+      SonarQubePlugin.setTestClasspathProps(properties, getJavaCompiler(variant).getDestinationDir(), libraries);
     } else {
-      SonarQubePlugin.setMainClasspathProps(properties, false, getJavaCompiler(releaseVariant).getDestinationDir(), libraries);
+      SonarQubePlugin.setMainClasspathProps(properties, false, getJavaCompiler(variant).getDestinationDir(), libraries);
     }
   }
 
