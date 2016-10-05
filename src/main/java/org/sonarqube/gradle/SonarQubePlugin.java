@@ -279,20 +279,30 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, File mainClassDir, Collection<File> mainLibraries) {
-    properties.put("sonar.java.binaries", mainClassDir);
+    appendProp(properties, "sonar.java.binaries", mainClassDir.getAbsolutePath());
     if (addForGroovy) {
-      properties.put("sonar.groovy.binaries", mainClassDir);
+      appendProp(properties, "sonar.groovy.binaries", mainClassDir.getAbsolutePath());
     }
-    properties.put("sonar.java.libraries", mainLibraries);
+    appendProps(properties, "sonar.java.libraries", mainLibraries);
 
     // Populate deprecated properties for backward compatibility
-    properties.put("sonar.binaries", mainClassDir);
-    properties.put("sonar.libraries", mainLibraries);
+    appendProp(properties, "sonar.binaries", mainClassDir);
+    appendProp(properties, "sonar.libraries", mainLibraries);
+  }
+
+  private static void appendProps(Map<String, Object> properties, String key, Iterable valuesToAppend) {
+    properties.putIfAbsent(key, new ArrayList<String>());
+    StreamSupport.stream(valuesToAppend.spliterator(), false).forEach(v -> ((List<String>) properties.get(key)).add(v.toString()));
+  }
+
+  private static void appendProp(Map<String, Object> properties, String key, Object valueToAppend) {
+    properties.putIfAbsent(key, new ArrayList<String>());
+    ((List<String>) properties.get(key)).add(valueToAppend.toString());
   }
 
   static void setTestClasspathProps(Map<String, Object> properties, File testClassDir, Collection<File> testLibraries) {
-    properties.put("sonar.java.test.binaries", testClassDir);
-    properties.put("sonar.java.test.libraries", testLibraries);
+    appendProp(properties, "sonar.java.test.binaries", testClassDir);
+    appendProps(properties, "sonar.java.test.libraries", testLibraries);
   }
 
   private static void configureSourceEncoding(Project project, final Map<String, Object> properties) {
