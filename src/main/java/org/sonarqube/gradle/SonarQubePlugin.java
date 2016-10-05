@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -117,16 +118,24 @@ public class SonarQubePlugin implements Plugin<Project> {
       .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
       .map(p -> {
         BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
-        try {
-          return p.getTasks().getByName("compile" + capitalize(variant.getName()) + "JavaWithJavac");
-        } catch (UnknownTaskException e) {
-          return null;
-        }
+        List<Task> allCompileTasks = new ArrayList<>();
+        addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
+        addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
+        addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
+        return allCompileTasks;
       })
-      .filter(t -> t != null)
+      .flatMap(List::stream)
       .collect(Collectors.toList());
     sonarQubeTask.dependsOn(callable);
     return sonarQubeTask;
+  }
+
+  private static void addTaskByName(Project p, String name, List<Task> allCompileTasks) {
+    try {
+      allCompileTasks.add(p.getTasks().getByName(name));
+    } catch (UnknownTaskException e) {
+      // Ignore
+    }
   }
 
   private static String capitalize(final String word) {
@@ -146,13 +155,13 @@ public class SonarQubePlugin implements Plugin<Project> {
       AndroidUtils.configureForAndroid(project, extension.getAndroidVariant(), rawProperties);
     }
 
-    rawProperties.putIfAbsent(SONAR_SOURCES_PROP, "");
-
     evaluateSonarPropertiesBlocks(sonarPropertiesActionBroadcastMap.get(project), rawProperties);
     if (project.equals(targetProject)) {
       addEnvironmentProperties(rawProperties);
       addSystemProperties(rawProperties);
     }
+
+    rawProperties.putIfAbsent(SONAR_SOURCES_PROP, "");
 
     convertProperties(rawProperties, prefix, properties);
 
@@ -197,7 +206,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.library") || project.getPlugins().hasPlugin("com.android.test");
   }
 
-  private void configureForJava(final Project project, final Map<String, Object> properties) {
+  private static void configureForJava(final Project project, final Map<String, Object> properties) {
     project.getPlugins().withType(JavaBasePlugin.class, javaBasePlugin -> configureJdkSourceAndTarget(project, properties));
 
     project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
@@ -215,7 +224,7 @@ public class SonarQubePlugin implements Plugin<Project> {
    * Groovy projects support joint compilation of a mix of Java and Groovy classes. That's why we set both
    * sonar.java.* and sonar.groovy.* properties.
    */
-  private void configureForGroovy(final Project project, final Map<String, Object> properties) {
+  private static void configureForGroovy(final Project project, final Map<String, Object> properties) {
     project.getPlugins().withType(GroovyBasePlugin.class, groovyBasePlugin -> configureJdkSourceAndTarget(project, properties));
 
     project.getPlugins().withType(GroovyPlugin.class, groovyPlugin -> {
@@ -257,7 +266,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     properties.put("sonar.surefire.reportsPath", testResultsDir);
   }
 
-  private boolean configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, final boolean addForGroovy) {
+  private static boolean configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, final boolean addForGroovy) {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
@@ -278,30 +287,36 @@ public class SonarQubePlugin implements Plugin<Project> {
     return sourceDirectories != null || testDirectories != null;
   }
 
-  static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, File mainClassDir, Collection<File> mainLibraries) {
-    appendProp(properties, "sonar.java.binaries", mainClassDir.getAbsolutePath());
-    if (addForGroovy) {
-      appendProp(properties, "sonar.groovy.binaries", mainClassDir.getAbsolutePath());
+  static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, @Nullable File mainClassDir, Collection<File> mainLibraries) {
+    if (mainClassDir != null && mainClassDir.exists()) {
+      appendProp(properties, "sonar.java.binaries", mainClassDir);
+      if (addForGroovy) {
+        appendProp(properties, "sonar.groovy.binaries", mainClassDir);
+      }
+      // Populate deprecated properties for backward compatibility
+      appendProp(properties, "sonar.binaries", mainClassDir);
     }
-    appendProps(properties, "sonar.java.libraries", mainLibraries);
 
+    appendProps(properties, "sonar.java.libraries", mainLibraries);
     // Populate deprecated properties for backward compatibility
-    appendProp(properties, "sonar.binaries", mainClassDir);
     appendProp(properties, "sonar.libraries", mainLibraries);
   }
 
-  private static void appendProps(Map<String, Object> properties, String key, Iterable valuesToAppend) {
-    properties.putIfAbsent(key, new ArrayList<String>());
-    StreamSupport.stream(valuesToAppend.spliterator(), false).forEach(v -> ((List<String>) properties.get(key)).add(v.toString()));
+  static void appendProps(Map<String, Object> properties, String key, Iterable valuesToAppend) {
+    properties.putIfAbsent(key, new LinkedHashSet<String>());
+    StreamSupport.stream(valuesToAppend.spliterator(), false)
+      .forEach(v -> ((Collection<String>) properties.get(key)).add(v.toString()));
   }
 
-  private static void appendProp(Map<String, Object> properties, String key, Object valueToAppend) {
-    properties.putIfAbsent(key, new ArrayList<String>());
-    ((List<String>) properties.get(key)).add(valueToAppend.toString());
+  static void appendProp(Map<String, Object> properties, String key, Object valueToAppend) {
+    properties.putIfAbsent(key, new LinkedHashSet<String>());
+    ((Collection<String>) properties.get(key)).add(valueToAppend.toString());
   }
 
-  static void setTestClasspathProps(Map<String, Object> properties, File testClassDir, Collection<File> testLibraries) {
-    appendProp(properties, "sonar.java.test.binaries", testClassDir);
+  static void setTestClasspathProps(Map<String, Object> properties, @Nullable File testClassDir, Collection<File> testLibraries) {
+    if (testClassDir != null && testClassDir.exists()) {
+      appendProp(properties, "sonar.java.test.binaries", testClassDir);
+    }
     appendProps(properties, "sonar.java.test.libraries", testLibraries);
   }
 
@@ -355,7 +370,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     if (runtimeJar != null) {
       libraries.add(runtimeJar);
     }
-    
+
     File fxRuntimeJar = getFxRuntimeJar();
     if (fxRuntimeJar != null) {
       libraries.add(fxRuntimeJar);
@@ -378,7 +393,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
 
   }
-  
+
   private static File getFxRuntimeJar() {
     try {
       final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();

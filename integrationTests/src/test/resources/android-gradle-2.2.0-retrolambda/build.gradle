@@ -1,0 +1,43 @@
+buildscript {
+  repositories {
+    mavenCentral()
+    mavenLocal()
+    jcenter()
+  }
+  dependencies {
+    classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}'
+    classpath 'com.android.tools.build:gradle:2.2.0'
+    classpath 'me.tatarka:gradle-retrolambda:3.2.5'
+  }
+}
+
+apply plugin: 'jacoco'
+apply plugin: 'com.android.application'
+apply plugin: 'org.sonarqube'
+apply plugin: 'me.tatarka.retrolambda'
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  compile 'joda-time:joda-time:2.7'
+  testCompile 'junit:junit:4.12'
+}
+
+android {
+  compileSdkVersion 23
+  buildToolsVersion "23.0.1"
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "Simple Android Gradle Project"
+        property "sonar.projectKey", "org.sonarqube:example-android-gradle"
+    }
+}
+

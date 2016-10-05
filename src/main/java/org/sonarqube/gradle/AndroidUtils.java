@@ -25,6 +25,7 @@ import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.LibraryPlugin;
 import com.android.build.gradle.TestExtension;
 import com.android.build.gradle.TestPlugin;
+import com.android.build.gradle.api.ApkVariant;
 import com.android.build.gradle.api.BaseVariant;
 import com.android.build.gradle.api.TestVariant;
 import com.android.build.gradle.api.UnitTestVariant;
@@ -32,9 +33,11 @@ import com.android.build.gradle.internal.api.TestedVariant;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.Nullable;
 import org.gradle.api.Project;
@@ -61,14 +64,27 @@ class AndroidUtils {
   static void configureForAndroid(Project project, String variantName, final Map<String, Object> properties) {
     BaseVariant variant = findVariant(project, variantName);
     if (variant != null) {
-      List<File> bootClassPath = getBootClasspath(project);
+      configureForAndroid(project, variant, properties);
+    }
+  }
+
+  private static void configureForAndroid(Project project, BaseVariant variant, Map<String, Object> properties) {
+    List<File> bootClassPath = getBootClasspath(project);
+    if (project.getPlugins().hasPlugin("com.android.test")) {
+      // Instrumentation tests only
+      populateSonarQubeProps(properties, bootClassPath, variant, true);
+    } else {
       populateSonarQubeProps(properties, bootClassPath, variant, false);
-      if (variant instanceof TestVariant) {
-        populateSonarQubeProps(properties, bootClassPath, variant, true);
-      } else if (variant instanceof TestedVariant) {
+      if (variant instanceof TestedVariant) {
+        // Local tests
         UnitTestVariant unitTestVariant = ((TestedVariant) variant).getUnitTestVariant();
         if (unitTestVariant != null) {
           populateSonarQubeProps(properties, bootClassPath, unitTestVariant, true);
+        }
+        // Instrumentation tests
+        TestVariant testVariant = ((TestedVariant) variant).getTestVariant();
+        if (testVariant != null) {
+          populateSonarQubeProps(properties, bootClassPath, testVariant, true);
         }
       }
     }
@@ -155,22 +171,38 @@ class AndroidUtils {
         ArrayList::new,
         ArrayList::addAll,
         ArrayList::addAll);
-    properties.put(isTest ? SonarQubePlugin.SONAR_TESTS_PROP : SonarQubePlugin.SONAR_SOURCES_PROP,
-        SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList())));
+    List<File> sourcesOrTests = SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList()));
+    if (sourcesOrTests != null) {
+      SonarQubePlugin.appendProps(properties, isTest ? SonarQubePlugin.SONAR_TESTS_PROP : SonarQubePlugin.SONAR_SOURCES_PROP, sourcesOrTests);
+    }
 
-    properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, getJavaCompiler(variant).getSourceCompatibility());
-    properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, getJavaCompiler(variant).getTargetCompatibility());
+    AbstractCompile javaCompiler = getJavaCompiler(variant);
+    if (javaCompiler == null) {
+      LOGGER.warn("Unable to find Java compiler on variant '{}'. Is Jack toolchain used? SonarQube analysis will be less accurate without bytecode.", variant.getName());
+    }
+    if (javaCompiler != null) {
+      properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, javaCompiler.getSourceCompatibility());
+      properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, javaCompiler.getTargetCompatibility());
+    }
 
-    List<File> libraries = new ArrayList<>();
+    Set<File> libraries = new LinkedHashSet<>();
     libraries.addAll(bootClassPath);
-    libraries.addAll(getJavaCompiler(variant).getClasspath().getFiles());
+    // I don't know what is best: ApkVariant::getCompileLibraries() or BaseVariant::getJavaCompile()::getClasspath()
+    // In doubt I put both in a set to remove duplicates
+    if (variant instanceof ApkVariant) {
+      libraries.addAll(((ApkVariant) variant).getCompileLibraries());
+    }
+    if (javaCompiler != null) {
+      libraries.addAll(javaCompiler.getClasspath().getFiles());
+    }
     if (isTest) {
-      SonarQubePlugin.setTestClasspathProps(properties, getJavaCompiler(variant).getDestinationDir(), libraries);
+      SonarQubePlugin.setTestClasspathProps(properties, javaCompiler != null ? javaCompiler.getDestinationDir() : null, libraries);
     } else {
-      SonarQubePlugin.setMainClasspathProps(properties, false, getJavaCompiler(variant).getDestinationDir(), libraries);
+      SonarQubePlugin.setMainClasspathProps(properties, false, javaCompiler != null ? javaCompiler.getDestinationDir() : null, libraries);
     }
   }
 
+  @Nullable
   private static AbstractCompile getJavaCompiler(BaseVariant variant) {
     return variant.getJavaCompile();
   }
