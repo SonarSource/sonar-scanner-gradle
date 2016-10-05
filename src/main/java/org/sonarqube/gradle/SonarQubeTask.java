@@ -78,6 +78,9 @@ public class SonarQubeTask extends DefaultTask {
 
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
+    if (LOGGER.isDebugEnabled()) {
+      propertiesObject.put("sonar.verbose", "true");
+    }
 
     if(isSkip(propertiesObject)) {
       return;
