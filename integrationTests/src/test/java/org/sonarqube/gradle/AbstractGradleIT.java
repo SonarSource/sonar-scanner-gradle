@@ -2,6 +2,7 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
@@ -17,6 +19,19 @@ public abstract class AbstractGradleIT {
 
   @Rule
   public TemporaryFolder temp = new TemporaryFolder();
+
+  private static String gradleVersion;
+  static {
+    try {
+      gradleVersion = IOUtils.toString(AbstractGradleIT.class.getResource("/gradleversion.txt"), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  protected static String getGradleVersion() {
+    return gradleVersion;
+  }
 
   protected Properties runGradlewSonarQubeSimulationMode(String project) throws Exception {
     return runGradlewSonarQubeSimulationModeWithEnv(project, Collections.emptyMap());

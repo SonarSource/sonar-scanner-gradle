@@ -15,8 +15,7 @@ public class AndroidTest extends AbstractGradleIT {
   @Test
   public void testAndroidProject2_1_3() throws Exception {
     // android plugin 2.1.3 requires Gradle 2.14.1 but fails with Gradle 3
-    String gradleVersion = System.getProperty("gradle.version");
-    assumeTrue(gradleVersion.startsWith("2.14"));
+    assumeTrue(getGradleVersion().startsWith("2.14"));
 
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.1.3");
 
@@ -117,7 +116,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   private void assumeGradle2_14_1_or_more() {
     // android plugin 2.2.x requires Gradle 2.14.1
-    String gradleVersion = System.getProperty("gradle.version");
+    String gradleVersion = getGradleVersion();
     assumeTrue(gradleVersion.startsWith("2.14") || gradleVersion.startsWith("3.") || gradleVersion.startsWith("4."));
   }
 }
