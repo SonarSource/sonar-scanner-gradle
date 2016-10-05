@@ -1,5 +1,7 @@
 package org.sonarqube.gradle;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -15,15 +17,17 @@ public class GradleTest extends AbstractGradleIT {
   public void testSimpleJavaProject() throws Exception {
     Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-simple");
 
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
     assertThat(props).contains(entry("sonar.projectKey", "org.codehaus.sonar:example-java-gradle"));
-    assertThat(props.get("sonar.sources").toString()).contains("src/main/java");
-    assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
-    assertThat(props.get("sonar.java.binaries").toString()).contains("java-gradle-simple/build/classes/main");
-    assertThat(props.get("sonar.java.test.binaries").toString()).contains("java-gradle-simple/build/classes/test");
-    assertThat(props.get("sonar.java.libraries").toString()).contains("commons-io-2.5.jar");
-    assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.10.jar");
-    assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.10.jar");
-    assertThat(props.get("sonar.java.test.libraries").toString()).contains("commons-io-2.5.jar");
+    assertThat(Paths.get(props.getProperty("sonar.sources"))).isEqualTo(baseDir.resolve("src/main/java"));
+    assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/classes/main"));
+    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/classes/test"));
+    assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar");
+    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("commons-io-2.5.jar");
   }
 
   @Test
@@ -46,26 +50,28 @@ public class GradleTest extends AbstractGradleIT {
 
     Properties props = runGradlewSonarQubeSimulationMode("/java-compile-only");
 
-    assertThat(props.get("sonar.java.libraries").toString()).contains("commons-io-2.5.jar");
-    assertThat(props.get("sonar.java.libraries").toString()).contains("commons-lang-2.6.jar");
-    assertThat(props.get("sonar.java.libraries").toString()).doesNotContain("junit-4.10.jar");
-    assertThat(props.get("sonar.java.test.libraries").toString()).contains("junit-4.10.jar");
-    assertThat(props.get("sonar.java.test.libraries").toString()).contains("commons-io-2.5.jar");
+    assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar");
+    assertThat(props.getProperty("sonar.java.libraries")).contains("commons-lang-2.6.jar");
+    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("commons-io-2.5.jar");
     // Seems like compileOnly are not included into test classpath
-    assertThat(props.get("sonar.java.test.libraries").toString()).doesNotContain("commons-lang-2.6.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).doesNotContain("commons-lang-2.6.jar");
   }
 
   @Test
   public void mixJavaGroovyProject() throws Exception {
     Properties props = runGradlewSonarQubeSimulationMode("/java-groovy-tests-gradle");
 
-    assertThat(props).contains(entry("sonar.projectKey", "groovy-java-gradle-mixed-tests"));
-    assertThat(props.get("sonar.sources").toString()).contains("src/main/groovy");
-    assertThat(props.get("sonar.tests").toString()).contains("src/test/groovy");
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
-    assertThat(props.get("sonar.junit.reportsPath").toString()).contains("java-groovy-tests-gradle/build/test-results");
-    assertThat(props.get("sonar.groovy.jacoco.reportPath").toString()).contains("java-groovy-tests-gradle/build/jacoco/test.exec");
-    assertThat(props.get("sonar.jacoco.reportPath").toString()).contains("java-groovy-tests-gradle/build/jacoco/test.exec");
+    assertThat(props).contains(entry("sonar.projectKey", "groovy-java-gradle-mixed-tests"));
+    assertThat(Paths.get(props.getProperty("sonar.sources"))).isEqualTo(baseDir.resolve("src/main/groovy"));
+    assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/groovy"));
+
+    assertThat(Paths.get(props.getProperty("sonar.junit.reportsPath"))).isEqualTo(baseDir.resolve("build/test-results"));
+    assertThat(Paths.get(props.getProperty("sonar.groovy.jacoco.reportPath"))).isEqualTo(baseDir.resolve("build/jacoco/test.exec"));
+    assertThat(Paths.get(props.getProperty("sonar.jacoco.reportPath"))).isEqualTo(baseDir.resolve("build/jacoco/test.exec"));
   }
 
   @Test
@@ -74,10 +80,7 @@ public class GradleTest extends AbstractGradleIT {
     env.put("SONARQUBE_SCANNER_PARAMS", "{\"sonar.host.url\" : \"myhost\" }");
     Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-simple", env);
 
-    assertThat(props).contains(entry("sonar.projectKey", "org.codehaus.sonar:example-java-gradle"));
     assertThat(props).contains(entry("sonar.host.url", "myhost"));
-    assertThat(props.get("sonar.sources").toString()).contains("src/main/java");
-    assertThat(props.get("sonar.tests").toString()).contains("src/test/java");
   }
 
   @Test
