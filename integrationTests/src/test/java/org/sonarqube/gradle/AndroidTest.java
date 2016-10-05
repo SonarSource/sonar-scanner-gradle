@@ -242,6 +242,29 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.7");
   }
 
+  // SONARGRADL-22
+  @Test
+  public void noDebugVariant() throws Exception {
+    assumeGradle2_14_1_or_more();
+
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-no-debug");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
+    assertThat(stream(props.getProperty("sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("src/main/java"),
+        baseDir.resolve("src/main/res"),
+        baseDir.resolve("src/main/AndroidManifest.xml"));
+    assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/release"));
+    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/test/release"));
+    assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
+    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
+  }
+
   private void assumeGradle2_14_1_or_more() {
     // android plugin 2.2.x requires Gradle 2.14.1
     String gradleVersion = getGradleVersion();

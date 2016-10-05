@@ -148,29 +148,33 @@ class AndroidUtils {
       return null;
     }
     if (variant == null) {
-      // Take first "release" buildType when there is provided variant name
-      Optional<BaseVariant> result = candidates.stream().filter(v -> DEFAULT_BUILD_TYPE.equals(v.getBuildType().getName())).findFirst();
-      if (result.isPresent()) {
-        LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.get().getName());
-        return result.get();
+      // Take first "debug" buildType when there is no provided variant name
+      Optional<BaseVariant> firstDebug = candidates.stream().filter(v -> DEFAULT_BUILD_TYPE.equals(v.getBuildType().getName())).findFirst();
+      BaseVariant result;
+      if (firstDebug.isPresent()) {
+        result = firstDebug.get();
+      } else {
+        // No debug variant? Then use first variant whatever is the type
+        result = candidates.get(0);
       }
+      LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.getName());
+      return result;
     } else {
       Optional<BaseVariant> result = candidates.stream().filter(v -> variant.equals(v.getName())).findFirst();
       if (result.isPresent()) {
         return result.get();
       } else {
-        LOGGER.warn("Unable to find variant '{}' to use in SonarQube configuration", variant);
+        throw new IllegalArgumentException("Unable to find variant '" + variant + "' to use for SonarQube configuration");
       }
     }
-    return null;
   }
 
   @NotNull
   private static void populateSonarQubeProps(Map<String, Object> properties, List<File> bootClassPath, BaseVariant variant, boolean isTest) {
     List<File> srcDirs = variant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
-        ArrayList::new,
-        ArrayList::addAll,
-        ArrayList::addAll);
+      ArrayList::new,
+      ArrayList::addAll,
+      ArrayList::addAll);
     List<File> sourcesOrTests = SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList()));
     if (sourcesOrTests != null) {
       SonarQubePlugin.appendProps(properties, isTest ? SonarQubePlugin.SONAR_TESTS_PROP : SonarQubePlugin.SONAR_SOURCES_PROP, sourcesOrTests);
