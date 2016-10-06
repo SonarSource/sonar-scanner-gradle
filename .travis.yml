@@ -9,15 +9,14 @@ jdk:
   - oraclejdk8
 
 before_cache:
-  - rm -rf $HOME/.m2/repository/org/sonarqube/gradle/gradle-sonarqube-plugin
-  - find $HOME/.gradle -type f -name *.lock -exec rm {} +
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 
 cache:
   directories:
-    - '$HOME/.m2/repository'
-    - '$HOME/.gradle'
-    - '.gradle'
-    - '$HOME/.sonar'
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.sonar
 
 notifications:
   email: false
