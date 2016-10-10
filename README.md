@@ -1,16 +1,18 @@
 # SonarQube Scanner for Gradle
+
 [![Build Status](https://travis-ci.org/SonarSource/sonar-scanner-gradle.svg?branch=master)](https://travis-ci.org/SonarSource/sonar-scanner-gradle)
 
 ## User documentation
 
-http://docs.sonarqube.org/display/SONAR/Analyzing+with+SonarQube+Scanner+for+Gradle
+http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle
 
 ## Developer documentation
 
-### How to install a SNAPSHOT in local Maven repository:
-`./gradlew install`
+### Install a SNAPSHOT in local Maven repository
 
-### How to use the plugin SNAPSHOT previously installed in local Maven repository:
+    ./gradlew install
+
+### Using the plugin SNAPSHOT previously installed in local Maven repository
 
 ```groovy
 buildscript {
@@ -24,8 +26,9 @@ buildscript {
 apply plugin: 'org.sonarqube'
 ```
 
-### How to release and deploy on Gradle plugin repository:
+### Release and deploy on Gradle plugin repository
+
 https://plugins.gradle.org/docs/publish-plugin
 
-`./gradlew release`
+    ./gradlew release
 
