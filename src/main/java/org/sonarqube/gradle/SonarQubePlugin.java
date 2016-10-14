@@ -119,9 +119,13 @@ public class SonarQubePlugin implements Plugin<Project> {
       .map(p -> {
         BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
         List<Task> allCompileTasks = new ArrayList<>();
-        addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
-        addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
-        addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
+        boolean unitTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
+        boolean androidTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
+        // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
+        // that would lead to run main compile task several times
+        if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
+          addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
+        }
         return allCompileTasks;
       })
       .flatMap(List::stream)
@@ -130,11 +134,12 @@ public class SonarQubePlugin implements Plugin<Project> {
     return sonarQubeTask;
   }
 
-  private static void addTaskByName(Project p, String name, List<Task> allCompileTasks) {
+  private static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
     try {
       allCompileTasks.add(p.getTasks().getByName(name));
+      return true;
     } catch (UnknownTaskException e) {
-      // Ignore
+      return false;
     }
   }
 

@@ -2,6 +2,7 @@ package org.sonarqube.gradle;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Properties;
 import org.junit.Test;
 
@@ -240,6 +241,23 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/test"));
     assertThat(props.getProperty(":module-plain-java.sonar.java.source")).isEqualTo("1.7");
     assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.7");
+  }
+
+  @Test
+  public void testingBlueprint_task_dependencies() throws Exception {
+    assumeGradle2_14_1_or_more();
+
+    // First flavor that is picked up seems to be the flavor2
+
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", Collections.emptyMap(), "tasks", "--all");
+
+    assertThat(result.getLog()).contains("sonarqube - Analyzes root project 'AndroidTestingBlueprint' and its subprojects with SonarQube. "
+      + "[app:compileFlavor2DebugAndroidTestJavaWithJavac,"
+      + " app:compileFlavor2DebugUnitTestJavaWithJavac,"
+      + " module-android-library:compileDebugAndroidTestJavaWithJavac,"
+      + " module-android-library:compileDebugUnitTestJavaWithJavac,"
+      + " module-flavor1-androidTest-only:compileDebugJavaWithJavac,"
+      + " module-plain-java:test]");
   }
 
   // SONARGRADL-22

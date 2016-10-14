@@ -57,6 +57,13 @@ public abstract class AbstractGradleIT {
   }
 
   protected RunResult runGradlewSonarQubeWithEnvQuietly(String project, Map<String, String> env, String... args) throws Exception {
+    List<String> newArgs = new ArrayList<>(args.length + 1);
+    newArgs.add("sonarqube");
+    newArgs.addAll(Arrays.asList(args));
+    return runGradlewWithEnvQuietly(project, env, newArgs.toArray(new String[args.length + 1]));
+  }
+
+  protected RunResult runGradlewWithEnvQuietly(String project, Map<String, String> env, String... args) throws Exception {
     File projectBaseDir = new File(this.getClass().getResource(project).toURI());
     File tempProjectDir = temp.newFolder(project);
     File outputFile = temp.newFile();
@@ -67,12 +74,12 @@ public abstract class AbstractGradleIT {
     } else {
       command.add("/bin/bash");
     }
-    command.addAll(Arrays.asList("gradlew", "--stacktrace", "--no-daemon", "sonarqube"));
+    command.addAll(Arrays.asList("gradlew", "--stacktrace", "--no-daemon"));
     command.addAll(Arrays.asList(args));
     ProcessBuilder pb = new ProcessBuilder(command)
-      .directory(tempProjectDir)
-      .redirectOutput(outputFile)
-      .redirectErrorStream(true);
+        .directory(tempProjectDir)
+        .redirectOutput(outputFile)
+        .redirectErrorStream(true);
     pb.environment().put("GRADLE_OPTS", "-Xmx1024m");
     pb.environment().putAll(env);
     Process p = pb.start();
