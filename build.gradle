@@ -21,6 +21,9 @@ apply plugin: 'maven-publish'
 
 group = 'org.sonarsource.scanner.gradle'
 description = 'Gradle plugin to help analyzing projects with SonarQube'
+def projectName = 'SonarQube Scanner for Gradle'
+def docUrl = 'http://redirect.sonarsource.com/doc/gradle.html'
+def githubUrl = 'https://github.com/SonarSource/sonar-scanner-gradle'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -55,17 +58,17 @@ dependencies {
 }
 
 pluginBundle {
-  website = 'http://redirect.sonarsource.com/doc/gradle.html'
-  vcsUrl = 'https://github.com/SonarSource/sonar-scanner-gradle'
+  website = docUrl
+  vcsUrl = githubUrl
 
-  description = 'Gradle plugin for running SonarQube analysis.'
+  description = project.description
   tags = ['sonarqube', 'sonar', 'quality', 'qa']
 
   plugins {
 
     sonarqubePlugin {
       id = 'org.sonarqube'
-      displayName = 'SonarQube Scanner for Gradle'
+      displayName = projectName
     }
   }
 
@@ -77,7 +80,7 @@ pluginBundle {
 
 sonarqube {
   properties {
-    property 'sonar.projectName', 'SonarQube Scanner for Gradle'
+    property 'sonar.projectName', projectName
   }
 }
 
@@ -89,6 +92,36 @@ jacoco {
   toolVersion = "0.7.6.201602180812"
 }
 
+// Add required informations to deploy on central
+install {
+  repositories.mavenInstaller {
+    pom.project {
+      name projectName
+      description project.description
+      url docUrl
+      organization {
+        name 'SonarSource'
+        url 'http://www.sonarsource.com'
+      }
+      licenses {
+        license {
+          name 'GNU LGPL 3'
+          url 'http://www.gnu.org/licenses/lgpl.txt'
+          distribution 'repo'
+        }
+      }
+      scm {
+        url githubUrl
+      }
+      developers {
+        developer {
+          id 'henryju'
+          name 'Julien Henry'
+        }
+      }
+    }
+  }
+}
 
 artifactory {
   clientConfig.setIncludeEnvVars(true)
