@@ -299,7 +299,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         appendProp(properties, "sonar.groovy.binaries", mainClassDir);
       }
       // Populate deprecated properties for backward compatibility
-      appendProp(properties, "sonar.binaries", mainClassDir);
+      appendProps(properties, "sonar.binaries", mainClassDir);
     }
 
     appendProps(properties, "sonar.java.libraries", mainLibraries);
