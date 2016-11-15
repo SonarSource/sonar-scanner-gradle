@@ -304,7 +304,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
     appendProps(properties, "sonar.java.libraries", mainLibraries);
     // Populate deprecated properties for backward compatibility
-    appendProp(properties, "sonar.libraries", mainLibraries);
+    appendProps(properties, "sonar.libraries", mainLibraries);
   }
 
   static void appendProps(Map<String, Object> properties, String key, Iterable valuesToAppend) {
