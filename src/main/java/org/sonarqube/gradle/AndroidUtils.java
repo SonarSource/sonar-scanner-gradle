@@ -197,7 +197,7 @@ class AndroidUtils {
       libraries.addAll(((ApkVariant) variant).getCompileLibraries());
     }
     if (javaCompiler != null) {
-      libraries.addAll(javaCompiler.getClasspath().getFiles());
+      libraries.addAll(javaCompiler.getClasspath().filter(File::exists).getFiles());
     }
     if (isTest) {
       SonarQubePlugin.setTestClasspathProps(properties, javaCompiler != null ? javaCompiler.getDestinationDir() : null, libraries);
