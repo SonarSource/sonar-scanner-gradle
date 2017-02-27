@@ -121,4 +121,32 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(props).contains(entry(":toplevel2.:toplevel2:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel2:plugins"));
   }
 
+  // SONARGRADL-5
+  @Test
+  public void testMultimoduleProjectWithSourceInRoot() throws Exception {
+    Properties props = runGradlewSonarQubeSimulationMode("/multi-module-source-in-root");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(Paths.get(props.getProperty("sonar.sources"))).isEqualTo(baseDir.resolve("src/main/java"));
+    assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/classes/main"));
+    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/classes/test"));
+    assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar");
+    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("commons-io-2.5.jar");
+
+    Path moduleA = baseDir.resolve("moduleA");
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.sources"))).isEqualTo(moduleA.resolve("src/main/java"));
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.tests"))).isEqualTo(moduleA.resolve("src/test/java"));
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.binaries"))).isEqualTo(moduleA.resolve("build/classes/main"));
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.test.binaries"))).isEqualTo(moduleA.resolve("build/classes/test"));
+    assertThat(props.getProperty(":moduleA.sonar.java.libraries")).contains("commons-io-2.5.jar");
+    assertThat(props.getProperty(":moduleA.sonar.java.libraries")).doesNotContain("junit-4.10.jar");
+    assertThat(props.getProperty(":moduleA.sonar.java.test.libraries")).contains("junit-4.10.jar");
+    assertThat(props.getProperty(":moduleA.sonar.java.test.libraries")).contains("commons-io-2.5.jar");
+
+  }
+
 }
