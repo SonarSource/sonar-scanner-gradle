@@ -19,6 +19,10 @@
  */
 package org.sonarqube.gradle;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -82,16 +86,26 @@ public class SonarQubeTask extends DefaultTask {
       propertiesObject.put("sonar.verbose", "true");
     }
 
-    if(isSkip(propertiesObject)) {
+    if (isSkip(propertiesObject)) {
       return;
     }
 
     EmbeddedScanner scanner = EmbeddedScanner.create(LOG_OUTPUT)
-      .setApp("Gradle", getProject().getGradle().getGradleVersion())
+      .setApp("ScannerGradle", getPluginVersion() + "/" + getProject().getGradle().getGradleVersion())
       .addGlobalProperties(propertiesObject);
     scanner.start();
     scanner.runAnalysis(propertiesObject);
     scanner.stop();
+  }
+
+  private String getPluginVersion() {
+    InputStream inputStream = this.getClass().getResourceAsStream("/version.txt");
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+      return reader.readLine();
+    } catch(IOException e) {
+      LOGGER.warn("Failed to find the version of the plugin", e);
+    }
+    return "";
   }
 
   private static boolean isSkip(Properties properties) {

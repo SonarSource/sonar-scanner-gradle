@@ -167,3 +167,10 @@ bintray {
 publishPlugins.dependsOn bintrayUpload
 afterReleaseBuild.dependsOn publishPlugins
 
+processResources {
+  filesMatching('**/version.txt') {
+    expand version: project.version
+  }
+}
+
+
