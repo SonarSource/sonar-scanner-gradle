@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle;
 
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -26,6 +27,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.sonarsource.scanner.api.EmbeddedScanner;
 import org.sonarsource.scanner.api.LogOutput;
@@ -113,6 +115,11 @@ public class SonarQubeTask extends DefaultTask {
     }
 
     return sonarProperties;
+  }
+
+  @OutputFile
+  public File getOutputFile() {
+    return new File(getProject().getBuildDir().getPath() + "/sonarqube-");
   }
 
 }
