@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -100,7 +101,7 @@ public class SonarQubeTask extends DefaultTask {
 
   private String getPluginVersion() {
     InputStream inputStream = this.getClass().getResourceAsStream("/version.txt");
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       return reader.readLine();
     } catch(IOException e) {
       LOGGER.warn("Failed to find the version of the plugin", e);
