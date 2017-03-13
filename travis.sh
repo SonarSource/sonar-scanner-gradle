@@ -9,46 +9,49 @@ function strongEcho {
 
 function configureTravis {
   mkdir -p ~/.local
-  curl -sSL https://github.com/SonarSource/travis-utils/tarball/v28 | tar zx --strip-components 1 -C ~/.local
+  curl -sSL https://github.com/SonarSource/travis-utils/tarball/v33 | tar zx --strip-components 1 -C ~/.local
   source ~/.local/bin/install
 }
-configureTravis
 
-#build_snapshot SonarSource/sonar-scanner-api
+function prepareBuildVersion {
+    # Analyze with SNAPSHOT version as long as SQ does not correctly handle purge of release data
+    CURRENT_VERSION=`cat gradle.properties | grep version | awk -F= '{print $2}'`
+    RELEASE_VERSION=`echo $CURRENT_VERSION | sed "s/-.*//g"`
+    # In case of 2 digits, we need to add the 3rd digit (0 obviously)
+    # Mandatory in order to compare versions (patch VS non patch)
+    IFS=$'.'
+    DIGIT_COUNT=`echo $RELEASE_VERSION | wc -w`
+    unset IFS
+    if [ $DIGIT_COUNT -lt 3 ]; then
+        RELEASE_VERSION="$RELEASE_VERSION.0"
+    fi
+    NEW_VERSION="$RELEASE_VERSION.$TRAVIS_BUILD_NUMBER"
+    export PROJECT_VERSION=$NEW_VERSION
+
+    # Deply the release version related to this build instead of snapshot
+    sed -i.bak "s/$CURRENT_VERSION/$NEW_VERSION/g" gradle.properties
+    # set the build name with travis build number
+    echo buildInfo.build.name=sonar-scanner-gradle >> gradle.properties
+    echo buildInfo.build.number=$TRAVIS_BUILD_NUMBER >> gradle.properties
+}
+
 
 if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-  strongEcho 'Build analyze and deploy commit in master'
+  strongEcho 'Build and analyze commit in master and publish in artifactory'
   # this commit is master must be built and analyzed (with upload of report)
 
-  # Analyze with SNAPSHOT version as long as SQ does not correctly handle
-  # purge of release data
-  CURRENT_VERSION=`cat gradle.properties | grep version | awk -F= '{print $2}'`
-  # Do not deploy a SNAPSHOT version but the release version related to this build
-  sed -i.bak "s/-SNAPSHOT/-build$TRAVIS_BUILD_NUMBER/g" gradle.properties    
-  # set the build name with travis build number
-  echo buildInfo.build.name=sonar-scanner-gradle >> gradle.properties 
-  echo buildInfo.build.number=$TRAVIS_BUILD_NUMBER >> gradle.properties 
-
+  prepareBuildVersion
   ./gradlew build check sonarqube artifactory \
       -Dsonar.projectVersion=$CURRENT_VERSION \
       -Dsonar.host.url=$SONAR_HOST_URL \
       -Dsonar.login=$SONAR_TOKEN
 
 elif [[ "${TRAVIS_BRANCH}" == "branch-"* ]] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-  # no dory analysis on release branch
-  if [[ $CURRENT_VERSION =~ "-SNAPSHOT" ]]; then
-    echo "======= Found SNAPSHOT version ======="
-    # Do not deploy a SNAPSHOT version but the release version related to this build
-    # Do not deploy a SNAPSHOT version but the release version related to this build
-    sed -i.bak "s/-SNAPSHOT/-build$TRAVIS_BUILD_NUMBER/g" gradle.properties    
-    # set the build name with travis build number
-    echo buildInfo.build.name=sonar-scanner-gradle >> gradle.properties 
-    echo buildInfo.build.number=$TRAVIS_BUILD_NUMBER >> gradle.properties 
-  else
-    echo "======= Found RELEASE version ======="
-  fi     
-  #build and deploy
-  ./gradlew build artifactory 
+  strongEcho 'Build and publish in artifactory'
+  prepareBuildVersion
+
+  #build and deploy - no dory analysis on release branch
+  ./gradlew build check artifactory 
 
 elif [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_SECURE_ENV_VARS" == "true" ]; then
   strongEcho 'Build and analyze pull request'  
@@ -56,15 +59,7 @@ elif [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_SECURE_ENV_VARS" == "tr
   if [ "${DEPLOY_PULL_REQUEST:-}" == "true" ]; then
     echo '======= with deploy'
 
-    # Analyze with SNAPSHOT version as long as SQ does not correctly handle
-    # purge of release data
-    CURRENT_VERSION=`cat gradle.properties | grep version | awk -F= '{print $2}'`
-    # Do not deploy a SNAPSHOT version but the release version related to this build
-    sed -i.bak "s/-SNAPSHOT/-build$TRAVIS_BUILD_NUMBER/g" gradle.properties    
-    # set the build name with travis build number
-    echo buildInfo.build.name=sonar-scanner-gradle >> gradle.properties 
-    echo buildInfo.build.number=$TRAVIS_BUILD_NUMBER >> gradle.properties 
-    
+    prepareBuildVersion
     ./gradlew build check sonarqube artifactory \
       -Dsonar.analysis.mode=issues \
       -Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST \
