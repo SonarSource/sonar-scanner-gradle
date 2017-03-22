@@ -20,7 +20,6 @@
 package org.sonarqube.gradle;
 
 import org.gradle.api.Action;
-import org.gradle.listener.ActionBroadcast;
 
 /**
  * An extension for configuring the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">SonarQube</a> analysis.

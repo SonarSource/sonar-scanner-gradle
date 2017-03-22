@@ -19,7 +19,6 @@
  */
 package org.sonarqube.gradle
 
-import org.gradle.listener.ActionBroadcast
 import spock.lang.Specification
 
 class SonarQubeExtensionTest extends Specification {
