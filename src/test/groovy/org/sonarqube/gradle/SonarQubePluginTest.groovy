@@ -189,6 +189,10 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 
+        def testResultsDir = new File(project.buildDir, "test-results/test")
+        testResultsDir.mkdirs()
+        new File(testResultsDir, 'TEST-.xml').createNewFile()
+
         when:
         def properties = project.tasks.sonarqube.properties
 
@@ -240,6 +244,10 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.test.output.resourcesDir = "$project.buildDir/test-out"
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
+
+        def testResultsDir = new File(project.buildDir, "test-results/test")
+        testResultsDir.mkdirs()
+        new File(testResultsDir, 'TEST-.xml').createNewFile()
 
         when:
         def properties = project.tasks.sonarqube.properties

@@ -22,7 +22,6 @@ package org.sonarqube.gradle;
 import com.android.build.gradle.api.BaseVariant;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.gradle.api.Nullable;
@@ -55,6 +55,8 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
 import org.sonarsource.scanner.api.Utils;
 
+import static java.util.Arrays.asList;
+
 /**
  * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
@@ -62,6 +64,7 @@ import org.sonarsource.scanner.api.Utils;
  */
 public class SonarQubePlugin implements Plugin<Project> {
 
+  private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
   static final Predicate<File> FILE_EXISTS = File::exists;
   private static final Predicate<File> IS_FILE = File::isFile;
   static final String SONAR_SOURCES_PROP = "sonar.sources";
@@ -258,17 +261,15 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
     File testResultsDir = testTask.getReports().getJunitXml().getDestination();
-    // create the test results folder to prevent SonarQube from emitting
-    // a warning if a project does not contain any tests
-    try {
-      Files.createDirectories(testResultsDir.toPath());
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to create test report directory", e);
-    }
 
-    properties.put("sonar.junit.reportsPath", testResultsDir);
-    // For backward compatibility
-    properties.put("sonar.surefire.reportsPath", testResultsDir);
+    // do not set a custom test reports path if it does not exists, otherwise SonarQube will emit an error
+    // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
+    if (testResultsDir.isDirectory()
+            && asList(testResultsDir.list()).stream().anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
+      properties.put("sonar.junit.reportsPath", testResultsDir);
+      // For backward compatibility
+      properties.put("sonar.surefire.reportsPath", testResultsDir);
+    }
   }
 
   private static boolean configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, final boolean addForGroovy) {
