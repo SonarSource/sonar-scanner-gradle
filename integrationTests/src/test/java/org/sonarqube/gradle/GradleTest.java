@@ -149,4 +149,21 @@ public class GradleTest extends AbstractGradleIT {
 
   }
 
+  @Test
+  public void testJavaProjectWithoutTestsDoesNotSetCustomReportsPath() throws Exception {
+    Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-no-tests");
+    Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
+
+    assertThat(testResultsDir).doesNotExist();
+    assertThat(props.getProperty("sonar.junit.reportsPath")).isNull();
+  }
+
+  @Test
+  public void testJavaProjectWithoutRealTestsDoesNotSetCustomReportsPath() throws Exception {
+    Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-no-real-tests");
+    Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
+
+    assertThat(testResultsDir).exists();
+    assertThat(props.getProperty("sonar.junit.reportsPath")).isNull();
+  }
 }
