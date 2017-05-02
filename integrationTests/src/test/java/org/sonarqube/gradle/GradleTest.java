@@ -86,7 +86,7 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(Paths.get(props.getProperty("sonar.sources"))).isEqualTo(baseDir.resolve("src/main/groovy"));
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/groovy"));
 
-    if (getGradleVersion().startsWith("3.")) {
+    if (getGradleVersion().startsWith("3.") || getGradleVersion().startsWith("4.")) {
       assertThat(Paths.get(props.getProperty("sonar.junit.reportsPath"))).isEqualTo(baseDir.resolve("build/test-results/test"));
     } else {
       assertThat(Paths.get(props.getProperty("sonar.junit.reportsPath"))).isEqualTo(baseDir.resolve("build/test-results"));

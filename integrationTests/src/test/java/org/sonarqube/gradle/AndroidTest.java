@@ -45,7 +45,7 @@ public class AndroidTest extends AbstractGradleIT {
   public void testAndroidProjectJdk8Jack() throws Exception {
     assumeGradle2_14_1_or_more();
 
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-jack");
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-jack");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -69,7 +69,7 @@ public class AndroidTest extends AbstractGradleIT {
   public void testAndroidProjectJdk8Retrolambda() throws Exception {
     assumeGradle2_14_1_or_more();
 
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-retrolambda");
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-retrolambda");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -96,7 +96,7 @@ public class AndroidTest extends AbstractGradleIT {
   public void testUsingDefaultVariant() throws Exception {
     assumeGradle2_14_1_or_more();
 
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-default-variant");
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-default-variant");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -121,7 +121,7 @@ public class AndroidTest extends AbstractGradleIT {
   public void testSpecifyVariant() throws Exception {
     assumeGradle2_14_1_or_more();
 
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-nondefault-variant");
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-nondefault-variant");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -249,15 +249,15 @@ public class AndroidTest extends AbstractGradleIT {
 
     // First flavor that is picked up seems to be the flavor2
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", Collections.emptyMap(), "tasks", "--all");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", Collections.emptyMap(), "sonarqube", "taskTree");
 
-    assertThat(result.getLog()).contains("sonarqube - Analyzes root project 'AndroidTestingBlueprint' and its subprojects with SonarQube. "
-      + "[app:compileFlavor2DebugAndroidTestJavaWithJavac,"
-      + " app:compileFlavor2DebugUnitTestJavaWithJavac,"
-      + " module-android-library:compileDebugAndroidTestJavaWithJavac,"
-      + " module-android-library:compileDebugUnitTestJavaWithJavac,"
-      + " module-flavor1-androidTest-only:compileDebugJavaWithJavac,"
-      + " module-plain-java:test]");
+    assertThat(result.getLog().split("\\r?\\n")).containsSubsequence(":sonarqube",
+      "+--- :app:compileFlavor2DebugAndroidTestJavaWithJavac",
+      "+--- :app:compileFlavor2DebugUnitTestJavaWithJavac",
+      "+--- :module-android-library:compileDebugAndroidTestJavaWithJavac",
+      "+--- :module-android-library:compileDebugUnitTestJavaWithJavac",
+      "+--- :module-flavor1-androidTest-only:compileDebugJavaWithJavac",
+      "\\--- :module-plain-java:test");
   }
 
   // SONARGRADL-22
@@ -265,7 +265,7 @@ public class AndroidTest extends AbstractGradleIT {
   public void noDebugVariant() throws Exception {
     assumeGradle2_14_1_or_more();
 
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.2.0-no-debug");
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-no-debug");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -284,8 +284,8 @@ public class AndroidTest extends AbstractGradleIT {
   }
 
   private void assumeGradle2_14_1_or_more() {
-    // android plugin 2.2.x requires Gradle 2.14.1
+    // android plugin 2.4.x requires Gradle 3.4.1
     String gradleVersion = getGradleVersion();
-    assumeTrue(gradleVersion.startsWith("2.14") || gradleVersion.startsWith("3.") || gradleVersion.startsWith("4."));
+    assumeTrue(gradleVersion.startsWith("3.") || gradleVersion.startsWith("4."));
   }
 }
