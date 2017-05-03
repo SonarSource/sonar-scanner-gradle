@@ -33,7 +33,7 @@ public class ActionBroadcast<T> implements Action<T> {
 
   @Override
   public void execute(T t) {
-    actions.forEach((a) -> a.execute(t));
+    actions.forEach(a -> a.execute(t));
   }
 
 }
