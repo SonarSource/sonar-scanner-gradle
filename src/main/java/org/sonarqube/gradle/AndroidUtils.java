@@ -52,17 +52,13 @@ import org.jetbrains.annotations.NotNull;
  */
 class AndroidUtils {
 
-  /**
-   * We should use debug by default. Release variant may be obfuscated using proguard. Also unit tests and coverage reports are usually collected in debug mode.
-   */
-  static final String DEFAULT_BUILD_TYPE = "debug";
   private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
 
   private AndroidUtils() {
   }
 
-  static void configureForAndroid(Project project, String variantName, final Map<String, Object> properties) {
-    BaseVariant variant = findVariant(project, variantName);
+  static void configureForAndroid(Project project, String userConfiguredBuildVariantName, final Map<String, Object> properties) {
+    BaseVariant variant = findVariant(project, userConfiguredBuildVariantName);
     if (variant != null) {
       configureForAndroid(project, variant, properties);
     }
@@ -117,39 +113,60 @@ class AndroidUtils {
   }
 
   @Nullable
-  static BaseVariant findVariant(Project project, @Nullable String variant) {
+  static String getTestBuildType(Project project) {
     PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
     if (!appPlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
       if (androidExtension != null) {
-        return findVariant(androidExtension.getApplicationVariants().stream().collect(Collectors.toList()), variant);
+        return androidExtension.getTestBuildType();
       }
     }
     PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
     if (!libPlugins.isEmpty()) {
       LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
       if (androidExtension != null) {
-        return findVariant(androidExtension.getLibraryVariants().stream().collect(Collectors.toList()), variant);
-      }
-    }
-    PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
-    if (!testPlugins.isEmpty()) {
-      TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
-      if (androidExtension != null) {
-        return findVariant(androidExtension.getApplicationVariants().stream().collect(Collectors.toList()), variant);
+        return androidExtension.getTestBuildType();
       }
     }
     return null;
   }
 
   @Nullable
-  static BaseVariant findVariant(List<BaseVariant> candidates, @Nullable String variant) {
+  static BaseVariant findVariant(Project project, @Nullable String userConfiguredBuildVariantName) {
+    String testBuildType = getTestBuildType(project);
+    PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
+    if (!appPlugins.isEmpty()) {
+      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
+      if (androidExtension != null) {
+        return findVariant(androidExtension.getApplicationVariants().stream().collect(Collectors.toList()), testBuildType, userConfiguredBuildVariantName);
+      }
+    }
+    PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
+    if (!libPlugins.isEmpty()) {
+      LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
+      if (androidExtension != null) {
+        return findVariant(androidExtension.getLibraryVariants().stream().collect(Collectors.toList()), testBuildType, userConfiguredBuildVariantName);
+      }
+    }
+    PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
+    if (!testPlugins.isEmpty()) {
+      TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
+      if (androidExtension != null) {
+        return findVariant(androidExtension.getApplicationVariants().stream().collect(Collectors.toList()), testBuildType, userConfiguredBuildVariantName);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  static BaseVariant findVariant(List<BaseVariant> candidates, @Nullable String testBuildType, @Nullable String userConfiguredBuildVariantName) {
     if (candidates.isEmpty()) {
       return null;
     }
-    if (variant == null) {
-      // Take first "debug" buildType when there is no provided variant name
-      Optional<BaseVariant> firstDebug = candidates.stream().filter(v -> DEFAULT_BUILD_TYPE.equals(v.getBuildType().getName())).findFirst();
+    if (userConfiguredBuildVariantName == null) {
+      // Take first "test" buildType when there is no provided variant name
+      // Release variant may be obfuscated using proguard. Also unit tests and coverage reports are usually collected in debug mode.
+      Optional<BaseVariant> firstDebug = candidates.stream().filter(v -> testBuildType != null && testBuildType.equals(v.getBuildType().getName())).findFirst();
       BaseVariant result;
       if (firstDebug.isPresent()) {
         result = firstDebug.get();
@@ -160,11 +177,11 @@ class AndroidUtils {
       LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.getName());
       return result;
     } else {
-      Optional<BaseVariant> result = candidates.stream().filter(v -> variant.equals(v.getName())).findFirst();
+      Optional<BaseVariant> result = candidates.stream().filter(v -> userConfiguredBuildVariantName.equals(v.getName())).findFirst();
       if (result.isPresent()) {
         return result.get();
       } else {
-        throw new IllegalArgumentException("Unable to find variant '" + variant + "' to use for SonarQube configuration");
+        throw new IllegalArgumentException("Unable to find variant '" + userConfiguredBuildVariantName + "' to use for SonarQube configuration");
       }
     }
   }
