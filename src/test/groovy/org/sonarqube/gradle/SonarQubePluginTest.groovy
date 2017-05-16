@@ -116,12 +116,11 @@ class SonarQubePluginTest extends Specification {
 
         then:
         properties["sonar.projectKey"] == "group:root:parent"
+        properties[":parent:child.sonar.moduleKey"] == "group:root:parent:parent:child"
         properties["sonar.working.directory"] == new File(parentProject.buildDir, "sonar") as String
 
         and:
-        !properties.containsKey(":parent:child.sonar.projectKey") // default left to Sonar
-        !properties.containsKey(":parent:child.sonar.environment.information.key")
-        !properties.containsKey(":parent:child.sonar.environment.information.version")
+        !properties.containsKey(":parent:child.sonar.projectKey")
         !properties.containsKey(':parent:child.sonar.working.directory')
     }
 
@@ -320,6 +319,19 @@ class SonarQubePluginTest extends Specification {
 
         then:
         properties["sonar.some.key"] == "some value"
+    }
+
+    def "allows to configure project key via 'sonarqube' extension"() {
+        parentProject.sonarqube.properties {
+            property "sonar.projectKey", "myProject"
+        }
+
+        when:
+        def properties = parentSonarQubeTask().properties
+
+        then:
+        properties["sonar.projectKey"] == "myProject"
+        properties[":parent:child.sonar.moduleKey"] == "myProject:parent:child"
     }
 
     def "prefixes property keys of subprojects"() {

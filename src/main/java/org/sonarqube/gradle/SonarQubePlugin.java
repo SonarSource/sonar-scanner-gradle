@@ -58,16 +58,15 @@ import static java.util.Arrays.asList;
 /**
  * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
- * Please see the “SonarQube Runner Plugin” chapter of the Gradle User Guide for more information.
  */
 public class SonarQubePlugin implements Plugin<Project> {
 
-  private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
   static final String SONAR_SOURCES_PROP = "sonar.sources";
   static final String SONAR_TESTS_PROP = "sonar.tests";
   static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
   static final String SONAR_JAVA_TARGET_PROP = "sonar.java.target";
-
+  private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
+  // Project where sonarqube plugin is apply. Most of the time the root project.
   private Project targetProject;
 
   private static void evaluateSonarPropertiesBlocks(ActionBroadcast<? super SonarQubeProperties> propertiesActions, Map<String, Object> properties) {
@@ -75,62 +74,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     propertiesActions.execute(sqProperties);
   }
 
-  @Override
-  public void apply(Project project) {
-    targetProject = project;
-
-    final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
-    createTask(project, actionBroadcastMap);
-
-    ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
-    project.subprojects(p -> {
-      ActionBroadcast<SonarQubeProperties> action = addBroadcaster(actionBroadcastMap, p);
-      p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, action);
-    });
-    project.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
-  }
-
   private static ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
     ActionBroadcast<SonarQubeProperties> actionBroadcast = new ActionBroadcast<>();
     actionBroadcastMap.put(project, actionBroadcast);
     return actionBroadcast;
-  }
-
-  private SonarQubeTask createTask(final Project project, final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
-    SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
-    sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
-
-    ConventionMapping conventionMapping = new DslObject(sonarQubeTask).getConventionMapping();
-    conventionMapping.map("properties", () -> {
-      Map<String, Object> properties = new LinkedHashMap<>();
-      computeSonarProperties(project, properties, actionBroadcastMap, "");
-      return properties;
-    });
-
-    Callable<Iterable<? extends Task>> testTask = () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-      .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
-      .collect(Collectors.toList());
-    sonarQubeTask.dependsOn(testTask);
-
-    Callable<Iterable<? extends Task>> callable = () -> project.getAllprojects().stream()
-      .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-      .map(p -> {
-        BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
-        List<Task> allCompileTasks = new ArrayList<>();
-        boolean unitTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
-        boolean androidTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
-        // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
-        // that would lead to run main compile task several times
-        if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
-          addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
-        }
-        return allCompileTasks;
-      })
-      .flatMap(List::stream)
-      .collect(Collectors.toList());
-    sonarQubeTask.dependsOn(callable);
-    return sonarQubeTask;
   }
 
   private static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
@@ -144,66 +91,6 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static String capitalize(final String word) {
     return Character.toUpperCase(word.charAt(0)) + word.substring(1);
-  }
-
-  private void computeSonarProperties(Project project, Map<String, Object> properties, Map<Project, ActionBroadcast<SonarQubeProperties>> sonarPropertiesActionBroadcastMap,
-    String prefix) {
-    SonarQubeExtension extension = project.getExtensions().getByType(SonarQubeExtension.class);
-    if (extension.isSkipProject()) {
-      return;
-    }
-
-    Map<String, Object> rawProperties = new LinkedHashMap<>();
-    addGradleDefaults(project, rawProperties);
-    if (isAndroidProject(project)) {
-      AndroidUtils.configureForAndroid(project, extension.getAndroidVariant(), rawProperties);
-    }
-
-    evaluateSonarPropertiesBlocks(sonarPropertiesActionBroadcastMap.get(project), rawProperties);
-    if (project.equals(targetProject)) {
-      addEnvironmentProperties(rawProperties);
-      addSystemProperties(rawProperties);
-    }
-
-    rawProperties.putIfAbsent(SONAR_SOURCES_PROP, "");
-
-    convertProperties(rawProperties, prefix, properties);
-
-    List<Project> enabledChildProjects = project.getChildProjects().values().stream()
-      .filter(p -> !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-      .collect(Collectors.toList());
-
-    if (enabledChildProjects.isEmpty()) {
-      return;
-    }
-
-    List<String> moduleIds = new ArrayList<>();
-
-    for (Project childProject : enabledChildProjects) {
-      String moduleId = childProject.getPath();
-      moduleIds.add(moduleId);
-      String modulePrefix = (prefix.length() > 0) ? (prefix + "." + moduleId) : moduleId;
-      computeSonarProperties(childProject, properties, sonarPropertiesActionBroadcastMap, modulePrefix);
-    }
-    properties.put(convertKey("sonar.modules", prefix), moduleIds.stream().collect(Collectors.joining(",")));
-  }
-
-  private void addGradleDefaults(final Project project, final Map<String, Object> properties) {
-    properties.put("sonar.projectName", project.getName());
-    properties.put("sonar.projectDescription", project.getDescription());
-    properties.put("sonar.projectVersion", project.getVersion());
-    properties.put("sonar.projectBaseDir", project.getProjectDir());
-
-    if (project.equals(targetProject)) {
-      // Root project
-      properties.put("sonar.projectKey", getProjectKey(project));
-      properties.put("sonar.working.directory", new File(project.getBuildDir(), "sonar"));
-    } else {
-      properties.put("sonar.moduleKey", getProjectKey(project));
-    }
-
-    configureForJava(project, properties);
-    configureForGroovy(project, properties);
   }
 
   private static boolean isAndroidProject(Project project) {
@@ -261,7 +148,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     // do not set a custom test reports path if it does not exists, otherwise SonarQube will emit an error
     // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
     if (testResultsDir.isDirectory()
-            && asList(testResultsDir.list()).stream().anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
+        && asList(testResultsDir.list()).stream().anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
       properties.put("sonar.junit.reportsPath", testResultsDir);
       // For backward compatibility
       properties.put("sonar.surefire.reportsPath", testResultsDir);
@@ -307,7 +194,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   static void appendProps(Map<String, Object> properties, String key, Iterable valuesToAppend) {
     properties.putIfAbsent(key, new LinkedHashSet<String>());
     StreamSupport.stream(valuesToAppend.spliterator(), false)
-      .forEach(v -> ((Collection<String>) properties.get(key)).add(v.toString()));
+        .forEach(v -> ((Collection<String>) properties.get(key)).add(v.toString()));
   }
 
   static void appendProp(Map<String, Object> properties, String key, Object valueToAppend) {
@@ -337,17 +224,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     properties.put(SONAR_JAVA_TARGET_PROP, javaPluginConvention.getTargetCompatibility());
   }
 
-  private static String getProjectKey(Project project) {
-    Project rootProject = project.getRootProject();
-    String rootProjectName = rootProject.getName();
-    String rootGroup = rootProject.getGroup().toString();
-    String rootKey = rootGroup.isEmpty() ? rootProjectName : (rootGroup + ":" + rootProjectName);
-    if (project == rootProject) {
-      return rootKey;
-    }
-    return rootKey + project.getPath();
-  }
-
   private static void addEnvironmentProperties(Map<String, Object> properties) {
     for (Map.Entry<Object, Object> e : Utils.loadEnvironmentProperties(System.getenv()).entrySet()) {
       properties.put(e.getKey().toString(), e.getValue().toString());
@@ -365,7 +241,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Collection<File> getLibraries(SourceSet main) {
     List<File> libraries = main.getCompileClasspath().getFiles().stream().filter(File::exists)
-      .collect(Collectors.toList());
+        .collect(Collectors.toList());
 
     File runtimeJar = getRuntimeJar();
     if (runtimeJar != null) {
@@ -427,9 +303,9 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
     if (value instanceof Iterable<?>) {
       String joined = StreamSupport.stream(((Iterable<Object>) value).spliterator(), false)
-        .map(SonarQubePlugin::convertValue)
-        .filter(v -> v != null)
-        .collect(Collectors.joining(","));
+          .map(SonarQubePlugin::convertValue)
+          .filter(v -> v != null)
+          .collect(Collectors.joining(","));
       return joined.isEmpty() ? null : joined;
     } else {
       return value.toString();
@@ -440,6 +316,133 @@ public class SonarQubePlugin implements Plugin<Project> {
   public static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
     List<T> list = Collections.unmodifiableList(new ArrayList<>(collection));
     return list.isEmpty() ? null : list;
+  }
+
+  @Override
+  public void apply(Project project) {
+    targetProject = project;
+
+    final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
+    createTask(project, actionBroadcastMap);
+
+    ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
+    project.subprojects(p -> {
+      ActionBroadcast<SonarQubeProperties> action = addBroadcaster(actionBroadcastMap, p);
+      p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, action);
+    });
+    project.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
+  }
+
+  private SonarQubeTask createTask(final Project project, final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
+    SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
+    sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
+
+    ConventionMapping conventionMapping = new DslObject(sonarQubeTask).getConventionMapping();
+    conventionMapping.map("properties", () -> {
+      Map<String, Object> properties = new LinkedHashMap<>();
+      computeSonarProperties(project, properties, actionBroadcastMap, "");
+      return properties;
+    });
+
+    Callable<Iterable<? extends Task>> testTask = () -> project.getAllprojects().stream()
+        .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+        .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
+        .collect(Collectors.toList());
+    sonarQubeTask.dependsOn(testTask);
+
+    Callable<Iterable<? extends Task>> callable = () -> project.getAllprojects().stream()
+        .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+        .map(p -> {
+          BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
+          List<Task> allCompileTasks = new ArrayList<>();
+          boolean unitTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
+          boolean androidTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
+          // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
+          // that would lead to run main compile task several times
+          if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
+            addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
+          }
+          return allCompileTasks;
+        })
+        .flatMap(List::stream)
+        .collect(Collectors.toList());
+    sonarQubeTask.dependsOn(callable);
+    return sonarQubeTask;
+  }
+
+  private void computeSonarProperties(Project project, Map<String, Object> properties, Map<Project, ActionBroadcast<SonarQubeProperties>> sonarPropertiesActionBroadcastMap,
+                                      String prefix) {
+    SonarQubeExtension extension = project.getExtensions().getByType(SonarQubeExtension.class);
+    if (extension.isSkipProject()) {
+      return;
+    }
+
+    Map<String, Object> rawProperties = new LinkedHashMap<>();
+    addGradleDefaults(project, rawProperties);
+    if (isAndroidProject(project)) {
+      AndroidUtils.configureForAndroid(project, extension.getAndroidVariant(), rawProperties);
+    }
+
+    evaluateSonarPropertiesBlocks(sonarPropertiesActionBroadcastMap.get(project), rawProperties);
+    if (project.equals(targetProject)) {
+      addEnvironmentProperties(rawProperties);
+      addSystemProperties(rawProperties);
+    }
+
+    rawProperties.putIfAbsent(SONAR_SOURCES_PROP, "");
+
+    if (project.equals(targetProject)) {
+      rawProperties.putIfAbsent("sonar.projectKey", computeProjectKey());
+    } else {
+      String projectKey = (String) properties.get("sonar.projectKey");
+      rawProperties.put("sonar.moduleKey", projectKey + project.getPath());
+    }
+
+    convertProperties(rawProperties, prefix, properties);
+
+    List<Project> enabledChildProjects = project.getChildProjects().values().stream()
+        .filter(p -> !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+        .collect(Collectors.toList());
+
+    if (enabledChildProjects.isEmpty()) {
+      return;
+    }
+
+    List<String> moduleIds = new ArrayList<>();
+
+    for (Project childProject : enabledChildProjects) {
+      String moduleId = childProject.getPath();
+      moduleIds.add(moduleId);
+      String modulePrefix = (prefix.length() > 0) ? (prefix + "." + moduleId) : moduleId;
+      computeSonarProperties(childProject, properties, sonarPropertiesActionBroadcastMap, modulePrefix);
+    }
+    properties.put(convertKey("sonar.modules", prefix), moduleIds.stream().collect(Collectors.joining(",")));
+  }
+
+  private void addGradleDefaults(final Project project, final Map<String, Object> properties) {
+    properties.put("sonar.projectName", project.getName());
+    properties.put("sonar.projectDescription", project.getDescription());
+    properties.put("sonar.projectVersion", project.getVersion());
+    properties.put("sonar.projectBaseDir", project.getProjectDir());
+
+    if (project.equals(targetProject)) {
+      // Root project
+      properties.put("sonar.working.directory", new File(project.getBuildDir(), "sonar"));
+    }
+
+    configureForJava(project, properties);
+    configureForGroovy(project, properties);
+  }
+
+  private String computeProjectKey() {
+    Project rootProject = targetProject.getRootProject();
+    String rootProjectName = rootProject.getName();
+    String rootGroup = rootProject.getGroup().toString();
+    String rootKey = rootGroup.isEmpty() ? rootProjectName : (rootGroup + ":" + rootProjectName);
+    if (targetProject == rootProject) {
+      return rootKey;
+    }
+    return rootKey + targetProject.getPath();
   }
 
 }
