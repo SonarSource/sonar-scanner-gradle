@@ -272,10 +272,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
-    List<File> sourceDirectories = nonEmptyOrNull(main.getAllSource().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
+    List<File> sourceDirectories = nonEmptyOrNull(main.getAllJava().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
     properties.put(SONAR_SOURCES_PROP, sourceDirectories);
     SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
-    List<File> testDirectories = nonEmptyOrNull(test.getAllSource().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
+    List<File> testDirectories = nonEmptyOrNull(test.getAllJava().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
     properties.put(SONAR_TESTS_PROP, testDirectories);
 
     File mainClassDir = main.getOutput().getClassesDir();
