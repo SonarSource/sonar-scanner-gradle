@@ -29,6 +29,8 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("commons-io-2.5.jar");
+    // SONARGRADL-39
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains(baseDir.resolve("build/classes/main").toString());
   }
 
   @Test
