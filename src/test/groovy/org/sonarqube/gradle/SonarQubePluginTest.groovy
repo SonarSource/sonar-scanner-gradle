@@ -225,6 +225,7 @@ class SonarQubePluginTest extends Specification {
 
         then:
         properties["sonar.jacoco.reportPath"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
+        properties["sonar.jacoco.reportPaths"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
     }
 
     def "adds additional default properties for 'groovy' projects"() {
