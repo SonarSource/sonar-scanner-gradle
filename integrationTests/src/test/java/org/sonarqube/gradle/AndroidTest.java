@@ -147,7 +147,8 @@ public class AndroidTest extends AbstractGradleIT {
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
-    assertThat(props.getProperty(":app.sonar.moduleKey")).isEqualTo("com.test.app:multi-module-android-studio:app");
+    assertThat(props.getProperty("sonar.projectKey")).isEqualTo("com.test.app:app");
+    assertThat(props.getProperty(":app.sonar.moduleKey")).isEqualTo("com.test.app:app:app");
     assertThat(stream(props.getProperty(":app.sonar.sources").split(",")).map(Paths::get))
       .containsOnly(
         baseDir.resolve("app/src/main/java"),
