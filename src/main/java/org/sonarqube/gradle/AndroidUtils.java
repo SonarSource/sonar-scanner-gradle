@@ -192,7 +192,7 @@ class AndroidUtils {
       ArrayList::new,
       ArrayList::addAll,
       ArrayList::addAll);
-    List<File> sourcesOrTests = SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(SonarQubePlugin.FILE_EXISTS).collect(Collectors.toList()));
+    List<File> sourcesOrTests = SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(File::exists).collect(Collectors.toList()));
     if (sourcesOrTests != null) {
       SonarQubePlugin.appendProps(properties, isTest ? SonarQubePlugin.SONAR_TESTS_PROP : SonarQubePlugin.SONAR_SOURCES_PROP, sourcesOrTests);
     }

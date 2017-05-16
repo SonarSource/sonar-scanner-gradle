@@ -31,7 +31,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -64,8 +63,6 @@ import static java.util.Arrays.asList;
 public class SonarQubePlugin implements Plugin<Project> {
 
   private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
-  static final Predicate<File> FILE_EXISTS = File::exists;
-  private static final Predicate<File> IS_FILE = File::isFile;
   static final String SONAR_SOURCES_PROP = "sonar.sources";
   static final String SONAR_TESTS_PROP = "sonar.tests";
   static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
@@ -275,10 +272,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
-    List<File> sourceDirectories = nonEmptyOrNull(main.getAllSource().getSrcDirs().stream().filter(FILE_EXISTS).collect(Collectors.toList()));
+    List<File> sourceDirectories = nonEmptyOrNull(main.getAllSource().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
     properties.put(SONAR_SOURCES_PROP, sourceDirectories);
     SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
-    List<File> testDirectories = nonEmptyOrNull(test.getAllSource().getSrcDirs().stream().filter(FILE_EXISTS).collect(Collectors.toList()));
+    List<File> testDirectories = nonEmptyOrNull(test.getAllSource().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
     properties.put(SONAR_TESTS_PROP, testDirectories);
 
     File mainClassDir = main.getOutput().getClassesDir();
@@ -367,8 +364,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static Collection<File> getLibraries(SourceSet main) {
-    List<File> libraries = main.getCompileClasspath().getFiles().stream()
-      .filter(IS_FILE)
+    List<File> libraries = main.getCompileClasspath().getFiles().stream().filter(File::exists)
       .collect(Collectors.toList());
 
     File runtimeJar = getRuntimeJar();
@@ -396,7 +392,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
-
   }
 
   private static File getFxRuntimeJar() {
@@ -411,7 +406,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
-
   }
 
   private static void convertProperties(Map<String, Object> rawProperties, final String projectPrefix, final Map<String, Object> properties) {
