@@ -396,7 +396,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       rawProperties.putIfAbsent("sonar.projectKey", computeProjectKey());
     } else {
       String projectKey = (String) properties.get("sonar.projectKey");
-      rawProperties.put("sonar.moduleKey", projectKey + project.getPath());
+      rawProperties.putIfAbsent("sonar.moduleKey", projectKey + project.getPath());
     }
 
     convertProperties(rawProperties, prefix, properties);
