@@ -7,6 +7,9 @@ buildscript {
         maven {
 		      url "https://plugins.gradle.org/m2/"
 		    }
+        maven {
+            url "https://maven.google.com"
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:${androidGradle.version}'
@@ -24,6 +27,9 @@ apply plugin: "com.dorongold.task-tree"
 allprojects {
     repositories {
         jcenter()
+		    maven {
+		        url "https://maven.google.com"
+		    }
     }
 }
 

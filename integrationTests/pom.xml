@@ -9,11 +9,12 @@
   <inceptionYear>2015</inceptionYear>
 
   <properties>
+    <!-- Default version when running ITs on dev machines. Value overriden on cix.sh and .cix.yml -->
     <gradle.version>3.5</gradle.version>
-    <androidGradle.version>2.4.0-alpha7</androidGradle.version>
-    <androidBuildTools.version>25.0.1</androidBuildTools.version>
+    <androidBuildTools.version>25.0.3</androidBuildTools.version>
+    <androidGradle.version>2.3.2</androidGradle.version>
   </properties>
-
+  
   <build>
     <filters>
       <filter>../gradle.properties</filter>
@@ -94,6 +95,18 @@
           <scope>test</scope>
         </dependency>
       </dependencies>
+    </profile>
+    <profile>
+      <id>gradle2_14</id>
+      <activation>
+        <property>
+          <name>gradle.version</name>
+          <value>2.14.1</value>
+        </property>        
+      </activation>
+      <properties>
+        <androidGradle.version>2.2.3</androidGradle.version>
+      </properties>
     </profile>
   </profiles>
 </project>

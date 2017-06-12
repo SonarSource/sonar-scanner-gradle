@@ -9,66 +9,11 @@ import org.junit.Test;
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
-import static org.junit.Assume.assumeTrue;
 
 public class AndroidTest extends AbstractGradleIT {
 
   @Test
-  public void testAndroidProject2_1_3() throws Exception {
-    // android plugin 2.1.3 requires Gradle 2.14.1 but fails with Gradle 3
-    assumeTrue(getGradleVersion().startsWith("2.14"));
-
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.1.3");
-
-    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
-
-    assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
-    assertThat(stream(props.getProperty("sonar.sources").split(",")).map(Paths::get))
-      .containsOnly(
-        baseDir.resolve("src/main/java"),
-        baseDir.resolve("src/main/res"),
-        baseDir.resolve("src/main/AndroidManifest.xml"));
-    assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/debug"));
-    assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
-      .containsOnly(
-        baseDir.resolve("build/intermediates/classes/test/debug"),
-        baseDir.resolve("build/intermediates/classes/androidTest/debug"));
-    assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
-    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
-    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
-    assertThat(props.getProperty("sonar.java.source")).isEqualTo("1.7");
-    assertThat(props.getProperty("sonar.java.target")).isEqualTo("1.7");
-  }
-
-  @Test
-  public void testAndroidProjectJdk8Jack() throws Exception {
-    assumeGradle2_14_1_or_more();
-
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-jack");
-
-    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
-
-    assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
-    assertThat(stream(props.getProperty("sonar.sources").split(",")).map(Paths::get))
-      .containsOnly(
-        baseDir.resolve("src/main/java"),
-        baseDir.resolve("src/main/res"),
-        baseDir.resolve("src/main/AndroidManifest.xml"));
-    assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/debug"));
-    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/test/debug"));
-    assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
-    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
-    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
-    assertThat(props.getProperty("sonar.java.source")).isEqualTo("1.8");
-    assertThat(props.getProperty("sonar.java.target")).isEqualTo("1.8");
-  }
-
-  @Test
   public void testAndroidProjectJdk8Retrolambda() throws Exception {
-    assumeGradle2_14_1_or_more();
-
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-retrolambda");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -94,8 +39,6 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testUsingDefaultVariant() throws Exception {
-    assumeGradle2_14_1_or_more();
-
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-default-variant");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -119,8 +62,6 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testSpecifyVariant() throws Exception {
-    assumeGradle2_14_1_or_more();
-
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-nondefault-variant");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -141,8 +82,6 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testMultiModule() throws Exception {
-    assumeGradle2_14_1_or_more();
-
     Properties props = runGradlewSonarQubeSimulationMode("/multi-module-android-studio");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -172,8 +111,6 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testingBlueprint_default_flavor() throws Exception {
-    assumeGradle2_14_1_or_more();
-
     // First flavor that is picked up seems to be the flavor2
 
     Properties props = runGradlewSonarQubeSimulationMode("/AndroidTestingBlueprint");
@@ -238,16 +175,19 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(stream(props.getProperty(":module-plain-java.sonar.tests").split(",")).map(Paths::get))
       .containsOnly(
         baseDir.resolve("module-plain-java/src/test/java"));
-    assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/main"));
-    assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/test"));
+    if (getGradleVersion().startsWith("2.") || getGradleVersion().startsWith("3.")) {
+      assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/main"));
+      assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/test"));
+    } else {
+      assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/java/main"));
+      assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/java/test"));
+    }
     assertThat(props.getProperty(":module-plain-java.sonar.java.source")).isEqualTo("1.7");
     assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.7");
   }
 
   @Test
   public void testingBlueprint_task_dependencies() throws Exception {
-    assumeGradle2_14_1_or_more();
-
     // First flavor that is picked up seems to be the flavor2
 
     RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", Collections.emptyMap(), "sonarqube", "taskTree");
@@ -264,8 +204,6 @@ public class AndroidTest extends AbstractGradleIT {
   // SONARGRADL-22
   @Test
   public void noDebugVariant() throws Exception {
-    assumeGradle2_14_1_or_more();
-
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-no-debug");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -284,9 +222,4 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
   }
 
-  private void assumeGradle2_14_1_or_more() {
-    // android plugin 2.4.x requires Gradle 3.4.1
-    String gradleVersion = getGradleVersion();
-    assumeTrue(gradleVersion.startsWith("3.") || gradleVersion.startsWith("4."));
-  }
 }
