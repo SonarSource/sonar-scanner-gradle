@@ -10,7 +10,7 @@
 
   <properties>
     <!-- Default version when running ITs on dev machines. Value overriden on cix.sh and .cix.yml -->
-    <gradle.version>4.2.1</gradle.version>
+    <gradle.version>4.3.1</gradle.version>
     <androidGradle.version>3.0.0</androidGradle.version>
   </properties>
   
