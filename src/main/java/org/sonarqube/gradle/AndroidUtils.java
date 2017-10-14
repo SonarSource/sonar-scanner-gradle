@@ -208,7 +208,7 @@ class AndroidUtils {
 
     Set<File> libraries = new LinkedHashSet<>();
     libraries.addAll(bootClassPath);
-    // I don't know what is best: ApkVariant::getCompileLibraries() or BaseVariant::getJavaCompile()::getClasspath()
+    // I don't know what is best: ApkVariant::getCompileClasspath() or BaseVariant::getJavaCompile()::getClasspath()
     // In doubt I put both in a set to remove duplicates
     if (variant instanceof ApkVariant) {
       libraries.addAll(((ApkVariant) variant).getCompileClasspath(null).getFiles());
