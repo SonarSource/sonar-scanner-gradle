@@ -39,13 +39,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.gradle.api.Nullable;
+import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.tasks.compile.AbstractCompile;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Only access this class when running on an Android application
@@ -187,7 +186,6 @@ class AndroidUtils {
     }
   }
 
-  @NotNull
   private static void populateSonarQubeProps(Map<String, Object> properties, List<File> bootClassPath, BaseVariant variant, boolean isTest) {
     List<File> srcDirs = variant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
       ArrayList::new,
