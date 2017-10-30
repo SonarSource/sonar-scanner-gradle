@@ -158,7 +158,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(Paths.get(props.getProperty(":module-android-library.sonar.java.binaries"))).isEqualTo(baseDir.resolve("module-android-library/build/intermediates/classes/debug"));
     assertThat(stream(props.getProperty(":module-android-library.sonar.java.test.binaries").split(",")).map(Paths::get))
       .containsOnly(
-        baseDir.resolve("module-android-library/build/intermediates/classes/androidTest/debug"));
+        baseDir.resolve("module-android-library/build/intermediates/classes/androidTest/debug"),
+        baseDir.resolve("module-android-library/build/intermediates/classes/test/debug"));
     assertThat(props.getProperty(":module-android-library.sonar.java.source")).isEqualTo("1.7");
     assertThat(props.getProperty(":module-android-library.sonar.java.target")).isEqualTo("1.7");
 

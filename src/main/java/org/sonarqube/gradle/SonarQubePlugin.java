@@ -23,6 +23,7 @@ import com.android.build.gradle.api.BaseVariant;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,6 +52,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
+import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.Utils;
 
 import static java.util.Arrays.asList;
@@ -149,7 +151,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     // do not set a custom test reports path if it does not exists, otherwise SonarQube will emit an error
     // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
     if (testResultsDir.isDirectory()
-        && asList(testResultsDir.list()).stream().anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
+      && asList(testResultsDir.list()).stream().anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
       appendProp(properties, "sonar.junit.reportsPath", testResultsDir);
       // For backward compatibility
       appendProp(properties, "sonar.surefire.reportsPath", testResultsDir);
@@ -166,36 +168,44 @@ public class SonarQubePlugin implements Plugin<Project> {
     List<File> testDirectories = nonEmptyOrNull(test.getAllJava().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
     properties.put(SONAR_TESTS_PROP, testDirectories);
 
-    File mainClassDir = main.getOutput().getClassesDir();
+    Collection<File> mainClassDirs = getOutputDirs(main);
     Collection<File> mainLibraries = getLibraries(main);
-    setMainClasspathProps(properties, addForGroovy, mainClassDir, mainLibraries);
+    setMainClasspathProps(properties, addForGroovy, mainClassDirs, mainLibraries);
 
-    File testClassDir = test.getOutput().getClassesDir();
+    Collection<File> testClassDirs = getOutputDirs(test);
     Collection<File> testLibraries = getLibraries(test);
-    setTestClasspathProps(properties, testClassDir, testLibraries);
+    setTestClasspathProps(properties, testClassDirs, testLibraries);
 
     return sourceDirectories != null || testDirectories != null;
   }
 
-  static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, @Nullable File mainClassDir, Collection<File> mainLibraries) {
-    if (mainClassDir != null && mainClassDir.exists()) {
-      appendProp(properties, "sonar.java.binaries", mainClassDir);
-      if (addForGroovy) {
-        appendProp(properties, "sonar.groovy.binaries", mainClassDir);
-      }
-      // Populate deprecated properties for backward compatibility
-      appendProp(properties, "sonar.binaries", mainClassDir);
+  private static Collection<File> getOutputDirs(SourceSet sourceSet) {
+    Collection<File> result;
+    if (GradleVersion.version("4.0").compareTo(GradleVersion.current()) <= 0) {
+      result = sourceSet.getOutput().getClassesDirs().getFiles();
+    } else {
+      result = Arrays.asList(sourceSet.getOutput().getClassesDir());
     }
+    return result.stream().filter(File::exists).collect(Collectors.toList());
+  }
+
+  static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, Collection<File> mainClassDirs, Collection<File> mainLibraries) {
+    appendProps(properties, "sonar.java.binaries", mainClassDirs);
+    if (addForGroovy) {
+      appendProps(properties, "sonar.groovy.binaries", mainClassDirs);
+    }
+    // Populate deprecated properties for backward compatibility
+    appendProps(properties, "sonar.binaries", mainClassDirs);
 
     appendProps(properties, "sonar.java.libraries", mainLibraries);
     // Populate deprecated properties for backward compatibility
     appendProps(properties, "sonar.libraries", mainLibraries);
   }
 
-  static void appendProps(Map<String, Object> properties, String key, Iterable valuesToAppend) {
+  static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {
     properties.putIfAbsent(key, new LinkedHashSet<String>());
     StreamSupport.stream(valuesToAppend.spliterator(), false)
-        .forEach(v -> ((Collection<String>) properties.get(key)).add(v.toString()));
+      .forEach(v -> ((Collection<String>) properties.get(key)).add(v.toString()));
   }
 
   static void appendProp(Map<String, Object> properties, String key, Object valueToAppend) {
@@ -203,10 +213,8 @@ public class SonarQubePlugin implements Plugin<Project> {
     ((Collection<String>) properties.get(key)).add(valueToAppend.toString());
   }
 
-  static void setTestClasspathProps(Map<String, Object> properties, @Nullable File testClassDir, Collection<File> testLibraries) {
-    if (testClassDir != null && testClassDir.exists()) {
-      appendProp(properties, "sonar.java.test.binaries", testClassDir);
-    }
+  static void setTestClasspathProps(Map<String, Object> properties, Collection<File> testClassDirs, Collection<File> testLibraries) {
+    appendProps(properties, "sonar.java.test.binaries", testClassDirs);
     appendProps(properties, "sonar.java.test.libraries", testLibraries);
   }
 
@@ -242,7 +250,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Collection<File> getLibraries(SourceSet main) {
     List<File> libraries = main.getCompileClasspath().getFiles().stream().filter(File::exists)
-        .collect(Collectors.toList());
+      .collect(Collectors.toList());
 
     File runtimeJar = getRuntimeJar();
     if (runtimeJar != null) {
@@ -304,9 +312,9 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
     if (value instanceof Iterable<?>) {
       String joined = StreamSupport.stream(((Iterable<Object>) value).spliterator(), false)
-          .map(SonarQubePlugin::convertValue)
-          .filter(v -> v != null)
-          .collect(Collectors.joining(","));
+        .map(SonarQubePlugin::convertValue)
+        .filter(v -> v != null)
+        .collect(Collectors.joining(","));
       return joined.isEmpty() ? null : joined;
     } else {
       return value.toString();
@@ -346,33 +354,33 @@ public class SonarQubePlugin implements Plugin<Project> {
     });
 
     Callable<Iterable<? extends Task>> testTask = () -> project.getAllprojects().stream()
-        .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-        .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
-        .collect(Collectors.toList());
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
+      .collect(Collectors.toList());
     sonarQubeTask.dependsOn(testTask);
 
     Callable<Iterable<? extends Task>> callable = () -> project.getAllprojects().stream()
-        .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-        .map(p -> {
-          BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
-          List<Task> allCompileTasks = new ArrayList<>();
-          boolean unitTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
-          boolean androidTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
-          // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
-          // that would lead to run main compile task several times
-          if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
-            addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
-          }
-          return allCompileTasks;
-        })
-        .flatMap(List::stream)
-        .collect(Collectors.toList());
+      .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .map(p -> {
+        BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
+        List<Task> allCompileTasks = new ArrayList<>();
+        boolean unitTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
+        boolean androidTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
+        // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
+        // that would lead to run main compile task several times
+        if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
+          addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
+        }
+        return allCompileTasks;
+      })
+      .flatMap(List::stream)
+      .collect(Collectors.toList());
     sonarQubeTask.dependsOn(callable);
     return sonarQubeTask;
   }
 
   private void computeSonarProperties(Project project, Map<String, Object> properties, Map<Project, ActionBroadcast<SonarQubeProperties>> sonarPropertiesActionBroadcastMap,
-                                      String prefix) {
+    String prefix) {
     SonarQubeExtension extension = project.getExtensions().getByType(SonarQubeExtension.class);
     if (extension.isSkipProject()) {
       return;
@@ -402,8 +410,8 @@ public class SonarQubePlugin implements Plugin<Project> {
     convertProperties(rawProperties, prefix, properties);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
-        .filter(p -> !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
-        .collect(Collectors.toList());
+      .filter(p -> !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .collect(Collectors.toList());
 
     if (enabledChildProjects.isEmpty()) {
       return;
