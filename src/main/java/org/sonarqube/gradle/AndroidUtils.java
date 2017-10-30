@@ -33,6 +33,7 @@ import com.android.build.gradle.internal.api.TestedVariant;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -90,23 +91,17 @@ class AndroidUtils {
     PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
     if (!appPlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      if (androidExtension != null) {
-        return androidExtension.getBootClasspath();
-      }
+      return androidExtension.getBootClasspath();
     }
     PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
     if (!libPlugins.isEmpty()) {
       LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      if (androidExtension != null) {
-        return androidExtension.getBootClasspath();
-      }
+      return androidExtension.getBootClasspath();
     }
     PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
     if (!testPlugins.isEmpty()) {
       TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
-      if (androidExtension != null) {
-        return androidExtension.getBootClasspath();
-      }
+      return androidExtension.getBootClasspath();
     }
     return null;
   }
@@ -116,16 +111,12 @@ class AndroidUtils {
     PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
     if (!appPlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      if (androidExtension != null) {
-        return androidExtension.getTestBuildType();
-      }
+      return androidExtension.getTestBuildType();
     }
     PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
     if (!libPlugins.isEmpty()) {
       LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      if (androidExtension != null) {
-        return androidExtension.getTestBuildType();
-      }
+      return androidExtension.getTestBuildType();
     }
     return null;
   }
@@ -136,23 +127,17 @@ class AndroidUtils {
     PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
     if (!appPlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      if (androidExtension != null) {
-        return findVariant(androidExtension.getApplicationVariants().stream().collect(Collectors.toList()), testBuildType, userConfiguredBuildVariantName);
-      }
+      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
     }
     PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
     if (!libPlugins.isEmpty()) {
       LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      if (androidExtension != null) {
-        return findVariant(androidExtension.getLibraryVariants().stream().collect(Collectors.toList()), testBuildType, userConfiguredBuildVariantName);
-      }
+      return findVariant(new ArrayList<>(androidExtension.getLibraryVariants()), testBuildType, userConfiguredBuildVariantName);
     }
     PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
     if (!testPlugins.isEmpty()) {
       TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
-      if (androidExtension != null) {
-        return findVariant(androidExtension.getApplicationVariants().stream().collect(Collectors.toList()), testBuildType, userConfiguredBuildVariantName);
-      }
+      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
     }
     return null;
   }
@@ -166,13 +151,8 @@ class AndroidUtils {
       // Take first "test" buildType when there is no provided variant name
       // Release variant may be obfuscated using proguard. Also unit tests and coverage reports are usually collected in debug mode.
       Optional<BaseVariant> firstDebug = candidates.stream().filter(v -> testBuildType != null && testBuildType.equals(v.getBuildType().getName())).findFirst();
-      BaseVariant result;
-      if (firstDebug.isPresent()) {
-        result = firstDebug.get();
-      } else {
-        // No debug variant? Then use first variant whatever is the type
-        result = candidates.get(0);
-      }
+      // No debug variant? Then use first variant whatever is the type
+      BaseVariant result = firstDebug.orElse(candidates.get(0));
       LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.getName());
       return result;
     } else {
@@ -181,7 +161,7 @@ class AndroidUtils {
         return result.get();
       } else {
         throw new IllegalArgumentException("Unable to find variant '" + userConfiguredBuildVariantName +
-            "' to use for SonarQube analysis. Candidates are: " + candidates.stream().map(BaseVariant::getName).collect(Collectors.joining(", ")));
+          "' to use for SonarQube analysis. Candidates are: " + candidates.stream().map(BaseVariant::getName).collect(Collectors.joining(", ")));
       }
     }
   }
@@ -216,9 +196,9 @@ class AndroidUtils {
       libraries.addAll(javaCompiler.getClasspath().filter(File::exists).getFiles());
     }
     if (isTest) {
-      SonarQubePlugin.setTestClasspathProps(properties, javaCompiler != null ? javaCompiler.getDestinationDir() : null, libraries);
+      SonarQubePlugin.setTestClasspathProps(properties, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
     } else {
-      SonarQubePlugin.setMainClasspathProps(properties, false, javaCompiler != null ? javaCompiler.getDestinationDir() : null, libraries);
+      SonarQubePlugin.setMainClasspathProps(properties, false, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
     }
   }
 

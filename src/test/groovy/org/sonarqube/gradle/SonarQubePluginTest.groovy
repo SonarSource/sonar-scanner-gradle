@@ -23,7 +23,6 @@ import org.gradle.api.plugins.GroovyBasePlugin
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.internal.jvm.Jvm
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import spock.lang.Specification
@@ -180,11 +179,9 @@ class SonarQubePluginTest extends Specification {
 
         project.sourceSets.main.java.srcDirs = ["src"]
         project.sourceSets.test.java.srcDirs = ["test"]
-        project.sourceSets.main.output.classesDir = "$project.buildDir/out"
-        project.sourceSets.main.output.resourcesDir = "$project.buildDir/out"
+        project.sourceSets.main.java.outputDir = new File(project.buildDir, "out")
         project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
-        project.sourceSets.test.output.classesDir = "$project.buildDir/test-out"
-        project.sourceSets.test.output.resourcesDir = "$project.buildDir/test-out"
+        project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 
@@ -239,10 +236,9 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.main.groovy.srcDirs = ["src"]
         project.sourceSets.test.groovy.srcDirs = ["test"]
         project.sourceSets.main.output.classesDir = "$project.buildDir/out"
-        project.sourceSets.main.output.resourcesDir = "$project.buildDir/out"
+        project.sourceSets.main.java.outputDir = new File(project.buildDir, "out")
         project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
-        project.sourceSets.test.output.classesDir = "$project.buildDir/test-out"
-        project.sourceSets.test.output.resourcesDir = "$project.buildDir/test-out"
+        project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 
