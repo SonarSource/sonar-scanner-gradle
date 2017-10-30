@@ -160,8 +160,9 @@ public class SonarQubePlugin implements Plugin<Project> {
     // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
     if (testResultsDir.isDirectory()
       && asList(testResultsDir.list()).stream().anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
-      appendProp(properties, "sonar.junit.reportsPath", testResultsDir);
+      appendProp(properties, "sonar.junit.reportPaths", testResultsDir);
       // For backward compatibility
+      appendProp(properties, "sonar.junit.reportsPath", testResultsDir);
       appendProp(properties, "sonar.surefire.reportsPath", testResultsDir);
     }
   }

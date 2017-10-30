@@ -204,6 +204,7 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
         properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results/test") as String
         properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results/test") as String
+        properties["sonar.junit.reportPaths"] == new File(project.buildDir, "test-results/test") as String
         properties["sonar.sourceEncoding"] == "ISO-8859-1"
     }
 
@@ -288,6 +289,7 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
         properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results/test") as String
         properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results/test") as String
+        properties["sonar.junit.reportPaths"] == new File(project.buildDir, "test-results/test") as String
         properties["sonar.sourceEncoding"] == "ISO-8859-1"
     }
 
