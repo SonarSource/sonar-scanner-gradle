@@ -42,6 +42,8 @@ import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.ConventionMapping;
 import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -62,6 +64,8 @@ import static java.util.Arrays.asList;
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
  */
 public class SonarQubePlugin implements Plugin<Project> {
+
+  private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
   static final String SONAR_SOURCES_PROP = "sonar.sources";
   static final String SONAR_TESTS_PROP = "sonar.tests";
@@ -106,9 +110,13 @@ public class SonarQubePlugin implements Plugin<Project> {
       boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, false);
       if (hasSourceOrTest) {
         configureSourceEncoding(project, properties);
-        final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
-        configureTestReports(testTask, properties);
-        configureJaCoCoCoverageReport(testTask, false, project, properties);
+        Task testTask = project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
+        if (testTask instanceof Test) {
+          configureTestReports((Test) testTask, properties);
+          configureJaCoCoCoverageReport((Test) testTask, false, project, properties);
+        } else {
+          LOGGER.warn("Non standard test task: unable to automatically find test execution and coverage reports paths");
+        }
       }
     });
   }

@@ -225,6 +225,33 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.jacoco.reportPaths"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
     }
 
+    def "don't crash for 'java' projects if test task was overriden"() {
+        def rootProject = ProjectBuilder.builder().withName("root").build()
+        def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-project")).build()
+
+        project.pluginManager.apply(SonarQubePlugin)
+        project.pluginManager.apply(JavaPlugin)
+        project.pluginManager.apply(JacocoPlugin)
+
+        project.sourceSets.main.java.srcDirs = ["src"]
+
+        project.tasks.remove(project.tasks.findByPath('test'));
+        Map taskProperties = [
+                name: 'test',
+                type: FakeTask,
+                group: JavaBasePlugin.VERIFICATION_GROUP,
+                description: 'Runs unit tests with the randomized testing framework'
+        ]
+        FakeTask newTestTask = project.tasks.create(taskProperties)
+
+        when:
+        def properties = project.tasks.sonarqube.properties
+
+        then:
+        !properties.containsKey("sonar.junit.reportPaths")
+        !properties.containsKey("sonar.jacoco.reportPaths")
+    }
+
     def "adds additional default properties for 'groovy' projects"() {
         def rootProject = ProjectBuilder.builder().withName("root").build()
         def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-project")).build()
