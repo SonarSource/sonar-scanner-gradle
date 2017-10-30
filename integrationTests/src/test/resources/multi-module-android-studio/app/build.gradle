@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "${androidBuildTools.version}"
 
     defaultConfig {
         applicationId "com.example.test.myapplication"

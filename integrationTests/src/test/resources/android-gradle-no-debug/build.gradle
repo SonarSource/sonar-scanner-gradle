@@ -3,6 +3,9 @@ buildscript {
     mavenCentral()
     mavenLocal()
     jcenter()
+    maven {
+      url "https://maven.google.com"
+    }
   }
   dependencies {
     classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}'
@@ -25,7 +28,6 @@ dependencies {
 
 android {
   compileSdkVersion 23
-  buildToolsVersion "${androidBuildTools.version}"
   defaultConfig {
     jackOptions {
       enabled true

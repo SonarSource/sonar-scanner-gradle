@@ -11,7 +11,6 @@
   <properties>
     <!-- Default version when running ITs on dev machines. Value overriden on cix.sh and .cix.yml -->
     <gradle.version>4.2.1</gradle.version>
-    <androidBuildTools.version>26.0.1</androidBuildTools.version>
     <androidGradle.version>3.0.0</androidGradle.version>
   </properties>
   

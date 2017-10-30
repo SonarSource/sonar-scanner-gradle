@@ -181,7 +181,8 @@ class AndroidUtils {
       if (result.isPresent()) {
         return result.get();
       } else {
-        throw new IllegalArgumentException("Unable to find variant '" + userConfiguredBuildVariantName + "' to use for SonarQube configuration");
+        throw new IllegalArgumentException("Unable to find variant '" + userConfiguredBuildVariantName +
+            "' to use for SonarQube analysis. Candidates are: " + candidates.stream().map(BaseVariant::getName).collect(Collectors.joining(", ")));
       }
     }
   }
