@@ -2,7 +2,6 @@ apply plugin: 'com.android.test' // A plugin used for test-only-modules
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
@@ -12,12 +11,13 @@ android {
         testApplicationId 'com.example.android.testing.blueprint.test'
         // The Instrumentation test runner used to run tests.
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+
+        missingDimensionStrategy 'dim', 'flavor1', 'flavor2'
     }
 
     // Set the target app project. The module specified here should contain the production code
     // test should run against.
     targetProjectPath ':app'
-    targetVariant 'flavor1Debug'
 
     lintOptions {
         abortOnError false
@@ -26,7 +26,7 @@ android {
 
 dependencies {
     // Android Testing Support Library's runner and rules and hamcrest matchers
-    compile 'com.android.support.test:runner:' + rootProject.ext.runnerVersion
-    compile 'com.android.support.test:rules:' + rootProject.ext.rulesVersion
-    compile 'org.hamcrest:hamcrest-core:' + rootProject.ext.hamcrestVersion
+    implementation 'com.android.support.test:runner:' + rootProject.ext.runnerVersion
+    implementation 'com.android.support.test:rules:' + rootProject.ext.rulesVersion
+    implementation 'org.hamcrest:hamcrest-core:' + rootProject.ext.hamcrestVersion
 }

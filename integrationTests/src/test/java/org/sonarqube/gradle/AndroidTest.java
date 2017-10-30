@@ -4,13 +4,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Properties;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
+import static org.junit.Assume.assumeFalse;
 
 public class AndroidTest extends AbstractGradleIT {
+
+  @BeforeClass
+  public static void verifyGradleVersion() {
+    assumeFalse(getGradleVersion().startsWith("2.") || getGradleVersion().startsWith("3."));
+  }
 
   @Test
   public void testAndroidProjectJdk8Retrolambda() throws Exception {
@@ -50,11 +57,11 @@ public class AndroidTest extends AbstractGradleIT {
         baseDir.resolve("src/main/res"),
         baseDir.resolve("src/main/AndroidManifest.xml"));
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/demo/debug"));
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/demoMinApi23/debug"));
     assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
       .containsOnly(
-        baseDir.resolve("build/intermediates/classes/test/demo/debug"),
-        baseDir.resolve("build/intermediates/classes/androidTest/demo/debug")); // WHY ???
+        baseDir.resolve("build/intermediates/classes/test/demoMinApi23/debug"),
+        baseDir.resolve("build/intermediates/classes/androidTest/demoMinApi23/debug")); // WHY ???
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
@@ -73,8 +80,8 @@ public class AndroidTest extends AbstractGradleIT {
         baseDir.resolve("src/main/res"),
         baseDir.resolve("src/main/AndroidManifest.xml"));
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/full/release"));
-    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/test/full/release"));
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/fullMinApi23/release"));
+    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/test/fullMinApi23/release"));
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");

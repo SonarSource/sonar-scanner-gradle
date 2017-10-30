@@ -28,20 +28,29 @@ dependencies {
 
 android {
   compileSdkVersion 23
-  buildToolsVersion "${androidBuildTools.version}"
   buildTypes {
     release {
       testCoverageEnabled true
     }
   }
+  flavorDimensions "tier", "minApi"
   productFlavors {
     demo {
       applicationId "com.example.myapp.demo"
       versionName "1.0-demo"
+      dimension "tier"
     }
     full {
       applicationId "com.example.myapp.full"
       versionName "1.0-full"
+      dimension "tier"
+    }
+    minApi23 {
+      dimension "minApi"
+    }
+
+    minApi18 {
+      dimension "minApi"
     }
   }
 }
@@ -51,6 +60,6 @@ sonarqube {
         property "sonar.projectName", "Simple Android Gradle Project"
         property "sonar.projectKey", "org.sonarqube:example-android-gradle"
     }
-    androidVariant 'fullRelease'
+    androidVariant 'fullMinApi23Release'
 }
 

@@ -42,9 +42,8 @@ ext {
     minSdkVersion = 10
     targetSdkVersion = 25
     compileSdkVersion = 25
-    buildToolsVersion = "${androidBuildTools.version}"
 
-    supportLibVersion = "${androidBuildTools.version}"
+    supportLibVersion = "26.0.2"
     junitVersion = "4.12"
     mockitoVersion = "1.10.19"
     hamcrestVersion = "1.3"
