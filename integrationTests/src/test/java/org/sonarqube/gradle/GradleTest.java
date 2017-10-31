@@ -100,8 +100,10 @@ public class GradleTest extends AbstractGradleIT {
 
     if (getGradleVersion().startsWith("3.") || getGradleVersion().startsWith("4.")) {
       assertThat(Paths.get(props.getProperty("sonar.junit.reportsPath"))).isEqualTo(baseDir.resolve("build/test-results/test"));
+      assertThat(Paths.get(props.getProperty("sonar.junit.reportPaths"))).isEqualTo(baseDir.resolve("build/test-results/test"));
     } else {
       assertThat(Paths.get(props.getProperty("sonar.junit.reportsPath"))).isEqualTo(baseDir.resolve("build/test-results"));
+      assertThat(Paths.get(props.getProperty("sonar.junit.reportPaths"))).isEqualTo(baseDir.resolve("build/test-results"));
     }
     assertThat(Paths.get(props.getProperty("sonar.groovy.jacoco.reportPath"))).isEqualTo(baseDir.resolve("build/jacoco/test.exec"));
     assertThat(Paths.get(props.getProperty("sonar.jacoco.reportPath"))).isEqualTo(baseDir.resolve("build/jacoco/test.exec"));
@@ -179,6 +181,7 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(testResultsDir).doesNotExist();
     assertThat(props.getProperty("sonar.junit.reportsPath")).isNull();
+    assertThat(props.getProperty("sonar.junit.reportPaths")).isNull();
   }
 
   @Test
@@ -188,5 +191,6 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(testResultsDir).exists();
     assertThat(props.getProperty("sonar.junit.reportsPath")).isNull();
+    assertThat(props.getProperty("sonar.junit.reportPaths")).isNull();
   }
 }
