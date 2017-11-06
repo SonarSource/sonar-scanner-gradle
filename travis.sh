@@ -37,27 +37,24 @@ function prepareBuildVersion {
 
 
 if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-  strongEcho 'Build and analyze commit in master and publish in artifactory'
+  strongEcho 'Build, deploy and analyze master'
   # this commit is master must be built and analyzed (with upload of report)
+
+  git fetch --unshallow || true
 
   prepareBuildVersion
   ./gradlew build check sonarqube artifactory \
       -Dsonar.projectVersion=$CURRENT_VERSION \
       -Dsonar.host.url=$SONAR_HOST_URL \
-      -Dsonar.login=$SONAR_TOKEN
+      -Dsonar.login=$SONAR_TOKEN \
+      -Dsonar.analysis.buildNumber=$TRAVIS_BUILD_NUMBER \
+      -Dsonar.analysis.pipeline=$TRAVIS_BUILD_NUMBER \
+      -Dsonar.analysis.sha1=$TRAVIS_COMMIT  \
+      -Dsonar.analysis.repository=$TRAVIS_REPO_SLUG
 
-elif [[ "${TRAVIS_BRANCH}" == "branch-"* ]] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-  strongEcho 'Build and publish in artifactory'
-  prepareBuildVersion
-
-  #build and deploy - no dory analysis on release branch
-  ./gradlew build check artifactory 
 
 elif [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_SECURE_ENV_VARS" == "true" ]; then
-  strongEcho 'Build and analyze pull request'  
-
-  if [ "${DEPLOY_PULL_REQUEST:-}" == "true" ]; then
-    echo '======= with deploy'
+  strongEcho 'Build and analyze pull request with deploy'
 
     prepareBuildVersion
     ./gradlew build check sonarqube artifactory \
@@ -68,17 +65,17 @@ elif [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_SECURE_ENV_VARS" == "tr
       -Dsonar.host.url=$SONAR_HOST_URL \
       -Dsonar.login=$SONAR_TOKEN
 
-  else
-    echo '======= no deploy'                                                                                                                            
-
     ./gradlew build check sonarqube \
-      -Dsonar.analysis.mode=issues \
-      -Dsonar.github.pullRequest=$TRAVIS_PULL_REQUEST \
-      -Dsonar.github.repository=$TRAVIS_REPO_SLUG \
-      -Dsonar.github.oauth=$GITHUB_TOKEN \
       -Dsonar.host.url=$SONAR_HOST_URL \
-      -Dsonar.login=$SONAR_TOKEN
-  fi
+      -Dsonar.login=$SONAR_TOKEN \
+      -Dsonar.analysis.buildNumber=$TRAVIS_BUILD_NUMBER \
+      -Dsonar.analysis.pipeline=$TRAVIS_BUILD_NUMBER \
+      -Dsonar.analysis.sha1=$TRAVIS_PULL_REQUEST_SHA  \
+      -Dsonar.analysis.repository=$TRAVIS_REPO_SLUG \
+      -Dsonar.analysis.prNumber=$TRAVIS_PULL_REQUEST \
+      -Dsonar.branch.name=$TRAVIS_PULL_REQUEST_BRANCH \
+      -Dsonar.branch.target=$TRAVIS_BRANCH
+
 else
   strongEcho 'Build, no analysis'
   # Build branch, without any analysis
