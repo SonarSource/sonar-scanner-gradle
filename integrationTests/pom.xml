@@ -95,17 +95,5 @@
         </dependency>
       </dependencies>
     </profile>
-    <profile>
-      <id>gradle2_14</id>
-      <activation>
-        <property>
-          <name>gradle.version</name>
-          <value>2.14.1</value>
-        </property>        
-      </activation>
-      <properties>
-        <androidGradle.version>2.2.3</androidGradle.version>
-      </properties>
-    </profile>
   </profiles>
 </project>
