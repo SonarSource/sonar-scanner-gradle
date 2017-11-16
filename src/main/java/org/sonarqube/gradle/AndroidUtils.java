@@ -32,7 +32,10 @@ import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -46,6 +49,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.tasks.compile.AbstractCompile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Only access this class when running on an Android application
@@ -190,7 +194,7 @@ class AndroidUtils {
     // I don't know what is best: ApkVariant::getCompileClasspath() or BaseVariant::getJavaCompile()::getClasspath()
     // In doubt I put both in a set to remove duplicates
     if (variant instanceof ApkVariant) {
-      libraries.addAll(((ApkVariant) variant).getCompileClasspath(null).getFiles());
+      libraries.addAll(getLibraries((ApkVariant) variant));
     }
     if (javaCompiler != null) {
       libraries.addAll(javaCompiler.getClasspath().filter(File::exists).getFiles());
@@ -199,6 +203,18 @@ class AndroidUtils {
       SonarQubePlugin.setTestClasspathProps(properties, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
     } else {
       SonarQubePlugin.setMainClasspathProps(properties, false, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
+    }
+  }
+
+  @NotNull
+  private static Collection<File> getLibraries(ApkVariant variant) {
+    try {
+      Method methodOnAndroidBefore30 = variant.getClass().getMethod("getCompileLibraries");
+      return (Set<File>) methodOnAndroidBefore30.invoke(variant, null);
+    } catch (NoSuchMethodException e) {
+      return variant.getCompileClasspath(null).getFiles();
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new IllegalArgumentException("Unable to call getCompileLibraries", e);
     }
   }
 

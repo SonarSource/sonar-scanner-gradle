@@ -20,6 +20,29 @@ public class AndroidTest extends AbstractGradleIT {
   }
 
   @Test
+  public void testAndroid2_3_3() throws Exception {
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-2.3.3");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle"));
+    assertThat(stream(props.getProperty("sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("src/main/java"),
+        baseDir.resolve("src/main/res"),
+        baseDir.resolve("src/main/AndroidManifest.xml"));
+    assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/classes/demoMinApi23/debug"));
+    assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("build/intermediates/classes/test/demoMinApi23/debug"),
+        baseDir.resolve("build/intermediates/classes/androidTest/demoMinApi23/debug")); // WHY ???
+    assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
+    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
+  }
+
+  @Test
   public void testAndroidProjectJdk8Retrolambda() throws Exception {
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-retrolambda");
 
