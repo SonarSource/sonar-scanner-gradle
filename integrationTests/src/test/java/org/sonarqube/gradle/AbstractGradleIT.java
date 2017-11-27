@@ -41,6 +41,7 @@ public abstract class AbstractGradleIT {
   public TemporaryFolder temp = new TemporaryFolder();
 
   private static String gradleVersion;
+
   static {
     try {
       gradleVersion = IOUtils.toString(AbstractGradleIT.class.getResource("/gradleversion.txt"), StandardCharsets.UTF_8);
@@ -49,21 +50,21 @@ public abstract class AbstractGradleIT {
     }
   }
 
-  protected static String getGradleVersion() {
-    return gradleVersion;
-  }
-
   protected Properties runGradlewSonarQubeSimulationMode(String project) throws Exception {
     return runGradlewSonarQubeSimulationModeWithEnv(project, Collections.emptyMap());
   }
 
   protected Properties runGradlewSonarQubeSimulationModeWithEnv(String project, Map<String, String> env, String... args) throws Exception {
+    return runGradlewSonarQubeSimulationModeWithEnv(project, null, env, args);
+  }
+
+  protected Properties runGradlewSonarQubeSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File out = temp.newFile();
     String[] newArgs = Stream.concat(
       Stream.of("-Dsonar.scanner.dumpToFile=" + out.getAbsolutePath()),
       Arrays.stream(args))
       .toArray(String[]::new);
-    runGradlewSonarQubeWithEnv(project, env, newArgs);
+    runGradlewSonarQubeWithEnv(project, exeRelativePath, env, newArgs);
 
     Properties props = new Properties();
     try (FileReader fr = new FileReader(out)) {
@@ -73,7 +74,12 @@ public abstract class AbstractGradleIT {
   }
 
   protected RunResult runGradlewSonarQubeWithEnv(String project, Map<String, String> env, String... args) throws Exception {
-    RunResult result = runGradlewSonarQubeWithEnvQuietly(project, env, args);
+    return runGradlewSonarQubeWithEnv(project, null, env, args);
+  }
+
+  protected RunResult runGradlewSonarQubeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
+    RunResult result = runGradlewSonarQubeWithEnvQuietly(project, exeRelativePath, env, args);
+    System.out.println(result.getLog());
     if (result.exitValue != 0) {
       throw new RuntimeException(result.log);
     }
@@ -81,13 +87,17 @@ public abstract class AbstractGradleIT {
   }
 
   protected RunResult runGradlewSonarQubeWithEnvQuietly(String project, Map<String, String> env, String... args) throws Exception {
+    return runGradlewSonarQubeWithEnvQuietly(project, null, env, args);
+  }
+
+  protected RunResult runGradlewSonarQubeWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     List<String> newArgs = new ArrayList<>(args.length + 1);
     newArgs.addAll(Arrays.asList(args));
     newArgs.add("sonarqube");
-    return runGradlewWithEnvQuietly(project, env, newArgs.toArray(new String[args.length + 1]));
+    return runGradlewWithEnvQuietly(project, exeRelativePath, env, newArgs.toArray(new String[args.length + 1]));
   }
 
-  protected RunResult runGradlewWithEnvQuietly(String project, Map<String, String> env, String... args) throws Exception {
+  protected RunResult runGradlewWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File projectBaseDir = new File(this.getClass().getResource(project).toURI());
     File tempProjectDir = temp.newFolder(project);
     File outputFile = temp.newFile();
@@ -100,10 +110,14 @@ public abstract class AbstractGradleIT {
     }
     command.addAll(Arrays.asList("gradlew", "--stacktrace", "--no-daemon"));
     command.addAll(Arrays.asList(args));
+    File exeDir = tempProjectDir;
+    if (exeRelativePath != null) {
+      exeDir = new File(exeDir, exeRelativePath);
+    }
     ProcessBuilder pb = new ProcessBuilder(command)
-        .directory(tempProjectDir)
-        .redirectOutput(outputFile)
-        .redirectErrorStream(true);
+      .directory(exeDir)
+      .redirectOutput(outputFile)
+      .redirectErrorStream(true);
     pb.environment().put("GRADLE_OPTS", "-Xmx1024m");
     pb.environment().putAll(env);
     Process p = pb.start();

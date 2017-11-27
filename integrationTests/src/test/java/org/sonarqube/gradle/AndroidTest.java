@@ -225,7 +225,7 @@ public class AndroidTest extends AbstractGradleIT {
   public void testingBlueprint_task_dependencies() throws Exception {
     // First flavor that is picked up seems to be the flavor2
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", Collections.emptyMap(), "sonarqube", "taskTree", "--max-workers=1");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", null, Collections.emptyMap(), "sonarqube", "taskTree", "--max-workers=1");
 
     assertThat(result.getLog().split("\\r?\\n")).containsSubsequence(":sonarqube",
       "+--- :app:compileFlavor2DebugAndroidTestJavaWithJavac",

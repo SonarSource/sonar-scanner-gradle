@@ -22,8 +22,8 @@ package org.sonarqube.gradle;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +52,6 @@ import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.Utils;
 
-import static java.util.Arrays.asList;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.exists;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
@@ -80,6 +79,9 @@ public class SonarPropertyComputer {
   public Map<String, Object> computeSonarProperties() {
     Map<String, Object> properties = new LinkedHashMap<>();
     computeSonarProperties(targetProject, properties, "");
+    if (properties.containsKey("sonar.projectBaseDir")) {
+      properties.put("sonar.projectBaseDir", SonarUtils.findProjectBaseDir(properties));
+    }
     return properties;
   }
 
@@ -131,7 +133,6 @@ public class SonarPropertyComputer {
       return;
     }
 
-
     List<String> moduleIds = new ArrayList<>();
 
     for (Project childProject : enabledChildProjects) {
@@ -140,7 +141,7 @@ public class SonarPropertyComputer {
       String modulePrefix = (prefix.length() > 0) ? (prefix + "." + moduleId) : moduleId;
       computeSonarProperties(childProject, properties, modulePrefix);
     }
-    properties.put(convertKey("sonar.modules", prefix), moduleIds.stream().collect(Collectors.joining(",")));
+    properties.put(convertKey("sonar.modules", prefix), String.join(",", moduleIds));
   }
 
   private static void evaluateSonarPropertiesBlocks(ActionBroadcast<? super SonarQubeProperties> propertiesActions, Map<String, Object> properties) {
@@ -274,7 +275,7 @@ public class SonarPropertyComputer {
     // do not set a custom test reports path if it does not exists, otherwise SonarQube will emit an error
     // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
     if (testResultsDir.isDirectory()
-      && asList(testResultsDir.list()).stream().anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
+      && Arrays.stream(testResultsDir.list()).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
       appendProp(properties, "sonar.junit.reportPaths", testResultsDir);
       // For backward compatibility
       appendProp(properties, "sonar.junit.reportsPath", testResultsDir);

@@ -174,6 +174,15 @@ public class GradleTest extends AbstractGradleIT {
 
   }
 
+  /**
+   * SONARGRADL-48
+   */
+  @Test
+  public void testFlatProjectStructure() throws Exception {
+    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/multi-module-flat", "build", Collections.emptyMap());
+    assertThat(Paths.get(props.getProperty("sonar.projectBaseDir")).getFileName().toString()).isEqualTo("multi-module-flat");
+  }
+
   @Test
   public void testJavaProjectWithoutTestsDoesNotSetCustomReportsPath() throws Exception {
     Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-no-tests");
