@@ -20,6 +20,8 @@
 package org.sonarqube.gradle;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,6 +41,34 @@ public class SonarUtils {
 
   static String capitalize(final String word) {
     return Character.toUpperCase(word.charAt(0)) + word.substring(1);
+  }
+
+  static String findProjectBaseDir(Map<String, Object> properties) {
+    Path rootBaseDir = Paths.get(properties.get("sonar.projectBaseDir").toString()).toAbsolutePath().normalize();
+
+    List<Path> allProjectsBaseDir = properties.entrySet().stream()
+      .filter(e -> e.getKey().endsWith(".projectBaseDir"))
+      .map(e -> Paths.get(e.getValue().toString()))
+      .collect(Collectors.toList());
+
+    for (Path baseDir : allProjectsBaseDir) {
+      Path normalizedBaseDir = baseDir.toAbsolutePath().normalize();
+
+      if (!normalizedBaseDir.getRoot().equals(rootBaseDir.getRoot())) {
+        continue;
+      }
+
+      if (!normalizedBaseDir.startsWith(rootBaseDir)) {
+        int c1 = normalizedBaseDir.getNameCount();
+        int c2 = rootBaseDir.getNameCount();
+        Path newBaseDir = rootBaseDir.getRoot();
+        for (int i = 0; i < c1 && i < c2 && normalizedBaseDir.getName(i).equals(rootBaseDir.getName(i)); i++) {
+          newBaseDir = newBaseDir.resolve(rootBaseDir.getName(i));
+        }
+        rootBaseDir = newBaseDir;
+      }
+    }
+    return rootBaseDir.toString();
   }
 
   static void setTestClasspathProps(Map<String, Object> properties, Collection<File> testClassDirs, Collection<File> testLibraries) {
