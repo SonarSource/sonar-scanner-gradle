@@ -23,7 +23,6 @@ import com.android.build.gradle.api.BaseVariant;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -193,22 +193,22 @@ public class SonarQubePlugin implements Plugin<Project> {
     if (GradleVersion.version("4.0").compareTo(GradleVersion.current()) <= 0) {
       result = sourceSet.getOutput().getClassesDirs().getFiles();
     } else {
-      result = Arrays.asList(sourceSet.getOutput().getClassesDir());
+      result = Collections.singletonList(sourceSet.getOutput().getClassesDir());
     }
-    return result.stream().filter(File::exists).collect(Collectors.toList());
+    return exists(result);
   }
 
   static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, Collection<File> mainClassDirs, Collection<File> mainLibraries) {
-    appendProps(properties, "sonar.java.binaries", mainClassDirs);
+    appendProps(properties, "sonar.java.binaries", exists(mainClassDirs));
     if (addForGroovy) {
-      appendProps(properties, "sonar.groovy.binaries", mainClassDirs);
+      appendProps(properties, "sonar.groovy.binaries", exists(mainClassDirs));
     }
     // Populate deprecated properties for backward compatibility
-    appendProps(properties, "sonar.binaries", mainClassDirs);
+    appendProps(properties, "sonar.binaries", exists(mainClassDirs));
 
-    appendProps(properties, "sonar.java.libraries", mainLibraries);
+    appendProps(properties, "sonar.java.libraries", exists(mainLibraries));
     // Populate deprecated properties for backward compatibility
-    appendProps(properties, "sonar.libraries", mainLibraries);
+    appendProps(properties, "sonar.libraries", exists(mainLibraries));
   }
 
   static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {
@@ -223,8 +223,12 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   static void setTestClasspathProps(Map<String, Object> properties, Collection<File> testClassDirs, Collection<File> testLibraries) {
-    appendProps(properties, "sonar.java.test.binaries", testClassDirs);
-    appendProps(properties, "sonar.java.test.libraries", testLibraries);
+    appendProps(properties, "sonar.java.test.binaries", exists(testClassDirs));
+    appendProps(properties, "sonar.java.test.libraries", exists(testLibraries));
+  }
+
+  private static List<File> exists(Collection<File> files) {
+    return files.stream().filter(File::exists).collect(Collectors.toList());
   }
 
   private static void configureSourceEncoding(Project project, final Map<String, Object> properties) {
@@ -258,8 +262,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static Collection<File> getLibraries(SourceSet main) {
-    List<File> libraries = main.getCompileClasspath().getFiles().stream().filter(File::exists)
-      .collect(Collectors.toList());
+    List<File> libraries = exists(main.getCompileClasspath().getFiles());
 
     File runtimeJar = getRuntimeJar();
     if (runtimeJar != null) {
@@ -322,7 +325,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     if (value instanceof Iterable<?>) {
       String joined = StreamSupport.stream(((Iterable<Object>) value).spliterator(), false)
         .map(SonarQubePlugin::convertValue)
-        .filter(v -> v != null)
+        .filter(Objects::nonNull)
         .collect(Collectors.joining(","));
       return joined.isEmpty() ? null : joined;
     } else {
