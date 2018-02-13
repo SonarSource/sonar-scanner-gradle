@@ -110,13 +110,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, false);
       if (hasSourceOrTest) {
         configureSourceEncoding(project, properties);
-        Task testTask = project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
-        if (testTask instanceof Test) {
-          configureTestReports((Test) testTask, properties);
-          configureJaCoCoCoverageReport((Test) testTask, false, project, properties);
-        } else {
-          LOGGER.warn("Non standard test task: unable to automatically find test execution and coverage reports paths");
-        }
+        extractTestProperties(project, properties, false);
       }
     });
   }
@@ -132,11 +126,19 @@ public class SonarQubePlugin implements Plugin<Project> {
       boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, true);
       if (hasSourceOrTest) {
         configureSourceEncoding(project, properties);
-        final Test testTask = (Test) project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
-        configureTestReports(testTask, properties);
-        configureJaCoCoCoverageReport(testTask, true, project, properties);
+        extractTestProperties(project, properties, true);
       }
     });
+  }
+
+  private static void extractTestProperties(Project project, Map<String, Object> properties, boolean addForGroovy) {
+    Task testTask = project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
+    if (testTask instanceof Test) {
+      configureTestReports((Test) testTask, properties);
+      configureJaCoCoCoverageReport((Test) testTask, addForGroovy, project, properties);
+    } else {
+      LOGGER.warn("Non standard test task: unable to automatically find test execution and coverage reports paths");
+    }
   }
 
   private static void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
@@ -451,8 +453,12 @@ public class SonarQubePlugin implements Plugin<Project> {
       properties.put("sonar.working.directory", new File(project.getBuildDir(), "sonar"));
     }
 
-    configureForJava(project, properties);
-    configureForGroovy(project, properties);
+    if (project.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
+      // Groovy extends the Java plugin, so no need to configure twice
+      configureForGroovy(project, properties);
+    } else {
+      configureForJava(project, properties);
+    }
   }
 
   private String computeProjectKey() {
