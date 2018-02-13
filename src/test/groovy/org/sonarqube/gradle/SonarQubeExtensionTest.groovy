@@ -1,6 +1,6 @@
 /*
- * SonarQube Gradle Plugin
- * Copyright (C) 2015-2017 SonarSource
+ * SonarQube Scanner for Gradle
+ * Copyright (C) 2015-2018 SonarSource
  * sonarqube@googlegroups.com
  *
  * This program is free software; you can redistribute it and/or
