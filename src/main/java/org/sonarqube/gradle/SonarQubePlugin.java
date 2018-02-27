@@ -100,7 +100,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static boolean isAndroidProject(Project project) {
-    return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.library") || project.getPlugins().hasPlugin("com.android.test");
+    return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.feature") || project.getPlugins().hasPlugin("com.android.library") || project.getPlugins().hasPlugin("com.android.test");
   }
 
   private static void configureForJava(final Project project, final Map<String, Object> properties) {
