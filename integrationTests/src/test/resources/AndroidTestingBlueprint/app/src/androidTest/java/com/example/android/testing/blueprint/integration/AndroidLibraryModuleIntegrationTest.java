@@ -24,6 +24,7 @@ import android.test.suitebuilder.annotation.MediumTest;
 
 import com.example.android.testing.blueprint.R;
 import com.example.android.testing.blueprint.androidlibrarymodule.AndroidLibraryModuleClass;
+import com.example.android.testing.blueprint.androidfeaturemodule.AndroidFeatureModuleClass;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -82,5 +83,17 @@ public class AndroidLibraryModuleIntegrationTest {
     public void verifyClassFromLibrary() {
         AndroidLibraryModuleClass libraryModuleInstance = new AndroidLibraryModuleClass();
         assertThat(libraryModuleInstance.isReady(), is(true));
+    }
+
+    @Test
+    public void verifyResourceFromFeature() {
+        assertThat(mContext.getString(R.string.feature_module_hello_world),
+                is(equalTo("Hello from an Android feature module!")));
+    }
+
+    @Test
+    public void verifyClassFromFeature() {
+        AndroidFeatureModuleClass featureModuleInstance = new AndroidFeatureModuleClass();
+        assertThat(featureModuleInstance.isReady(), is(true));
     }
 }
