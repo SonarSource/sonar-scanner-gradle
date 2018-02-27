@@ -33,7 +33,8 @@ import org.gradle.api.Project;
 
 public class SonarUtils {
   static boolean isAndroidProject(Project project) {
-    return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.library") || project.getPlugins().hasPlugin("com.android.test");
+    return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.library")
+      || project.getPlugins().hasPlugin("com.android.test") || project.getPlugins().hasPlugin("com.android.feature");
   }
 
   static String capitalize(final String word) {
