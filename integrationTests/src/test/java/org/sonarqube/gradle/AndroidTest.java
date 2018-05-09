@@ -204,6 +204,22 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":module-android-library.sonar.java.source")).isEqualTo("1.7");
     assertThat(props.getProperty(":module-android-library.sonar.java.target")).isEqualTo("1.7");
 
+    // Feature module has no local tests
+    assertThat(stream(props.getProperty(":module-android-feature.sonar.sources").split(",")).map(Paths::get))
+            .containsOnly(
+                    baseDir.resolve("module-android-feature/src/main/java"),
+                    baseDir.resolve("module-android-feature/src/main/res"),
+                    baseDir.resolve("module-android-feature/src/main/AndroidManifest.xml"));
+    assertThat(stream(props.getProperty(":module-android-feature.sonar.tests").split(",")).map(Paths::get))
+            .containsOnly(
+                    baseDir.resolve("module-android-feature/src/androidTest/java"));
+    assertThat(Paths.get(props.getProperty(":module-android-feature.sonar.java.binaries"))).isEqualTo(baseDir.resolve("module-android-feature/build/intermediates/classes/debug"));
+    assertThat(stream(props.getProperty(":module-android-feature.sonar.java.test.binaries").split(",")).map(Paths::get))
+            .containsOnly(
+                    baseDir.resolve("module-android-feature/build/intermediates/classes/androidTest/debug"));
+    assertThat(props.getProperty(":module-android-feature.sonar.java.source")).isEqualTo("1.7");
+    assertThat(props.getProperty(":module-android-feature.sonar.java.target")).isEqualTo("1.7");
+
     // test only module
     assertThat(props.getProperty(":module-flavor1-androidTest-only.sonar.sources")).isEmpty();
     assertThat(stream(props.getProperty(":module-flavor1-androidTest-only.sonar.tests").split(",")).map(Paths::get))

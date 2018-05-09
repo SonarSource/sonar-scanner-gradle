@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.example.android.testing.blueprint.androidlibrarymodule.AndroidLibraryModuleClass;
+import com.example.android.testing.blueprint.androidlibrarymodule.AndroidFeatureModuleClass;
 import com.example.android.testing.blueprint.plainjavamodule.MyPlainJavaClass;
 
 /**
@@ -39,6 +40,9 @@ public class HelloTestingBlueprintActivity extends AppCompatActivity {
     // Instance of a class in an android library module.
     private AndroidLibraryModuleClass mAndroidLibraryClassInstance;
 
+    // Instance of a class in an android feature module.
+    private AndroidFeatureModuleClass mAndroidFeatureClassInstance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +54,7 @@ public class HelloTestingBlueprintActivity extends AppCompatActivity {
     }
 
     public void onClick(View view) {
-        if (mPlainJavaClassInstance.isReady() && mAndroidLibraryClassInstance.isReady()) {
+        if (mPlainJavaClassInstance.isReady() && mAndroidLibraryClassInstance.isReady() && mAndroidFeatureClassInstance.isReady()) {
             mAndroidTestingRocksTextView.setText(getString(R.string.android_testing_rocks));
         }
     }
