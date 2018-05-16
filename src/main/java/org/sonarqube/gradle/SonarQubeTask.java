@@ -31,7 +31,6 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.sonarsource.scanner.api.EmbeddedScanner;
 import org.sonarsource.scanner.api.LogOutput;
@@ -50,7 +49,7 @@ public class SonarQubeTask extends DefaultTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
 
-  public static final LogOutput LOG_OUTPUT = new DefaultLogOutput();
+  private static final LogOutput LOG_OUTPUT = new DefaultLogOutput();
 
   private static class DefaultLogOutput implements LogOutput {
     @Override public void log(String formattedMessage, Level level) {
@@ -100,7 +99,6 @@ public class SonarQubeTask extends DefaultTask {
     scanner.stop();
   }
 
-  @Internal
   private String getPluginVersion() {
     InputStream inputStream = this.getClass().getResourceAsStream("/version.txt");
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
