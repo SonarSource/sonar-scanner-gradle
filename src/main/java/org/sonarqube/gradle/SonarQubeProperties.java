@@ -19,7 +19,6 @@
  */
 package org.sonarqube.gradle;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,7 +33,7 @@ import java.util.Map;
  */
 public class SonarQubeProperties {
 
-  private Map<String, Object> properties = new LinkedHashMap<>();
+  private Map<String, Object> properties;
 
   public SonarQubeProperties(Map<String, Object> properties) {
     this.properties = properties;

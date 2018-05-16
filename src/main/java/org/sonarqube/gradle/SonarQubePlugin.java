@@ -60,7 +60,7 @@ import org.sonarsource.scanner.api.Utils;
 import static java.util.Arrays.asList;
 
 /**
- * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Runner</a>.
+ * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Scanner</a>.
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
  */
 public class SonarQubePlugin implements Plugin<Project> {
@@ -320,7 +320,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return projectPrefix.isEmpty() ? key : (projectPrefix + "." + key);
   }
 
-  private static String convertValue(Object value) {
+  private static String convertValue(@Nullable Object value) {
     if (value == null) {
       return null;
     }
@@ -336,7 +336,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   @Nullable
-  public static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
+  static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
     List<T> list = Collections.unmodifiableList(new ArrayList<>(collection));
     return list.isEmpty() ? null : list;
   }

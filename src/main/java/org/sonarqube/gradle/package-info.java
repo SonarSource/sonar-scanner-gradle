@@ -22,4 +22,7 @@
  * <p>
  * Please see <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">Analyzing with Gradle</a>
  */
+@ParametersAreNonnullByDefault
 package org.sonarqube.gradle;
+
+import javax.annotation.ParametersAreNonnullByDefault;

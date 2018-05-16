@@ -189,8 +189,7 @@ class AndroidUtils {
       properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, javaCompiler.getTargetCompatibility());
     }
 
-    Set<File> libraries = new LinkedHashSet<>();
-    libraries.addAll(bootClassPath);
+    Set<File> libraries = new LinkedHashSet<>(bootClassPath);
     // I don't know what is best: ApkVariant::getCompileClasspath() or BaseVariant::getJavaCompile()::getClasspath()
     // In doubt I put both in a set to remove duplicates
     if (variant instanceof ApkVariant) {
@@ -210,7 +209,7 @@ class AndroidUtils {
   private static Collection<File> getLibraries(ApkVariant variant) {
     try {
       Method methodOnAndroidBefore30 = variant.getClass().getMethod("getCompileLibraries");
-      return (Set<File>) methodOnAndroidBefore30.invoke(variant, null);
+      return (Set<File>) methodOnAndroidBefore30.invoke(variant, (Object[]) null);
     } catch (NoSuchMethodException e) {
       return variant.getCompileClasspath(null).getFiles();
     } catch (IllegalAccessException | InvocationTargetException e) {
