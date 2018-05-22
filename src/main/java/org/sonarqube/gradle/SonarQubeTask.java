@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
-import org.gradle.api.DefaultTask;
+import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
@@ -45,7 +45,7 @@ import org.sonarsource.scanner.api.ScanProperties;
  * For more information on how to configure the SonarQube Scanner, and on which properties are available, see the
  * <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner documentation</a>.
  */
-public class SonarQubeTask extends DefaultTask {
+public class SonarQubeTask extends ConventionTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
 
