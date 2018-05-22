@@ -51,6 +51,15 @@ import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.jetbrains.annotations.NotNull;
 
+import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_JAVA_SOURCE_PROP;
+import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_JAVA_TARGET_PROP;
+import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
+import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
+import static org.sonarqube.gradle.SonarUtils.appendProps;
+import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
+import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
+import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
+
 /**
  * Only access this class when running on an Android application
  */
@@ -91,7 +100,7 @@ class AndroidUtils {
   }
 
   @Nullable
-  static List<File> getBootClasspath(Project project) {
+  private static List<File> getBootClasspath(Project project) {
     PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
     if (!appPlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
@@ -111,7 +120,7 @@ class AndroidUtils {
   }
 
   @Nullable
-  static String getTestBuildType(Project project) {
+  private static String getTestBuildType(Project project) {
     PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
     if (!appPlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
@@ -147,7 +156,7 @@ class AndroidUtils {
   }
 
   @Nullable
-  static BaseVariant findVariant(List<BaseVariant> candidates, @Nullable String testBuildType, @Nullable String userConfiguredBuildVariantName) {
+  private static BaseVariant findVariant(List<BaseVariant> candidates, @Nullable String testBuildType, @Nullable String userConfiguredBuildVariantName) {
     if (candidates.isEmpty()) {
       return null;
     }
@@ -175,9 +184,9 @@ class AndroidUtils {
       ArrayList::new,
       ArrayList::addAll,
       ArrayList::addAll);
-    List<File> sourcesOrTests = SonarQubePlugin.nonEmptyOrNull(srcDirs.stream().filter(File::exists).collect(Collectors.toList()));
+    List<File> sourcesOrTests = nonEmptyOrNull(srcDirs.stream().filter(File::exists).collect(Collectors.toList()));
     if (sourcesOrTests != null) {
-      SonarQubePlugin.appendProps(properties, isTest ? SonarQubePlugin.SONAR_TESTS_PROP : SonarQubePlugin.SONAR_SOURCES_PROP, sourcesOrTests);
+      appendProps(properties, isTest ? SONAR_TESTS_PROP : SONAR_SOURCES_PROP, sourcesOrTests);
     }
 
     AbstractCompile javaCompiler = getJavaCompiler(variant);
@@ -185,8 +194,8 @@ class AndroidUtils {
       LOGGER.warn("Unable to find Java compiler on variant '{}'. Is Jack toolchain used? SonarQube analysis will be less accurate without bytecode.", variant.getName());
     }
     if (javaCompiler != null) {
-      properties.put(SonarQubePlugin.SONAR_JAVA_SOURCE_PROP, javaCompiler.getSourceCompatibility());
-      properties.put(SonarQubePlugin.SONAR_JAVA_TARGET_PROP, javaCompiler.getTargetCompatibility());
+      properties.put(SONAR_JAVA_SOURCE_PROP, javaCompiler.getSourceCompatibility());
+      properties.put(SONAR_JAVA_TARGET_PROP, javaCompiler.getTargetCompatibility());
     }
 
     Set<File> libraries = new LinkedHashSet<>(bootClassPath);
@@ -199,9 +208,9 @@ class AndroidUtils {
       libraries.addAll(javaCompiler.getClasspath().filter(File::exists).getFiles());
     }
     if (isTest) {
-      SonarQubePlugin.setTestClasspathProps(properties, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
+      setTestClasspathProps(properties, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
     } else {
-      SonarQubePlugin.setMainClasspathProps(properties, false, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
+      setMainClasspathProps(properties, false, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
     }
   }
 
