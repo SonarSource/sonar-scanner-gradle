@@ -81,13 +81,18 @@ public class SonarQubeTask extends ConventionTask {
   public void run() {
     Map<String, Object> properties = getProperties();
 
+   // if (properties.isEmpty()) {
+   //   LOGGER.warn("Skipping SonarQube analysis: no properties configured, was it skipped in all projects?");
+    //  return;
+    //}
+
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
     if (LOGGER.isDebugEnabled()) {
       propertiesObject.put("sonar.verbose", "true");
     }
 
-    if (isSkip(propertiesObject)) {
+    if (isSkippedWithProperty(propertiesObject)) {
       return;
     }
 
@@ -109,7 +114,7 @@ public class SonarQubeTask extends ConventionTask {
     return "";
   }
 
-  private static boolean isSkip(Properties properties) {
+  private static boolean isSkippedWithProperty(Properties properties) {
     if ("true".equalsIgnoreCase(properties.getProperty(ScanProperties.SKIP))) {
       LOGGER.warn("SonarQube Scanner analysis skipped");
       return true;

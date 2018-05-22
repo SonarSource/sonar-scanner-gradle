@@ -60,8 +60,29 @@ class SonarQubePluginTest extends Specification {
         childProject.extensions.findByName("sonarqube") instanceof SonarQubeExtension
     }
 
+    def "adds a sonarqube extension to each project once in multimodule projects"() {
+        when:
+        parentProject.allprojects { pluginManager.apply(SonarQubePlugin) }
+
+        then:
+        rootProject.extensions.findByName("sonarqube") == null
+        parentProject.extensions.findByName("sonarqube") instanceof SonarQubeExtension
+        childProject.extensions.findByName("sonarqube") instanceof SonarQubeExtension
+    }
+
     def "adds a sonarqube task to the target project"() {
         expect:
+        parentProject.tasks.findByName("sonarqube") instanceof SonarQubeTask
+        parentSonarQubeTask().description == "Analyzes project ':parent' and its subprojects with SonarQube."
+
+        childProject.tasks.findByName("sonarqube") == null
+    }
+
+    def "adds a sonarqube task once in multimodule projects"() {
+        when:
+        parentProject.allprojects { pluginManager.apply(SonarQubePlugin) }
+
+        then:
         parentProject.tasks.findByName("sonarqube") instanceof SonarQubeTask
         parentSonarQubeTask().description == "Analyzes project ':parent' and its subprojects with SonarQube."
 

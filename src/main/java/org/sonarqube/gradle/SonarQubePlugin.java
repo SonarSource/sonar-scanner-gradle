@@ -2,14 +2,17 @@
  * SonarQube Scanner for Gradle
  * Copyright (C) 2015-2018 SonarSource
  * sonarqube@googlegroups.com
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3 of the License, or (at your option) any later version.
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
@@ -61,15 +64,20 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   @Override
   public void apply(Project project) {
-    LOGGER.debug("Adding " + SonarQubeExtension.SONARQUBE_EXTENSION_NAME + " extension to " + project);
-    addExtensions(project);
-    SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
-    sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
-    configureTask(sonarQubeTask, project);
+    // don't try to see if the task was added to any project in the hierarchy. It will try to resolve recursively the configuration of all the projects, failing
+    // if a project has a sonarqube configuration since the extension wasn't added to it yet.
+    if (project.getExtensions().findByName(SonarQubeExtension.SONARQUBE_EXTENSION_NAME) == null) {
+      addExtensions(project);
+      LOGGER.debug("Adding " + SonarQubeExtension.SONARQUBE_TASK_NAME + " task to " + project);
+      SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
+      sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
+      configureTask(sonarQubeTask, project);
+    }
   }
 
   private void addExtensions(Project project) {
     project.allprojects(p -> {
+      LOGGER.debug("Adding " + SonarQubeExtension.SONARQUBE_EXTENSION_NAME + " extension to " + p);
       ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(p);
       p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
     });
@@ -77,6 +85,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private void configureTask(SonarQubeTask sonarQubeTask, Project project) {
     ConventionMapping conventionMapping = sonarQubeTask.getConventionMapping();
+    // this will call the SonarPropertyComputer to populate the properties of the task just before running it
     conventionMapping.map("properties", () -> new SonarPropertyComputer(actionBroadcastMap, project)
       .computeSonarProperties());
 
