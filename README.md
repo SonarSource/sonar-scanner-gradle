@@ -8,6 +8,43 @@ http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Grad
 
 ## Developer documentation
 
+### How the plugin works
+When the plugin is applied to a project, it will add to that project the SonarQube task. It will also add to the project and all it's subprojects the SonarQube extension.
+For multi-module projects, the plugin will only apply to the first project where it gets called. The goal is to allow the usage of `allprojects {}`, for example.
+
+**SonarQube extension**
+The `sonarqube` extension enables a easy configuration of a project with the DSL.
+
+**SonarQube task**
+The SonarQube task has the name `sonarqube`, so it can be executing by calling `./gradlew sonarqube`. It collects information from the project and all its subprojects, generating the properties for the analysis. Then, it runs the SonarQube analysis using all those properties.
+The task depends on all compile and test tasks of all projects (except for skipped projects).
+If all projects are skipped (by adding `skipProject=true` to the sonarqube DSL), the analysis won't execute.
+
+  
+
+
+### Using the plugin directly in a project (no need to build/install it in advance)
+
+In the target project, apply as usual:
+```
+apply plugin: 'org.sonarqube'
+```
+
+Run with:
+```
+./gradlew sonarqube --include-build /path/to/sonar-scanner-gradle
+```
+
+### Debugging the plugin
+See the previous point about including the plugin's build when building a target project.
+To debug, simple add the parameter:
+```
+./gradlew sonarqube --include-build /path/to/sonar-scanner-gradle -Dorg.gradle.debug=true
+```
+
+Now debug remotely by connecting to port 5005.
+
+
 ### Install a SNAPSHOT in local Maven repository
 
     ./gradlew install
