@@ -78,6 +78,17 @@ class SonarQubePluginTest extends Specification {
         childProject.tasks.findByName("sonarqube") == null
     }
 
+    def "skipping all projects does nothing"() {
+        when:
+        parentProject.allprojects { sonarqube { skipProject = true } }
+        parentSonarQubeTask().run()
+        def properties = parentSonarQubeTask().properties
+
+        then:
+        noExceptionThrown()
+        properties.isEmpty()
+    }
+
     def "adds a sonarqube task once in multimodule projects"() {
         when:
         parentProject.allprojects { pluginManager.apply(SonarQubePlugin) }

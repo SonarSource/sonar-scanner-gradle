@@ -81,10 +81,10 @@ public class SonarQubeTask extends ConventionTask {
   public void run() {
     Map<String, Object> properties = getProperties();
 
-   // if (properties.isEmpty()) {
-   //   LOGGER.warn("Skipping SonarQube analysis: no properties configured, was it skipped in all projects?");
-    //  return;
-    //}
+    if (properties.isEmpty()) {
+      LOGGER.warn("Skipping SonarQube analysis: no properties configured, was it skipped in all projects?");
+      return;
+    }
 
     Properties propertiesObject = new Properties();
     propertiesObject.putAll(properties);
