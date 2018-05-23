@@ -117,6 +117,14 @@ public class SonarPropertyComputer {
       .filter(p -> !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
       .collect(Collectors.toList());
 
+    List<Project> skippedChildProjects = project.getChildProjects().values().stream()
+      .filter(p -> p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .collect(Collectors.toList());
+
+    if (!skippedChildProjects.isEmpty()) {
+      LOGGER.debug("Skipping collecting SonarQube properties on: " + skippedChildProjects.toArray(new Project[0]));
+    }
+
     if (enabledChildProjects.isEmpty()) {
       return;
     }
