@@ -40,8 +40,8 @@ taskTree{
 
 ext {
     minSdkVersion = 10
-    targetSdkVersion = 25
-    compileSdkVersion = 25
+    targetSdkVersion = 26
+    compileSdkVersion = 26
 
     supportLibVersion = "26.0.2"
     junitVersion = "4.12"

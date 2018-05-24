@@ -22,7 +22,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.example.android.testing.blueprint.androidlibrarymodule.AndroidLibraryModuleClass;
-import com.example.android.testing.blueprint.androidlibrarymodule.AndroidFeatureModuleClass;
+import com.example.android.testing.blueprint.androidfeaturemodule.AndroidFeatureModuleClass;
 import com.example.android.testing.blueprint.plainjavamodule.MyPlainJavaClass;
 
 /**
