@@ -6,6 +6,8 @@
 
 http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle
 
+Need help or want to report a bug/suggest a new feature? Check out the [SonarSource Community Forum](https://community.sonarsource.com/).
+
 ## Developer documentation
 
 ### How the plugin works
