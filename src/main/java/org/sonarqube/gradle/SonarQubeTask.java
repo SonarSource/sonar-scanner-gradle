@@ -24,9 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Properties;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -75,33 +75,29 @@ public class SonarQubeTask extends ConventionTask {
     }
   }
 
-  private Map<String, Object> sonarProperties;
+  private Map<String, String> sonarProperties;
 
   @TaskAction
   public void run() {
-    Map<String, Object> properties = getProperties();
+    Map<String, String> properties = getProperties();
 
     if (properties.isEmpty()) {
       LOGGER.warn("Skipping SonarQube analysis: no properties configured, was it skipped in all projects?");
       return;
     }
 
-    Properties propertiesObject = new Properties();
-    propertiesObject.putAll(properties);
     if (LOGGER.isDebugEnabled()) {
-      propertiesObject.put("sonar.verbose", "true");
+      properties.put("sonar.verbose", "true");
     }
 
-    if (isSkippedWithProperty(propertiesObject)) {
+    if (isSkippedWithProperty(properties)) {
       return;
     }
 
-    EmbeddedScanner scanner = EmbeddedScanner.create(LOG_OUTPUT)
-      .setApp("ScannerGradle", getPluginVersion() + "/" + getProject().getGradle().getGradleVersion())
-      .addGlobalProperties(propertiesObject);
+    EmbeddedScanner scanner = EmbeddedScanner.create("ScannerGradle", getPluginVersion() + "/" + getProject().getGradle().getGradleVersion(), LOG_OUTPUT)
+      .addGlobalProperties(properties);
     scanner.start();
-    scanner.runAnalysis(propertiesObject);
-    scanner.stop();
+    scanner.execute(new HashMap<>());
   }
 
   private String getPluginVersion() {
@@ -114,8 +110,8 @@ public class SonarQubeTask extends ConventionTask {
     return "";
   }
 
-  private static boolean isSkippedWithProperty(Properties properties) {
-    if ("true".equalsIgnoreCase(properties.getProperty(ScanProperties.SKIP))) {
+  private static boolean isSkippedWithProperty(Map<String, String> properties) {
+    if ("true".equalsIgnoreCase(properties.getOrDefault(ScanProperties.SKIP, "false"))) {
       LOGGER.warn("SonarQube Scanner analysis skipped");
       return true;
     }
@@ -127,7 +123,7 @@ public class SonarQubeTask extends ConventionTask {
    * {@code null} values are not permitted.
    */
   @Input
-  public Map<String, Object> getProperties() {
+  public Map<String, String> getProperties() {
     if (sonarProperties == null) {
       sonarProperties = new LinkedHashMap<>();
     }
