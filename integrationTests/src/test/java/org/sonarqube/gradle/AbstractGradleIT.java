@@ -58,7 +58,7 @@ public abstract class AbstractGradleIT {
 
   protected Properties runGradlewSonarQubeSimulationModeWithEnv(String project, Map<String, String> env) throws Exception {
     File out = temp.newFile();
-    runGradlewSonarQubeWithEnv(project, env, "-DsonarRunner.dumpToFile=" + out.getAbsolutePath());
+    runGradlewSonarQubeWithEnv(project, env, "-Dsonar.scanner.dumpToFile=" + out.getAbsolutePath());
 
     Properties props = new Properties();
     try (FileReader fr = new FileReader(out)) {
