@@ -90,6 +90,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       .computeSonarProperties());
 
     Callable<Iterable<? extends Task>> testTasks = () -> project.getAllprojects().stream()
+      .filter(p -> !project.getExtensions().getByType(SonarQubeExtension.class).isSkipTests())
       .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
       .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
       .collect(Collectors.toList());

@@ -59,6 +59,7 @@ public class SonarQubeExtension {
   private boolean skipProject;
   private final ActionBroadcast<SonarQubeProperties> propertiesActions;
   private String androidVariant;
+  private boolean skipTests;
 
   public SonarQubeExtension(ActionBroadcast<SonarQubeProperties> propertiesActions) {
     this.propertiesActions = propertiesActions;
@@ -107,5 +108,13 @@ public class SonarQubeExtension {
 
   public void setAndroidVariant(String androidVariant) {
     this.androidVariant = androidVariant;
+  }
+
+  public boolean isSkipTests() {
+    return skipTests;
+  }
+
+  public void setSkipTests(boolean skipTests) {
+    this.skipTests = skipTests;
   }
 }

@@ -29,6 +29,7 @@ import spock.lang.Specification
 
 import static org.hamcrest.Matchers.contains
 import static org.hamcrest.Matchers.containsInAnyOrder
+import static org.hamcrest.Matchers.not
 import static spock.util.matcher.HamcrestSupport.expect
 
 class SonarQubePluginTest extends Specification {
@@ -98,6 +99,18 @@ class SonarQubePluginTest extends Specification {
         parentSonarQubeTask().description == "Analyzes project ':parent' and its subprojects with SonarQube."
 
         childProject.tasks.findByName("sonarqube") == null
+    }
+
+    def "doesn't make sonarqube task depend on test tasks when skipTests is true"() {
+        when:
+        rootProject.pluginManager.apply(JavaPlugin)
+        parentProject.pluginManager.apply(JavaPlugin)
+        childProject.pluginManager.apply(JavaPlugin)
+        parentProject.sonarqube.skipTests = true
+
+        then:
+        expect(parentSonarQubeTask(), TaskDependencyMatchers.dependsOnPaths(not(contains(":parent:test"))))
+        expect(parentSonarQubeTask(), TaskDependencyMatchers.dependsOnPaths(not(contains(":parent:child:test"))))
     }
 
     def "makes sonarqube task depend on test tasks of the target project and its subprojects"() {
