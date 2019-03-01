@@ -48,7 +48,9 @@ import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginCollection;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.compile.AbstractCompile;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.jetbrains.annotations.NotNull;
 
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_JAVA_SOURCE_PROP;
@@ -228,7 +230,8 @@ class AndroidUtils {
 
   @Nullable
   private static AbstractCompile getJavaCompiler(BaseVariant variant) {
-    return variant.getJavaCompile();
+    TaskProvider<JavaCompile> taskProvider = variant.getJavaCompileProvider();
+    return taskProvider != null ? taskProvider.get() : null;
   }
 
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
