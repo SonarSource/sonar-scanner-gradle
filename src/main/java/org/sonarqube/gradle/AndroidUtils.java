@@ -230,8 +230,15 @@ class AndroidUtils {
 
   @Nullable
   private static AbstractCompile getJavaCompiler(BaseVariant variant) {
-    TaskProvider<JavaCompile> taskProvider = variant.getJavaCompileProvider();
-    return taskProvider != null ? taskProvider.get() : null;
+    try {
+      Method methodOnAndroidBefore33 = variant.getClass().getMethod("getJavaCompile");
+      return (AbstractCompile) methodOnAndroidBefore33.invoke(variant);
+    } catch (NoSuchMethodException e) {
+      TaskProvider<JavaCompile> taskProvider = variant.getJavaCompileProvider();
+      return taskProvider != null ? taskProvider.get() : null;
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new IllegalArgumentException("Unable to call getJavaCompile", e);
+    }
   }
 
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
