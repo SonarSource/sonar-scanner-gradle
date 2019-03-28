@@ -45,11 +45,11 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 public class SonarQubePlugin implements Plugin<Project> {
 
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
-  private static final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
+  private static final Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
 
   private ActionBroadcast<SonarQubeProperties> addBroadcaster(Project project) {
     ActionBroadcast<SonarQubeProperties> actionBroadcast = new ActionBroadcast<>();
-    actionBroadcastMap.put(project, actionBroadcast);
+    actionBroadcastMap.put(project.getPath(), actionBroadcast);
     return actionBroadcast;
   }
 
