@@ -67,10 +67,10 @@ public class SonarPropertyComputer {
   static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
   static final String SONAR_JAVA_TARGET_PROP = "sonar.java.target";
 
-  private final Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap;
+  private final Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap;
   private final Project targetProject;
 
-  public SonarPropertyComputer(Map<Project, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project targetProject) {
+  public SonarPropertyComputer(Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project targetProject) {
     this.actionBroadcastMap = actionBroadcastMap;
     this.targetProject = targetProject;
   }
@@ -93,7 +93,7 @@ public class SonarPropertyComputer {
       AndroidUtils.configureForAndroid(project, extension.getAndroidVariant(), rawProperties);
     }
 
-    ActionBroadcast<SonarQubeProperties> actionBroadcast = actionBroadcastMap.get(project);
+    ActionBroadcast<SonarQubeProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
     if (actionBroadcast != null) {
       evaluateSonarPropertiesBlocks(actionBroadcast, rawProperties);
     }
