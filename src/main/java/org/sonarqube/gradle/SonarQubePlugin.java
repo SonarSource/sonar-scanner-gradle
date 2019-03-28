@@ -72,6 +72,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
       sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
       configureTask(sonarQubeTask, project);
+      project.getGradle().buildFinished(p -> actionBroadcastMap.clear());
     }
   }
 
