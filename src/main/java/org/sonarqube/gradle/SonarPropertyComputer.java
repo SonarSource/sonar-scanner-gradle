@@ -42,11 +42,13 @@ import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.reporting.SingleFileReport;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
+import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.Utils;
 
@@ -243,6 +245,16 @@ public class SonarPropertyComputer {
   }
 
   private static void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
+    project.getTasks().withType(JacocoReport.class, jacocoReportTask -> {
+      SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
+      if (xmlReport.isEnabled() && xmlReport.getDestination().exists()) {
+        appendProp(properties, "sonar.coverage.jacoco.xmlReportPaths", xmlReport.getDestination());
+      } else {
+        LOGGER.info("JaCoCo report task detected, but XML report is not enabled or it was not produced. " +
+          "Coverage for this task will not be reported.");
+      }
+    });
+    // for backward compatibility we are also setting properties used by SonarJava's JaCoCo sensor
     project.getPlugins().withType(JacocoPlugin.class, jacocoPlugin -> {
       JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
       File destinationFile = jacocoTaskExtension.getDestinationFile();
