@@ -36,6 +36,17 @@ javadoc {
   options.encoding = 'UTF-8'
 }
 
+ext {
+  buildNumber = System.getProperty("buildNumber")
+  artifactsToPublish = ''
+  artifactsToDownload = ''
+}
+// Replaces the version defined in sources, usually x.y-SNAPSHOT, by a version identifying the build.
+if (version.endsWith('-SNAPSHOT') && ext.buildNumber != null) {
+  def versionSuffix = (version.toString().count('.') == 1 ? ".0.${ext.buildNumber}" : ".${ext.buildNumber}")
+  version = version.replace('-SNAPSHOT', versionSuffix)
+}
+
 repositories {
   jcenter()
   mavenLocal()
@@ -140,16 +151,26 @@ artifactory {
     }
     defaults {
       properties = [
-        'vcs.revision': (System.getenv('GIT_COMMIT') ?: System.getenv('TRAVIS_COMMIT')),
-        'vcs.branch': (System.getenv('GIT_BRANCH') ?: System.getenv('TRAVIS_BRANCH')),
         'build.name': 'sonar-scanner-gradle',
-        'build.number': (System.getenv('BUILD_ID') ?: System.getenv('TRAVIS_BUILD_NUMBER'))
+        'build.number': System.getenv('BUILD_NUMBER'),
+        'pr.branch.target': System.getenv('PULL_REQUEST_BRANCH_TARGET'),
+        'pr.number': System.getenv('PULL_REQUEST_NUMBER'),
+        'vcs.branch': System.getenv('GIT_BRANCH'),
+        'vcs.revision': System.getenv('GIT_COMMIT'),
+        'version': version
       ]
       publishConfigs('archives', 'published')
       publishPom = true // Publish generated POM files to Artifactory (true by default)
       publishIvy = false // Publish generated Ivy descriptor files to Artifactory (true by default)
     }
-  }  
+  }
+  clientConfig.info.setBuildName('sonar-scanner-gradle')
+  clientConfig.info.setBuildNumber(System.getenv('BUILD_NUMBER'))
+  // Define the artifacts to be deployed to https://binaries.sonarsource.com on releases
+  clientConfig.info.addEnvironmentProperty('ARTIFACTS_TO_PUBLISH', artifactsToPublish)
+  clientConfig.info.addEnvironmentProperty('ARTIFACTS_TO_DOWNLOAD', artifactsToDownload)
+  // The name of this variable is important because it's used by the delivery process when extracting version from Artifactory build info.
+  clientConfig.info.addEnvironmentProperty('PROJECT_VERSION', "${version}")
 }
 
 bintray {
