@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import org.gradle.BuildAdapter;
+import org.gradle.BuildResult;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -72,7 +74,12 @@ public class SonarQubePlugin implements Plugin<Project> {
       SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
       sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
       configureTask(sonarQubeTask, project);
-      project.getGradle().buildFinished(p -> actionBroadcastMap.clear());
+      project.getGradle().addBuildListener(new BuildAdapter() {
+        @Override
+        public void buildFinished(BuildResult result) {
+          actionBroadcastMap.clear();
+        }
+      });
     }
   }
 
