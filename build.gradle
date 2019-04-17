@@ -4,7 +4,7 @@
 plugins {
   id "com.gradle.plugin-publish" version "0.9.9"
   // Eat your own dog food :)
-  id "org.sonarqube" version "2.6.2"
+  id "org.sonarqube" version "2.7"
   id "com.jfrog.artifactory" version "4.5.4"
   id "com.github.hierynomus.license" version "0.14.0"
   id "net.researchgate.release" version "2.6.0"
