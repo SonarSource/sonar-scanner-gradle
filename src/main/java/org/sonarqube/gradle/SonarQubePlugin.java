@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import org.gradle.BuildAdapter;
-import org.gradle.BuildResult;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -45,11 +43,9 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
  */
 public class SonarQubePlugin implements Plugin<Project> {
-
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
-  private static final Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
 
-  private ActionBroadcast<SonarQubeProperties> addBroadcaster(Project project) {
+  private ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
     ActionBroadcast<SonarQubeProperties> actionBroadcast = new ActionBroadcast<>();
     actionBroadcastMap.put(project.getPath(), actionBroadcast);
     return actionBroadcast;
@@ -66,32 +62,27 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   @Override
   public void apply(Project project) {
-    // don't try to see if the task was added to any project in the hierarchy. It will try to resolve recursively the configuration of all the projects, failing
-    // if a project has a sonarqube configuration since the extension wasn't added to it yet.
+    // don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to resolve recursively the configuration of all
+    // the projects, failing if a project has a sonarqube configuration since the extension wasn't added to it yet.
     if (project.getExtensions().findByName(SonarQubeExtension.SONARQUBE_EXTENSION_NAME) == null) {
-      addExtensions(project);
+      Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
+      addExtensions(project, actionBroadcastMap);
       LOGGER.debug("Adding " + SonarQubeExtension.SONARQUBE_TASK_NAME + " task to " + project);
       SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
       sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
-      configureTask(sonarQubeTask, project);
-      project.getGradle().addBuildListener(new BuildAdapter() {
-        @Override
-        public void buildFinished(BuildResult result) {
-          actionBroadcastMap.clear();
-        }
-      });
+      configureTask(sonarQubeTask, project, actionBroadcastMap);
     }
   }
 
-  private void addExtensions(Project project) {
+  private void addExtensions(Project project, Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
     project.allprojects(p -> {
       LOGGER.debug("Adding " + SonarQubeExtension.SONARQUBE_EXTENSION_NAME + " extension to " + p);
-      ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(p);
+      ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, p);
       p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
     });
   }
 
-  private void configureTask(SonarQubeTask sonarQubeTask, Project project) {
+  private void configureTask(SonarQubeTask sonarQubeTask, Project project, Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
     ConventionMapping conventionMapping = sonarQubeTask.getConventionMapping();
     // this will call the SonarPropertyComputer to populate the properties of the task just before running it
     conventionMapping.map("properties", () -> new SonarPropertyComputer(actionBroadcastMap, project)
