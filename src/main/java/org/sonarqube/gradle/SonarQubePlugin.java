@@ -75,7 +75,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private void addExtensions(Project project, Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
-    project.allprojects(p -> {
+    project.getAllprojects().forEach(p -> {
       LOGGER.debug("Adding " + SonarQubeExtension.SONARQUBE_EXTENSION_NAME + " extension to " + p);
       ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, p);
       p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
