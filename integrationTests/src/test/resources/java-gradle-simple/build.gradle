@@ -36,6 +36,12 @@ jacoco {
   toolVersion = "0.7.0.201403182114"
 }
 
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+}
+
 dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
     testCompile group: 'junit', name: 'junit', version: '4.10'

@@ -21,6 +21,7 @@ package org.sonarqube.gradle;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -211,5 +212,13 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(testResultsDir).exists();
     assertThat(props.getProperty("sonar.junit.reportsPath")).isNull();
     assertThat(props.getProperty("sonar.junit.reportPaths")).isNull();
+  }
+
+  @Test
+  public void testJaCoCoProperties() throws Exception {
+    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-simple", Collections.emptyMap(), "jacocoTestReport");
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+    assertThat(props.getProperty("sonar.jacoco.reportPaths")).contains(baseDir.resolve("build/jacoco/test.exec").toString());
+    assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths")).contains(baseDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString());
   }
 }
