@@ -73,6 +73,17 @@ public class GradleTest extends AbstractGradleIT {
   }
 
   @Test
+  public void testHostUrlInEnv() throws Exception {
+    Map<String, String> env = new HashMap<>();
+    env.put("SONAR_HOST_URL", "http://host-in-env");
+    RunResult result = runGradlewSonarQubeWithEnvQuietly("/java-gradle-simple", env);
+
+    System.out.println(result.getLog());
+    assertThat(result.getExitValue()).isEqualTo(1);
+    assertThat(result.getLog()).contains("java.net.UnknownHostException: host-in-env");
+  }
+
+  @Test
   public void testCompileOnly() throws Exception {
     Properties props = runGradlewSonarQubeSimulationMode("/java-compile-only");
 
