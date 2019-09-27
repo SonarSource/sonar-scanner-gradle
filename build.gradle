@@ -51,9 +51,6 @@ ext {
 }
 
 repositories {
-  jcenter()
-  mavenLocal()
-  mavenCentral()
   maven {
     url "https://maven.google.com"
   }
