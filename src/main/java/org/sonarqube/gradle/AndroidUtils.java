@@ -189,7 +189,7 @@ class AndroidUtils {
       appendProps(properties, isTest ? SONAR_TESTS_PROP : SONAR_SOURCES_PROP, sourcesOrTests);
     }
 
-    AbstractCompile javaCompiler = getJavaCompiler(variant);
+    AbstractCompile javaCompiler = getJavaCompileProvider(variant);
     if (javaCompiler == null) {
       LOGGER.warn("Unable to find Java compiler on variant '{}'. Is Jack toolchain used? SonarQube analysis will be less accurate without bytecode.", variant.getName());
     }
