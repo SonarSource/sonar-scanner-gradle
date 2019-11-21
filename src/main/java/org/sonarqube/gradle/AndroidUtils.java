@@ -228,7 +228,7 @@ class AndroidUtils {
 
   @Nullable
   private static AbstractCompile getJavaCompiler(BaseVariant variant) {
-    return variant.getJavaCompile();
+    return variant.getJavaCompileProvider();
   }
 
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
