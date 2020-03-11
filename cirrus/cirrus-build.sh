@@ -2,6 +2,8 @@
 
 . ./cirrus/cirrus-env.sh BUILD
 
+echo '======= Init'
+
 ADDITIONAL_TASKS=""
 ADDITIONAL_PARAMS=""
 if [[ ! -z "$PULL_REQUEST" ]] || [[ "$GITHUB_BRANCH" == "master" ]] || [[ "$GITHUB_BRANCH" == "branch-"* ]]; then
@@ -21,6 +23,8 @@ if [[ ! -z "$PULL_REQUEST" ]] || [[ "$GITHUB_BRANCH" == "master" ]] || [[ "$GITH
 		ADDITIONAL_PARAMS="${ADDITIONAL_PARAMS} -Dsonar.analysis.prNumber=${PULL_REQUEST}"
 	fi
 fi
+
+echo '======= Go !'
 
 gradle build ${ADDITIONAL_TASKS} \
 	-DbuildNumber=$BUILD_NUMBER \
