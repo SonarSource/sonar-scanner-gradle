@@ -1,9 +1,6 @@
 #!/bin/bash
 
-. ./private/cirrus/cirrus-env.sh PROMOTE
-
-# Set the list of artifacts to display in BURGR
-ARTIFACTS=org.sonarsource.sonarqube:sonar-application:zip,com.sonarsource.sonarqube:sonarqube-developer:zip,com.sonarsource.sonarqube:sonarqube-datacenter:zip,com.sonarsource.sonarqube:sonarqube-enterprise:zip,com.sonarsource.sonarqube:sonarqube-developer:yguard:xml,com.sonarsource.sonarqube:sonarqube-datacenter:yguard:xml,com.sonarsource.sonarqube:sonarqube-enterprise:yguard:xml,com.sonarsource.sonarqube:sonar-docs:zip
+. ./cirrus/cirrus-env.sh PROMOTE
 
 # Compute the version of the project
 PROJECT_VERSION=$(cat gradle.properties | grep "version=" | sed s/version=//)

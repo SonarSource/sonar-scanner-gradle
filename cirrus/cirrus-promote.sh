@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ./private/cirrus/cirrus-env.sh PROMOTE
+. ./cirrus/cirrus-env.sh PROMOTE
 
 if [ "$PULL_REQUEST" != "" ]; then
   PRIVATE_TARGET_REPO='sonarsource-private-dev'
@@ -27,7 +27,7 @@ if [ -n "${STATUS:-}" ]; then
     exit 1
   else
     echo "Build ${CIRRUS_REPO_NAME}#${BUILD_NUMBER} promoted to ${PRIVATE_TARGET_REPO} and ${PUBLIC_TARGET_REPO}"
-    ./private/cirrus/burgr-notify-promotion.sh 
+    ./cirrus/burgr-notify-promotion.sh
   fi
 else
   echo 'No promotion for builds coming from a development branch'
