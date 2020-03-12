@@ -59,7 +59,7 @@ build_task:
       path: "**/test-results/**/*.xml"
       format: junit
 
-qa_task:
+gradle_qa_task:
   depends_on:
     - build
   <<: *ONLY_SONARSOURCE_QA
@@ -88,7 +88,7 @@ qa_task:
 promote_task:
   depends_on:
     - build
-    - qa
+    - gradle_qa
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
     <<: *CONTAINER_DEFINITION
