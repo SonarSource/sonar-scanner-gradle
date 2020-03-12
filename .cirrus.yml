@@ -54,8 +54,6 @@ build_task:
   script:
     - source cirrus-env BUILD
     - regular_gradle_build_deploy_analyze
-  cleanup_before_cache_script:
-    - ./cirrus/cleanup-gradle-cache.sh
   on_failure:
     reports_artifacts:
       path: "**/build/reports/**/*"
@@ -63,9 +61,41 @@ build_task:
       path: "**/test-results/**/*.xml"
       format: junit
 
+qa_task:
+  depends_on:
+    - build
+  <<: *ONLY_SONARSOURCE_QA
+  gke_container:
+    dockerfile: its/docker/Dockerfile
+    builder_image_project: ci-cd-215716
+    builder_image_name: docker-builder-v2
+    cluster_name: cirrus-uscentral1a-cluster
+    zone: us-central1-a
+    namespace: default
+    cpu: 3
+    memory: 8G
+  env:
+    matrix:
+      - GRADLE_VERSION: 2.14.1
+      - GRADLE_VERSION: 3.5
+      - GRADLE_VERSION: 4.3.1
+  gradle_cache:
+     folder: ~/.gradle/caches
+  qa_script:
+    - ./cirrus/cirrus-qa.sh
+  cleanup_before_cache_script:
+    - ./cirrus/cleanup-gradle-cache.sh
+  on_failure:
+    reports_artifacts:
+      path: "**/target/**/logs/*"
+    junit_artifacts:
+      path: "**/test-results/**/*.xml"
+      format: junit
+
 promote_task:
   depends_on:
     - build
+    - qa
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
     <<: *CONTAINER_DEFINITION
