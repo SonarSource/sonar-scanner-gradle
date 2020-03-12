@@ -50,7 +50,8 @@ build_task:
     SONAR_TOKEN: ENCRYPTED[!5ba7cbb5bf9d168de69bcd444d9e884c9cf664be1115640cc64e49df6d241c309a87fc527cab533c08f289b167187017!]
     SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
   script:
-    - ./cirrus/cirrus-build.sh
+    - ./cirrus/cirrus-env.sh BUILD
+    - ./cirrus/regular_gradle_build_deploy_analyze.sh
   on_failure:
     reports_artifacts:
       path: "**/build/reports/**/*"
