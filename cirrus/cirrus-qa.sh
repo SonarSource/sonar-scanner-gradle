@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "*** QA ***"
+
 source cirrus-env QA
 
 #echo "ANDROID_HOME="$ANDROID_HOME
