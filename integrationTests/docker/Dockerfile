@@ -1,6 +1,7 @@
 #FROM gradle:5.6.1-jdk8
 #FROM gradle:4.6-jdk8
-FROM maven:3.6-jdk-8
+#FROM maven:3.6-jdk-8
+FROM gcr.io/ci-cd-215716/base:latest
 
 USER root
 
