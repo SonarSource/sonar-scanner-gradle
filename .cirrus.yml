@@ -31,9 +31,7 @@ env:
 # RE-USABLE CONFIGS
 #
 container_definition: &CONTAINER_DEFINITION
-  dockerfile: integrationTests/docker/Dockerfile
-  builder_image_project: ci-cd-215716
-  builder_image_name: docker-builder-v2
+  image: gcr.io/ci-cd-215716/jdk8:latest
   cluster_name: cirrus-uscentral1a-cluster
   zone: us-central1-a
   namespace: default
