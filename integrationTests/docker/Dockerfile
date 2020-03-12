@@ -6,6 +6,7 @@ USER root
 
 RUN apt-get update && apt-get -y install xvfb
 
+
 # Back to the user of the base image
 USER gradle
 
