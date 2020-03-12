@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/bash
 # Requires the environment variables:
 # - SONAR_HOST_URL: URL of SonarQube server
 # - SONAR_TOKEN: access token to send analysis reports to $SONAR_HOST_URL
