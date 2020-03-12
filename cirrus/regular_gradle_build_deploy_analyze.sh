@@ -1,4 +1,4 @@
-#!/bin/bash
+#/bin/sh
 # Regular way to build a SonarSource Maven project.
 # Requires the environment variables:
 # - SONAR_HOST_URL: URL of SonarQube server
