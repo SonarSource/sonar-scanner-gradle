@@ -15,6 +15,8 @@ echo "*** BEFORE set_maven_build_version ***"
 
 BUILD_ID=$BUILD_NUMBER
 
+echo "*** 1 ***"
+
 VERSION=$(mvn -q \
   -Dexec.executable="echo" \
   -Dexec.args='${project.version}' \
@@ -23,11 +25,16 @@ VERSION=$(mvn -q \
 
 RELEASE_VERSION=${VERSION%"-SNAPSHOT"}
 
+echo "*** 2 ***"
+
 # In case of 2 digits, we need to add the 3rd digit (0 obviously)
 # Mandatory in order to compare versions (patch VS non patch)
 IFS=$'.'
 DIGIT_COUNT=`echo $RELEASE_VERSION | wc -w`
 unset IFS
+
+echo "*** 3 ***"
+
 if [ $DIGIT_COUNT -lt 3 ]; then
     RELEASE_VERSION="$RELEASE_VERSION.0"
 fi
