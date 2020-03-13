@@ -3,6 +3,7 @@
 echo "*** BFFORE cirrus-env ***"
 
 source cirrus-env QA
+source maven_expression
 
 echo "*** BEFORE change build number ***"
 
