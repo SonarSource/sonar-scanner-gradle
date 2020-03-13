@@ -1,5 +1,5 @@
 # JDK-8 is used because Gradle 4.6 used by the wrapper is not compatible with JDK 11
-FROM gcr.io/ci-cd-215716/base:latest
+FROM gcr.io/ci-cd-215716/jdk8:latest
 
 USER root
 
@@ -23,4 +23,6 @@ RUN sed '/^CLASSPATH=/a CLASSPATH=/usr/share/java/jaxb-api.jar:/usr/share/java/j
 
 # Back to the user of the base image
 USER sonarsource
+
+RUN ls -l $ANDROID_HOME/licenses
 
