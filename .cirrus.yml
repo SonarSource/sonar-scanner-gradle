@@ -82,6 +82,12 @@ gradle_qa_task:
     - ./cirrus/cirrus-qa.sh
   cleanup_before_cache_script:
     - ./cirrus/cleanup-gradle-cache.sh
+  on_failure:
+    reports_artifacts:
+      path: "**/build/reports/**/*"
+    junit_artifacts:
+      path: "**/test-results/**/*.xml"
+      format: junit
 
 promote_task:
   depends_on:
