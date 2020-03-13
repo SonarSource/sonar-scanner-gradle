@@ -5,15 +5,13 @@ echo "*** BFFORE cirrus-env ***"
 #source cirrus-env QA
 #source maven_expression
 
-echo "*** BEFORE change build number ***"
-
-
-
-echo "*** BEFORE go to IT ***"
-
 #echo "ANDROID_HOME="$ANDROID_HOME
 
 cd integrationTests
+
+
+echo "*** BEFORE change build number ***"
+
 
 # Make sure ITs are using the same version as the plugin
 #source set_maven_build_version $BUILD_NUMBER

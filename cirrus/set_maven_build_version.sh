@@ -2,11 +2,15 @@
 
 #set -euo pipefail
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BUILD_ID=$1
 
-BUILD_ID=2000
-CURRENT_VERSION=`$DIR/maven_expression "project.version"`
-RELEASE_VERSION=${CURRENT_VERSION%"-SNAPSHOT"}
+VERSION=$(mvn -q \
+  -Dexec.executable="echo" \
+  -Dexec.args='${project.version}' \
+  --non-recursive \
+  org.codehaus.mojo:exec-maven-plugin:1.6.0:exec)
+
+RELEASE_VERSION=${VERSION%"-SNAPSHOT"}
 
 # In case of 2 digits, we need to add the 3rd digit (0 obviously)
 # Mandatory in order to compare versions (patch VS non patch)
