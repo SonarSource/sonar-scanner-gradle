@@ -1,10 +1,10 @@
 #!/bin/bash
 
-set -euo pipefail
+#set -euo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-BUILD_ID=$1
+BUILD_ID=2000
 CURRENT_VERSION=`$DIR/maven_expression "project.version"`
 RELEASE_VERSION=${CURRENT_VERSION%"-SNAPSHOT"}
 
