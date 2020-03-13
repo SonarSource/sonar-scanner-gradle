@@ -10,6 +10,12 @@ cd integrationTests
 
 echo "*** BEFORE set_maven_build_version ***"
 
+mvn -q \
+  -Dexec.executable="echo" \
+  -Dexec.args='${project.version}' \
+  --non-recursive \
+  org.codehaus.mojo:exec-maven-plugin:1.6.0:exec
+
 # Make sure ITs are using the same version as the plugin
 . ./../cirrus/set_maven_build_version.sh $BUILD_NUMBER
 

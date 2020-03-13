@@ -1,6 +1,4 @@
-#/bin/sh
-
-set -euo pipefail
+#!/bin/bash
 
 rm -rf ~/.gradle/caches/$GRADLE_VERSION/
 rm -rf ~/.gradle/daemon/
