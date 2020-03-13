@@ -1,13 +1,15 @@
 #!/bin/bash
 
-echo "*** BEGIN ***"
+echo "*** BFFORE cirrus-env ***"
+
+source cirrus-env QA
 
 echo "*** BEFORE change build number ***"
 
 # Make sure ITs are using the same version as the plugin
 source set_maven_build_version $BUILD_NUMBER
 
-source cirrus-env QA
+
 
 echo "*** BEFORE go to IT ***"
 
