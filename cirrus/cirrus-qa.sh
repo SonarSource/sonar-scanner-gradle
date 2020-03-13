@@ -1,8 +1,10 @@
 #!/bin/bash
 
+set -euo pipefail
+
 echo "*** BEFORE cirrus-env ***"
 
-#source cirrus-env QA
+source cirrus-env QA
 
 #echo "ANDROID_HOME="$ANDROID_HOME
 
