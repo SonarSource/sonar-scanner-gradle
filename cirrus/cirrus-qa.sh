@@ -2,6 +2,11 @@
 
 echo "*** BEGIN ***"
 
+echo "*** BEFORE change build number ***"
+
+# Make sure ITs are using the same version as the plugin
+source set_maven_build_version $BUILD_NUMBER
+
 source cirrus-env QA
 
 echo "*** BEFORE go to IT ***"
@@ -10,10 +15,7 @@ echo "*** BEFORE go to IT ***"
 
 cd integrationTests
 
-echo "*** BEFORE change build number ***"
 
-# Make sure ITs are using the same version as the plugin
-source set_maven_build_version $BUILD_NUMBER
 
 echo "*** BEFORE start execution of IT ***"
 
