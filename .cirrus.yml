@@ -27,6 +27,8 @@ env:
   DEPLOY_PULL_REQUEST: true
   ARTIFACTS: org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:jar
 
+  CIRRUS_SHELL: bash
+
 #
 # RE-USABLE CONFIGS
 #

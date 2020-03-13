@@ -2,7 +2,7 @@
 
 echo "*** BEFORE cirrus-env ***"
 
-source cirrus-env QA
+#source cirrus-env QA
 
 #echo "ANDROID_HOME="$ANDROID_HOME
 
@@ -23,22 +23,9 @@ VERSION=$(mvn -q \
   --non-recursive \
   org.codehaus.mojo:exec-maven-plugin:1.6.0:exec)
 
-RELEASE_VERSION=${VERSION%"-SNAPSHOT"}
-
 echo "*** 2 ***"
 
-# In case of 2 digits, we need to add the 3rd digit (0 obviously)
-# Mandatory in order to compare versions (patch VS non patch)
-IFS=$'.'
-DIGIT_COUNT=`echo $RELEASE_VERSION | wc -w`
-unset IFS
-
-echo "*** 3 ***"
-
-if [ $DIGIT_COUNT -lt 3 ]; then
-    RELEASE_VERSION="$RELEASE_VERSION.0"
-fi
-NEW_VERSION="$RELEASE_VERSION.$BUILD_ID"
+NEW_VERSION="${VERSION%"-SNAPSHOT"}.$BUILD_ID"
 
 echo "Replacing version $CURRENT_VERSION with $NEW_VERSION"
 
