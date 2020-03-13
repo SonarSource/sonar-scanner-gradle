@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -euo pipefail
-
 BUILD_ID=$1
 
 VERSION=$(mvn -q \
@@ -14,7 +12,7 @@ RELEASE_VERSION=${VERSION%"-SNAPSHOT"}
 
 NEW_VERSION="$RELEASE_VERSION.$BUILD_ID"
 
-echo "Replacing version $CURRENT_VERSION with $NEW_VERSION"
+echo "Replacing version $VERSION with $NEW_VERSION"
 
 mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false -B -e
 
