@@ -33,10 +33,12 @@ env:
 # RE-USABLE CONFIGS
 #
 container_definition: &CONTAINER_DEFINITION
-  image: gcr.io/ci-cd-215716/jdk8:latest
-  cluster_name: cirrus-uscentral1a-cluster
-  zone: us-central1-a
-  namespace: default
+    dockerfile: integrationTests/docker/Dockerfile
+    builder_image_project: ci-cd-215716
+    builder_image_name: docker-builder-v2
+    cluster_name: cirrus-uscentral1a-cluster
+    zone: us-central1-a
+    namespace: default
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
@@ -66,12 +68,7 @@ gradle_qa_task:
     - build
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
-    dockerfile: its/docker/Dockerfile
-    builder_image_project: ci-cd-215716
-    builder_image_name: docker-builder-v2
-    cluster_name: cirrus-uscentral1a-cluster
-    zone: us-central1-a
-    namespace: default
+    <<: *CONTAINER_DEFINITION
     cpu: 3
     memory: 8G
   env:
