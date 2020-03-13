@@ -66,7 +66,12 @@ gradle_qa_task:
     - build
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
-    <<: *CONTAINER_DEFINITION
+    dockerfile: its/docker/Dockerfile
+    builder_image_project: ci-cd-215716
+    builder_image_name: docker-builder-v2
+    cluster_name: cirrus-uscentral1a-cluster
+    zone: us-central1-a
+    namespace: default
     cpu: 3
     memory: 8G
   env:
