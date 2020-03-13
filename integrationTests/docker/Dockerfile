@@ -7,9 +7,6 @@ RUN apt-get update && apt-get -y install xvfb
 
 ENV SDK_TOOLS=sdk-tools-linux-4333796.zip
 
-# Installing openjdk 11
-#RUN apt-get -y update && apt-get install --no-install-recommends -y wget unzip openjdk-11-jdk-headless libjaxb-java && rm /var/lib/apt/lists/* /var/cache/apt/* -rf
-
 #Installing android sdk
 RUN echo "Installing android-sdk" \
   && cd /opt && mkdir android-sdk-linux && cd android-sdk-linux && mkdir add-ons platforms platform-tools temp \
@@ -24,6 +21,4 @@ RUN chmod -R 755 $ANDROID_HOME \
 
 # Back to the user of the base image
 USER sonarsource
-
-RUN ls -l $ANDROID_HOME/licenses
 
