@@ -1,9 +1,9 @@
+# JDK-8 is used because Gradle 4.6 used by the wrapper is not compatible with JDK 11
 FROM gcr.io/ci-cd-215716/jdk8:latest
 
 USER root
 
 RUN apt-get update && apt-get -y install xvfb
-
 
 ENV SDK_TOOLS=sdk-tools-linux-4333796.zip
 
