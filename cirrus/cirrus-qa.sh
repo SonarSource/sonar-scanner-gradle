@@ -20,6 +20,7 @@ mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=$NEW_VERSION -D
 # Simulate license acceptance
 echo "ANDROID_HOME="$ANDROID_HOME
 mkdir -p $ANDROID_HOME/licenses
+ls -l $ANDROID_HOME/licenses
 cp -f licenses/* $ANDROID_HOME/licenses
 
 # Execute ITs
