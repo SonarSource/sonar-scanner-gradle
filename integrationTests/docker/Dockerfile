@@ -1,5 +1,5 @@
 # JDK-8 is used because Gradle 4.6 used by the wrapper is not compatible with JDK 11
-FROM gcr.io/ci-cd-215716/jdk8:latest
+FROM gcr.io/ci-cd-215716/base:latest
 
 USER root
 
