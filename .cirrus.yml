@@ -51,7 +51,7 @@ build_task:
      folder: ~/.gradle/caches
   script:
     - source cirrus-env BUILD
-    - regular_gradle_build_deploy_analyze
+    - regular_gradle_build_deploy_analyze -x test
   on_failure:
     reports_artifacts:
       path: "**/build/reports/**/*"
