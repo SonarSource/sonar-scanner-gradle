@@ -1,12 +1,6 @@
 #!/bin/bash
 
-echo "*** BEFORE cirrus-env ***"
-
 source cirrus-env QA
-
-#echo "ANDROID_HOME="$ANDROID_HOME
-
-echo "*** BEFORE set_maven_build_version ***"
 
 CURRENT_VERSION=`cat gradle.properties | grep version | awk -F= '{print $2}'`
 RELEASE_VERSION=`echo $CURRENT_VERSION | sed "s/-.*//g"`
@@ -22,10 +16,7 @@ cd integrationTests
 
 mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false -B -e
 
-#source set_maven_build_version $BUILD_NUMBER
-
-echo "*** BEFORE start execution of IT ***"
-
+#echo "ANDROID_HOME="$ANDROID_HOME
 #mkdir -p $ANDROID_HOME/licenses
 #cp -f licenses/* $ANDROID_HOME/licenses
 
