@@ -14,7 +14,8 @@ RUN echo "Installing android-sdk" \
 
 ENV ANDROID_HOME=/opt/android-sdk-linux  PATH=$PATH:/opt/android-sdk-linux/tools:/opt/android-sdk-linux/platform-tools:/opt/android-sdk-linux/tools/bin
 RUN sed '/^CLASSPATH=/a CLASSPATH=/usr/share/java/jaxb-api.jar:/usr/share/java/jaxb-impl.jar:/usr/share/java/jaxb-core.jar:/usr/share/java/jaxb-jxc.jar:/usr/share/java/jaxb-xjc.jar:/usr/share/java/javax.activation.jar:"$CLASSPATH"' -i /opt/android-sdk-linux/tools/bin/sdkmanager /opt/android-sdk-linux/tools/bin/avdmanager \
-  && yes |sdkmanager "platform-tools" "extras;android;m2repository"
+  && yes |sdkmanager "platform-tools" "extras;android;m2repository" \
+  && yes |sdkmanager --licenses
 
 RUN chmod -R 755 $ANDROID_HOME \
   && chown -R sonarsource: $ANDROID_HOME
