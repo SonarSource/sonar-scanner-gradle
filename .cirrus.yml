@@ -69,7 +69,7 @@ gradle_qa_task:
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
     <<: *CONTAINER_DEFINITION
-    cpu: 1
+    cpu: 2
     memory: 2G
   env:
     matrix:
