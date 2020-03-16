@@ -1,8 +1,0 @@
-# Definition of QA pipeline at SonarSource
-
-GRADLE_VERSION: 
-  - 2.14.1
-  - 3.5
-  - 4.3.1
-
-exclude:
