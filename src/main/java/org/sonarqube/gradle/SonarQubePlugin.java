@@ -20,6 +20,18 @@
 package org.sonarqube.gradle;
 
 import com.android.build.gradle.api.BaseVariant;
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.UnknownTaskException;
+import org.gradle.api.internal.ConventionMapping;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
+import org.gradle.api.plugins.JavaBasePlugin;
+import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.testing.jacoco.plugins.JacocoPlugin;
+import org.gradle.testing.jacoco.tasks.JacocoReport;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,16 +40,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.UnknownTaskException;
-import org.gradle.api.internal.ConventionMapping;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
-import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.testing.jacoco.plugins.JacocoPlugin;
-import org.gradle.testing.jacoco.tasks.JacocoReport;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
@@ -47,6 +49,7 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
  */
 public class SonarQubePlugin implements Plugin<Project> {
+  
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
   private ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
@@ -71,9 +74,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     if (project.getExtensions().findByName(SonarQubeExtension.SONARQUBE_EXTENSION_NAME) == null) {
       Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
       addExtensions(project, actionBroadcastMap);
-      LOGGER.debug("Adding " + SonarQubeExtension.SONARQUBE_TASK_NAME + " task to " + project);
+      LOGGER.debug("Adding '{}' task to '{}'", SonarQubeExtension.SONARQUBE_TASK_NAME, project);
       SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
       sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
+      sonarQubeTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
       configureTask(sonarQubeTask, project, actionBroadcastMap);
     }
   }
@@ -127,12 +131,13 @@ public class SonarQubePlugin implements Plugin<Project> {
         BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
         List<Task> allCompileTasks = new ArrayList<>();
         if (variant != null) {
-          boolean unitTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
-          boolean androidTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
+          final String compileTaskPrefix = "compile" + capitalize(variant.getName());
+          boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allCompileTasks);
+          boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allCompileTasks);
           // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
           // that would lead to run main compile task several times
           if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
-            addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
+            addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allCompileTasks);
           }
         }
         return allCompileTasks;

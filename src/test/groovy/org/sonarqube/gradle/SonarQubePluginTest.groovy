@@ -73,6 +73,7 @@ class SonarQubePluginTest extends Specification {
     def "adds a sonarqube task to the target project"() {
         expect:
         parentProject.tasks.findByName("sonarqube") instanceof SonarQubeTask
+        parentSonarQubeTask().group == JavaBasePlugin.VERIFICATION_GROUP
         parentSonarQubeTask().description == "Analyzes project ':parent' and its subprojects with SonarQube."
 
         childProject.tasks.findByName("sonarqube") == null
