@@ -322,7 +322,7 @@ class SonarQubePluginTest extends Specification {
 
         project.sourceSets.main.groovy.srcDirs = ["src"]
         project.sourceSets.test.groovy.srcDirs = ["test"]
-        project.sourceSets.main.output.classesDir = "$project.buildDir/out"
+        project.sourceSets.main.output.classesDirs.setFrom(new File(project.buildDir, "out"))
         project.sourceSets.main.java.outputDir = new File(project.buildDir, "out")
         project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
         project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
