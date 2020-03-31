@@ -41,10 +41,6 @@ public class SonarUtils {
     return Character.toUpperCase(word.charAt(0)) + word.substring(1);
   }
 
-  static boolean isRoot(Project project) {
-    return project.getRootProject().equals(project);
-  }
-
   static void setTestClasspathProps(Map<String, Object> properties, Collection<File> testClassDirs, Collection<File> testLibraries) {
     appendProps(properties, "sonar.java.test.binaries", exists(testClassDirs));
     appendProps(properties, "sonar.java.test.libraries", exists(testLibraries));

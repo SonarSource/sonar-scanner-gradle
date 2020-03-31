@@ -48,7 +48,8 @@ import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginCollection;
-import org.gradle.api.tasks.compile.AbstractCompile;
+import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.jetbrains.annotations.NotNull;
 
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_JAVA_SOURCE_PROP;
@@ -189,13 +190,12 @@ class AndroidUtils {
       appendProps(properties, isTest ? SONAR_TESTS_PROP : SONAR_SOURCES_PROP, sourcesOrTests);
     }
 
-    AbstractCompile javaCompiler = getJavaCompiler(variant);
-    if (javaCompiler == null) {
+    TaskProvider<JavaCompile> javaCompilerProvider = getJavaCompiler(variant);
+    if (!javaCompilerProvider.isPresent()) {
       LOGGER.warn("Unable to find Java compiler on variant '{}'. Is Jack toolchain used? SonarQube analysis will be less accurate without bytecode.", variant.getName());
-    }
-    if (javaCompiler != null) {
-      properties.put(SONAR_JAVA_SOURCE_PROP, javaCompiler.getSourceCompatibility());
-      properties.put(SONAR_JAVA_TARGET_PROP, javaCompiler.getTargetCompatibility());
+    } else {
+      properties.put(SONAR_JAVA_SOURCE_PROP, javaCompilerProvider.get().getSourceCompatibility());
+      properties.put(SONAR_JAVA_TARGET_PROP, javaCompilerProvider.get().getTargetCompatibility());
     }
 
     Set<File> libraries = new LinkedHashSet<>(bootClassPath);
@@ -204,13 +204,15 @@ class AndroidUtils {
     if (variant instanceof ApkVariant) {
       libraries.addAll(getLibraries((ApkVariant) variant));
     }
-    if (javaCompiler != null) {
-      libraries.addAll(javaCompiler.getClasspath().filter(File::exists).getFiles());
+    if (javaCompilerProvider.isPresent()) {
+      libraries.addAll(javaCompilerProvider.get().getClasspath().filter(File::exists).getFiles());
     }
     if (isTest) {
-      setTestClasspathProps(properties, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
+      setTestClasspathProps(properties,
+        javaCompilerProvider.map(c -> Collections.singleton(c.getDestinationDir())).getOrElse(Collections.emptySet()), libraries);
     } else {
-      setMainClasspathProps(properties, false, javaCompiler != null ? Collections.singleton(javaCompiler.getDestinationDir()) : null, libraries);
+      setMainClasspathProps(properties, false,
+        javaCompilerProvider.map(c -> Collections.singleton(c.getDestinationDir())).getOrElse(Collections.emptySet()), libraries);
     }
   }
 
@@ -226,9 +228,8 @@ class AndroidUtils {
     }
   }
 
-  @Nullable
-  private static AbstractCompile getJavaCompiler(BaseVariant variant) {
-    return variant.getJavaCompile();
+  private static TaskProvider<JavaCompile> getJavaCompiler(BaseVariant variant) {
+    return variant.getJavaCompileProvider();
   }
 
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
