@@ -116,7 +116,7 @@ license {
 }
 
 jacoco {
-  toolVersion = "0.8.1"
+  toolVersion = "0.8.5"
 }
 
 // Add required informations to deploy on central
