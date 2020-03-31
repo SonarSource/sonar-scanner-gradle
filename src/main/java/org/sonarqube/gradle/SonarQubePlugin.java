@@ -99,12 +99,14 @@ public class SonarQubePlugin implements Plugin<Project> {
       .map(p -> {
         BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
         List<Task> allCompileTasks = new ArrayList<>();
-        boolean unitTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
-        boolean androidTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
-        // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
-        // that would lead to run main compile task several times
-        if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
-          addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
+        if (variant != null) {
+          boolean unitTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "UnitTestJavaWithJavac", allCompileTasks);
+          boolean androidTestTaskDepAdded = addTaskByName(p, "compile" + capitalize(variant.getName()) + "AndroidTestJavaWithJavac", allCompileTasks);
+          // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
+          // that would lead to run main compile task several times
+          if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
+            addTaskByName(p, "compile" + capitalize(variant.getName()) + "JavaWithJavac", allCompileTasks);
+          }
         }
         return allCompileTasks;
       })
