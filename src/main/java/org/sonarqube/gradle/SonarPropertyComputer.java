@@ -308,7 +308,7 @@ public class SonarPropertyComputer {
     if (GradleVersion.version("4.0").compareTo(GradleVersion.current()) <= 0) {
       result = sourceSet.getOutput().getClassesDirs().getFiles();
     } else {
-      result = Collections.singletonList(sourceSet.getOutput().getClassesDir());
+      result = sourceSet.getOutput().getClassesDirs().getFiles();
     }
     return exists(result);
   }
