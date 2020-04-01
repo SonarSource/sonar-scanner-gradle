@@ -33,12 +33,12 @@ allprojects {
 	}
 	
 	jacoco {
-	  toolVersion = "0.7.0.201403182114"
+	  toolVersion = "0.8.5"
 	}
 	
 	dependencies {
-	    compile group: 'commons-io', name: 'commons-io', version: '2.5'
-	    testCompile group: 'junit', name: 'junit', version: '4.10'
+	    implementation group: 'commons-io', name: 'commons-io', version: '2.5'
+	    testImplementation group: 'junit', name: 'junit', version: '4.10'
 	}
 }
 
