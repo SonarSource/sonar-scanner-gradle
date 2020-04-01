@@ -48,8 +48,8 @@ import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginCollection;
-import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_JAVA_SOURCE_PROP;
@@ -75,6 +75,8 @@ class AndroidUtils {
     BaseVariant variant = findVariant(project, userConfiguredBuildVariantName);
     if (variant != null) {
       configureForAndroid(project, variant, properties);
+    } else {
+      LOGGER.warn("No variant found for '{}'. No android specific configuration will be done", project.getName());
     }
   }
 
@@ -190,12 +192,12 @@ class AndroidUtils {
       appendProps(properties, isTest ? SONAR_TESTS_PROP : SONAR_SOURCES_PROP, sourcesOrTests);
     }
 
-    TaskProvider<JavaCompile> javaCompilerProvider = getJavaCompiler(variant);
-    if (!javaCompilerProvider.isPresent()) {
+    JavaCompile javaCompile = getJavaCompiler(variant);
+    if (javaCompile == null) {
       LOGGER.warn("Unable to find Java compiler on variant '{}'. Is Jack toolchain used? SonarQube analysis will be less accurate without bytecode.", variant.getName());
     } else {
-      properties.put(SONAR_JAVA_SOURCE_PROP, javaCompilerProvider.get().getSourceCompatibility());
-      properties.put(SONAR_JAVA_TARGET_PROP, javaCompilerProvider.get().getTargetCompatibility());
+      properties.put(SONAR_JAVA_SOURCE_PROP, javaCompile.getSourceCompatibility());
+      properties.put(SONAR_JAVA_TARGET_PROP, javaCompile.getTargetCompatibility());
     }
 
     Set<File> libraries = new LinkedHashSet<>(bootClassPath);
@@ -204,15 +206,13 @@ class AndroidUtils {
     if (variant instanceof ApkVariant) {
       libraries.addAll(getLibraries((ApkVariant) variant));
     }
-    if (javaCompilerProvider.isPresent()) {
-      libraries.addAll(javaCompilerProvider.get().getClasspath().filter(File::exists).getFiles());
+    if (javaCompile != null) {
+      libraries.addAll(javaCompile.getClasspath().filter(File::exists).getFiles());
     }
     if (isTest) {
-      setTestClasspathProps(properties,
-        javaCompilerProvider.map(c -> Collections.singleton(c.getDestinationDir())).getOrElse(Collections.emptySet()), libraries);
+      setTestClasspathProps(properties, javaCompile != null ? Collections.singleton(javaCompile.getDestinationDir()) : Collections.emptySet(), libraries);
     } else {
-      setMainClasspathProps(properties, false,
-        javaCompilerProvider.map(c -> Collections.singleton(c.getDestinationDir())).getOrElse(Collections.emptySet()), libraries);
+      setMainClasspathProps(properties, false, javaCompile != null ? Collections.singleton(javaCompile.getDestinationDir()) : Collections.emptySet(), libraries);
     }
   }
 
@@ -228,8 +228,15 @@ class AndroidUtils {
     }
   }
 
-  private static TaskProvider<JavaCompile> getJavaCompiler(BaseVariant variant) {
-    return variant.getJavaCompileProvider();
+  @Nullable
+  private static JavaCompile getJavaCompiler(BaseVariant variant) {
+    if (GradleVersion.current().compareTo(GradleVersion.version("4.10.1")) >= 0) {
+      // TaskProvider was introduced in Gradle 4.8. The android plugin added #getJavaCompileProvider in v3.3.0
+      // v3.3.0 of the plugin only runs in Gradle 4.10.1+.
+      return variant.getJavaCompileProvider().getOrNull();
+    } else {
+      return variant.getJavaCompile();
+    }
   }
 
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
