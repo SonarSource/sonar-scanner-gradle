@@ -3,6 +3,7 @@ buildscript {
     mavenCentral()
     mavenLocal()
     jcenter()
+    google()
     maven {
         url "https://maven.google.com"
     }
@@ -19,11 +20,12 @@ apply plugin: 'org.sonarqube'
 
 repositories {
   jcenter()
+  google()
 }
 
 dependencies {
-  compile 'joda-time:joda-time:2.7'
-  testCompile 'junit:junit:4.12'
+  implementation 'joda-time:joda-time:2.7'
+  testImplementation 'junit:junit:4.12'
 }
 
 android {

@@ -18,7 +18,7 @@ cd integrationTests
 mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false -B -e
 
 # Execute ITs
-mvn -e -B clean verify -Dgradle.version=$GRADLE_VERSION
+mvn -e -B clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=$ANDROID_GRADLE_VERSION
 
 
 

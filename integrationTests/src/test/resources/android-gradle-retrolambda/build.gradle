@@ -3,6 +3,7 @@ buildscript {
     mavenCentral()
     mavenLocal()
     jcenter()
+    google()
     maven {
         url "https://maven.google.com"
     }
@@ -10,7 +11,7 @@ buildscript {
   dependencies {
     classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}'
     classpath 'com.android.tools.build:gradle:${androidGradle.version}'
-    classpath 'me.tatarka:gradle-retrolambda:3.2.5'
+    classpath 'me.tatarka:gradle-retrolambda:3.7.1'
   }
 }
 
@@ -21,11 +22,12 @@ apply plugin: 'me.tatarka.retrolambda'
 
 repositories {
   jcenter()
+    google()
 }
 
 dependencies {
-  compile 'joda-time:joda-time:2.7'
-  testCompile 'junit:junit:4.12'
+  implementation 'joda-time:joda-time:2.7'
+  testImplementation 'junit:junit:4.12'
 }
 
 android {
