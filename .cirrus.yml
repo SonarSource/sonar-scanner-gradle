@@ -40,6 +40,14 @@ container_definition: &CONTAINER_DEFINITION
     zone: us-central1-a
     namespace: default
 
+container_definition_11: &CONTAINER_DEFINITION_11
+    dockerfile: integrationTests/docker/Dockerfile_java11
+    builder_image_project: ci-cd-215716
+    builder_image_name: docker-builder-v2
+    cluster_name: cirrus-uscentral1a-cluster
+    zone: us-central1-a
+    namespace: default
+
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
@@ -68,10 +76,10 @@ gradle_qa_task:
     - build
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
-    <<: *CONTAINER_DEFINITION
-    cpu: 2
-    memory: 2G
-  env:
+      <<: *CONTAINER_DEFINITION
+      cpu: 2
+      memory: 2G
+  env:  
     matrix:
       - GRADLE_VERSION: 4.6
         ANDROID_GRADLE_VERSION: 3.2.1
@@ -84,10 +92,29 @@ gradle_qa_task:
   cleanup_before_cache_script:
     - ./cirrus/cleanup-gradle-cache.sh
 
+gradle_qa_java11_task:
+  depends_on:
+    - build
+  <<: *ONLY_SONARSOURCE_QA
+  gke_container:
+      <<: *CONTAINER_DEFINITION_11
+      cpu: 2
+      memory: 2G
+  env:  
+      GRADLE_VERSION: 5.6.4
+      ANDROID_GRADLE_VERSION: 3.3.2
+  gradle_cache:
+     folder: ~/.gradle/caches
+  script:
+    - ./cirrus/cirrus-qa.sh
+  cleanup_before_cache_script:
+    - ./cirrus/cleanup-gradle-cache.sh
+ 
 promote_task:
   depends_on:
     - build
     - gradle_qa
+    - gradle_qa_java11
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
     <<: *CONTAINER_DEFINITION
