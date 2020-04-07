@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle
 
+
 import org.gradle.api.plugins.GroovyBasePlugin
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
@@ -28,7 +29,6 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import spock.lang.Specification
 
 import static org.hamcrest.Matchers.contains
-import static org.hamcrest.Matchers.containsInAnyOrder
 import static spock.util.matcher.HamcrestSupport.expect
 
 class SonarQubePluginTest extends Specification {
@@ -100,14 +100,18 @@ class SonarQubePluginTest extends Specification {
         childProject.tasks.findByName("sonarqube") == null
     }
 
-    def "makes sonarqube task depend on test tasks of the target project and its subprojects"() {
+    def "makes sonarqube task must run after test tasks of the target project and its subprojects"() {
         when:
         rootProject.pluginManager.apply(JavaPlugin)
         parentProject.pluginManager.apply(JavaPlugin)
         childProject.pluginManager.apply(JavaPlugin)
 
+        def taskDep = parentSonarQubeTask().getMustRunAfter()
+
         then:
-        expect(parentSonarQubeTask(), TaskDependencyMatchers.dependsOnPaths(containsInAnyOrder(":parent:test", ":parent:child:test")))
+        expect(taskDep.getDependencies(parentSonarQubeTask()), contains(parentProject.tasks.getByName(JavaPlugin.TEST_TASK_NAME),
+                childProject.tasks.getByName(JavaPlugin.TEST_TASK_NAME)))
+
     }
 
     def "doesn't make sonarqube task depend on test task of skipped projects"() {
@@ -118,7 +122,10 @@ class SonarQubePluginTest extends Specification {
         childProject.sonarqube.skipProject = true
 
         then:
-        expect(parentSonarQubeTask(), TaskDependencyMatchers.dependsOnPaths(contains(":parent:test")))
+        def taskDep = parentSonarQubeTask().getMustRunAfter()
+
+        then:
+        expect(taskDep.getDependencies(parentSonarQubeTask()), contains(parentProject.tasks.getByName(JavaPlugin.TEST_TASK_NAME)))
     }
 
     def "adds default properties for target project and its subprojects"() {
@@ -270,9 +277,9 @@ class SonarQubePluginTest extends Specification {
 
         project.tasks.remove(project.tasks.findByPath('test'));
         Map taskProperties = [
-                name: 'test',
-                type: FakeTask,
-                group: JavaBasePlugin.VERIFICATION_GROUP,
+                name       : 'test',
+                type       : FakeTask,
+                group      : JavaBasePlugin.VERIFICATION_GROUP,
                 description: 'Runs unit tests with the randomized testing framework'
         ]
         FakeTask newTestTask = project.tasks.create(taskProperties)
@@ -297,9 +304,9 @@ class SonarQubePluginTest extends Specification {
 
         project.tasks.remove(project.tasks.findByPath('test'));
         Map taskProperties = [
-                name: 'test',
-                type: FakeTask,
-                group: JavaBasePlugin.VERIFICATION_GROUP,
+                name       : 'test',
+                type       : FakeTask,
+                group      : JavaBasePlugin.VERIFICATION_GROUP,
                 description: 'Runs unit tests with the randomized testing framework'
         ]
         FakeTask newTestTask = project.tasks.create(taskProperties)

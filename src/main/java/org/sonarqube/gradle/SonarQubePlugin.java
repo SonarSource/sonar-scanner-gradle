@@ -92,7 +92,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
       .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
       .collect(Collectors.toList());
-    sonarQubeTask.dependsOn(testTasks);
+    sonarQubeTask.mustRunAfter(testTasks);
 
     Callable<Iterable<? extends Task>> compileTasks = () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
@@ -112,7 +112,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       })
       .flatMap(List::stream)
       .collect(Collectors.toList());
-    sonarQubeTask.dependsOn(compileTasks);
+    sonarQubeTask.mustRunAfter(compileTasks);
   }
 
 }
