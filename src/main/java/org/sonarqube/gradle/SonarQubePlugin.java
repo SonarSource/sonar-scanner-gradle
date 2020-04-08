@@ -21,11 +21,13 @@ package org.sonarqube.gradle;
 
 import com.android.build.gradle.api.BaseVariant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -34,6 +36,8 @@ import org.gradle.api.internal.ConventionMapping;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.testing.jacoco.plugins.JacocoPlugin;
+import org.gradle.testing.jacoco.tasks.JacocoReport;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
@@ -88,13 +92,36 @@ public class SonarQubePlugin implements Plugin<Project> {
     conventionMapping.map("properties", () -> new SonarPropertyComputer(actionBroadcastMap, project)
       .computeSonarProperties());
 
-    Callable<Iterable<? extends Task>> testTasks = () -> project.getAllprojects().stream()
+    sonarQubeTask.mustRunAfter(getJavaTestTasks(project));
+    sonarQubeTask.dependsOn(getJavaCompileTasks(project));
+    sonarQubeTask.mustRunAfter(getJacocoTasks(project));
+    sonarQubeTask.dependsOn(getAndroidCompileTasks(project));
+  }
+
+  private static Callable<Iterable<? extends Task>> getJacocoTasks(Project project) {
+    return () -> project.getAllprojects().stream()
+      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .map(p -> p.getTasks().withType(JacocoReport.class))
+      .flatMap(Collection::stream)
+      .collect(Collectors.toList());
+  }
+
+  private static Callable<Iterable<? extends Task>> getJavaTestTasks(Project project) {
+    return () -> project.getAllprojects().stream()
       .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
       .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
       .collect(Collectors.toList());
-    sonarQubeTask.mustRunAfter(testTasks);
+  }
 
-    Callable<Iterable<? extends Task>> compileTasks = () -> project.getAllprojects().stream()
+  private static Callable<Iterable<? extends Task>> getJavaCompileTasks(Project project) {
+    return () -> project.getAllprojects().stream()
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .flatMap(p -> Stream.of(p.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME), p.getTasks().getByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME)))
+      .collect(Collectors.toList());
+  }
+
+  private static Callable<Iterable<? extends Task>> getAndroidCompileTasks(Project project) {
+    return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
       .map(p -> {
         BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
@@ -112,7 +139,5 @@ public class SonarQubePlugin implements Plugin<Project> {
       })
       .flatMap(List::stream)
       .collect(Collectors.toList());
-    sonarQubeTask.mustRunAfter(compileTasks);
   }
-
 }
