@@ -233,7 +233,7 @@ public class AndroidTest extends AbstractGradleIT {
       "+--- :module-android-library:compileDebugAndroidTestJavaWithJavac",
       "+--- :module-android-library:compileDebugUnitTestJavaWithJavac",
       "+--- :module-flavor1-androidTest-only:compileDebugJavaWithJavac",
-      "\\--- :module-plain-java:test");
+      "\\--- :module-plain-java:compileTestJava");
   }
 
   // SONARGRADL-22

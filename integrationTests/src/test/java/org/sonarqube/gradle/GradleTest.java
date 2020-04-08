@@ -28,6 +28,7 @@ import java.util.Properties;
 import org.junit.Test;
 
 import static java.util.Arrays.stream;
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 
@@ -107,7 +108,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void mixJavaGroovyProject() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/java-groovy-tests-gradle");
+    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), "test");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -179,7 +180,7 @@ public class GradleTest extends AbstractGradleIT {
    */
   @Test
   public void testFlatProjectStructure() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/multi-module-flat", "build", Collections.emptyMap());
+    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/multi-module-flat", "build", emptyMap());
     assertThat(Paths.get(props.getProperty("sonar.projectBaseDir")).getFileName().toString()).isEqualTo("multi-module-flat");
   }
 
@@ -195,7 +196,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testJavaProjectWithoutRealTestsDoesNotSetCustomReportsPath() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-no-real-tests");
+    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-no-real-tests", emptyMap(), "test");
     Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
 
     assertThat(testResultsDir).exists();
@@ -205,7 +206,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testJaCoCoProperties() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-simple", Collections.emptyMap(), "jacocoTestReport");
+    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-simple", emptyMap(), "test", "jacocoTestReport");
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
     assertThat(props.getProperty("sonar.jacoco.reportPaths")).contains(baseDir.resolve("build/jacoco/test.exec").toString());
     assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths")).contains(baseDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString());
