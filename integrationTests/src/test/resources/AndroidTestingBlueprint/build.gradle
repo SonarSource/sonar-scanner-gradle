@@ -3,14 +3,11 @@
 buildscript {
     repositories {
         jcenter()
-        google()
         mavenLocal()
         maven {
-		      url "https://plugins.gradle.org/m2/"
-		    }
-        maven {
-            url "https://maven.google.com"
+            url "https://plugins.gradle.org/m2/"
         }
+        google()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:${androidGradle.version}'
@@ -29,13 +26,10 @@ allprojects {
     repositories {
         google()
         jcenter()
-		    maven {
-		        url "https://maven.google.com"
-		    }
     }
 }
 
-taskTree{
+taskTree {
     noRepeat = true  //do not print a sub-tree in the task-tree more than once
     impliesSubProjects = true  //do not print task-tree for child projects in a multi-project
 }

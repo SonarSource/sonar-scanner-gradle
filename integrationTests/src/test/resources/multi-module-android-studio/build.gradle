@@ -2,13 +2,10 @@
 
 buildscript {
     repositories {
-        google()
         mavenCentral()
         mavenLocal()
         jcenter()
-        maven {
-            url "https://maven.google.com"
-        }
+        google()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:${androidGradle.version}'
@@ -28,7 +25,9 @@ allprojects {
     description = "Test"
 
     repositories {
-        google()
+        maven {
+            url 'https://maven.google.com'
+        }
         jcenter()
     }
 }
