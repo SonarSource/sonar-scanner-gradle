@@ -50,6 +50,10 @@ public abstract class AbstractGradleIT {
     }
   }
 
+  protected static String getGradleVersion() {
+    return gradleVersion;
+  }
+
   protected Properties runGradlewSonarQubeSimulationMode(String project) throws Exception {
     return runGradlewSonarQubeSimulationModeWithEnv(project, Collections.emptyMap());
   }

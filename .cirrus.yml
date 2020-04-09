@@ -33,20 +33,20 @@ env:
 # RE-USABLE CONFIGS
 #
 container_definition: &CONTAINER_DEFINITION
-    dockerfile: integrationTests/docker/Dockerfile
-    builder_image_project: ci-cd-215716
-    builder_image_name: docker-builder-v2
-    cluster_name: cirrus-uscentral1a-cluster
-    zone: us-central1-a
-    namespace: default
+  dockerfile: integrationTests/docker/Dockerfile
+  builder_image_project: ci-cd-215716
+  builder_image_name: docker-builder-v2
+  cluster_name: cirrus-uscentral1a-cluster
+  zone: us-central1-a
+  namespace: default
 
 container_definition_11: &CONTAINER_DEFINITION_11
-    dockerfile: integrationTests/docker/Dockerfile_java11
-    builder_image_project: ci-cd-215716
-    builder_image_name: docker-builder-v2
-    cluster_name: cirrus-uscentral1a-cluster
-    zone: us-central1-a
-    namespace: default
+  dockerfile: integrationTests/docker/Dockerfile_java11
+  builder_image_project: ci-cd-215716
+  builder_image_name: docker-builder-v2
+  cluster_name: cirrus-uscentral1a-cluster
+  zone: us-central1-a
+  namespace: default
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
@@ -60,7 +60,7 @@ build_task:
     SONAR_TOKEN: ENCRYPTED[!5ba7cbb5bf9d168de69bcd444d9e884c9cf664be1115640cc64e49df6d241c309a87fc527cab533c08f289b167187017!]
     SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
   gradle_cache:
-     folder: ~/.gradle/caches
+    folder: ~/.gradle/caches
   script:
     - source cirrus-env BUILD
     - regular_gradle_build_deploy_analyze
@@ -76,17 +76,20 @@ gradle_qa_task:
     - build
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
-      <<: *CONTAINER_DEFINITION
-      cpu: 2
-      memory: 2G
-  env:  
+    <<: *CONTAINER_DEFINITION
+    cpu: 2
+    memory: 2G
+  env:
     matrix:
       - GRADLE_VERSION: 4.6
         ANDROID_GRADLE_VERSION: 3.2.1
       - GRADLE_VERSION: 5.6.4
         ANDROID_GRADLE_VERSION: 3.3.2
+      - GRADLE_VERSION: 3.5
+        # ITs with android are skipped with gradle 3 but we define it so that the var is not unboud
+        ANDROID_GRADLE_VERSION: 1.0.0
   gradle_cache:
-     folder: ~/.gradle/caches
+    folder: ~/.gradle/caches
   script:
     - ./cirrus/cirrus-qa.sh
   cleanup_before_cache_script:
@@ -97,19 +100,19 @@ gradle_qa_java11_task:
     - build
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
-      <<: *CONTAINER_DEFINITION_11
-      cpu: 2
-      memory: 2G
-  env:  
-      GRADLE_VERSION: 5.6.4
-      ANDROID_GRADLE_VERSION: 3.3.2
+    <<: *CONTAINER_DEFINITION_11
+    cpu: 2
+    memory: 2G
+  env:
+    GRADLE_VERSION: 5.6.4
+    ANDROID_GRADLE_VERSION: 3.3.2
   gradle_cache:
-     folder: ~/.gradle/caches
+    folder: ~/.gradle/caches
   script:
     - ./cirrus/cirrus-qa.sh
   cleanup_before_cache_script:
     - ./cirrus/cleanup-gradle-cache.sh
- 
+
 promote_task:
   depends_on:
     - build

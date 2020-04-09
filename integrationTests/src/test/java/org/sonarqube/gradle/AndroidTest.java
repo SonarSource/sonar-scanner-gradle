@@ -23,13 +23,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Properties;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
+import static org.junit.Assume.assumeFalse;
 
 public class AndroidTest extends AbstractGradleIT {
+  @BeforeClass
+  public static void verifyGradleVersion() {
+    assumeFalse(getGradleVersion().startsWith("3."));
+  }
+
   @Test
   public void testAndroidProjectJdk8Retrolambda() throws Exception {
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-retrolambda");

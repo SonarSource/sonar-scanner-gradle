@@ -21,9 +21,11 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,7 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.reporting.SingleFileReport;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
@@ -309,7 +312,15 @@ public class SonarPropertyComputer {
     if (GradleVersion.version("4.0").compareTo(GradleVersion.current()) <= 0) {
       result = sourceSet.getOutput().getClassesDirs().getFiles();
     } else {
-      result = sourceSet.getOutput().getClassesDirs().getFiles();
+      SourceSetOutput output = sourceSet.getOutput();
+      try {
+        // old API with a method that was removed
+        File file = (File) SourceSetOutput.class.getMethod("getClassesDir").invoke(output);
+        return Collections.singletonList(file);
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        LOGGER.warn("Failed to find classes output directories");
+        return Collections.emptyList();
+      }
     }
     return exists(result);
   }
