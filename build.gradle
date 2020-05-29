@@ -2,7 +2,7 @@
 // The above triggers groovy syntax highlighting in vim
 
 plugins {
-  id "com.gradle.plugin-publish" version "0.9.9"
+  id "com.gradle.plugin-publish" version "0.12.0"
   // Eat your own dog food :)
   id "org.sonarqube" version "2.7"
   id "com.jfrog.artifactory" version "4.5.4"
@@ -154,11 +154,11 @@ artifactory {
   clientConfig.setIncludeEnvVars(true)
   clientConfig.setEnvVarsExcludePatterns('*password*,*PASSWORD*,*secret*,*MAVEN_CMD_LINE_ARGS*,sun.java.command,*token*,*TOKEN*,*LOGIN*,*login*')
   contextUrl = System.getenv('ARTIFACTORY_URL')
-  publish {    
+  publish {
     repository {
       repoKey = System.getenv('ARTIFACTORY_DEPLOY_REPO')
       username = System.getenv('ARTIFACTORY_DEPLOY_USERNAME')
-      password = System.getenv('ARTIFACTORY_DEPLOY_PASSWORD')      
+      password = System.getenv('ARTIFACTORY_DEPLOY_PASSWORD')
     }
     defaults {
       properties = [
@@ -206,5 +206,3 @@ processResources {
     expand version: project.version
   }
 }
-
-
