@@ -1,4 +1,4 @@
-FROM gcr.io/ci-cd-215716/base:latest
+FROM gcr.io/sonarqube-team/base:mvn-jdk-11
 
 USER root
 

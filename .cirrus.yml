@@ -1,5 +1,5 @@
 # content of service-account-credentials.json, used to access to Google Cloud Platform
-gcp_credentials: ENCRYPTED[!1fcffe5cc2de4fbbda5befae835ca275a47c1148dabbbb7b5d21334604efba3ef8730d8bc5820952e575c7dd5177e433!]
+gcp_credentials: ENCRYPTED[0006392fac64aa1d1fa874595c4ec576060fde31e860d8b1f4c2e015bc44522c46638ba15e73356d76867e06b320cdf7]
 
 #
 # ENV VARIABLES
@@ -34,18 +34,18 @@ env:
 #
 container_definition: &CONTAINER_DEFINITION
   dockerfile: integrationTests/docker/Dockerfile
-  builder_image_project: ci-cd-215716
-  builder_image_name: docker-builder-v2
-  cluster_name: cirrus-uscentral1a-cluster
-  zone: us-central1-a
+  builder_image_project: sonarqube-team
+  builder_image_name: docker-builder-v20200819
+  cluster_name: cirrus-ci-cluster
+  zone: europe-west4-a
   namespace: default
 
 container_definition_11: &CONTAINER_DEFINITION_11
   dockerfile: integrationTests/docker/Dockerfile_java11
-  builder_image_project: ci-cd-215716
-  builder_image_name: docker-builder-v2
-  cluster_name: cirrus-uscentral1a-cluster
-  zone: us-central1-a
+  builder_image_project: sonarqube-team
+  builder_image_name: docker-builder-v20200819
+  cluster_name: cirrus-ci-cluster
+  zone: europe-west4-a
   namespace: default
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
