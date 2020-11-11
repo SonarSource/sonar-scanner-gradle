@@ -103,7 +103,8 @@ public abstract class AbstractGradleIT {
 
   protected RunResult runGradlewWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File projectBaseDir = new File(this.getClass().getResource(project).toURI());
-    File tempProjectDir = temp.newFolder(project);
+    String projectDir = project.startsWith("/") ? "." + project : project;
+    File tempProjectDir = temp.newFolder(projectDir);
     File outputFile = temp.newFile();
     FileUtils.copyDirectory(projectBaseDir, tempProjectDir);
     List<String> command = new ArrayList<>();
