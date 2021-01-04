@@ -25,6 +25,8 @@ def githubUrl = 'https://github.com/SonarSource/sonar-scanner-gradle'
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
+  withJavadocJar()
+  withSourcesJar()
 }
 
 compileJava {
@@ -81,6 +83,8 @@ dependencies {
 gradlePlugin {
   plugins {
     sonarqubePlugin {
+      displayName = projectName
+      description = project.description
       id = 'org.sonarqube'
       implementationClass = 'org.sonarqube.gradle.SonarQubePlugin'
     }
@@ -91,14 +95,7 @@ pluginBundle {
   website = docUrl
   vcsUrl = githubUrl
 
-  description = project.description
   tags = ['sonarqube', 'sonar', 'quality', 'qa']
-
-  plugins {
-    sonarqubePlugin {
-      displayName = projectName
-    }
-  }
 
   mavenCoordinates {
     groupId = project.group
@@ -135,8 +132,7 @@ tasks['sonarqube'].dependsOn jacocoTestReport
 // Add required informations to deploy on central
 publishing {
   publications {
-    sqGradlePlugin(MavenPublication) {
-      from components.java
+    pluginMaven(MavenPublication) {
       pom {
         name = projectName
         description = project.description
@@ -180,7 +176,7 @@ artifactory {
         'vcs.revision': System.getenv('GIT_COMMIT'),
         'version': version
       ]
-      publications 'sqGradlePlugin'
+      publications 'pluginMaven'
       publishPom = true // Publish generated POM files to Artifactory (true by default)
       publishIvy = false // Publish generated Ivy descriptor files to Artifactory (true by default)
     }
@@ -204,7 +200,7 @@ bintray {
       released  = new Date()
       vcsTag = project.version
     }
-    publications = ['sqGradlePlugin']
+    publications = ['pluginMaven']
   }
 }
 
