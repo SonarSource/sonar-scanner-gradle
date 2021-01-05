@@ -19,13 +19,16 @@
  */
 package org.sonarqube.gradle
 
-
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.GroovyBasePlugin
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.initialization.GradlePropertiesController
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
+import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Specification
 
 import static org.hamcrest.Matchers.contains
@@ -44,6 +47,7 @@ class SonarQubePluginTest extends Specification {
         parentProject.repositories {
             mavenCentral()
         }
+        (parentProject as ProjectInternal).services.get(GradlePropertiesController.class).loadGradlePropertiesFrom(parentProject.rootDir)
 
         rootProject.allprojects {
             group = "group"
@@ -173,9 +177,9 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.projectKey"] == "root:parent"
     }
 
-    def "adds additional default properties for 'java-base' projects"() {
-        parentProject.pluginManager.apply(JavaBasePlugin)
-        childProject.pluginManager.apply(JavaBasePlugin)
+    def "compute source and target properties for 'java' projects"() {
+        parentProject.pluginManager.apply(JavaPlugin)
+        childProject.pluginManager.apply(JavaPlugin)
         parentProject.sourceCompatibility = 1.5
         parentProject.targetCompatibility = 1.6
         childProject.sourceCompatibility = 1.6
@@ -191,9 +195,25 @@ class SonarQubePluginTest extends Specification {
         properties[":parent:child.sonar.java.target"] == "1.7"
     }
 
-    def "adds additional default properties for 'groovy-base' projects"() {
-        parentProject.pluginManager.apply(GroovyBasePlugin)
-        childProject.pluginManager.apply(GroovyBasePlugin)
+    def "compute source and target properties for 'java' projects from release"() {
+        parentProject.pluginManager.apply(JavaPlugin)
+        childProject.pluginManager.apply(JavaPlugin)
+        parentProject.compileJava.options.release = 7
+        childProject.compileJava.options.release = 7
+
+        when:
+        def properties = parentSonarQubeTask().properties
+
+        then:
+        properties["sonar.java.source"] == "7"
+        properties["sonar.java.target"] == "7"
+        properties[":parent:child.sonar.java.source"] == "7"
+        properties[":parent:child.sonar.java.target"] == "7"
+    }
+
+    def "compute source and target properties for 'groovy' projects"() {
+        parentProject.pluginManager.apply(GroovyPlugin)
+        childProject.pluginManager.apply(GroovyPlugin)
         parentProject.sourceCompatibility = 1.5
         parentProject.targetCompatibility = 1.6
         childProject.sourceCompatibility = 1.6
@@ -556,6 +576,26 @@ class SonarQubePluginTest extends Specification {
         then:
         !properties.any { key, value -> key.startsWith("sonar.") }
         !properties.any { key, value -> key.startsWith(":parent.") }
+    }
+
+    def "set jdkHome for 'java' projects"() {
+        parentProject.pluginManager.apply(JavaPlugin)
+
+        when:
+        def properties = parentSonarQubeTask().properties
+
+        then:
+        properties["sonar.java.jdkHome"] != null
+    }
+
+    def "set jdkHome for 'groovy' projects"() {
+        parentProject.pluginManager.apply(GroovyPlugin)
+
+        when:
+        def properties = parentSonarQubeTask().properties
+
+        then:
+        properties["sonar.java.jdkHome"] != null
     }
 
     private SonarQubeTask parentSonarQubeTask() {

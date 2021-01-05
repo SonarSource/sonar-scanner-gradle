@@ -52,7 +52,8 @@ public class SonarQubeTask extends ConventionTask {
   private static final LogOutput LOG_OUTPUT = new DefaultLogOutput();
 
   private static class DefaultLogOutput implements LogOutput {
-    @Override public void log(String formattedMessage, Level level) {
+    @Override
+    public void log(String formattedMessage, Level level) {
       switch (level) {
         case TRACE:
           LOGGER.trace(formattedMessage);
@@ -104,7 +105,7 @@ public class SonarQubeTask extends ConventionTask {
     InputStream inputStream = this.getClass().getResourceAsStream("/version.txt");
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       return reader.readLine();
-    } catch(IOException e) {
+    } catch (IOException e) {
       LOGGER.warn("Failed to find the version of the plugin", e);
     }
     return "";
@@ -130,5 +131,4 @@ public class SonarQubeTask extends ConventionTask {
 
     return sonarProperties;
   }
-
 }

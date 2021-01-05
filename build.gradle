@@ -14,6 +14,7 @@ plugins {
   id "com.jfrog.artifactory" version "4.18.3"
   id "com.github.hierynomus.license" version "0.15.0"
   id "com.jfrog.bintray" version "1.8.5"
+  id "pl.droidsonroids.jacoco.testkit" version "1.0.7"
 }
 
 group = 'org.sonarsource.scanner.gradle'

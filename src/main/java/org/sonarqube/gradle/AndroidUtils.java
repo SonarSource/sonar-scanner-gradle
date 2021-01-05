@@ -52,8 +52,6 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
-import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_JAVA_SOURCE_PROP;
-import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_JAVA_TARGET_PROP;
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
@@ -196,8 +194,8 @@ class AndroidUtils {
     if (javaCompile == null) {
       LOGGER.warn("Unable to find Java compiler on variant '{}'. Is Jack toolchain used? SonarQube analysis will be less accurate without bytecode.", variant.getName());
     } else {
-      properties.put(SONAR_JAVA_SOURCE_PROP, javaCompile.getSourceCompatibility());
-      properties.put(SONAR_JAVA_TARGET_PROP, javaCompile.getTargetCompatibility());
+      SonarUtils.populateJdkProperties(properties, JavaCompilerUtils.extractConfiguration(javaCompile));
+      JavaCompilerUtils.extractConfiguration(javaCompile);
     }
 
     Set<File> libraries = new LinkedHashSet<>(bootClassPath);

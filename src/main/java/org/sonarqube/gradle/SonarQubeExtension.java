@@ -108,4 +108,5 @@ public class SonarQubeExtension {
   public void setAndroidVariant(String androidVariant) {
     this.androidVariant = androidVariant;
   }
+
 }
