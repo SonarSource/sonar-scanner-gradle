@@ -1,4 +1,4 @@
-/**
+/*
  * SonarQube Scanner for Gradle
  * Copyright (C) 2015-2021 SonarSource
  * mailto:info AT sonarsource DOT com
