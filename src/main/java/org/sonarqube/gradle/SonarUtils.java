@@ -28,12 +28,21 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 
 public class SonarUtils {
+
+  static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
+  static final String SONAR_JAVA_TARGET_PROP = "sonar.java.target";
+
+  private SonarUtils() {
+    // Utility class
+  }
+
   static boolean isAndroidProject(Project project) {
     return project.getPlugins().hasPlugin("com.android.application") || project.getPlugins().hasPlugin("com.android.library")
       || project.getPlugins().hasPlugin("com.android.test") || project.getPlugins().hasPlugin("com.android.feature");
@@ -87,6 +96,18 @@ public class SonarUtils {
     appendProps(properties, "sonar.java.libraries", exists(mainLibraries));
     // Populate deprecated properties for backward compatibility
     appendProps(properties, "sonar.libraries", exists(mainLibraries));
+  }
+
+  static void populateJdkProperties(Map<String, Object> properties, JavaCompilerConfiguration config) {
+    properties.put("sonar.java.jdkHome", config.getJdkHome());
+    Optional<String> release = config.getRelease();
+    if (release.isPresent()) {
+      properties.put(SONAR_JAVA_SOURCE_PROP, release.get());
+      properties.put(SONAR_JAVA_TARGET_PROP, release.get());
+    } else {
+      config.getSource().ifPresent(s -> properties.put(SONAR_JAVA_SOURCE_PROP, s));
+      config.getTarget().ifPresent(t -> properties.put(SONAR_JAVA_TARGET_PROP, t));
+    }
   }
 
   static List<File> exists(Collection<File> files) {

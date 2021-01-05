@@ -68,8 +68,6 @@ public class SonarPropertyComputer {
 
   static final String SONAR_SOURCES_PROP = "sonar.sources";
   static final String SONAR_TESTS_PROP = "sonar.tests";
-  static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
-  static final String SONAR_JAVA_TARGET_PROP = "sonar.java.target";
 
   private final Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap;
   private final Project targetProject;
@@ -189,12 +187,6 @@ public class SonarPropertyComputer {
     });
   }
 
-  private static void configureJdkSourceAndTarget(Project project, Map<String, Object> properties) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
-    properties.put(SONAR_JAVA_SOURCE_PROP, javaPluginConvention.getSourceCompatibility());
-    properties.put(SONAR_JAVA_TARGET_PROP, javaPluginConvention.getTargetCompatibility());
-  }
-
   private static void addEnvironmentProperties(Map<String, Object> properties) {
     for (Map.Entry<Object, Object> e : Utils.loadEnvironmentProperties(System.getenv()).entrySet()) {
       properties.put(e.getKey().toString(), e.getValue().toString());
@@ -211,7 +203,7 @@ public class SonarPropertyComputer {
   }
 
   private static void configureForJava(final Project project, final Map<String, Object> properties) {
-    project.getPlugins().withType(JavaBasePlugin.class, javaBasePlugin -> configureJdkSourceAndTarget(project, properties));
+    project.getPlugins().withType(JavaBasePlugin.class, javaBasePlugin -> populateJdkProperties(project, properties));
 
     project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
       boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, false);
@@ -227,7 +219,7 @@ public class SonarPropertyComputer {
    * sonar.java.* and sonar.groovy.* properties.
    */
   private static void configureForGroovy(final Project project, final Map<String, Object> properties) {
-    project.getPlugins().withType(GroovyBasePlugin.class, groovyBasePlugin -> configureJdkSourceAndTarget(project, properties));
+    project.getPlugins().withType(GroovyBasePlugin.class, groovyBasePlugin -> populateJdkProperties(project, properties));
 
     project.getPlugins().withType(GroovyPlugin.class, groovyPlugin -> {
       boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, true);
@@ -236,6 +228,11 @@ public class SonarPropertyComputer {
         extractTestProperties(project, properties, true);
       }
     });
+  }
+
+  private static void populateJdkProperties(final Project project, final Map<String, Object> properties) {
+    JavaCompilerUtils.extractJavaCompilerConfigurationFromCompileTasks(project).ifPresent(
+      config -> SonarUtils.populateJdkProperties(properties, config));
   }
 
   private static void extractTestProperties(Project project, Map<String, Object> properties, boolean addForGroovy) {
