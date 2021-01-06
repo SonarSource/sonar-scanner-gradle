@@ -119,8 +119,16 @@ license {
 }
 
 jacoco {
-  toolVersion = "0.8.5"
+  toolVersion = "0.8.6"
 }
+
+jacocoTestReport {
+  reports {
+    xml.enabled true
+  }
+}
+
+tasks['sonarqube'].dependsOn jacocoTestReport
 
 // Add required informations to deploy on central
 install {
