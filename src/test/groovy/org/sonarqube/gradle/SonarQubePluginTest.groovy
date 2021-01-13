@@ -20,15 +20,12 @@
 package org.sonarqube.gradle
 
 import org.gradle.api.internal.project.ProjectInternal
-import org.gradle.api.plugins.GroovyBasePlugin
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.initialization.GradlePropertiesController
-import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
-import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Specification
 
 import static org.hamcrest.Matchers.contains
@@ -500,26 +497,6 @@ class SonarQubePluginTest extends Specification {
         and:
         !properties.containsKey(":parent:child.sonar.some.key")
         properties[":parent:child.sonar.projectVersion"] == "1.3"
-    }
-
-    def "handles invalid java home"() {
-        def rootProject = ProjectBuilder.builder().withName("root").build()
-        def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-project")).build()
-
-        project.pluginManager.apply(SonarQubePlugin)
-        project.pluginManager.apply(JavaPlugin)
-        project.pluginManager.apply(JacocoPlugin)
-
-        project.sourceSets.main.java.srcDirs = ["src"]
-
-        System.setProperty("java.home", "invalid")
-
-        when:
-        def properties = project.tasks.sonarqube.properties
-
-        then:
-        !properties.any { key, value -> value.contains("invalid") }
-        !properties.any { key, value -> value.contains("rt.jar") }
     }
 
     def "handles system properties correctly if plugin is applied to root project"() {
