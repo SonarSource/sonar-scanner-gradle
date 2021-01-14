@@ -152,6 +152,12 @@ publishing {
         scm {
           url = githubUrl
         }
+        developers {
+          developer {
+            id = 'sonarsource-team'
+            name = 'SonarSource Team'
+          }
+        }
       }
     }
   }
