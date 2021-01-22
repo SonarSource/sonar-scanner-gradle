@@ -99,7 +99,7 @@ public class SonarUtils {
   }
 
   static void populateJdkProperties(Map<String, Object> properties, JavaCompilerConfiguration config) {
-    properties.put("sonar.java.jdkHome", config.getJdkHome());
+    config.getJdkHome().ifPresent(s -> properties.put("sonar.java.jdkHome", s));
     Optional<String> release = config.getRelease();
     if (release.isPresent()) {
       properties.put(SONAR_JAVA_SOURCE_PROP, release.get());
