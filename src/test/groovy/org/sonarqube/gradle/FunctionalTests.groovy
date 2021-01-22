@@ -44,6 +44,31 @@ class FunctionalTests extends Specification {
         Files.copy(is, testProjectDir.newFile('gradle.properties').toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
 
+    def "no jdkHome, source and target for non 'java' projects"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.root)
+                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.absolutePath )
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":sonarqube").outcome == SUCCESS
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        !props.containsKey("sonar.java.jdkHome")
+        !props.containsKey("sonar.java.source")
+        !props.containsKey("sonar.java.target")
+    }
+
     def "set jdkHome, source and target for 'java' projects from global toolchains"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -140,5 +165,8 @@ class FunctionalTests extends Specification {
         props.load(outFile.newDataInputStream())
         props."sonar.java.source" == '7'
         props."sonar.java.target" == '7'
+        // sonar.java.jdkHome will be the runtime JDK used to run Gradle, so we can't really assert its particular value
+        // just check that it points to a valid path
+        new File(props."sonar.java.jdkHome").exists()
     }
 }
