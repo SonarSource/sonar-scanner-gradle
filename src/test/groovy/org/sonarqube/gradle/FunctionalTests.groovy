@@ -98,8 +98,9 @@ class FunctionalTests extends Specification {
         result.task(":sonarqube").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
-        props."sonar.java.jdkHome".contains('8')
         new File(props."sonar.java.jdkHome").exists()
+        "${props."sonar.java.jdkHome"}${File.separator}bin${File.separator}java -version".execute()
+                .err.text.contains("\"1.8.")
         props."sonar.java.source" == '8'
         props."sonar.java.target" == '8'
     }
@@ -133,8 +134,9 @@ class FunctionalTests extends Specification {
         result.task(":sonarqube").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
-        props."sonar.java.jdkHome".contains('8')
         new File(props."sonar.java.jdkHome").exists()
+        "${props."sonar.java.jdkHome"}${File.separator}bin${File.separator}java -version".execute()
+                .err.text.contains("\"1.8.")
         props."sonar.java.source" == '8'
         props."sonar.java.target" == '8'
     }
