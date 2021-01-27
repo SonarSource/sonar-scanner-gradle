@@ -87,7 +87,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion("6.7")
+                .withGradleVersion("6.7.1")
                 .withProjectDir(testProjectDir.root)
                 .forwardOutput()
                 .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.absolutePath )
@@ -121,7 +121,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion("6.7")
+                .withGradleVersion("6.7.1")
                 .withProjectDir(testProjectDir.root)
                 .forwardOutput()
                 .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.absolutePath )
