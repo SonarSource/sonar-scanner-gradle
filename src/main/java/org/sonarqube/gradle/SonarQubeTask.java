@@ -32,6 +32,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.EmbeddedScanner;
 import org.sonarsource.scanner.api.LogOutput;
 import org.sonarsource.scanner.api.ScanProperties;
@@ -95,7 +96,7 @@ public class SonarQubeTask extends ConventionTask {
       return;
     }
 
-    EmbeddedScanner scanner = EmbeddedScanner.create("ScannerGradle", getPluginVersion() + "/" + getProject().getGradle().getGradleVersion(), LOG_OUTPUT)
+    EmbeddedScanner scanner = EmbeddedScanner.create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current(), LOG_OUTPUT)
       .addGlobalProperties(properties);
     scanner.start();
     scanner.execute(new HashMap<>());
