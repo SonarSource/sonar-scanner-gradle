@@ -13,7 +13,6 @@ plugins {
   id "org.sonarqube" version "3.0"
   id "com.jfrog.artifactory" version "4.18.3"
   id "com.github.hierynomus.license" version "0.15.0"
-  id "com.jfrog.bintray" version "1.8.5"
   id "pl.droidsonroids.jacoco.testkit" version "1.0.7"
 }
 
@@ -194,24 +193,6 @@ artifactory {
   clientConfig.info.addEnvironmentProperty('PROJECT_VERSION', "${version}")
 }
 
-bintray {
-  user = System.getenv('BINTRAY_USER')
-  key = System.getenv('BINTRAY_KEY')
-  pkg {
-    repo = 'SonarQube'
-    name = project.group
-    userOrg = 'sonarsource'
-    version {
-      name = project.version
-      desc = "${project.description} ${project.version}"
-      released  = new Date()
-      vcsTag = project.version
-    }
-    publications = ['pluginMaven']
-  }
-}
-
-publishPlugins.dependsOn bintrayUpload
 afterReleaseBuild.dependsOn publishPlugins
 
 processResources {
