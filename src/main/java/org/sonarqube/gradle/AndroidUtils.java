@@ -19,8 +19,16 @@
  */
 package org.sonarqube.gradle;
 
+import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
+import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
+import static org.sonarqube.gradle.SonarUtils.appendProps;
+import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
+import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
+import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
+
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.AppPlugin;
+import com.android.build.gradle.DynamicFeaturePlugin;
 import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.LibraryPlugin;
 import com.android.build.gradle.TestExtension;
@@ -51,13 +59,6 @@ import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-
-import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
-import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
-import static org.sonarqube.gradle.SonarUtils.appendProps;
-import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
-import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
-import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
 
 /**
  * Only access this class when running on an Android application
@@ -117,6 +118,11 @@ class AndroidUtils {
       TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
       return androidExtension.getBootClasspath();
     }
+    PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
+    if (!dynamicFeaturePlugins.isEmpty()) {
+      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
+      return androidExtension.getBootClasspath();
+    }
     return null;
   }
 
@@ -130,6 +136,11 @@ class AndroidUtils {
     PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
     if (!libPlugins.isEmpty()) {
       LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
+      return androidExtension.getTestBuildType();
+    }
+    PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
+    if (!dynamicFeaturePlugins.isEmpty()) {
+      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
       return androidExtension.getTestBuildType();
     }
     return null;
@@ -151,6 +162,11 @@ class AndroidUtils {
     PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
     if (!testPlugins.isEmpty()) {
       TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
+      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+    }
+    PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
+    if (!dynamicFeaturePlugins.isEmpty()) {
+      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
       return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
     }
     return null;
