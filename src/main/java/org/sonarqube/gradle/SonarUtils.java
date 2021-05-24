@@ -45,9 +45,9 @@ public class SonarUtils {
 
   static boolean isAndroidProject(Project project) {
     return project.getPlugins().hasPlugin("com.android.application")
-        || project.getPlugins().hasPlugin("com.android.library")
-        || project.getPlugins().hasPlugin("com.android.test")
-        || project.getPlugins().hasPlugin("com.android.dynamic-feature");
+      || project.getPlugins().hasPlugin("com.android.library")
+      || project.getPlugins().hasPlugin("com.android.test")
+      || project.getPlugins().hasPlugin("com.android.dynamic-feature");
   }
 
   static String capitalize(final String word) {

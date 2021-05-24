@@ -19,13 +19,6 @@
  */
 package org.sonarqube.gradle;
 
-import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
-import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
-import static org.sonarqube.gradle.SonarUtils.appendProps;
-import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
-import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
-import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
-
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.AppPlugin;
 import com.android.build.gradle.DynamicFeaturePlugin;
@@ -59,6 +52,13 @@ import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
+
+import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
+import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
+import static org.sonarqube.gradle.SonarUtils.appendProps;
+import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
+import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
+import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
 
 /**
  * Only access this class when running on an Android application
