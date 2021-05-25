@@ -68,7 +68,7 @@ Now debug remotely by connecting to port 5005.
 
 ### Install a SNAPSHOT in local Maven repository
 
-    ./gradlew install
+    ./gradlew publishToMavenLocal
 
 ### Using the plugin SNAPSHOT previously installed in local Maven repository
 
