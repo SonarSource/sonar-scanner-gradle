@@ -70,7 +70,7 @@ repositories {
 
 dependencies {
   implementation 'org.sonarsource.scanner.api:sonar-scanner-api:2.16.1.361'
-  compileOnly 'com.android.tools.build:gradle:3.3.2'
+  compileOnly 'com.android.tools.build:gradle:4.2.0'
   compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
   testImplementation localGroovy()
   testImplementation 'junit:junit:4.12'
