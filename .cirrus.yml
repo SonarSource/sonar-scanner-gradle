@@ -81,13 +81,12 @@ gradle_qa_task:
     memory: 2G
   env:
     matrix:
-      - GRADLE_VERSION: 4.6
-        ANDROID_GRADLE_VERSION: 3.2.1
+      - GRADLE_VERSION: 6.8.3
+        ANDROID_GRADLE_VERSION: 4.2.0
       - GRADLE_VERSION: 5.6.4
         ANDROID_GRADLE_VERSION: 3.3.2
-      - GRADLE_VERSION: 3.5
-        # ITs with android are skipped with gradle 3 but we define it so that the var is not unboud
-        ANDROID_GRADLE_VERSION: 1.0.0
+      - GRADLE_VERSION: 4.6
+        ANDROID_GRADLE_VERSION: 3.2.1
   gradle_cache:
     folder: ~/.gradle/caches
   script:
