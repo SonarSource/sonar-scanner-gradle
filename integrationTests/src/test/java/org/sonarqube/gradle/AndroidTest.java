@@ -19,6 +19,8 @@
  */
 package org.sonarqube.gradle;
 
+import com.github.zafarkhaja.semver.Version;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -37,6 +39,10 @@ public class AndroidTest extends AbstractGradleIT {
     assumeFalse(getGradleVersion().startsWith("3."));
   }
 
+  private boolean shouldExpectOldJavaBinariesDir() {
+    return Version.valueOf(getAndroidGradleVersion()).lessThan(Version.valueOf("3.5.0"));
+  }
+
   @Test
   public void testAndroidProjectJdk8Retrolambda() throws Exception {
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-retrolambda");
@@ -50,11 +56,22 @@ public class AndroidTest extends AbstractGradleIT {
         baseDir.resolve("src/main/res"),
         baseDir.resolve("src/main/AndroidManifest.xml"));
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"));
-    assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
-      .containsOnly(
-        baseDir.resolve("build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes"),
-        baseDir.resolve("build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes"));
+    if (shouldExpectOldJavaBinariesDir()) {
+      assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"));
+      assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes"),
+          baseDir.resolve("build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes"));
+    } else {
+      assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/debug/classes"));
+      assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("build/intermediates/javac/debugUnitTest/classes"),
+          baseDir.resolve("build/intermediates/javac/debugAndroidTest/classes"));
+    }
+
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
@@ -75,12 +92,23 @@ public class AndroidTest extends AbstractGradleIT {
         baseDir.resolve("src/main/res"),
         baseDir.resolve("src/main/AndroidManifest.xml"));
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
-      .isEqualTo(baseDir.resolve("build/intermediates/javac/demoMinApi23Debug/compileDemoMinApi23DebugJavaWithJavac/classes"));
-    assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
-      .containsOnly(
-        baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/compileDemoMinApi23DebugUnitTestJavaWithJavac/classes"),
-        baseDir.resolve("build/intermediates/javac/demoMinApi23DebugAndroidTest/compileDemoMinApi23DebugAndroidTestJavaWithJavac/classes")); // WHY ???
+
+    if (shouldExpectOldJavaBinariesDir()) {
+      assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/demoMinApi23Debug/compileDemoMinApi23DebugJavaWithJavac/classes"));
+      assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/compileDemoMinApi23DebugUnitTestJavaWithJavac/classes"),
+          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugAndroidTest/compileDemoMinApi23DebugAndroidTestJavaWithJavac/classes"));
+    } else {
+      assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/demoMinApi23Debug/classes"));
+      assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/classes"),
+          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugAndroidTest/classes"));
+    }
+
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
@@ -99,10 +127,17 @@ public class AndroidTest extends AbstractGradleIT {
         baseDir.resolve("src/main/res"),
         baseDir.resolve("src/main/AndroidManifest.xml"));
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
-      .isEqualTo(baseDir.resolve("build/intermediates/javac/fullMinApi23Release/compileFullMinApi23ReleaseJavaWithJavac/classes"));
-    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries")))
-      .isEqualTo(baseDir.resolve("build/intermediates/javac/fullMinApi23ReleaseUnitTest/compileFullMinApi23ReleaseUnitTestJavaWithJavac/classes"));
+    if (shouldExpectOldJavaBinariesDir()) {
+      assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/fullMinApi23Release/compileFullMinApi23ReleaseJavaWithJavac/classes"));
+      assertThat(Paths.get(props.getProperty("sonar.java.test.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/fullMinApi23ReleaseUnitTest/compileFullMinApi23ReleaseUnitTestJavaWithJavac/classes"));
+    } else {
+      assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/fullMinApi23Release/classes"));
+      assertThat(Paths.get(props.getProperty("sonar.java.test.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/fullMinApi23ReleaseUnitTest/classes"));
+    }
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
@@ -125,11 +160,23 @@ public class AndroidTest extends AbstractGradleIT {
       .containsOnly(
         baseDir.resolve("app/src/test/java"),
         baseDir.resolve("app/src/androidTest/java"));
-    assertThat(Paths.get(props.getProperty(":app.sonar.java.binaries"))).isEqualTo(baseDir.resolve("app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"));
-    assertThat(stream(props.getProperty(":app.sonar.java.test.binaries").split(",")).map(Paths::get))
-      .containsOnly(
-        baseDir.resolve("app/build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes"),
-        baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes"));
+
+    if (shouldExpectOldJavaBinariesDir()) {
+      assertThat(Paths.get(props.getProperty(":app.sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"));
+      assertThat(stream(props.getProperty(":app.sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("app/build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes"),
+          baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes"));
+    } else {
+      assertThat(Paths.get(props.getProperty(":app.sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("app/build/intermediates/javac/debug/classes"));
+      assertThat(stream(props.getProperty(":app.sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("app/build/intermediates/javac/debugUnitTest/classes"),
+          baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/classes"));
+    }
+
     assertThat(props.getProperty(":app.sonar.java.libraries")).contains("android.jar");
     assertThat(props.getProperty(":app.sonar.java.libraries")).doesNotContain("hamcrest-core-1.3.jar");
     assertThat(props.getProperty(":app.sonar.java.test.libraries")).contains("hamcrest-core-1.3.jar");
@@ -258,10 +305,19 @@ public class AndroidTest extends AbstractGradleIT {
         baseDir.resolve("src/main/res"),
         baseDir.resolve("src/main/AndroidManifest.xml"));
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
-      .isEqualTo(baseDir.resolve("build/intermediates/javac/release/compileReleaseJavaWithJavac/classes"));
-    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries")))
-      .isEqualTo(baseDir.resolve("build/intermediates/javac/releaseUnitTest/compileReleaseUnitTestJavaWithJavac/classes"));
+
+    if (shouldExpectOldJavaBinariesDir()) {
+      assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/release/compileReleaseJavaWithJavac/classes"));
+      assertThat(Paths.get(props.getProperty("sonar.java.test.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/releaseUnitTest/compileReleaseUnitTestJavaWithJavac/classes"));
+    } else {
+      assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/release/classes"));
+      assertThat(Paths.get(props.getProperty("sonar.java.test.binaries")))
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/releaseUnitTest/classes"));
+    }
+
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
