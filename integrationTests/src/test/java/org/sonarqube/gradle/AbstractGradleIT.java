@@ -41,10 +41,12 @@ public abstract class AbstractGradleIT {
   public TemporaryFolder temp = new TemporaryFolder();
 
   private static String gradleVersion;
+  private static String androidGradleVersion;
 
   static {
     try {
       gradleVersion = IOUtils.toString(AbstractGradleIT.class.getResource("/gradleversion.txt"), StandardCharsets.UTF_8);
+      androidGradleVersion = IOUtils.toString(AbstractGradleIT.class.getResource("/androidgradleversion.txt"), StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
@@ -52,6 +54,10 @@ public abstract class AbstractGradleIT {
 
   protected static String getGradleVersion() {
     return gradleVersion;
+  }
+
+  protected static String getAndroidGradleVersion() {
+    return androidGradleVersion;
   }
 
   protected Properties runGradlewSonarQubeSimulationMode(String project) throws Exception {
