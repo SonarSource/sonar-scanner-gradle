@@ -47,6 +47,7 @@ public class SonarUtils {
     return project.getPlugins().hasPlugin("com.android.application")
       || project.getPlugins().hasPlugin("com.android.library")
       || project.getPlugins().hasPlugin("com.android.test")
+      || project.getPlugins().hasPlugin("com.android.feature")
       || project.getPlugins().hasPlugin("com.android.dynamic-feature");
   }
 
