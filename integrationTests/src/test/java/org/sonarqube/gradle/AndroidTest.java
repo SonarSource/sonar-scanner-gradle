@@ -232,15 +232,16 @@ public class AndroidTest extends AbstractGradleIT {
   public void testingBlueprint_task_dependencies() throws Exception {
     // First flavor that is picked up seems to be the flavor2
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", null, Collections.emptyMap(), "sonarqube", "taskTree", "--max-workers=1");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", null, Collections.emptyMap(), "sonarqube", "--dry-run", "--max-workers=1");
 
-    assertThat(result.getLog().split("\\r?\\n")).containsSubsequence(":sonarqube",
-      "+--- :app:compileFlavor2DebugAndroidTestJavaWithJavac",
-      "+--- :app:compileFlavor2DebugUnitTestJavaWithJavac",
-      "+--- :module-android-library:compileDebugAndroidTestJavaWithJavac",
-      "+--- :module-android-library:compileDebugUnitTestJavaWithJavac",
-      "+--- :module-flavor1-androidTest-only:compileDebugJavaWithJavac",
-      "\\--- :module-plain-java:compileTestJava");
+    assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
+            ":app:compileFlavor2DebugAndroidTestJavaWithJavac SKIPPED",
+            ":app:compileFlavor2DebugUnitTestJavaWithJavac SKIPPED",
+            ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
+            ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
+            ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
+            ":module-plain-java:compileTestJava SKIPPED",
+            ":sonarqube SKIPPED");
   }
 
   // SONARGRADL-22
