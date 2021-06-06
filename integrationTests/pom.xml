@@ -10,14 +10,14 @@
   </parent>
   <groupId>org.sonarsource.scanner.gradle</groupId>
   <artifactId>it-gradle</artifactId>
-  <version>3.0-SNAPSHOT</version>
+  <version>3.3-SNAPSHOT</version>
   <name>Gradle Plugin :: Integration Tests</name>
   <inceptionYear>2015</inceptionYear>
 
   <properties>
     <!-- Default version when running ITs on dev machines. Value overridden in .cirrus.yml -->
-    <gradle.version>5.6.4</gradle.version>
-    <androidGradle.version>3.3.2</androidGradle.version>
+    <gradle.version>6.8.3</gradle.version>
+    <androidGradle.version>4.2.0</androidGradle.version>
   </properties>
   
   <build>
