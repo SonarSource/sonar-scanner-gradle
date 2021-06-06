@@ -301,6 +301,118 @@ public class AndroidTest extends AbstractGradleIT {
             ":sonarqube SKIPPED");
   }
 
+  @Test
+  public void testingBlueprintWithDynamicFeatureModule_default_flavor() throws Exception {
+    assumeTrue(Version.valueOf(getAndroidGradleVersion()).greaterThanOrEqualTo(Version.valueOf("4.1.0")));
+
+    // First flavor that is picked up seems to be the flavor1
+
+    Properties props = runGradlewSonarQubeSimulationMode("/AndroidTestingBlueprintWithDynamicFeatureModule");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    // App module contains main code + local tests + instrumented tests
+    assertThat(stream(props.getProperty(":app.sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("app/src/main/java"),
+        baseDir.resolve("app/src/main/res"),
+        baseDir.resolve("app/src/main/AndroidManifest.xml"),
+        baseDir.resolve("app/src/flavor1/java"),
+        baseDir.resolve("app/src/flavor1/res"));
+    assertThat(stream(props.getProperty(":app.sonar.tests").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("app/src/test/java"),
+        baseDir.resolve("app/src/test/resources"),
+        baseDir.resolve("app/src/androidTest/java"),
+        baseDir.resolve("app/src/androidTest/AndroidManifest.xml"),
+        baseDir.resolve("app/src/testFlavor1/java"));
+    assertThat(Paths.get(props.getProperty(":app.sonar.java.binaries")))
+      .isEqualTo(baseDir.resolve("app/build/intermediates/javac/flavor1Debug/classes"));
+    assertThat(stream(props.getProperty(":app.sonar.java.test.binaries").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("app/build/intermediates/javac/flavor1DebugUnitTest/classes"),
+        baseDir.resolve("app/build/intermediates/javac/flavor1DebugAndroidTest/classes"));
+    assertThat(props.getProperty(":app.sonar.java.source")).isEqualTo("1.8");
+    assertThat(props.getProperty(":app.sonar.java.target")).isEqualTo("1.8");
+
+    // Library module has no local tests
+    assertThat(stream(props.getProperty(":module-android-library.sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module-android-library/src/main/java"),
+        baseDir.resolve("module-android-library/src/main/res"),
+        baseDir.resolve("module-android-library/src/main/AndroidManifest.xml"));
+    assertThat(stream(props.getProperty(":module-android-library.sonar.tests").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module-android-library/src/androidTest/java"));
+    assertThat(Paths.get(props.getProperty(":module-android-library.sonar.java.binaries")))
+      .isEqualTo(baseDir.resolve("module-android-library/build/intermediates/javac/debug/classes"));
+    assertThat(stream(props.getProperty(":module-android-library.sonar.java.test.binaries").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module-android-library/build/intermediates/javac/debugAndroidTest/classes"));
+    assertThat(props.getProperty(":module-android-library.sonar.java.source")).isEqualTo("1.8");
+    assertThat(props.getProperty(":module-android-library.sonar.java.target")).isEqualTo("1.8");
+
+    // Feature module has no local tests
+    assertThat(stream(props.getProperty(":module_android_feature.sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module_android_feature/src/main/java"),
+        baseDir.resolve("module_android_feature/src/main/res"),
+        baseDir.resolve("module_android_feature/src/main/AndroidManifest.xml"));
+    assertThat(stream(props.getProperty(":module_android_feature.sonar.tests").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module_android_feature/src/androidTest/java"));
+    assertThat(Paths.get(props.getProperty(":module_android_feature.sonar.java.binaries")))
+      .isEqualTo(baseDir.resolve("module_android_feature/build/intermediates/javac/flavor1Debug/classes"));
+    assertThat(stream(props.getProperty(":module_android_feature.sonar.java.test.binaries").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module_android_feature/build/intermediates/javac/flavor1DebugAndroidTest/classes"));
+    assertThat(props.getProperty(":module_android_feature.sonar.java.source")).isEqualTo("1.8");
+    assertThat(props.getProperty(":module_android_feature.sonar.java.target")).isEqualTo("1.8");
+
+    // test only module
+    assertThat(props.getProperty(":module-flavor1-androidTest-only.sonar.sources")).isEmpty();
+    assertThat(stream(props.getProperty(":module-flavor1-androidTest-only.sonar.tests").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module-flavor1-androidTest-only/src/main/java"),
+        baseDir.resolve("module-flavor1-androidTest-only/src/main/AndroidManifest.xml"));
+    assertThat(props).doesNotContainKey(":module-flavor1-androidTest-only.sonar.java.binaries");
+    assertThat(stream(props.getProperty(":module-flavor1-androidTest-only.sonar.java.test.binaries").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module-flavor1-androidTest-only/build/intermediates/javac/debug/classes"));
+    assertThat(props.getProperty(":module-flavor1-androidTest-only.sonar.java.source")).isEqualTo("1.8");
+    assertThat(props.getProperty(":module-flavor1-androidTest-only.sonar.java.target")).isEqualTo("1.8");
+
+    // regular java module
+    assertThat(stream(props.getProperty(":module-plain-java.sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module-plain-java/src/main/java"));
+    assertThat(stream(props.getProperty(":module-plain-java.sonar.tests").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("module-plain-java/src/test/java"));
+    assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/java/main"));
+    assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/java/test"));
+    assertThat(props.getProperty(":module-plain-java.sonar.java.source")).isEqualTo("1.7");
+    assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.7");
+  }
+
+  @Test
+  public void testingBlueprintWithDynamicFeatureModule_task_dependencies() throws Exception {
+    assumeTrue(Version.valueOf(getAndroidGradleVersion()).greaterThanOrEqualTo(Version.valueOf("4.1.0")));
+
+    // First flavor that is picked up seems to be the flavor1
+
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, Collections.emptyMap(), "sonarqube", "--dry-run", "--max-workers=1");
+
+    assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
+            ":app:compileFlavor1DebugAndroidTestJavaWithJavac SKIPPED",
+            ":app:compileFlavor1DebugUnitTestJavaWithJavac SKIPPED",
+            ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
+            ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
+            ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
+            ":module-plain-java:compileTestJava SKIPPED",
+            ":module_android_feature:compileFlavor1DebugJavaWithJavac SKIPPED",
+            ":sonarqube SKIPPED");
+  }
   // SONARGRADL-22
   @Test
   public void noDebugVariant() throws Exception {

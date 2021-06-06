@@ -1,0 +1,14 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+}
+
+// In case Java 8+ is the default JDK, force Java 7 as this module will be used from Android.
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+dependencies {
+    // Dependencies for local unit tests
+    testImplementation "junit:junit:${rootProject.ext.junitVersion}"
+    testImplementation "org.hamcrest:hamcrest-core:${rootProject.ext.hamcrestVersion}"
+}

@@ -1,0 +1,34 @@
+plugins {
+    id 'com.android.test'
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+
+        // The package name of the test app
+        testApplicationId 'com.example.android.testing.blueprint.test'
+        // The Instrumentation test runner used to run tests.
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+
+        missingDimensionStrategy 'dim', 'flavor1', 'flavor2'
+    }
+
+    // Set the target app project. The module specified here should contain the production code
+    // test should run against.
+    targetProjectPath ':app'
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    // Android Testing Support Library's runner and rules and hamcrest matchers
+    implementation "com.android.support.test:runner:${rootProject.ext.runnerVersion}"
+    implementation "com.android.support.test:rules:${rootProject.ext.rulesVersion}"
+    implementation "org.hamcrest:hamcrest-core:${rootProject.ext.hamcrestVersion}"
+}
