@@ -32,6 +32,8 @@ import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 public class AndroidTest extends AbstractGradleIT {
   @BeforeClass
@@ -41,6 +43,10 @@ public class AndroidTest extends AbstractGradleIT {
 
   private boolean shouldExpectOldJavaBinariesDir() {
     return Version.valueOf(getAndroidGradleVersion()).lessThan(Version.valueOf("3.5.0"));
+  }
+
+  private boolean supportAndroidFeatureModule() {
+    return Version.valueOf(getAndroidGradleVersion()).lessThan(Version.valueOf("4.0.0"));
   }
 
   @Test
@@ -185,10 +191,12 @@ public class AndroidTest extends AbstractGradleIT {
   }
 
   @Test
-  public void testingBlueprint_default_flavor() throws Exception {
+  public void testingBlueprintWithFeatureModule_default_flavor() throws Exception {
+    assumeTrue("Assume that Android Gradle Plugin version supports com.android.feature modules", supportAndroidFeatureModule());
+
     // First flavor that is picked up seems to be the flavor2
 
-    Properties props = runGradlewSonarQubeSimulationMode("/AndroidTestingBlueprint");
+    Properties props = runGradlewSonarQubeSimulationMode("/AndroidTestingBlueprintWithFeatureModule");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -276,10 +284,12 @@ public class AndroidTest extends AbstractGradleIT {
   }
 
   @Test
-  public void testingBlueprint_task_dependencies() throws Exception {
+  public void testingBlueprintWithFeatureModule_task_dependencies() throws Exception {
+    assumeTrue("Assume that Android Gradle Plugin version supports com.android.feature modules", supportAndroidFeatureModule());
+
     // First flavor that is picked up seems to be the flavor2
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprint", null, Collections.emptyMap(), "sonarqube", "--dry-run", "--max-workers=1");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithFeatureModule", null, Collections.emptyMap(), "sonarqube", "--dry-run", "--max-workers=1");
 
     assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
             ":app:compileFlavor2DebugAndroidTestJavaWithJavac SKIPPED",
