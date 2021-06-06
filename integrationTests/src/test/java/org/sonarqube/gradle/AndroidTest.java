@@ -121,6 +121,74 @@ public class AndroidTest extends AbstractGradleIT {
   }
 
   @Test
+  public void testAndroidDynamicFeature() throws Exception {
+    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-dynamic-feature");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(props).contains(entry("sonar.projectKey", "org.sonarqube:example-android-gradle-dynamic-module"));
+    assertThat(stream(props.getProperty("sonar.modules").split(",")))
+      .containsOnly(":app", ":mydynamicfeature");
+
+    assertThat(stream(props.getProperty(":app.sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("app/src/main/java"),
+        baseDir.resolve("app/src/main/res"),
+        baseDir.resolve("app/src/main/AndroidManifest.xml"));
+    assertThat(stream(props.getProperty(":app.sonar.tests").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("app/src/test/java"),
+        baseDir.resolve("app/src/androidTest/java")
+      );
+    if (shouldExpectOldJavaBinariesDir()) {
+      assertThat(Paths.get(props.getProperty(":app.sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"));
+      assertThat(stream(props.getProperty(":app.sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("app/build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes"),
+          baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes"));
+    } else {
+      assertThat(Paths.get(props.getProperty(":app.sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("app/build/intermediates/javac/debug/classes"));
+      assertThat(stream(props.getProperty(":app.sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("app/build/intermediates/javac/debugUnitTest/classes"),
+          baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/classes"));
+    }
+    assertThat(props.getProperty(":app.sonar.java.libraries")).contains("android.jar");
+    assertThat(props.getProperty(":app.sonar.java.libraries")).doesNotContain("junit-4.12.jar");
+    assertThat(props.getProperty(":app.sonar.java.test.libraries")).contains("junit-4.12.jar");
+
+    assertThat(stream(props.getProperty(":mydynamicfeature.sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("mydynamicfeature/src/main/java"),
+        baseDir.resolve("mydynamicfeature/src/main/AndroidManifest.xml"));
+    assertThat(stream(props.getProperty(":mydynamicfeature.sonar.tests").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("mydynamicfeature/src/test/java"),
+        baseDir.resolve("mydynamicfeature/src/androidTest/java")
+      );
+    if (shouldExpectOldJavaBinariesDir()) {
+      assertThat(Paths.get(props.getProperty(":mydynamicfeature.sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("mydynamicfeature/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"));
+      assertThat(stream(props.getProperty(":mydynamicfeature.sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("mydynamicfeature/build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes"),
+          baseDir.resolve("mydynamicfeature/build/intermediates/javac/debugAndroidTest/compileDebugAndroidTestJavaWithJavac/classes"));
+    } else {
+      assertThat(Paths.get(props.getProperty(":mydynamicfeature.sonar.java.binaries")))
+        .isEqualTo(baseDir.resolve("mydynamicfeature/build/intermediates/javac/debug/classes"));
+      assertThat(stream(props.getProperty(":mydynamicfeature.sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("mydynamicfeature/build/intermediates/javac/debugUnitTest/classes"),
+          baseDir.resolve("mydynamicfeature/build/intermediates/javac/debugAndroidTest/classes"));
+    }
+    assertThat(props.getProperty(":mydynamicfeature.sonar.java.libraries")).contains("android.jar");
+    assertThat(props.getProperty(":mydynamicfeature.sonar.java.libraries")).doesNotContain("junit-4.12.jar");
+    assertThat(props.getProperty(":mydynamicfeature.sonar.java.test.libraries")).contains("junit-4.12.jar");
+  }
+
+  @Test
   public void testSpecifyVariant() throws Exception {
     Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-nondefault-variant");
 

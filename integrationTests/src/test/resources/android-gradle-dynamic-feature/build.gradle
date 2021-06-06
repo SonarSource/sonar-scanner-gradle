@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        google()
+    }
+    dependencies {
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}"
+        classpath "com.android.tools.build:gradle:${androidGradle.version}"
+    }
+}
+
+apply plugin: 'jacoco'
+apply plugin: "org.sonarqube"
+
+allprojects {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        google()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "Simple Android Gradle Project With Dynamic Module"
+        property "sonar.projectKey", "org.sonarqube:example-android-gradle-dynamic-module"
+    }
+}
