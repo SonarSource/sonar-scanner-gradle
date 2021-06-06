@@ -1,0 +1,3 @@
+include ':mydynamicfeature'
+include ':app'
+rootProject.name = "My Application"
