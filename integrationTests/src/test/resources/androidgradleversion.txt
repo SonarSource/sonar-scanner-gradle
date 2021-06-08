@@ -1,0 +1,1 @@
+${androidGradle.version}
