@@ -53,7 +53,7 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 
 build_task:
   gke_container:
-    <<: *CONTAINER_DEFINITION
+    <<: *CONTAINER_DEFINITION_11
     cpu: 1.5
     memory: 4G
   env:
