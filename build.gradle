@@ -11,7 +11,7 @@ plugins {
   id 'net.researchgate.release' version "2.8.1"
   // Eat your own dog food :)
   id "org.sonarqube" version "3.0"
-  id "com.jfrog.artifactory" version "4.18.3"
+  id "com.jfrog.artifactory" version "4.24.23"
   id "com.github.hierynomus.license" version "0.15.0"
   id "pl.droidsonroids.jacoco.testkit" version "1.0.7"
 }
@@ -198,5 +198,29 @@ afterReleaseBuild.dependsOn publishPlugins
 processResources {
   filesMatching('**/version.txt') {
     expand version: project.version
+  }
+}
+
+apply plugin: 'signing'
+
+signing {
+  def signingKeyId = findProperty("signingKeyId")
+  def signingKey = findProperty("signingKey")
+  def signingPassword = findProperty("signingPassword")
+  useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+  required {
+    def branch = System.getenv()["CIRRUS_BRANCH"]
+    return (branch == 'master' || branch ==~ 'branch-[\\d.]+') &&
+      gradle.taskGraph.hasTask(":artifactoryPublish")
+  }
+  sign publishing.publications
+}
+
+tasks.withType(Sign) {
+  onlyIf {
+    def branch = System.getenv()["CIRRUS_BRANCH"]
+    return !artifactoryPublish.skip &&
+      (branch == 'master' || branch ==~ 'branch-[\\d.]+') &&
+      gradle.taskGraph.hasTask(":artifactoryPublish")
   }
 }
