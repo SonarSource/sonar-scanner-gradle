@@ -248,8 +248,8 @@ public class SonarPropertyComputer {
   private static void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
     project.getTasks().withType(JacocoReport.class, jacocoReportTask -> {
       SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
-      if (xmlReport.isEnabled() && xmlReport.getDestination().exists()) {
-        appendProp(properties, "sonar.coverage.jacoco.xmlReportPaths", xmlReport.getDestination());
+      if (xmlReport.getRequired().get() && xmlReport.getOutputLocation().getAsFile().getOrNull().exists()) {
+        appendProp(properties, "sonar.coverage.jacoco.xmlReportPaths", xmlReport.getOutputLocation().getAsFile().getOrNull());
       } else {
         LOGGER.info("JaCoCo report task detected, but XML report is not enabled or it was not produced. " +
           "Coverage for this task will not be reported.");
@@ -270,7 +270,7 @@ public class SonarPropertyComputer {
   }
 
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
-    File testResultsDir = testTask.getReports().getJunitXml().getDestination();
+    File testResultsDir = testTask.getReports().getJunitXml().getOutputLocation().getAsFile().getOrNull();
 
     // do not set a custom test reports path if it does not exists, otherwise SonarQube will emit an error
     // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
