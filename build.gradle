@@ -110,6 +110,7 @@ sonarqube {
 }
 
 license {
+  header = rootProject.file('HEADER')
   mapping {
     java = 'SLASHSTAR_STYLE'
   }
