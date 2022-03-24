@@ -52,6 +52,14 @@ container_definition_11: &CONTAINER_DEFINITION_11
   zone: us-central1-a
   namespace: default
 
+container_definition_17: &CONTAINER_DEFINITION_17
+  dockerfile: integrationTests/docker/Dockerfile_java17
+  builder_image_project: sonarqube-team
+  builder_image_name: docker-builder-v20200915
+  cluster_name: cirrus-ci-cluster
+  zone: us-central1-a
+  namespace: default
+
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
@@ -107,8 +115,26 @@ gradle_qa_java11_task:
     cpu: 2
     memory: 2G
   env:
-    GRADLE_VERSION: 5.6.4
-    ANDROID_GRADLE_VERSION: 3.3.2
+    GRADLE_VERSION: 6.8.3
+    ANDROID_GRADLE_VERSION: 4.2.0
+  gradle_cache:
+    folder: ~/.gradle/caches
+  script:
+    - ./cirrus/cirrus-qa.sh
+  cleanup_before_cache_script:
+    - ./cirrus/cleanup-gradle-cache.sh
+
+gradle_qa_java17_task:
+  depends_on:
+    - build
+  <<: *ONLY_SONARSOURCE_QA
+  gke_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 2
+    memory: 2G
+  env:
+    GRADLE_VERSION: 7.3.1
+    ANDROID_GRADLE_VERSION: 7.1.2
   gradle_cache:
     folder: ~/.gradle/caches
   script:
@@ -121,6 +147,7 @@ promote_task:
     - build
     - gradle_qa
     - gradle_qa_java11
+    - gradle_qa_java17
   <<: *ONLY_SONARSOURCE_QA
   gke_container:
     <<: *CONTAINER_DEFINITION

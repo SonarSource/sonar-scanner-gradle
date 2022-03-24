@@ -21,13 +21,12 @@ package org.sonarqube.gradle;
 
 import java.nio.file.Paths;
 import java.util.Map;
-import org.apache.groovy.util.SystemUtil;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
 import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils;
-import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class SonarUtilsTest {
   @Test
@@ -64,7 +63,7 @@ public class SonarUtilsTest {
 
   @Test
   public void get_project_base_dir_with_different_roots() {
-    Assume.assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    assumeTrue(SystemUtils.IS_OS_WINDOWS);
 
     Map<String, Object> properties = ImmutableMap.of(
       "sonar.projectBaseDir", "C:\\project\\build",

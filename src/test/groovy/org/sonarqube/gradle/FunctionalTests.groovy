@@ -19,9 +19,9 @@
  */
 package org.sonarqube.gradle
 
+import org.gradle.internal.impldep.org.junit.Rule
+import org.gradle.internal.impldep.org.junit.rules.TemporaryFolder
 import org.gradle.testkit.runner.GradleRunner
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 import java.nio.file.Files
@@ -152,7 +152,7 @@ class FunctionalTests extends Specification {
         }
         
         compileJava {
-          options.release = 7
+          options.release = 8
         }
         """
 
@@ -169,8 +169,8 @@ class FunctionalTests extends Specification {
         result.task(":sonarqube").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
-        props."sonar.java.source" == '7'
-        props."sonar.java.target" == '7'
+        props."sonar.java.source" == '8'
+        props."sonar.java.target" == '8'
         // sonar.java.jdkHome will be the runtime JDK used to run Gradle, so we can't really assert its particular value
         // just check that it points to a valid path
         new File(props."sonar.java.jdkHome").exists()

@@ -254,8 +254,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":app.sonar.java.libraries")).contains("android.jar");
     assertThat(props.getProperty(":app.sonar.java.libraries")).doesNotContain("hamcrest-core-1.3.jar");
     assertThat(props.getProperty(":app.sonar.java.test.libraries")).contains("hamcrest-core-1.3.jar");
-    assertThat(props.getProperty(":app.sonar.java.source")).isEqualTo("1.7");
-    assertThat(props.getProperty(":app.sonar.java.target")).isEqualTo("1.7");
+    assertThat(props.getProperty(":app.sonar.java.source")).isEqualTo("1.8");
+    assertThat(props.getProperty(":app.sonar.java.target")).isEqualTo("1.8");
   }
 
   @Test
@@ -347,8 +347,8 @@ public class AndroidTest extends AbstractGradleIT {
         baseDir.resolve("module-plain-java/src/test/java"));
     assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/java/main"));
     assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/java/test"));
-    assertThat(props.getProperty(":module-plain-java.sonar.java.source")).isEqualTo("1.7");
-    assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.7");
+    assertThat(props.getProperty(":module-plain-java.sonar.java.source")).isEqualTo("1.8");
+    assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.8");
   }
 
   @Test
@@ -459,8 +459,8 @@ public class AndroidTest extends AbstractGradleIT {
         baseDir.resolve("module-plain-java/src/test/java"));
     assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/java/main"));
     assertThat(Paths.get(props.getProperty(":module-plain-java.sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("module-plain-java/build/classes/java/test"));
-    assertThat(props.getProperty(":module-plain-java.sonar.java.source")).isEqualTo("1.7");
-    assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.7");
+    assertThat(props.getProperty(":module-plain-java.sonar.java.source")).isEqualTo("1.8");
+    assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.8");
   }
 
   @Test

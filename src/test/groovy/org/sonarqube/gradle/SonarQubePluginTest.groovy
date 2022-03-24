@@ -180,7 +180,7 @@ class SonarQubePluginTest extends Specification {
         parentProject.sourceCompatibility = 1.5
         parentProject.targetCompatibility = 1.6
         childProject.sourceCompatibility = 1.6
-        childProject.targetCompatibility = 1.7
+        childProject.targetCompatibility = 1.8
 
         when:
         def properties = parentSonarQubeTask().properties
@@ -189,23 +189,23 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.java.source"] == "1.5"
         properties["sonar.java.target"] == "1.6"
         properties[":parent:child.sonar.java.source"] == "1.6"
-        properties[":parent:child.sonar.java.target"] == "1.7"
+        properties[":parent:child.sonar.java.target"] == "1.8"
     }
 
     def "compute source and target properties for 'java' projects from release"() {
         parentProject.pluginManager.apply(JavaPlugin)
         childProject.pluginManager.apply(JavaPlugin)
-        parentProject.compileJava.options.release = 7
-        childProject.compileJava.options.release = 7
+        parentProject.compileJava.options.release = 8
+        childProject.compileJava.options.release = 8
 
         when:
         def properties = parentSonarQubeTask().properties
 
         then:
-        properties["sonar.java.source"] == "7"
-        properties["sonar.java.target"] == "7"
-        properties[":parent:child.sonar.java.source"] == "7"
-        properties[":parent:child.sonar.java.target"] == "7"
+        properties["sonar.java.source"] == "8"
+        properties["sonar.java.target"] == "8"
+        properties[":parent:child.sonar.java.source"] == "8"
+        properties[":parent:child.sonar.java.target"] == "8"
     }
 
     def "compute source and target properties for 'groovy' projects"() {
@@ -214,7 +214,7 @@ class SonarQubePluginTest extends Specification {
         parentProject.sourceCompatibility = 1.5
         parentProject.targetCompatibility = 1.6
         childProject.sourceCompatibility = 1.6
-        childProject.targetCompatibility = 1.7
+        childProject.targetCompatibility = 1.8
 
         when:
         def properties = parentSonarQubeTask().properties
@@ -223,7 +223,7 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.java.source"] == "1.5"
         properties["sonar.java.target"] == "1.6"
         properties[":parent:child.sonar.java.source"] == "1.6"
-        properties[":parent:child.sonar.java.target"] == "1.7"
+        properties[":parent:child.sonar.java.target"] == "1.8"
     }
 
     def "adds additional default properties for 'java' projects"() {

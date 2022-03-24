@@ -2,8 +2,8 @@ apply plugin: 'java'
 apply plugin: 'jacoco' // Apply the jacoco plugin to generate test coverage reports.
 
 // In case Java 8+ is the default JDK, force Java 7 as this module will be used from Android.
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 dependencies {
     // Dependencies for local unit tests

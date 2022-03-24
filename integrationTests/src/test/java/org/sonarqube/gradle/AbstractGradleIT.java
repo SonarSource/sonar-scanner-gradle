@@ -71,8 +71,8 @@ public abstract class AbstractGradleIT {
   protected Properties runGradlewSonarQubeSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File out = temp.newFile();
     String[] newArgs = Stream.concat(
-      Stream.of("-Dsonar.scanner.dumpToFile=" + out.getAbsolutePath()),
-      Arrays.stream(args))
+        Stream.of("-Dsonar.scanner.dumpToFile=" + out.getAbsolutePath()),
+        Arrays.stream(args))
       .toArray(String[]::new);
     runGradlewSonarQubeWithEnv(project, exeRelativePath, env, newArgs);
 
@@ -129,7 +129,12 @@ public abstract class AbstractGradleIT {
       .directory(exeDir)
       .redirectOutput(outputFile)
       .redirectErrorStream(true);
-    pb.environment().put("GRADLE_OPTS", "-Xmx1024m");
+    if (getJavaVersion() > 8) {
+      // Fix jacoco java 17 compatibility
+      pb.environment().put("GRADLE_OPTS", "-Xmx1024m --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED");
+    } else {
+      pb.environment().put("GRADLE_OPTS", "-Xmx1024m");
+    }
     pb.environment().putAll(env);
     Process p = pb.start();
     p.waitFor();
@@ -137,6 +142,19 @@ public abstract class AbstractGradleIT {
     String output = FileUtils.readFileToString(outputFile, StandardCharsets.UTF_8);
 
     return new RunResult(output, p.exitValue());
+  }
+
+  private static int getJavaVersion() {
+    String version = System.getProperty("java.version");
+    if (version.startsWith("1.")) {
+      version = version.substring(2, 3);
+    } else {
+      int dot = version.indexOf(".");
+      if (dot != -1) {
+        version = version.substring(0, dot);
+      }
+    }
+    return Integer.parseInt(version);
   }
 
   protected static class RunResult {
