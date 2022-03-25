@@ -4,7 +4,7 @@ USER root
 
 RUN apt-get update && apt-get -y install xvfb
 
-ENV SDK_TOOLS=sdk-tools-linux-4333796.zip
+ENV SDK_TOOLS=commandlinetools-linux-8092744_latest.zip
 
 #Installing android sdk
 RUN echo "Installing android-sdk" \
@@ -14,20 +14,10 @@ RUN echo "Installing android-sdk" \
   && unzip $SDK_TOOLS \
   && rm $SDK_TOOLS
 
-RUN mkdir /usr/share/java
+ENV ANDROID_HOME=/opt/android-sdk-linux/cmdline-tools  PATH=$PATH:/opt/android-sdk-linux/cmdline-tools/bin
 
-RUN curl https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar --output /usr/share/java/jaxb-api.jar \
-&& curl https://repo1.maven.org/maven2/javax/xml/jaxb-impl/2.1/jaxb-impl-2.1.jar --output /usr/share/java/jaxb-impl.jar \
-&& curl https://repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-core/2.3.0.1/jaxb-core-2.3.0.1.jar --output /usr/share/java/jaxb-core.jar \
-&& curl https://repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-jxc/2.3.2/jaxb-jxc-2.3.2.jar --output /usr/share/java/jaxb-jxc.jar \
-&& curl https://repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-xjc/2.3.2/jaxb-xjc-2.3.2.jar --output /usr/share/java/jaxb-xjc.jar \
-&& curl https://repo1.maven.org/maven2/javax/activation/activation/1.1.1/activation-1.1.1.jar --output /usr/share/java/activation.jar
-
-ENV ANDROID_HOME=/opt/android-sdk-linux  PATH=$PATH:/opt/android-sdk-linux/tools:/opt/android-sdk-linux/platform-tools:/opt/android-sdk-linux/tools/bin
-RUN ls /usr/share/java
-RUN sed '/^CLASSPATH=/a CLASSPATH=/usr/share/java/jaxb-api.jar:/usr/share/java/jaxb-impl.jar:/usr/share/java/jaxb-core.jar:/usr/share/java/jaxb-jxc.jar:/usr/share/java/jaxb-xjc.jar:/usr/share/java/javax.activation.jar:"$CLASSPATH"' -i /opt/android-sdk-linux/tools/bin/sdkmanager /opt/android-sdk-linux/tools/bin/avdmanager \
-  && yes |sdkmanager "platform-tools" "extras;android;m2repository" \
-  && yes |sdkmanager --licenses
+RUN yes |sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "extras;android;m2repository" \
+  && yes |sdkmanager --sdk_root=$ANDROID_HOME --licenses
 
 RUN chmod -R 755 $ANDROID_HOME \
   && chown -R sonarsource: $ANDROID_HOME
