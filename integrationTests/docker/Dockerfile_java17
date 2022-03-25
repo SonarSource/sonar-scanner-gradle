@@ -14,7 +14,7 @@ RUN echo "Installing android-sdk" \
   && unzip $SDK_TOOLS \
   && rm $SDK_TOOLS
 
-ENV ANDROID_HOME=/opt/android-sdk-linux/cmdline-tools  PATH=$PATH:/opt/android-sdk-linux/cmdline-tools/bin
+ENV ANDROID_HOME=/opt/android-sdk-linux  PATH=$PATH:/opt/android-sdk-linux/cmdline-tools/bin
 
 RUN yes |sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "extras;android;m2repository" \
   && yes |sdkmanager --sdk_root=$ANDROID_HOME --licenses

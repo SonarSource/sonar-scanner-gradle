@@ -132,8 +132,8 @@ gradle_qa_java17_task:
     cpu: 2
     memory: 2G
   env:
-    GRADLE_VERSION: 7.4.1
-    ANDROID_GRADLE_VERSION: 7.1.2
+    GRADLE_VERSION: 6.9.2
+    ANDROID_GRADLE_VERSION: 4.2.0
   gradle_cache:
     folder: ~/.gradle/caches
   script:
