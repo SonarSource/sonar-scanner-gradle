@@ -36,6 +36,7 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -44,6 +45,7 @@ import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.reporting.Report;
 import org.gradle.api.reporting.SingleFileReport;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -248,8 +250,9 @@ public class SonarPropertyComputer {
   private static void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
     project.getTasks().withType(JacocoReport.class, jacocoReportTask -> {
       SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
-      if (xmlReport.isEnabled() && xmlReport.getDestination().exists()) {
-        appendProp(properties, "sonar.coverage.jacoco.xmlReportPaths", xmlReport.getDestination());
+      File reportDestination = getDestination(xmlReport);
+      if (isReportEnabled(xmlReport) && reportDestination.exists()) {
+        appendProp(properties, "sonar.coverage.jacoco.xmlReportPaths", reportDestination);
       } else {
         LOGGER.info("JaCoCo report task detected, but XML report is not enabled or it was not produced. " +
           "Coverage for this task will not be reported.");
@@ -270,7 +273,7 @@ public class SonarPropertyComputer {
   }
 
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
-    File testResultsDir = testTask.getReports().getJunitXml().getDestination();
+    File testResultsDir = getDestination(testTask.getReports().getJunitXml());
 
     // do not set a custom test reports path if it does not exists, otherwise SonarQube will emit an error
     // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
@@ -394,5 +397,25 @@ public class SonarPropertyComputer {
       return rootKey;
     }
     return rootKey + targetProject.getPath();
+  }
+
+  private static boolean isReportEnabled(Report report) {
+    if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
+      return report.getRequired().getOrElse(false);
+    } else {
+      return report.isEnabled();
+    }
+  }
+
+  private static File getDestination(Report report) {
+    if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
+      FileSystemLocation location = report.getOutputLocation().getOrNull();
+      if (location != null) {
+        return location.getAsFile();
+      }
+      return null;
+    } else {
+      return report.getDestination();
+    }
   }
 }
