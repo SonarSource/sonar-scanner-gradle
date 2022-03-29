@@ -18,6 +18,7 @@
     <!-- Default version when running ITs on dev machines. Value overridden in .cirrus.yml -->
     <gradle.version>6.8.3</gradle.version>
     <androidGradle.version>4.2.0</androidGradle.version>
+    <jdk.min.version>1.8</jdk.min.version>
   </properties>
   
   <build>
@@ -46,46 +47,30 @@
         </excludes>
       </testResource>
     </testResources>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.3</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.19.1</version>
-      </plugin>
-    </plugins>
   </build>
   <dependencies>
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.5</version>
+      <version>2.11.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.1</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.4.1</version>
+      <version>3.22.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.zafarkhaja</groupId>
-      <artifactId>java-semver</artifactId>
-      <version>0.9.0</version>
+      <groupId>com.vdurmont</groupId>
+      <artifactId>semver4j</artifactId>
+      <version>3.1.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -108,6 +93,15 @@
           <scope>test</scope>
         </dependency>
       </dependencies>
+    </profile>
+    <profile>
+      <id>use-javac-release</id>
+      <activation>
+        <jdk>[9,)</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.release>8</maven.compiler.release>
+      </properties>
     </profile>
   </profiles>
 </project>

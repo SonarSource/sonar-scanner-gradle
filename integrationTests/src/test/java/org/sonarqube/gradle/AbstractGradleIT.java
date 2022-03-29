@@ -19,6 +19,8 @@
  */
 package org.sonarqube.gradle;
 
+import com.vdurmont.semver4j.Semver;
+import com.vdurmont.semver4j.Semver.SemverType;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -40,23 +42,23 @@ public abstract class AbstractGradleIT {
   @Rule
   public TemporaryFolder temp = new TemporaryFolder();
 
-  private static String gradleVersion;
-  private static String androidGradleVersion;
+  private static Semver gradleVersion;
+  private static Semver androidGradleVersion;
 
   static {
     try {
-      gradleVersion = IOUtils.toString(AbstractGradleIT.class.getResource("/gradleversion.txt"), StandardCharsets.UTF_8);
-      androidGradleVersion = IOUtils.toString(AbstractGradleIT.class.getResource("/androidgradleversion.txt"), StandardCharsets.UTF_8);
+      gradleVersion = new Semver(IOUtils.toString(AbstractGradleIT.class.getResource("/gradleversion.txt"), StandardCharsets.UTF_8), SemverType.LOOSE);
+      androidGradleVersion = new Semver(IOUtils.toString(AbstractGradleIT.class.getResource("/androidgradleversion.txt"), StandardCharsets.UTF_8), SemverType.LOOSE);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
-  protected static String getGradleVersion() {
+  protected static Semver getGradleVersion() {
     return gradleVersion;
   }
 
-  protected static String getAndroidGradleVersion() {
+  protected static Semver getAndroidGradleVersion() {
     return androidGradleVersion;
   }
 
@@ -71,8 +73,8 @@ public abstract class AbstractGradleIT {
   protected Properties runGradlewSonarQubeSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File out = temp.newFile();
     String[] newArgs = Stream.concat(
-        Stream.of("-Dsonar.scanner.dumpToFile=" + out.getAbsolutePath()),
-        Arrays.stream(args))
+      Stream.of("-Dsonar.scanner.dumpToFile=" + out.getAbsolutePath()),
+      Arrays.stream(args))
       .toArray(String[]::new);
     runGradlewSonarQubeWithEnv(project, exeRelativePath, env, newArgs);
 
@@ -158,8 +160,8 @@ public abstract class AbstractGradleIT {
   }
 
   protected static class RunResult {
-    private String log;
-    private int exitValue;
+    private final String log;
+    private final int exitValue;
 
     RunResult(String log, int exitValue) {
       this.log = log;

@@ -19,7 +19,6 @@
  */
 package org.sonarqube.gradle;
 
-import com.github.zafarkhaja.semver.Version;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -34,11 +33,11 @@ import static org.junit.Assume.assumeTrue;
 public class AndroidTest extends AbstractGradleIT {
 
   private boolean shouldExpectOldJavaBinariesDir() {
-    return Version.valueOf(getAndroidGradleVersion()).lessThan(Version.valueOf("3.5.0"));
+    return getAndroidGradleVersion().isLowerThan("3.5.0");
   }
 
   private boolean supportAndroidFeatureModule() {
-    return Version.valueOf(getAndroidGradleVersion()).lessThan(Version.valueOf("4.0.0"));
+    return getAndroidGradleVersion().isLowerThan("4.0.0");
   }
 
   @Test
@@ -361,7 +360,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testingBlueprintWithDynamicFeatureModule_default_flavor() throws Exception {
-    assumeTrue(Version.valueOf(getAndroidGradleVersion()).greaterThanOrEqualTo(Version.valueOf("4.1.0")));
+    assumeTrue(getAndroidGradleVersion().isGreaterThanOrEqualTo("4.1.0"));
 
     // First flavor that is picked up seems to be the flavor1
 
@@ -455,7 +454,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testingBlueprintWithDynamicFeatureModule_task_dependencies() throws Exception {
-    assumeTrue(Version.valueOf(getAndroidGradleVersion()).greaterThanOrEqualTo(Version.valueOf("4.1.0")));
+    assumeTrue(getAndroidGradleVersion().isGreaterThanOrEqualTo("4.1.0"));
 
     // First flavor that is picked up seems to be the flavor1
 
