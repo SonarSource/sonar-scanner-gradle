@@ -21,7 +21,6 @@ package org.sonarqube.gradle;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -55,12 +54,7 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("commons-io-2.5.jar");
-    // SONARGRADL-39
-    if (getGradleVersion().startsWith("3.")) {
-      assertThat(props.getProperty("sonar.java.test.libraries")).contains(baseDir.resolve("build/classes/main").toString());
-    } else {
-      assertThat(props.getProperty("sonar.java.test.libraries")).contains(baseDir.resolve("build/classes/java/main").toString());
-    }
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains(baseDir.resolve("build/classes/java/main").toString());
   }
 
   @Test
@@ -110,17 +104,10 @@ public class GradleTest extends AbstractGradleIT {
       .containsOnly(baseDir.resolve("src/main/java"), baseDir.resolve("src/main/foo.js"));
     assertThat(stream(props.getProperty("sonar.tests").split(",")).map(Paths::get))
       .containsOnly(baseDir.resolve("src/test/java"), baseDir.resolve("src/test/fooTest.js"));
-    if (getGradleVersion().startsWith("3.")) {
-      assertThat(stream(props.getProperty("sonar.java.binaries").split(",")).map(Paths::get))
-        .containsOnly(baseDir.resolve("build/classes/main"), baseDir.resolve("build/extraBinaries"));
-      assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
-        .containsOnly(baseDir.resolve("build/classes/test"), baseDir.resolve("build/extraTestBinaries"));
-    } else {
-      assertThat(stream(props.getProperty("sonar.java.binaries").split(",")).map(Paths::get))
-        .containsOnly(baseDir.resolve("build/classes/java/main"), baseDir.resolve("build/extraBinaries"));
-      assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
-        .containsOnly(baseDir.resolve("build/classes/java/test"), baseDir.resolve("build/extraTestBinaries"));
-    }
+    assertThat(stream(props.getProperty("sonar.java.binaries").split(",")).map(Paths::get))
+      .containsOnly(baseDir.resolve("build/classes/java/main"), baseDir.resolve("build/extraBinaries"));
+    assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
+      .containsOnly(baseDir.resolve("build/classes/java/test"), baseDir.resolve("build/extraTestBinaries"));
   }
 
   @Test
@@ -173,13 +160,8 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(Paths.get(props.getProperty("sonar.sources"))).isEqualTo(baseDir.resolve("src/main/java"));
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
-    if (getGradleVersion().startsWith("3.")) {
-      assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/classes/main"));
-      assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/classes/test"));
-    } else {
-      assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/classes/java/main"));
-      assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/classes/java/test"));
-    }
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/classes/java/main"));
+    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/classes/java/test"));
     assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
@@ -188,13 +170,8 @@ public class GradleTest extends AbstractGradleIT {
     Path moduleA = baseDir.resolve("moduleA");
     assertThat(Paths.get(props.getProperty(":moduleA.sonar.sources"))).isEqualTo(moduleA.resolve("src/main/java"));
     assertThat(Paths.get(props.getProperty(":moduleA.sonar.tests"))).isEqualTo(moduleA.resolve("src/test/java"));
-    if ( getGradleVersion().startsWith("3.")) {
-      assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.binaries"))).isEqualTo(moduleA.resolve("build/classes/main"));
-      assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.test.binaries"))).isEqualTo(moduleA.resolve("build/classes/test"));
-    } else {
-      assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.binaries"))).isEqualTo(moduleA.resolve("build/classes/java/main"));
-      assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.test.binaries"))).isEqualTo(moduleA.resolve("build/classes/java/test"));
-    }
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.binaries"))).isEqualTo(moduleA.resolve("build/classes/java/main"));
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.test.binaries"))).isEqualTo(moduleA.resolve("build/classes/java/test"));
     assertThat(props.getProperty(":moduleA.sonar.java.libraries")).contains("commons-io-2.5.jar");
     assertThat(props.getProperty(":moduleA.sonar.java.libraries")).doesNotContain("junit-4.10.jar");
     assertThat(props.getProperty(":moduleA.sonar.java.test.libraries")).contains("junit-4.10.jar");
@@ -233,7 +210,13 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testJaCoCoProperties() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-simple", emptyMap(), "test", "jacocoTestReport");
+    String project;
+    if (getGradleVersion().startsWith("4.") || getGradleVersion().startsWith("5.") || getGradleVersion().startsWith("6.")) {
+      project = "/java-gradle-jacoco-before-7";
+    } else {
+      project = "/java-gradle-jacoco-after-7";
+    }
+    Properties props = runGradlewSonarQubeSimulationModeWithEnv(project, emptyMap(), "test", "jacocoTestReport");
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
     assertThat(props.getProperty("sonar.jacoco.reportPaths")).contains(baseDir.resolve("build/jacoco/test.exec").toString());
     assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths")).contains(baseDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString());

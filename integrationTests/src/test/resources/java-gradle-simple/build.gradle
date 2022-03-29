@@ -7,7 +7,6 @@ buildscript {
 }
 
 apply plugin: 'java'
-apply plugin: 'jacoco'
 apply plugin: 'org.sonarqube'
 
 sourceCompatibility = 1.8
@@ -32,23 +31,12 @@ test {
   ignoreFailures = true
 }
 
-jacoco {
-  toolVersion = "0.8.7"
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled true
-    }
-}
-
 dependencies {
     implementation group: 'commons-io', name: 'commons-io', version: '2.5'
     testImplementation group: 'junit', name: 'junit', version: '4.10'
 }
 
 repositories {
-    jcenter()
     mavenLocal()
     mavenCentral()
 }

@@ -20,26 +20,18 @@
 package org.sonarqube.gradle;
 
 import com.github.zafarkhaja.semver.Version;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Properties;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 public class AndroidTest extends AbstractGradleIT {
-  @BeforeClass
-  public static void verifyGradleVersion() {
-    assumeFalse(getGradleVersion().startsWith("3."));
-  }
 
   private boolean shouldExpectOldJavaBinariesDir() {
     return Version.valueOf(getAndroidGradleVersion()).lessThan(Version.valueOf("3.5.0"));
@@ -138,8 +130,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(stream(props.getProperty(":app.sonar.tests").split(",")).map(Paths::get))
       .containsOnly(
         baseDir.resolve("app/src/test/java"),
-        baseDir.resolve("app/src/androidTest/java")
-      );
+        baseDir.resolve("app/src/androidTest/java"));
     if (shouldExpectOldJavaBinariesDir()) {
       assertThat(Paths.get(props.getProperty(":app.sonar.java.binaries")))
         .isEqualTo(baseDir.resolve("app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"));
@@ -166,8 +157,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(stream(props.getProperty(":mydynamicfeature.sonar.tests").split(",")).map(Paths::get))
       .containsOnly(
         baseDir.resolve("mydynamicfeature/src/test/java"),
-        baseDir.resolve("mydynamicfeature/src/androidTest/java")
-      );
+        baseDir.resolve("mydynamicfeature/src/androidTest/java"));
     if (shouldExpectOldJavaBinariesDir()) {
       assertThat(Paths.get(props.getProperty(":mydynamicfeature.sonar.java.binaries")))
         .isEqualTo(baseDir.resolve("mydynamicfeature/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"));
@@ -360,13 +350,13 @@ public class AndroidTest extends AbstractGradleIT {
     RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithFeatureModule", null, Collections.emptyMap(), "sonarqube", "--dry-run", "--max-workers=1");
 
     assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
-            ":app:compileFlavor2DebugAndroidTestJavaWithJavac SKIPPED",
-            ":app:compileFlavor2DebugUnitTestJavaWithJavac SKIPPED",
-            ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
-            ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
-            ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
-            ":module-plain-java:compileTestJava SKIPPED",
-            ":sonarqube SKIPPED");
+      ":app:compileFlavor2DebugAndroidTestJavaWithJavac SKIPPED",
+      ":app:compileFlavor2DebugUnitTestJavaWithJavac SKIPPED",
+      ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
+      ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
+      ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
+      ":module-plain-java:compileTestJava SKIPPED",
+      ":sonarqube SKIPPED");
   }
 
   @Test
@@ -472,15 +462,16 @@ public class AndroidTest extends AbstractGradleIT {
     RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, Collections.emptyMap(), "sonarqube", "--dry-run", "--max-workers=1");
 
     assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
-            ":app:compileFlavor1DebugAndroidTestJavaWithJavac SKIPPED",
-            ":app:compileFlavor1DebugUnitTestJavaWithJavac SKIPPED",
-            ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
-            ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
-            ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
-            ":module-plain-java:compileTestJava SKIPPED",
-            ":module_android_feature:compileFlavor1DebugJavaWithJavac SKIPPED",
-            ":sonarqube SKIPPED");
+      ":app:compileFlavor1DebugAndroidTestJavaWithJavac SKIPPED",
+      ":app:compileFlavor1DebugUnitTestJavaWithJavac SKIPPED",
+      ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
+      ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
+      ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
+      ":module-plain-java:compileTestJava SKIPPED",
+      ":module_android_feature:compileFlavor1DebugJavaWithJavac SKIPPED",
+      ":sonarqube SKIPPED");
   }
+
   // SONARGRADL-22
   @Test
   public void noDebugVariant() throws Exception {
