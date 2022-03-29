@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -129,7 +130,7 @@ public class SonarPropertyComputer {
       .collect(Collectors.toList());
 
     if (!skippedChildProjects.isEmpty()) {
-      LOGGER.debug("Skipping collecting SonarQube properties on: " + skippedChildProjects.toArray(new Project[0]));
+      LOGGER.debug("Skipping collecting SonarQube properties on: " + Arrays.toString(skippedChildProjects.toArray(new Project[0])));
     }
 
     if (enabledChildProjects.isEmpty()) {
@@ -251,7 +252,7 @@ public class SonarPropertyComputer {
     project.getTasks().withType(JacocoReport.class, jacocoReportTask -> {
       SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
       File reportDestination = getDestination(xmlReport);
-      if (isReportEnabled(xmlReport) && reportDestination.exists()) {
+      if (isReportEnabled(xmlReport) && reportDestination != null && reportDestination.exists()) {
         appendProp(properties, "sonar.coverage.jacoco.xmlReportPaths", reportDestination);
       } else {
         LOGGER.info("JaCoCo report task detected, but XML report is not enabled or it was not produced. " +
@@ -262,7 +263,7 @@ public class SonarPropertyComputer {
     project.getPlugins().withType(JacocoPlugin.class, jacocoPlugin -> {
       JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
       File destinationFile = jacocoTaskExtension.getDestinationFile();
-      if (destinationFile.exists()) {
+      if (destinationFile != null && destinationFile.exists()) {
         properties.put("sonar.jacoco.reportPath", destinationFile);
         appendProp(properties, "sonar.jacoco.reportPaths", destinationFile);
         if (addForGroovy) {
@@ -277,7 +278,7 @@ public class SonarPropertyComputer {
 
     // do not set a custom test reports path if it does not exists, otherwise SonarQube will emit an error
     // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
-    if (testResultsDir.isDirectory()
+    if (testResultsDir != null && testResultsDir.isDirectory()
       && Arrays.stream(testResultsDir.list()).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
       appendProp(properties, "sonar.junit.reportPaths", testResultsDir);
       // For backward compatibility
@@ -407,6 +408,7 @@ public class SonarPropertyComputer {
     }
   }
 
+  @CheckForNull
   private static File getDestination(Report report) {
     if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
       FileSystemLocation location = report.getOutputLocation().getOrNull();
