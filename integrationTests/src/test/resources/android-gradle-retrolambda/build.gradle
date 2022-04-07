@@ -2,7 +2,6 @@ buildscript {
   repositories {
     mavenCentral()
     mavenLocal()
-    jcenter()
     google()
   }
   dependencies {
@@ -18,8 +17,8 @@ apply plugin: 'org.sonarqube'
 apply plugin: 'me.tatarka.retrolambda'
 
 repositories {
-  jcenter()
   google()
+  mavenCentral()
 }
 
 dependencies {

@@ -2,7 +2,6 @@ buildscript {
   repositories {
     mavenCentral()
     mavenLocal()
-    jcenter()
     google()
   }
   dependencies {
@@ -16,8 +15,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.sonarqube'
 
 repositories {
-  jcenter()
   google()
+  mavenCentral()
 }
 
 dependencies {
