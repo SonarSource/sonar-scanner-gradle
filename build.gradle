@@ -14,6 +14,7 @@ plugins {
   id "com.jfrog.artifactory" version "4.24.23"
   id "com.github.hierynomus.license" version "0.16.1"
   id "pl.droidsonroids.jacoco.testkit" version "1.0.9"
+  id "org.cyclonedx.bom" version "1.5.0"
 }
 
 group = 'org.sonarsource.scanner.gradle'
@@ -118,6 +119,18 @@ license {
   exclude "**/version.txt"
 }
 
+def bomFile = layout.buildDirectory.file('reports/bom.json')
+cyclonedxBom {
+  includeConfigs += ["runtimeClasspath"]
+  outputs.file bomFile
+  outputs.upToDateWhen { false }
+}
+def bomArtifact = artifacts.add('archives', bomFile.get().asFile) {
+  type 'json'
+  classifier 'cyclonedx'
+  builtBy 'cyclonedxBom'
+}
+
 jacoco {
   toolVersion = "0.8.7"
 }
@@ -130,7 +143,7 @@ jacocoTestReport {
 
 tasks['sonarqube'].dependsOn jacocoTestReport
 
-// Add required informations to deploy on central
+// Add required information to deploy on central
 publishing {
   publications {
     pluginMaven(MavenPublication) {
@@ -159,6 +172,9 @@ publishing {
           }
         }
       }
+    }
+    pluginMaven(MavenPublication) {
+      artifact bomArtifact
     }
   }
 }
