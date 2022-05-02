@@ -31,11 +31,13 @@ import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.StopExecutionException;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.EmbeddedScanner;
 import org.sonarsource.scanner.api.LogOutput;
 import org.sonarsource.scanner.api.ScanProperties;
+import org.sonarsource.scanner.api.internal.ScannerException;
 
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
@@ -98,7 +100,17 @@ public class SonarQubeTask extends ConventionTask {
 
     EmbeddedScanner scanner = EmbeddedScanner.create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current(), LOG_OUTPUT)
       .addGlobalProperties(properties);
-    scanner.start();
+    try {
+      scanner.start();
+    } catch (ScannerException e) {
+      if (e.getCause() instanceof IllegalStateException && e.getCause().getMessage().contains("Fail to get bootstrap index from server")) {
+        // stop execution of sonarqube task if connection to sonarqube failed
+        // in general, we should throw a StopExecutionException if we catch a transient error.
+        throw new StopExecutionException("Failed to get bootstrap index from server");
+      } else {
+        throw e;
+      }
+    }
     scanner.execute(new HashMap<>());
   }
 
