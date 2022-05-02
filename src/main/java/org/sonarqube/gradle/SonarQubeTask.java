@@ -30,6 +30,7 @@ import java.util.Map;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.StopExecutionException;
 import org.gradle.api.tasks.TaskAction;
@@ -81,6 +82,13 @@ public class SonarQubeTask extends ConventionTask {
 
   private Map<String, String> sonarProperties;
 
+  private final Property<Boolean> allowFailure;
+
+  public SonarQubeTask() {
+    allowFailure = getProject().getObjects().property(Boolean.class);
+    allowFailure.convention(false);
+  }
+
   @TaskAction
   public void run() {
     Map<String, String> properties = getProperties();
@@ -103,7 +111,7 @@ public class SonarQubeTask extends ConventionTask {
     try {
       scanner.start();
     } catch (ScannerException e) {
-      if (e.getCause() instanceof IllegalStateException && e.getCause().getMessage().contains("Fail to get bootstrap index from server")) {
+      if (allowFailure.get() && e.getCause() instanceof IllegalStateException && e.getCause().getMessage().contains("Fail to get bootstrap index from server")) {
         // stop execution of sonarqube task if connection to sonarqube failed
         // in general, we should throw a StopExecutionException if we catch a transient error.
         throw new StopExecutionException("Failed to get bootstrap index from server");
@@ -143,5 +151,10 @@ public class SonarQubeTask extends ConventionTask {
     }
 
     return sonarProperties;
+  }
+
+  @Input
+  public Property<Boolean> isAllowFailure() {
+    return allowFailure;
   }
 }
