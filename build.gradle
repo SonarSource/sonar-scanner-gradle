@@ -7,8 +7,7 @@ plugins {
   id 'groovy'
   id 'jacoco'
   id 'maven-publish'
-  id "com.gradle.plugin-publish" version "0.12.0"
-  id 'net.researchgate.release' version "2.8.1"
+  id "com.gradle.plugin-publish" version "0.21.0"
   // Eat your own dog food :)
   id "org.sonarqube" version "3.3"
   id "com.jfrog.artifactory" version "4.24.23"
@@ -40,8 +39,6 @@ javadoc {
 
 ext {
   buildNumber = System.getProperty("buildNumber")
-  release = project.hasProperty('release') && project.getProperty('release')
-  official = project.hasProperty('official') && project.getProperty('official')
 }
 // Replaces the version defined in sources, usually x.y-SNAPSHOT, by a version identifying the build.
 if (version.endsWith('-SNAPSHOT') && ext.buildNumber != null) {
@@ -209,8 +206,6 @@ artifactory {
   // The name of this variable is important because it's used by the delivery process when extracting version from Artifactory build info.
   clientConfig.info.addEnvironmentProperty('PROJECT_VERSION', "${version}")
 }
-
-afterReleaseBuild.dependsOn publishPlugins
 
 processResources {
   filesMatching('**/version.txt') {

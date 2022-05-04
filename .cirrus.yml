@@ -161,3 +161,24 @@ promote_task:
     - source cirrus-env PROMOTE
     - curl -sfSL -H "Authorization: Bearer $GCF_ACCESS_TOKEN" "$PROMOTE_URL/$GITHUB_REPO/$GITHUB_BRANCH/$BUILD_NUMBER/$PULL_REQUEST?multi=true"
     - burgr-notify-promotion
+
+release_to_plugin_portal_task:
+  only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != ""
+  stateful: 'true'
+  depends_on:
+    - promote
+  gke_container:
+    <<: *CONTAINER_DEFINITION_11
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  env:
+    GRADLE_PUBLISH_KEY: ENCRYPTED[03bb20fd7f88b6d97cde0bdfd8999a34804eaa7394b6da397712823088ba07fd0bcc8093f85c719414e8f43bc5ed6f0a]
+    GRADLE_PUBLISH_SECRET: ENCRYPTED[91e21822690cfd6bf4e5a7653f79545e0ce8501759cb36643e77f8e35156388f27b3c57f03e9e8b8126df7679feeee5f]
+    JFROG_PROMOTER: ENCRYPTED[aa431a946fd2e021aca3991bf8e91e55c188443cfd323673d28b8bfbb41e9c5b33b873d520400edfeab2e77835057054]
+  script:
+    - source cirrus-env RELEASE
+    - gradle --info --stacktrace --console plain "-Pgradle.publish.key=${GRADLE_PUBLISH_KEY}" "-Pgradle.publish.secret=${GRADLE_PUBLISH_SECRET}" "-DbuildNumber=${BUILD_NUMBER}" publishPlugins
+    - jfrog config import "${JFROG_PROMOTER}"
+    - jfrog rt build-promote --status released "${CIRRUS_REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-releases
