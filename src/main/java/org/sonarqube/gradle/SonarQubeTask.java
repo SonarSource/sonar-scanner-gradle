@@ -28,9 +28,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.gradle.api.internal.ConventionTask;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.EmbeddedScanner;
@@ -50,7 +52,7 @@ public class SonarQubeTask extends ConventionTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
 
-  private static final LogOutput LOG_OUTPUT = new DefaultLogOutput();
+  private LogOutput logOutput = new DefaultLogOutput();
 
   private static class DefaultLogOutput implements LogOutput {
     @Override
@@ -77,6 +79,27 @@ public class SonarQubeTask extends ConventionTask {
     }
   }
 
+  /**
+   * Logs output from the given {@link Level} at the {@link LogLevel#LIFECYCLE} log level, which is the default log
+   * level for Gradle tasks. This can be used to specify the level of Sonar Scanner which it output during standard
+   * task execution, without needing to override the log level for the full Gradle execution.
+   */
+  private static class LifecycleLogOutput implements LogOutput {
+
+    private final Level logLevel;
+
+    public LifecycleLogOutput(Level logLevel) {
+      this.logLevel = logLevel;
+    }
+
+    @Override
+    public void log(String formattedMessage, Level level) {
+      if (level.ordinal() <= logLevel.ordinal()) {
+        LOGGER.lifecycle(formattedMessage);
+      }
+    }
+  }
+
   private Map<String, String> sonarProperties;
 
   @TaskAction
@@ -96,7 +119,7 @@ public class SonarQubeTask extends ConventionTask {
       return;
     }
 
-    EmbeddedScanner scanner = EmbeddedScanner.create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current(), LOG_OUTPUT)
+    EmbeddedScanner scanner = EmbeddedScanner.create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current(), getLogOutput())
       .addGlobalProperties(properties);
     scanner.start();
     scanner.execute(new HashMap<>());
@@ -131,5 +154,35 @@ public class SonarQubeTask extends ConventionTask {
     }
 
     return sonarProperties;
+  }
+
+  /**
+   * Sets the {@link LogLevel} to use during Scanner execution. All logged messages from the Scanner at this level or
+   * greater will be printed at the {@link LogLevel#LIFECYCLE} level, which is the default level for Gradle tasks. This
+   * can be used to specify the level of Sonar Scanner which it output during standard task execution, without needing
+   * to override the log level for the full Gradle execution.
+   * <p>
+   * This overrides the default {@link LogOutput} functionality, which passes logs through to the Gradle logger without
+   * modifying the log level.
+   *
+   * @param logLevel the minimum log level to include in {@link LogLevel#LIFECYCLE} logs
+   */
+  public void useLoggerLevel(LogLevel logLevel) {
+    LogOutput.Level internalLevel = LogOutput.Level.valueOf(logLevel.name());
+    this.logOutput = new LifecycleLogOutput(internalLevel);
+  }
+
+  /**
+   * @return The {@link LogOutput} object to use during Scanner execution. All logged messages from the Scanner will
+   * pass through this object. If needed, a custom implementation can be used to handle logged output, such as printing
+   * {@link LogLevel#INFO}-level log output when Gradle is only configured at the {@link LogLevel#LIFECYCLE} level.
+   */
+  @Internal
+  public LogOutput getLogOutput() {
+    return this.logOutput;
+  }
+
+  public void setLogOutput(LogOutput logOutput) {
+    this.logOutput = logOutput;
   }
 }
