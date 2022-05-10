@@ -1,0 +1,44 @@
+buildscript {
+    repositories { 
+      mavenCentral()
+      mavenLocal()
+    }
+    dependencies { classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}' }
+}
+
+apply plugin: 'java'
+apply plugin: 'org.sonarqube'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+allprojects {  
+  ext.baseVersion = "0.1"
+  ext.snapshotVersion = true
+  
+  group = "org.sonar.tests"
+  version = "$baseVersion" + (snapshotVersion ? "-SNAPSHOT" : "")
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectName", "Simple Java Gradle Project"
+        property "sonar.projectKey", "org.codehaus.sonar:example-java-gradle"
+    }
+}
+
+tasks.getByName("sonarqube").useLoggerLevel(LogLevel.DEBUG)
+
+test {
+  ignoreFailures = true
+}
+
+dependencies {
+    implementation group: 'commons-io', name: 'commons-io', version: '2.5'
+    testImplementation group: 'junit', name: 'junit', version: '4.10'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}

@@ -20,6 +20,7 @@
 package org.sonarqube.gradle
 
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
@@ -78,6 +79,14 @@ class SonarQubePluginTest extends Specification {
         parentSonarQubeTask().description == "Analyzes project ':parent' and its subprojects with SonarQube."
 
         childProject.tasks.findByName("sonarqube") == null
+    }
+
+    def "sets log output level"() {
+        when:
+        parentSonarQubeTask().useLoggerLevel(LogLevel.DEBUG)
+
+        then:
+        parentSonarQubeTask().getLogOutput().getClass().getSimpleName() == "LifecycleLogOutput"
     }
 
     def "skipping all projects does nothing"() {

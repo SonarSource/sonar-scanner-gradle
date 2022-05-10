@@ -19,6 +19,8 @@
  */
 package org.sonarqube.gradle;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -50,6 +52,13 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("commons-io-2.5.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains(baseDir.resolve("build/classes/java/main").toString());
+  }
+
+  @Test
+  public void testSetLogLevel() throws Exception {
+    RunResult runResult = runGradlewSonarQubeWithEnv("/java-gradle-log-level", emptyMap(), "-Dsonar.scanner.dumpToFile=asd");
+    // This is a debug log entry
+    assertThat(runResult.getLog()).contains("Work directory:");
   }
 
   @Test
