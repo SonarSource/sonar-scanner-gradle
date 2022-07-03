@@ -19,29 +19,31 @@
  */
 package org.sonarqube.gradle
 
-import org.gradle.internal.impldep.org.junit.Rule
-import org.gradle.internal.impldep.org.junit.rules.TemporaryFolder
+
 import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Specification
+import spock.lang.TempDir
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class FunctionalTests extends Specification {
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
-    File settingsFile
-    File buildFile
-    File outFile
+    @TempDir
+    Path testProjectDir
+    Path settingsFile
+    Path buildFile
+    Path outFile
 
     def setup() {
-        settingsFile = testProjectDir.newFile('settings.gradle')
-        buildFile = testProjectDir.newFile('build.gradle')
-        outFile = testProjectDir.newFile('out.properties')
+        settingsFile = testProjectDir.resolve('settings.gradle')
+        buildFile = testProjectDir.resolve('build.gradle')
+        outFile = testProjectDir.resolve('out.properties')
         // For JaCoCo coverage, see https://github.com/koral--/jacoco-gradle-testkit-plugin
         InputStream is = FunctionalTests.class.getClassLoader().getResourceAsStream('testkit-gradle.properties')
-        Files.copy(is, testProjectDir.newFile('gradle.properties').toPath(), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(is, testProjectDir.resolve('gradle.properties'), StandardCopyOption.REPLACE_EXISTING)
     }
 
     def "no jdkHome, source and target for non 'java' projects"() {
@@ -55,9 +57,9 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withProjectDir(testProjectDir.root)
+                .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.absolutePath )
+                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -88,9 +90,9 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
                 .withGradleVersion("6.7.1")
-                .withProjectDir(testProjectDir.root)
+                .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.absolutePath )
+                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -123,9 +125,9 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
                 .withGradleVersion("6.7.1")
-                .withProjectDir(testProjectDir.root)
+                .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.absolutePath )
+                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -159,9 +161,9 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
                 .withGradleVersion("6.6")
-                .withProjectDir(testProjectDir.root)
+                .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.absolutePath )
+                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
