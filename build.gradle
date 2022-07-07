@@ -240,3 +240,9 @@ tasks.withType(Sign) {
       gradle.taskGraph.hasTask(":artifactoryPublish")
   }
 }
+
+tasks.withType(Test).configureEach {
+  doLast {
+    Thread.sleep(2000) // https://github.com/gradle/gradle/issues/16603
+  }
+}
