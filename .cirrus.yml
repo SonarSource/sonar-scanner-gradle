@@ -116,7 +116,7 @@ gradle_qa_java11_task:
     memory: 2G
   env:
     matrix:
-      - GRADLE_VERSION: 7.4.1
+      - GRADLE_VERSION: 7.5.1
         ANDROID_GRADLE_VERSION: 7.1.0
       - GRADLE_VERSION: 6.8.3
         ANDROID_GRADLE_VERSION: 4.2.0
