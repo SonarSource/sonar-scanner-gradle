@@ -1,4 +1,4 @@
-SonarQube Scanner for Gradle
+SonarScanner for Gradle
 ============================
 
 [![Build Status](https://api.cirrus-ci.com/github/SonarSource/sonar-scanner-gradle.svg)](https://cirrus-ci.com/github/SonarSource/sonar-scanner-gradle) [![Quality Gate](https://next.sonarqube.com/sonarqube/api/project_badges/measure?project=org.sonarsource.scanner.gradle%3Asonarqube-gradle-plugin&metric=alert_status)](https://next.sonarqube.com/sonarqube/dashboard?id=org.sonarsource.scanner.gradle%3Asonarqube-gradle-plugin)
@@ -32,16 +32,16 @@ Developer documentation
 -----------------------
 
 ### How the plugin works
-When the plugin is applied to a project, it will add to that project the SonarQube task. It will also add to the project and all it's subprojects the SonarQube extension.
+When the plugin is applied to a project, it will add to that project the Sonar task. It will also add to the project and all it's subprojects the Sonar extension.
 For multi-module projects, the plugin will only apply to the first project where it gets called. The goal is to allow the usage of `allprojects {}`, for example.
 
-**SonarQube extension**
-The `sonarqube` extension enables an easy configuration of a project with the Domain Specific Language.
+**Sonar extension**
+The `sonar` extension enables an easy configuration of a project with the Domain Specific Language.
 
-**SonarQube task**
-The SonarQube task has the name `sonarqube`, so it can be executed by calling `./gradlew sonarqube`. It collects information from the project and all its subprojects, generating the properties for the analysis. Then, it runs the SonarQube analysis using all those properties.
+**Sonar task**
+The Sonar task has the name `sonar`, so it can be executed by calling `./gradlew sonar`. It collects information from the project and all its subprojects, generating the properties for the analysis. Then, it runs the SonarScanner analysis using all those properties.
 The task depends on all compile and test tasks of all projects (except for skipped projects).
-If all projects are skipped (by adding `skipProject=true` to the sonarqube DSL), the analysis won't execute.
+If all projects are skipped (by adding `skipProject=true` to the sonar DSL), the analysis won't execute.
 
 
 ### Using the plugin directly in a project (no need to build/install it in advance)
@@ -56,14 +56,14 @@ plugins {
 
 Run with:
 ```
-./gradlew sonarqube --include-build /path/to/sonar-scanner-gradle
+./gradlew sonar --include-build /path/to/sonar-scanner-gradle
 ```
 
 ### Debugging the plugin
 See the previous point about including the plugin's build when building a target project.
 To debug, simply add the parameter:
 ```
-./gradlew sonarqube --include-build /path/to/sonar-scanner-gradle -Dorg.gradle.debug=true
+./gradlew sonar --include-build /path/to/sonar-scanner-gradle -Dorg.gradle.debug=true
 ```
 
 Now debug remotely by connecting to the port 5005.

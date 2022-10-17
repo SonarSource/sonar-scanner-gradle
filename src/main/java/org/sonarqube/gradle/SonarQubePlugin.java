@@ -45,17 +45,15 @@ import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 
 /**
- * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarQube Scanner</a>.
+ * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarScanner for Gradle</a>.
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
  */
 public class SonarQubePlugin implements Plugin<Project> {
 
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
-  private ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
-    ActionBroadcast<SonarQubeProperties> actionBroadcast = new ActionBroadcast<>();
-    actionBroadcastMap.put(project.getPath(), actionBroadcast);
-    return actionBroadcast;
+  private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
+    return actionBroadcastMap.computeIfAbsent(project.getPath(), s -> new ActionBroadcast<>());
   }
 
   private static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
@@ -71,39 +69,48 @@ public class SonarQubePlugin implements Plugin<Project> {
   public void apply(Project project) {
     // don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to resolve recursively the configuration of all
     // the projects, failing if a project has a sonarqube configuration since the extension wasn't added to it yet.
-    if (project.getExtensions().findByName(SonarQubeExtension.SONARQUBE_EXTENSION_NAME) == null) {
-      Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap = new HashMap<>();
-      addExtensions(project, actionBroadcastMap);
-      LOGGER.debug("Adding '{}' task to '{}'", SonarQubeExtension.SONARQUBE_TASK_NAME, project);
-      SonarQubeTask sonarQubeTask = project.getTasks().create(SonarQubeExtension.SONARQUBE_TASK_NAME, SonarQubeTask.class);
-      sonarQubeTask.setDescription("Analyzes " + project + " and its subprojects with SonarQube.");
-      sonarQubeTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-      configureTask(sonarQubeTask, project, actionBroadcastMap);
+    if (project.getExtensions().findByName(SonarExtension.SONAR_EXTENSION_NAME) == null) {
+      Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap = new HashMap<>();
+      addExtensions(project, SonarExtension.SONAR_EXTENSION_NAME, actionBroadcastMap);
+      addExtensions(project, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME, actionBroadcastMap);
+      LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
+
+      SonarTask sonarqubeTask = project.getTasks().create(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class);
+      sonarqubeTask.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
+      sonarqubeTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+
+      SonarTask sonarTask = project.getTasks().create(SonarExtension.SONAR_TASK_NAME, SonarTask.class);
+      sonarTask.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
+      sonarTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+
+      configureTask(sonarqubeTask, project, actionBroadcastMap);
+      configureTask(sonarTask, project, actionBroadcastMap);
     }
   }
 
-  private void addExtensions(Project project, Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
+  private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
     project.getAllprojects().forEach(p -> {
-      LOGGER.debug("Adding " + SonarQubeExtension.SONARQUBE_EXTENSION_NAME + " extension to " + p);
-      ActionBroadcast<SonarQubeProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, p);
-      p.getExtensions().create(SonarQubeExtension.SONARQUBE_EXTENSION_NAME, SonarQubeExtension.class, actionBroadcast);
+      LOGGER.debug("Adding " + name + " extension to " + p);
+      ActionBroadcast<SonarProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, p);
+      p.getExtensions().create(name, SonarExtension.class, actionBroadcast);
     });
   }
 
-  private void configureTask(SonarQubeTask sonarQubeTask, Project project, Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap) {
-    ConventionMapping conventionMapping = sonarQubeTask.getConventionMapping();
+  private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
+    ConventionMapping conventionMapping = sonarTask.getConventionMapping();
     // this will call the SonarPropertyComputer to populate the properties of the task just before running it
     conventionMapping.map("properties", () -> new SonarPropertyComputer(actionBroadcastMap, project)
       .computeSonarProperties());
 
-    sonarQubeTask.mustRunAfter(getJavaTestTasks(project));
-    sonarQubeTask.dependsOn(getJavaCompileTasks(project));
-    sonarQubeTask.mustRunAfter(getJacocoTasks(project));
-    sonarQubeTask.dependsOn(getAndroidCompileTasks(project));
-    setNotCompatibleWithConfigurationCache(sonarQubeTask);
+    sonarTask.mustRunAfter(getJavaTestTasks(project));
+    sonarTask.dependsOn(getJavaCompileTasks(project));
+    sonarTask.mustRunAfter(getJacocoTasks(project));
+    sonarTask.dependsOn(getAndroidCompileTasks(project));
+    setNotCompatibleWithConfigurationCache(sonarTask);
+
   }
 
-  private static void setNotCompatibleWithConfigurationCache(SonarQubeTask sonarQubeTask) {
+  private static void setNotCompatibleWithConfigurationCache(SonarTask sonarQubeTask) {
     if (isGradleVersionGreaterOrEqualTo("7.4.0")) {
       sonarQubeTask.notCompatibleWithConfigurationCache("Plugin is not compatible with configuration cache");
     }
@@ -115,7 +122,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getJacocoTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
       .map(p -> p.getTasks().withType(JacocoReport.class))
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
@@ -123,23 +130,23 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getJavaTestTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
       .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
       .collect(Collectors.toList());
   }
 
   private static Callable<Iterable<? extends Task>> getJavaCompileTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
       .flatMap(p -> Stream.of(p.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME), p.getTasks().getByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME)))
       .collect(Collectors.toList());
   }
 
   private static Callable<Iterable<? extends Task>> getAndroidCompileTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
       .map(p -> {
-        BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarQubeExtension.class).getAndroidVariant());
+        BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarExtension.class).getAndroidVariant());
         List<Task> allCompileTasks = new ArrayList<>();
         if (variant != null) {
           final String compileTaskPrefix = "compile" + capitalize(variant.getName());

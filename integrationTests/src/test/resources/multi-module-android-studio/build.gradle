@@ -31,7 +31,7 @@ allprojects {
     }
 }
 
-sonarqube {
+sonar {
 
     properties {
         property "sonar.projectKey", "com.test.app:app"

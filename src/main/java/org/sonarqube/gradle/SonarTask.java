@@ -43,14 +43,14 @@ import org.sonarsource.scanner.api.ScanProperties;
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
  * Can be used with or without the {@code "sonar-gradle"} plugin.
  * If used together with the plugin, {@code properties} will be populated with defaults based on Gradle's object model and user-defined
- * values configured via {@link SonarQubeExtension}.
+ * values configured via {@link SonarExtension}.
  * If used without the plugin, all properties have to be configured manually.
  * For more information on how to configure the SonarQube Scanner, and on which properties are available, see the
  * <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner documentation</a>.
  */
-public class SonarQubeTask extends ConventionTask {
+public class SonarTask extends ConventionTask {
 
-  private static final Logger LOGGER = Logging.getLogger(SonarQubeTask.class);
+  private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
 
   private LogOutput logOutput = new DefaultLogOutput();
 
@@ -104,10 +104,13 @@ public class SonarQubeTask extends ConventionTask {
 
   @TaskAction
   public void run() {
+    if (SonarExtension.SONAR_DEPRECATED_TASK_NAME.equals(this.getName())) {
+      LOGGER.warn("Task 'sonarqube' is deprecated. Use 'sonar' instead.");
+    }
     Map<String, String> properties = getProperties();
 
     if (properties.isEmpty()) {
-      LOGGER.warn("Skipping SonarQube analysis: no properties configured, was it skipped in all projects?");
+      LOGGER.warn("Skipping Sonar analysis: no properties configured, was it skipped in all projects?");
       return;
     }
 
@@ -137,7 +140,7 @@ public class SonarQubeTask extends ConventionTask {
 
   private static boolean isSkippedWithProperty(Map<String, String> properties) {
     if ("true".equalsIgnoreCase(properties.getOrDefault(ScanProperties.SKIP, "false"))) {
-      LOGGER.warn("SonarQube Scanner analysis skipped");
+      LOGGER.warn("Sonar Scanner analysis skipped");
       return true;
     }
     return false;

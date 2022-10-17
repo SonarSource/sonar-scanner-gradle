@@ -42,7 +42,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testAndroidProjectJdk8Retrolambda() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-retrolambda");
+    Properties props = runGradlewSonarSimulationMode("/android-gradle-retrolambda");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -78,7 +78,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testUsingDefaultVariant() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-default-variant");
+    Properties props = runGradlewSonarSimulationMode("/android-gradle-default-variant");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -113,7 +113,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testAndroidDynamicFeature() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-dynamic-feature");
+    Properties props = runGradlewSonarSimulationMode("/android-gradle-dynamic-feature");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -179,7 +179,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testSpecifyVariant() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-nondefault-variant");
+    Properties props = runGradlewSonarSimulationMode("/android-gradle-nondefault-variant");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -208,7 +208,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testMultiModule() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/multi-module-android-studio");
+    Properties props = runGradlewSonarSimulationMode("/multi-module-android-studio");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -253,7 +253,7 @@ public class AndroidTest extends AbstractGradleIT {
 
     // First flavor that is picked up seems to be the flavor2
 
-    Properties props = runGradlewSonarQubeSimulationMode("/AndroidTestingBlueprintWithFeatureModule");
+    Properties props = runGradlewSonarSimulationMode("/AndroidTestingBlueprintWithFeatureModule");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -346,7 +346,7 @@ public class AndroidTest extends AbstractGradleIT {
 
     // First flavor that is picked up seems to be the flavor2
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithFeatureModule", null, Collections.emptyMap(), "sonarqube", "--dry-run", "--max-workers=1");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithFeatureModule", null, Collections.emptyMap(), "sonar", "--dry-run", "--max-workers=1");
 
     assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
       ":app:compileFlavor2DebugAndroidTestJavaWithJavac SKIPPED",
@@ -355,7 +355,7 @@ public class AndroidTest extends AbstractGradleIT {
       ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
       ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
       ":module-plain-java:compileTestJava SKIPPED",
-      ":sonarqube SKIPPED");
+      ":sonar SKIPPED");
   }
 
   @Test
@@ -364,7 +364,7 @@ public class AndroidTest extends AbstractGradleIT {
 
     // First flavor that is picked up seems to be the flavor1
 
-    Properties props = runGradlewSonarQubeSimulationMode("/AndroidTestingBlueprintWithDynamicFeatureModule");
+    Properties props = runGradlewSonarSimulationMode("/AndroidTestingBlueprintWithDynamicFeatureModule");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -458,7 +458,7 @@ public class AndroidTest extends AbstractGradleIT {
 
     // First flavor that is picked up seems to be the flavor1
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, Collections.emptyMap(), "sonarqube", "--dry-run", "--max-workers=1");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, Collections.emptyMap(), "sonar", "--dry-run", "--max-workers=1");
 
     assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
       ":app:compileFlavor1DebugAndroidTestJavaWithJavac SKIPPED",
@@ -468,13 +468,13 @@ public class AndroidTest extends AbstractGradleIT {
       ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
       ":module-plain-java:compileTestJava SKIPPED",
       ":module_android_feature:compileFlavor1DebugJavaWithJavac SKIPPED",
-      ":sonarqube SKIPPED");
+      ":sonar SKIPPED");
   }
 
   // SONARGRADL-22
   @Test
   public void noDebugVariant() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/android-gradle-no-debug");
+    Properties props = runGradlewSonarSimulationMode("/android-gradle-no-debug");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 

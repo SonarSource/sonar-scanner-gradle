@@ -39,7 +39,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testSimpleJavaProject() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-simple");
+    Properties props = runGradlewSonarSimulationMode("/java-gradle-simple");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -58,7 +58,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testSetLogLevel() throws Exception {
-    RunResult runResult = runGradlewSonarQubeWithEnv("/java-gradle-log-level", emptyMap(), "-Dsonar.scanner.dumpToFile=asd");
+    RunResult runResult = runGradlewSonarWithEnv("/java-gradle-log-level", emptyMap(), "-Dsonar.scanner.dumpToFile=asd");
     // This is a debug log entry
     assertThat(runResult.getLog()).contains("Work directory:");
   }
@@ -67,18 +67,18 @@ public class GradleTest extends AbstractGradleIT {
   public void testSkip() throws Exception {
     Map<String, String> env = new HashMap<>();
     env.put("SONARQUBE_SCANNER_PARAMS", "{\"sonar.scanner.skip\" : \"true\" }");
-    RunResult result = runGradlewSonarQubeWithEnv("/java-gradle-simple", env);
+    RunResult result = runGradlewSonarWithEnv("/java-gradle-simple", env);
 
     System.out.println(result.getLog());
     assertThat(result.getExitValue()).isEqualTo(0);
-    assertThat(result.getLog()).contains("SonarQube Scanner analysis skipped");
+    assertThat(result.getLog()).contains("Sonar Scanner analysis skipped");
   }
 
   @Test
   public void testHostUrlInEnv() throws Exception {
     Map<String, String> env = new HashMap<>();
     env.put("SONAR_HOST_URL", "http://host-in-env");
-    RunResult result = runGradlewSonarQubeWithEnvQuietly("/java-gradle-simple", env);
+    RunResult result = runGradlewSonarWithEnvQuietly("/java-gradle-simple", env);
 
     System.out.println(result.getLog());
     assertThat(result.getExitValue()).isEqualTo(1);
@@ -89,7 +89,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testCompileOnly() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/java-compile-only");
+    Properties props = runGradlewSonarSimulationMode("/java-compile-only");
 
     assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar", "commons-lang-2.6.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
@@ -102,7 +102,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testCustomConfiguration() throws Exception {
 
-    Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-custom-config");
+    Properties props = runGradlewSonarSimulationMode("/java-gradle-custom-config");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -118,7 +118,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void mixJavaGroovyProject() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), "test");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), "test");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -135,14 +135,14 @@ public class GradleTest extends AbstractGradleIT {
   public void loadSonarScannerPropertiesEnv() throws Exception {
     Map<String, String> env = new HashMap<>();
     env.put("SONARQUBE_SCANNER_PARAMS", "{\"sonar.host.url\" : \"myhost\" }");
-    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-simple", env);
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-simple", env);
 
     assertThat(props).contains(entry("sonar.host.url", "myhost"));
   }
 
   @Test
   public void module_inclusion_duplicate_key() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/module-inclusion");
+    Properties props = runGradlewSonarSimulationMode("/module-inclusion");
 
     assertThat(props).contains(entry("sonar.projectKey", "com.mygroup:root_project"));
     assertThat(props.get("sonar.modules").toString().split(",")).containsOnly(":toplevel1", ":toplevel2");
@@ -160,7 +160,7 @@ public class GradleTest extends AbstractGradleIT {
   // SONARGRADL-5
   @Test
   public void testMultimoduleProjectWithSourceInRoot() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/multi-module-source-in-root");
+    Properties props = runGradlewSonarSimulationMode("/multi-module-source-in-root");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -190,13 +190,13 @@ public class GradleTest extends AbstractGradleIT {
    */
   @Test
   public void testFlatProjectStructure() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/multi-module-flat", "build", emptyMap());
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-flat", "build", emptyMap());
     assertThat(Paths.get(props.getProperty("sonar.projectBaseDir")).getFileName().toString()).isEqualTo("multi-module-flat");
   }
 
   @Test
   public void testJavaProjectWithoutTestsDoesNotSetCustomReportsPath() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationMode("/java-gradle-no-tests");
+    Properties props = runGradlewSonarSimulationMode("/java-gradle-no-tests");
     Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
 
     assertThat(testResultsDir).doesNotExist();
@@ -206,7 +206,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testJavaProjectWithoutRealTestsDoesNotSetCustomReportsPath() throws Exception {
-    Properties props = runGradlewSonarQubeSimulationModeWithEnv("/java-gradle-no-real-tests", emptyMap(), "test");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-no-real-tests", emptyMap(), "test");
     Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
 
     assertThat(testResultsDir).exists();
@@ -224,7 +224,7 @@ public class GradleTest extends AbstractGradleIT {
       // Use report.required
       project = "/java-gradle-jacoco-after-7";
     }
-    Properties props = runGradlewSonarQubeSimulationModeWithEnv(project, emptyMap(), "test", "jacocoTestReport");
+    Properties props = runGradlewSonarSimulationModeWithEnv(project, emptyMap(), "test", "jacocoTestReport");
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
     assertThat(props.getProperty("sonar.jacoco.reportPaths")).contains(baseDir.resolve("build/jacoco/test.exec").toString());
     assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths")).contains(baseDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString());
@@ -234,8 +234,8 @@ public class GradleTest extends AbstractGradleIT {
   public void testProjectWithConfigurationCacheDoubleExecutionsShouldWork() throws Exception {
     Assume.assumeTrue("Tests only applies to version 6.5.0 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.5.0"));
 
-    runGradlewSonarQubeWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.dumpToFile=asd", "--configuration-cache");
-    RunResult runResult = runGradlewSonarQubeWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.dumpToFile=asd", "--configuration-cache");
+    runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.dumpToFile=asd", "--configuration-cache");
+    RunResult runResult = runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.dumpToFile=asd", "--configuration-cache");
 
     //Versions lower than 7.4.0 doesn't support org.gradle.api.internal.AbstractTask#notCompatibleWithConfigurationCache, so it is not possible to prevent configuration cache
     if (getGradleVersion().isLowerThan("7.4.0")) {

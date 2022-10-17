@@ -22,20 +22,20 @@ package org.sonarqube.gradle;
 import java.util.Map;
 
 /**
- * The SonarQube properties for the current Gradle project that are to be passed to the SonarQube Scanner.
+ * The Sonar properties for the current Gradle project that are to be passed to the Scanner.
  * <p>
  * The {@code properties} map is already populated with the defaults provided by Gradle, and can be further manipulated as necessary.
- * Before passing them on to the SonarQube Scanner, property values are converted to Strings as follows:
+ * Before passing them on to the Scanner, property values are converted to Strings as follows:
  * <ul>
  * <li>{@code Iterable}s are recursively converted and joined into a comma-separated String.</li>
  * <li>All other values are converted to Strings by calling their {@code toString()} method.</li>
  * </ul>
  */
-public class SonarQubeProperties {
+public class SonarProperties {
 
   private Map<String, Object> properties;
 
-  public SonarQubeProperties(Map<String, Object> properties) {
+  public SonarProperties(Map<String, Object> properties) {
     this.properties = properties;
   }
 

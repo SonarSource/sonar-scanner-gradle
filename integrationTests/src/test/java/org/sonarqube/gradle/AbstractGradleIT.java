@@ -62,21 +62,21 @@ public abstract class AbstractGradleIT {
     return androidGradleVersion;
   }
 
-  protected Properties runGradlewSonarQubeSimulationMode(String project) throws Exception {
-    return runGradlewSonarQubeSimulationModeWithEnv(project, Collections.emptyMap());
+  protected Properties runGradlewSonarSimulationMode(String project) throws Exception {
+    return runGradlewSonarSimulationModeWithEnv(project, Collections.emptyMap());
   }
 
-  protected Properties runGradlewSonarQubeSimulationModeWithEnv(String project, Map<String, String> env, String... args) throws Exception {
-    return runGradlewSonarQubeSimulationModeWithEnv(project, null, env, args);
+  protected Properties runGradlewSonarSimulationModeWithEnv(String project, Map<String, String> env, String... args) throws Exception {
+    return runGradlewSonarSimulationModeWithEnv(project, null, env, args);
   }
 
-  protected Properties runGradlewSonarQubeSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
+  protected Properties runGradlewSonarSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File out = temp.newFile();
     String[] newArgs = Stream.concat(
       Stream.of("-Dsonar.scanner.dumpToFile=" + out.getAbsolutePath()),
       Arrays.stream(args))
       .toArray(String[]::new);
-    runGradlewSonarQubeWithEnv(project, exeRelativePath, env, newArgs);
+    runGradlewSonarWithEnv(project, exeRelativePath, env, newArgs);
 
     Properties props = new Properties();
     try (FileReader fr = new FileReader(out)) {
@@ -85,12 +85,12 @@ public abstract class AbstractGradleIT {
     return props;
   }
 
-  protected RunResult runGradlewSonarQubeWithEnv(String project, Map<String, String> env, String... args) throws Exception {
-    return runGradlewSonarQubeWithEnv(project, null, env, args);
+  protected RunResult runGradlewSonarWithEnv(String project, Map<String, String> env, String... args) throws Exception {
+    return runGradlewSonarWithEnv(project, null, env, args);
   }
 
-  protected RunResult runGradlewSonarQubeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
-    RunResult result = runGradlewSonarQubeWithEnvQuietly(project, exeRelativePath, env, args);
+  protected RunResult runGradlewSonarWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
+    RunResult result = runGradlewSonarWithEnvQuietly(project, exeRelativePath, env, args);
     System.out.println(result.getLog());
     if (result.exitValue != 0) {
       throw new RuntimeException(result.log);
@@ -98,14 +98,14 @@ public abstract class AbstractGradleIT {
     return result;
   }
 
-  protected RunResult runGradlewSonarQubeWithEnvQuietly(String project, Map<String, String> env, String... args) throws Exception {
-    return runGradlewSonarQubeWithEnvQuietly(project, null, env, args);
+  protected RunResult runGradlewSonarWithEnvQuietly(String project, Map<String, String> env, String... args) throws Exception {
+    return runGradlewSonarWithEnvQuietly(project, null, env, args);
   }
 
-  protected RunResult runGradlewSonarQubeWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
+  protected RunResult runGradlewSonarWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     List<String> newArgs = new ArrayList<>(args.length + 1);
     newArgs.addAll(Arrays.asList(args));
-    newArgs.add("sonarqube");
+    newArgs.add("sonar");
     return runGradlewWithEnvQuietly(project, exeRelativePath, env, newArgs.toArray(new String[args.length + 1]));
   }
 

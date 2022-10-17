@@ -25,7 +25,7 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-sonarqube {
+sonar {
     properties {
         property "sonar.projectName", "Simple Android Gradle Project With Dynamic Module"
         property "sonar.projectKey", "org.sonarqube:example-android-gradle-dynamic-module"

@@ -15,7 +15,7 @@ allprojects {
 
 apply plugin: 'org.sonarqube'
 
-sonarqube {
+sonar {
     properties {
         property 'sonar.projectName', 'Test with dynamic module inclusion in settings.gradle'
     }
