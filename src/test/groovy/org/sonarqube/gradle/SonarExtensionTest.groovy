@@ -21,32 +21,29 @@ package org.sonarqube.gradle
 
 import spock.lang.Specification
 
-class SonarQubePropertiesTest extends Specification {
-    def properties = new SonarQubeProperties([:])
+class SonarExtensionTest extends Specification {
 
-    def "set a single property"() {
+    def "evaluate properties blocks"() {
+        def actionBroadcast = new ActionBroadcast<SonarProperties>()
+        def extension = new SonarExtension(actionBroadcast)
+        def props = ["key.1": "value 1"]
+
         when:
-        properties.property "foo", "one"
+        extension.properties {
+            it.property "key.2", ["value 2"]
+            it.properties(["key.3": "value 3", "key.4": "value 4"])
+        }
+
+        extension.properties {
+            it.property "key.5", "value 5"
+            it.properties["key.2"] << "value 6"
+            it.properties.remove("key.3")
+        }
+
+        def sonarProperties = new SonarProperties(props)
+        actionBroadcast.execute(sonarProperties)
 
         then:
-        properties.properties == [foo: "one"]
-    }
-
-    def "set multiple properties at once"() {
-        when:
-        properties.properties foo: "one", bar: "two"
-
-        then:
-        properties.properties == [foo: "one", bar: "two"]
-    }
-
-    def "read and write the properties map directly"() {
-        when:
-        properties.properties.putAll(foo: "one", bar: "two")
-        properties.properties.bar *= 2
-        properties.properties.remove("foo")
-
-        then:
-        properties.properties == [bar: "twotwo"]
+        props == ["key.1": "value 1", "key.2": ["value 2", "value 6"], "key.4": "value 4", "key.5": "value 5"]
     }
 }

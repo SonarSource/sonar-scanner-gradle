@@ -22,13 +22,13 @@ package org.sonarqube.gradle;
 import org.gradle.api.Action;
 
 /**
- * An extension for configuring the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">SonarQube</a> analysis.
+ * An extension for configuring the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">Sonar</a> analysis.
  * <p>
  * The extension is added to all projects that have the {@code "sonar-gradle"} plugin applied, and all of their subprojects.
  * <p>
  * Example usage:
  * <pre>
- * sonarqube {
+ * sonar {
  *   skipProject = false // this is the default
  *   properties {
  *     property "sonar.host.url", "http://my.sonar.server" // adding a single property
@@ -37,30 +37,31 @@ import org.gradle.api.Action;
  *   }
  * }
  * </pre>
- * <h3>SonarQube Properties</h3>
+ * <h3>Sonar Properties</h3>
  * <p>
- * The SonarQube configuration is provided by using the {@link #properties(org.gradle.api.Action)} method and specifying properties.
- * Certain properties are required, such as {@code "sonar.host.url"} which provides the address of the SonarQube server.
+ * The Sonar configuration is provided by using the {@link #properties(org.gradle.api.Action)} method and specifying properties.
+ * Certain properties are required, such as {@code "sonar.host.url"} which provides the address of the server.
  * For details on what properties are available, see <a href="http://docs.sonarqube.org/display/SONAR/Analysis+Parameters">Analysis Parameters</a>
  * in the SonarQube documentation.
  * <p>
  * The {@code "sonar-gradle"} plugin adds default values for several plugins depending on the nature of the project.
- * Please see the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">SonarQube Gradle documentation</a>
+ * Please see the <a href="http://docs.sonarqube.org/display/SONAR/Analyzing+with+Gradle">SonarScanner for Gradle documentation</a>
  * for details on which properties are set and their values.
  * <p>
- * Please see the {@link SonarQubeProperties} class for more information on the mechanics of setting SonarQube properties,
+ * Please see the {@link SonarProperties} class for more information on the mechanics of setting Sonar properties,
  * including laziness and property types.
  */
-public class SonarQubeExtension {
-
-  public static final String SONARQUBE_EXTENSION_NAME = "sonarqube";
-  public static final String SONARQUBE_TASK_NAME = "sonarqube";
+public class SonarExtension {
+  public static final String SONAR_EXTENSION_NAME = "sonar";
+  public static final String SONAR_DEPRECATED_EXTENSION_NAME = "sonarqube";
+  public static final String SONAR_TASK_NAME = "sonar";
+  public static final String SONAR_DEPRECATED_TASK_NAME = "sonarqube";
 
   private boolean skipProject;
-  private final ActionBroadcast<SonarQubeProperties> propertiesActions;
+  private final ActionBroadcast<SonarProperties> propertiesActions;
   private String androidVariant;
 
-  public SonarQubeExtension(ActionBroadcast<SonarQubeProperties> propertiesActions) {
+  public SonarExtension(ActionBroadcast<SonarProperties> propertiesActions) {
     this.propertiesActions = propertiesActions;
   }
 
@@ -82,7 +83,7 @@ public class SonarQubeExtension {
    *
    * @param action an action that configures SonarQube properties for the associated Gradle project
    */
-  public void properties(Action<? super SonarQubeProperties> action) {
+  public void properties(Action<? super SonarProperties> action) {
     propertiesActions.add(action);
   }
 

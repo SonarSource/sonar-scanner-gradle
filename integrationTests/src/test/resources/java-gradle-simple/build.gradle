@@ -20,7 +20,7 @@ allprojects {
   version = "$baseVersion" + (snapshotVersion ? "-SNAPSHOT" : "")
 }
 
-sonarqube {
+sonar {
     properties {
         property "sonar.projectName", "Simple Java Gradle Project"
         property "sonar.projectKey", "org.codehaus.sonar:example-java-gradle"

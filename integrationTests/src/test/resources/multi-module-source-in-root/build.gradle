@@ -41,7 +41,7 @@ allprojects {
 	}
 }
 
-sonarqube {
+sonar {
     properties {
         property "sonar.projectName", "Multi-module Project with sources in root"
         property "sonar.projectKey", "org.sonarsource.gradle:example-multimodule"

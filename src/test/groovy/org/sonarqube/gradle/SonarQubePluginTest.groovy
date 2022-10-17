@@ -55,93 +55,100 @@ class SonarQubePluginTest extends Specification {
         }
     }
 
-    def "adds a sonarqube extension to the target project (i.e. the project to which the plugin is applied) and its subprojects"() {
+    def "adds a sonar extension to the target project (i.e. the project to which the plugin is applied) and its subprojects"() {
         expect:
-        rootProject.extensions.findByName("sonarqube") == null
-        parentProject.extensions.findByName("sonarqube") instanceof SonarQubeExtension
-        childProject.extensions.findByName("sonarqube") instanceof SonarQubeExtension
+        rootProject.extensions.findByName("sonar") == null
+        parentProject.extensions.findByName("sonar") instanceof SonarExtension
+        childProject.extensions.findByName("sonar") instanceof SonarExtension
     }
 
-    def "adds a sonarqube extension to each project once in multimodule projects"() {
+    def "adds a sonar extension to each project once in multimodule projects"() {
         when:
         parentProject.allprojects { pluginManager.apply(SonarQubePlugin) }
 
         then:
-        rootProject.extensions.findByName("sonarqube") == null
-        parentProject.extensions.findByName("sonarqube") instanceof SonarQubeExtension
-        childProject.extensions.findByName("sonarqube") instanceof SonarQubeExtension
+        rootProject.extensions.findByName("sonar") == null
+        parentProject.extensions.findByName("sonar") instanceof SonarExtension
+        childProject.extensions.findByName("sonar") instanceof SonarExtension
     }
 
-    def "adds a sonarqube task to the target project"() {
+    def "adds a sonar task to the target project"() {
         expect:
-        parentProject.tasks.findByName("sonarqube") instanceof SonarQubeTask
-        parentSonarQubeTask().group == JavaBasePlugin.VERIFICATION_GROUP
-        parentSonarQubeTask().description == "Analyzes project ':parent' and its subprojects with SonarQube."
+        parentProject.tasks.findByName("sonar") instanceof SonarTask
+        parentSonarTask().group == JavaBasePlugin.VERIFICATION_GROUP
+        parentSonarTask().description == "Analyzes project ':parent' and its subprojects with Sonar."
 
-        childProject.tasks.findByName("sonarqube") == null
+        childProject.tasks.findByName("sonar") == null
+    }
+
+    def "adds a sonarqube deprecated task to the target project"() {
+        expect:
+        parentProject.tasks.findByName("sonarqube") instanceof SonarTask
+        (parentProject.tasks.sonarqube as SonarTask).group == JavaBasePlugin.VERIFICATION_GROUP
+        (parentProject.tasks.sonarqube as SonarTask).description == "Analyzes project ':parent' and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead."
     }
 
     def "sets log output level"() {
         when:
-        parentSonarQubeTask().useLoggerLevel(LogLevel.DEBUG)
+        parentSonarTask().useLoggerLevel(LogLevel.DEBUG)
 
         then:
-        parentSonarQubeTask().getLogOutput().getClass().getSimpleName() == "LifecycleLogOutput"
+        parentSonarTask().getLogOutput().getClass().getSimpleName() == "LifecycleLogOutput"
     }
 
     def "skipping all projects does nothing"() {
         when:
-        parentProject.allprojects { sonarqube { skipProject = true } }
-        parentSonarQubeTask().run()
-        def properties = parentSonarQubeTask().properties
+        parentProject.allprojects { sonar { skipProject = true } }
+        parentSonarTask().run()
+        def properties = parentSonarTask().properties
 
         then:
         noExceptionThrown()
         properties.isEmpty()
     }
 
-    def "adds a sonarqube task once in multimodule projects"() {
+    def "adds a sonar task once in multimodule projects"() {
         when:
         parentProject.allprojects { pluginManager.apply(SonarQubePlugin) }
 
         then:
-        parentProject.tasks.findByName("sonarqube") instanceof SonarQubeTask
-        parentSonarQubeTask().description == "Analyzes project ':parent' and its subprojects with SonarQube."
+        parentProject.tasks.findByName("sonar") instanceof SonarTask
+        parentSonarTask().description == "Analyzes project ':parent' and its subprojects with Sonar."
 
-        childProject.tasks.findByName("sonarqube") == null
+        childProject.tasks.findByName("sonar") == null
     }
 
-    def "makes sonarqube task must run after test tasks of the target project and its subprojects"() {
+    def "makes sonar task must run after test tasks of the target project and its subprojects"() {
         when:
         rootProject.pluginManager.apply(JavaPlugin)
         parentProject.pluginManager.apply(JavaPlugin)
         childProject.pluginManager.apply(JavaPlugin)
 
-        def taskDep = parentSonarQubeTask().getMustRunAfter()
+        def taskDep = parentSonarTask().getMustRunAfter()
 
         then:
-        expect(taskDep.getDependencies(parentSonarQubeTask()), contains(parentProject.tasks.getByName(JavaPlugin.TEST_TASK_NAME),
+        expect(taskDep.getDependencies(parentSonarTask()), contains(parentProject.tasks.getByName(JavaPlugin.TEST_TASK_NAME),
                 childProject.tasks.getByName(JavaPlugin.TEST_TASK_NAME)))
 
     }
 
-    def "doesn't make sonarqube task depend on test task of skipped projects"() {
+    def "doesn't make sonar task depend on test task of skipped projects"() {
         when:
         rootProject.pluginManager.apply(JavaPlugin)
         parentProject.pluginManager.apply(JavaPlugin)
         childProject.pluginManager.apply(JavaPlugin)
-        childProject.sonarqube.skipProject = true
+        childProject.sonar.skipProject = true
 
         then:
-        def taskDep = parentSonarQubeTask().getMustRunAfter()
+        def taskDep = parentSonarTask().getMustRunAfter()
 
         then:
-        expect(taskDep.getDependencies(parentSonarQubeTask()), contains(parentProject.tasks.getByName(JavaPlugin.TEST_TASK_NAME)))
+        expect(taskDep.getDependencies(parentSonarTask()), contains(parentProject.tasks.getByName(JavaPlugin.TEST_TASK_NAME)))
     }
 
     def "adds default properties for target project and its subprojects"() {
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.sources"] == ""
@@ -161,7 +168,7 @@ class SonarQubePluginTest extends Specification {
 
     def "adds additional default properties for target project"() {
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.projectKey"] == "group:root:parent"
@@ -177,7 +184,7 @@ class SonarQubePluginTest extends Specification {
         rootProject.group = null
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.projectKey"] == "root:parent"
@@ -192,7 +199,7 @@ class SonarQubePluginTest extends Specification {
         childProject.targetCompatibility = 1.8
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.java.source"] == "1.5"
@@ -208,7 +215,7 @@ class SonarQubePluginTest extends Specification {
         childProject.compileJava.options.release = 8
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.java.source"] == "8"
@@ -226,7 +233,7 @@ class SonarQubePluginTest extends Specification {
         childProject.targetCompatibility = 1.8
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.java.source"] == "1.5"
@@ -256,7 +263,7 @@ class SonarQubePluginTest extends Specification {
         new File(testResultsDir, 'TEST-.xml').createNewFile()
 
         when:
-        def properties = project.tasks.sonarqube.properties
+        def properties = project.tasks.sonar.properties
 
         then:
         properties["sonar.sources"] == new File(project.projectDir, "src") as String
@@ -285,7 +292,7 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.main.java.srcDirs = ["src"]
 
         when:
-        def properties = project.tasks.sonarqube.properties
+        def properties = project.tasks.sonar.properties
 
         then:
         properties["sonar.jacoco.reportPath"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
@@ -314,7 +321,7 @@ class SonarQubePluginTest extends Specification {
         new File(testResultsDir, 'TEST-.xml').createNewFile()
 
         when:
-        def properties = project.tasks.sonarqube.properties
+        def properties = project.tasks.sonar.properties
 
         then:
         properties["sonar.sources"] == new File(project.projectDir, "src") as String
@@ -343,7 +350,7 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.main.java.srcDirs = ["src"]
 
         when:
-        def properties = project.tasks.sonarqube.properties
+        def properties = project.tasks.sonar.properties
 
         then:
         properties["sonar.groovy.jacoco.reportPath"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
@@ -353,7 +360,7 @@ class SonarQubePluginTest extends Specification {
         parentProject.pluginManager.apply(JavaPlugin)
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         !properties.containsKey("sonar.tests")
@@ -365,7 +372,7 @@ class SonarQubePluginTest extends Specification {
         childProject2.pluginManager.apply(JavaPlugin)
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.sources"] == ""
@@ -374,25 +381,37 @@ class SonarQubePluginTest extends Specification {
         properties[":parent:child.:parent:child:leaf.sonar.sources"] == ""
     }
 
-    def "allows to configure Sonar properties via 'sonarqube' extension"() {
-        parentProject.sonarqube.properties {
+    def "allows to configure Sonar properties via 'sonar' extension"() {
+        parentProject.sonar.properties {
             property "sonar.some.key", "some value"
         }
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.some.key"] == "some value"
     }
 
-    def "allows to configure project key via 'sonarqube' extension"() {
+    def "allows to configure Sonar properties via deprecated 'sonarqube' extension"() {
         parentProject.sonarqube.properties {
+            property "sonar.some.key", "some value"
+        }
+
+        when:
+        def properties = parentSonarTask().properties
+
+        then:
+        properties["sonar.some.key"] == "some value"
+    }
+
+    def "allows to configure project key via 'sonar' extension"() {
+        parentProject.sonar.properties {
             property "sonar.projectKey", "myProject"
         }
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.projectKey"] == "myProject"
@@ -400,15 +419,15 @@ class SonarQubePluginTest extends Specification {
     }
 
     def "prefixes property keys of subprojects"() {
-        childProject.sonarqube.properties {
+        childProject.sonar.properties {
             property "sonar.some.key", "other value"
         }
-        leafProject.sonarqube.properties {
+        leafProject.sonar.properties {
             property "sonar.some.key", "other value leaf"
         }
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties[":parent:child.sonar.some.key"] == "other value"
@@ -417,7 +436,7 @@ class SonarQubePluginTest extends Specification {
 
     def "adds 'modules' properties declaring (prefixes of) subprojects"() {
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.modules"].contains(":parent:child")
@@ -436,7 +455,7 @@ class SonarQubePluginTest extends Specification {
         rootProject.pluginManager.apply(SonarQubePlugin)
 
         when:
-        def properties = rootProject.tasks.sonarqube.properties
+        def properties = rootProject.tasks.sonar.properties
 
         then:
         properties["sonar.modules"] == ":parent,:parent2"
@@ -446,58 +465,58 @@ class SonarQubePluginTest extends Specification {
 
     }
 
-    def "evaluates 'sonarqube' block lazily"() {
+    def "evaluates 'sonar' block lazily"() {
         parentProject.version = "1.0"
-        parentProject.sonarqube.properties {
+        parentProject.sonar.properties {
             property "sonar.projectVersion", parentProject.version
         }
         parentProject.version = "1.2.3"
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.projectVersion"] == "1.2.3"
     }
 
-    def "converts SonarQube property values to strings"() {
+    def "converts sonar property values to strings"() {
         def object = new Object() {
             String toString() {
                 "object"
             }
         }
 
-        parentProject.sonarqube.properties {
+        parentProject.sonar.properties {
             property "some.object", object
             property "some.list", [1, object, 2]
         }
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["some.object"] == "object"
         properties["some.list"] == "1,object,2"
     }
 
-    def "removes SonarQube properties with null values"() {
-        parentProject.sonarqube.properties {
+    def "removes sonar properties with null values"() {
+        parentProject.sonar.properties {
             property "some.key", null
         }
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         !properties.containsKey("some.key")
     }
 
-    def "allows to set SonarQube properties for target project via 'sonar.xyz' system properties"() {
+    def "allows to set sonar properties for target project via 'sonar.xyz' system properties"() {
         System.setProperty("sonar.some.key", "some value")
         System.setProperty("sonar.projectVersion", "3.2")
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.some.key"] == "some value"
@@ -518,7 +537,7 @@ class SonarQubePluginTest extends Specification {
         System.setProperty("sonar.projectVersion", "3.2")
 
         when:
-        def properties = rootProject.tasks.sonarqube.properties
+        def properties = rootProject.tasks.sonar.properties
 
         then:
         properties["sonar.some.key"] == "some value"
@@ -531,33 +550,33 @@ class SonarQubePluginTest extends Specification {
 
     def "system properties win over values set in build script"() {
         System.setProperty("sonar.some.key", "win")
-        parentProject.sonarqube.properties {
+        parentProject.sonar.properties {
             property "sonar.some.key", "lose"
         }
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.some.key"] == "win"
     }
 
-    def "doesn't add SonarQube properties for skipped child projects"() {
-        childProject.sonarqube.skipProject = true
+    def "doesn't add sonar properties for skipped child projects"() {
+        childProject.sonar.skipProject = true
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         !properties.any { key, value -> key.startsWith("child.sonar.") }
         !properties.any { key, value -> key.startsWith(":parent:child.") }
     }
 
-    def "doesn't add SonarQube properties for skipped projects"() {
-        parentProject.sonarqube.skipProject = true
+    def "doesn't add sonar properties for skipped projects"() {
+        parentProject.sonar.skipProject = true
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         !properties.any { key, value -> key.startsWith("sonar.") }
@@ -568,7 +587,7 @@ class SonarQubePluginTest extends Specification {
         parentProject.pluginManager.apply(JavaPlugin)
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.java.jdkHome"] != null
@@ -578,14 +597,14 @@ class SonarQubePluginTest extends Specification {
         parentProject.pluginManager.apply(GroovyPlugin)
 
         when:
-        def properties = parentSonarQubeTask().properties
+        def properties = parentSonarTask().properties
 
         then:
         properties["sonar.java.jdkHome"] != null
     }
 
-    private SonarQubeTask parentSonarQubeTask() {
-        parentProject.tasks.sonarqube as SonarQubeTask
+    private SonarTask parentSonarTask() {
+        parentProject.tasks.sonar as SonarTask
     }
 
 }

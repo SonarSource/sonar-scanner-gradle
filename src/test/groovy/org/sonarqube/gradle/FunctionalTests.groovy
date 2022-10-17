@@ -167,6 +167,29 @@ class FunctionalTests extends Specification {
         props."sonar.java.target" == '10'
     }
 
+    def "warn if using deprecated sonarqube task"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+            plugins {
+                id 'org.sonarqube'
+            }
+            """
+
+        when:
+        def result = GradleRunner.create()
+                .withGradleVersion("6.7.1")
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":sonarqube").outcome == SUCCESS
+        result.output.contains("Task 'sonarqube' is deprecated. Use 'sonar' instead.")
+    }
+
     def "set jdkHome, source and target for 'java' projects from task toolchains"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"

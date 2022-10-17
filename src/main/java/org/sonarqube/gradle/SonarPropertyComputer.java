@@ -72,10 +72,10 @@ public class SonarPropertyComputer {
   static final String SONAR_SOURCES_PROP = "sonar.sources";
   static final String SONAR_TESTS_PROP = "sonar.tests";
 
-  private final Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap;
+  private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
 
-  public SonarPropertyComputer(Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project targetProject) {
+  public SonarPropertyComputer(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project targetProject) {
     this.actionBroadcastMap = actionBroadcastMap;
     this.targetProject = targetProject;
   }
@@ -90,7 +90,7 @@ public class SonarPropertyComputer {
   }
 
   private void computeSonarProperties(Project project, Map<String, Object> properties, String prefix) {
-    SonarQubeExtension extension = project.getExtensions().getByType(SonarQubeExtension.class);
+    SonarExtension extension = project.getExtensions().getByType(SonarExtension.class);
     if (extension.isSkipProject()) {
       return;
     }
@@ -101,7 +101,7 @@ public class SonarPropertyComputer {
       AndroidUtils.configureForAndroid(project, extension.getAndroidVariant(), rawProperties);
     }
 
-    ActionBroadcast<SonarQubeProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
+    ActionBroadcast<SonarProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
     if (actionBroadcast != null) {
       evaluateSonarPropertiesBlocks(actionBroadcast, rawProperties);
     }
@@ -122,15 +122,15 @@ public class SonarPropertyComputer {
     convertProperties(rawProperties, prefix, properties);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
-      .filter(p -> !p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .filter(p -> !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
       .collect(Collectors.toList());
 
     List<Project> skippedChildProjects = project.getChildProjects().values().stream()
-      .filter(p -> p.getExtensions().getByType(SonarQubeExtension.class).isSkipProject())
+      .filter(p -> p.getExtensions().getByType(SonarExtension.class).isSkipProject())
       .collect(Collectors.toList());
 
     if (!skippedChildProjects.isEmpty()) {
-      LOGGER.debug("Skipping collecting SonarQube properties on: " + Arrays.toString(skippedChildProjects.toArray(new Project[0])));
+      LOGGER.debug("Skipping collecting Sonar properties on: " + Arrays.toString(skippedChildProjects.toArray(new Project[0])));
     }
 
     if (enabledChildProjects.isEmpty()) {
@@ -148,8 +148,8 @@ public class SonarPropertyComputer {
     properties.put(convertKey("sonar.modules", prefix), String.join(",", moduleIds));
   }
 
-  private static void evaluateSonarPropertiesBlocks(ActionBroadcast<? super SonarQubeProperties> propertiesActions, Map<String, Object> properties) {
-    SonarQubeProperties sqProperties = new SonarQubeProperties(properties);
+  private static void evaluateSonarPropertiesBlocks(ActionBroadcast<? super SonarProperties> propertiesActions, Map<String, Object> properties) {
+    SonarProperties sqProperties = new SonarProperties(properties);
     propertiesActions.execute(sqProperties);
   }
 
@@ -276,8 +276,8 @@ public class SonarPropertyComputer {
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
     File testResultsDir = getDestination(testTask.getReports().getJunitXml());
 
-    // do not set a custom test reports path if it does not exists, otherwise SonarQube will emit an error
-    // do not set a custom test reports path if there are no files, otherwise SonarQube will emit a warning
+    // do not set a custom test reports path if it does not exists, otherwise Sonar will emit an error
+    // do not set a custom test reports path if there are no files, otherwise Sonar will emit a warning
     if (testResultsDir != null && testResultsDir.isDirectory()
       && Arrays.stream(testResultsDir.list()).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
       appendProp(properties, "sonar.junit.reportPaths", testResultsDir);
