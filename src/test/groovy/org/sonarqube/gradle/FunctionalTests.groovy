@@ -107,6 +107,66 @@ class FunctionalTests extends Specification {
         props."sonar.java.target" == '8'
     }
 
+    def "set java release version"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        
+        compileJava {
+          options.release = 10
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withGradleVersion("6.7.1")
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .build()
+
+        then:
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.java.source" == '10'
+        props."sonar.java.target" == '10'
+    }
+
+    def "set java release version with compiler arguments"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        
+        compileJava {
+          options.compilerArgs.addAll(['--release', '10'])
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+                .withGradleVersion("6.7.1")
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .build()
+
+        then:
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.java.source" == '10'
+        props."sonar.java.target" == '10'
+    }
+
     def "set jdkHome, source and target for 'java' projects from task toolchains"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"

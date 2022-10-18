@@ -93,13 +93,27 @@ public class JavaCompilerUtils {
       ToolchainUtils.configureCompatibilityOptions(compileTask, config);
     } else {
       Optional<String> release = getRelease(compileTask.getOptions());
+      Optional<String> parsedVersion = parseArguments(compileTask.getOptions());
+
       if (release.isPresent()) {
         config.setRelease(release.get());
+      } else if (parsedVersion.isPresent()) {
+        config.setRelease(parsedVersion.get());
       } else {
         config.setTarget(compileTask.getTargetCompatibility());
         config.setSource(compileTask.getSourceCompatibility());
       }
     }
+  }
+
+  private static Optional<String> parseArguments(CompileOptions options) {
+    List<String> compilerArgs = options.getCompilerArgs();
+    for (int i = 0; i < compilerArgs.size(); i++) {
+      if ("--release".equals(compilerArgs.get(i)) && i < compilerArgs.size() - 1) {
+        return Optional.of(compilerArgs.get(i + 1));
+      }
+    }
+    return Optional.empty();
   }
 
   private static Optional<String> getRelease(CompileOptions options) {
