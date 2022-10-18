@@ -45,10 +45,13 @@ If all projects are skipped (by adding `skipProject=true` to the sonarqube DSL),
 
 
 ### Using the plugin directly in a project (no need to build/install it in advance)
+A composite build can be used to substitute plugins by an included build.
 
-In the target project, apply as usual:
+In the target project, apply the `sonarqube` plugin:
 ```
-apply plugin: 'org.sonarqube'
+plugins {
+  id 'org.sonarqube'
+}
 ```
 
 Run with:
