@@ -43,19 +43,11 @@ public class SonarUtils {
     // Utility class
   }
 
-  static boolean isAndroidProject(Project project) {
-    return project.getPlugins().hasPlugin("com.android.application")
-      || project.getPlugins().hasPlugin("com.android.library")
-      || project.getPlugins().hasPlugin("com.android.test")
-      || project.getPlugins().hasPlugin("com.android.feature")
-      || project.getPlugins().hasPlugin("com.android.dynamic-feature");
-  }
-
-  static String capitalize(final String word) {
+  public static String capitalize(final String word) {
     return Character.toUpperCase(word.charAt(0)) + word.substring(1);
   }
 
-  static String findProjectBaseDir(Map<String, Object> properties) {
+  public static String findProjectBaseDir(Map<String, Object> properties) {
     Path rootBaseDir = Paths.get(properties.get("sonar.projectBaseDir").toString()).toAbsolutePath().normalize();
 
     List<Path> allProjectsBaseDir = properties.entrySet().stream()
@@ -83,12 +75,12 @@ public class SonarUtils {
     return rootBaseDir.toString();
   }
 
-  static void setTestClasspathProps(Map<String, Object> properties, Collection<File> testClassDirs, Collection<File> testLibraries) {
+  public static void setTestClasspathProps(Map<String, Object> properties, Collection<File> testClassDirs, Collection<File> testLibraries) {
     appendProps(properties, "sonar.java.test.binaries", exists(testClassDirs));
     appendProps(properties, "sonar.java.test.libraries", exists(testLibraries));
   }
 
-  static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, Collection<File> mainClassDirs, Collection<File> mainLibraries) {
+  public static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, Collection<File> mainClassDirs, Collection<File> mainLibraries) {
     appendProps(properties, "sonar.java.binaries", exists(mainClassDirs));
     if (addForGroovy) {
       appendProps(properties, "sonar.groovy.binaries", exists(mainClassDirs));
@@ -101,7 +93,7 @@ public class SonarUtils {
     appendProps(properties, "sonar.libraries", exists(mainLibraries));
   }
 
-  static void populateJdkProperties(Map<String, Object> properties, JavaCompilerConfiguration config) {
+  public static void populateJdkProperties(Map<String, Object> properties, JavaCompilerConfiguration config) {
     config.getJdkHome().ifPresent(s -> properties.put("sonar.java.jdkHome", s));
     Optional<String> release = config.getRelease();
     if (release.isPresent()) {
@@ -117,7 +109,7 @@ public class SonarUtils {
     return files.stream().filter(File::exists).collect(Collectors.toList());
   }
 
-  static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {
+  public static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {
     properties.putIfAbsent(key, new LinkedHashSet<String>());
     StreamSupport.stream(valuesToAppend.spliterator(), false)
       .forEach(v -> ((Collection<String>) properties.get(key)).add(v.toString()));
@@ -129,7 +121,7 @@ public class SonarUtils {
   }
 
   @Nullable
-  static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
+  public static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
     List<T> list = Collections.unmodifiableList(new ArrayList<>(collection));
     return list.isEmpty() ? null : list;
   }

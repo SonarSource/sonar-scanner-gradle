@@ -55,7 +55,7 @@ public class JavaCompilerUtils {
     return Optional.of(first);
   }
 
-  static JavaCompilerConfiguration extractConfiguration(JavaCompile compileTask) {
+  public static JavaCompilerConfiguration extractConfiguration(JavaCompile compileTask) {
     JavaCompilerConfiguration javaCompilerConfiguration = new JavaCompilerConfiguration(compileTask.getName());
     configureCompatibilityOptions(compileTask, javaCompilerConfiguration);
     javaCompilerConfiguration.setJdkHome(extractJavaHome(compileTask).getAbsolutePath());

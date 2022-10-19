@@ -17,10 +17,11 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonarqube.gradle;
+package org.sonarqube.gradle.android;
 
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.AppPlugin;
+import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.DynamicFeaturePlugin;
 import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.LibraryPlugin;
@@ -31,6 +32,8 @@ import com.android.build.gradle.api.BaseVariant;
 import com.android.build.gradle.api.TestVariant;
 import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
+import com.android.build.gradle.internal.dsl.ProductFlavor;
+import com.android.builder.model.ApiVersion;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -41,6 +44,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,6 +56,8 @@ import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
+import org.sonarqube.gradle.JavaCompilerUtils;
+import org.sonarqube.gradle.SonarUtils;
 
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
@@ -63,24 +69,36 @@ import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
 /**
  * Only access this class when running on an Android application
  */
-class AndroidUtils {
+public class AndroidUtils {
 
   private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
 
   private AndroidUtils() {
   }
 
-  static void configureForAndroid(Project project, String userConfiguredBuildVariantName, final Map<String, Object> properties) {
-    BaseVariant variant = findVariant(project, userConfiguredBuildVariantName);
-    if (variant != null) {
-      configureForAndroid(project, variant, properties);
+  public static boolean isAndroidProject(Project project) {
+    return project.getPlugins().hasPlugin("com.android.application")
+      || project.getPlugins().hasPlugin("com.android.library")
+      || project.getPlugins().hasPlugin("com.android.test")
+      || project.getPlugins().hasPlugin("com.android.feature")
+      || project.getPlugins().hasPlugin("com.android.dynamic-feature");
+  }
+
+  public static void configureForAndroid(Project project, String userConfiguredBuildVariantName, final Map<String, Object> properties) {
+    AndroidVariantAndExtension android = findVariantAndExtension(project, userConfiguredBuildVariantName);
+    if (android != null && android.getVariant() != null) {
+      configureForAndroid(project, android, properties);
     } else {
       LOGGER.warn("No variant found for '{}'. No android specific configuration will be done", project.getName());
     }
   }
 
-  private static void configureForAndroid(Project project, BaseVariant variant, Map<String, Object> properties) {
+  private static void configureForAndroid(Project project, AndroidVariantAndExtension android, Map<String, Object> properties) {
     List<File> bootClassPath = getBootClasspath(project);
+    BaseVariant variant = android.getVariant();
+
+    populateSonarQubeAndroidProperties(android, properties);
+
     if (project.getPlugins().hasPlugin("com.android.test")) {
       // Instrumentation tests only
       populateSonarQubeProps(properties, bootClassPath, variant, true);
@@ -97,6 +115,25 @@ class AndroidUtils {
         if (testVariant != null) {
           populateSonarQubeProps(properties, bootClassPath, testVariant, true);
         }
+      }
+    }
+  }
+
+  private static void populateSonarQubeAndroidProperties(AndroidVariantAndExtension android, Map<String, Object> properties) {
+    properties.put(AndroidProperties.ANDROID_DETECTED, true);
+
+    if (android.isVariantProvidedByUser()) {
+      ApiVersion minSdkVersion = android.getVariant().getMergedFlavor().getMinSdkVersion();
+      if (minSdkVersion != null) {
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdkVersion.getApiLevel());
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdkVersion.getApiLevel());
+      }
+    } else {
+      Set<Integer> minSdks = android.getExtension().getProductFlavors().stream().map(ProductFlavor::getMinSdk).collect(Collectors.toSet());
+      minSdks.add(android.getExtension().getDefaultConfig().getMinSdk());
+      if (!minSdks.stream().allMatch(Objects::isNull)) {
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, Collections.min(minSdks));
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, Collections.max(minSdks));
       }
     }
   }
@@ -147,27 +184,32 @@ class AndroidUtils {
   }
 
   @Nullable
-  static BaseVariant findVariant(Project project, @Nullable String userConfiguredBuildVariantName) {
+  public static AndroidVariantAndExtension findVariantAndExtension(Project project, @Nullable String userConfiguredBuildVariantName) {
     String testBuildType = getTestBuildType(project);
     PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
     if (!appPlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
     }
     PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
     if (!libPlugins.isEmpty()) {
       LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      return findVariant(new ArrayList<>(androidExtension.getLibraryVariants()), testBuildType, userConfiguredBuildVariantName);
+      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getLibraryVariants()), testBuildType, userConfiguredBuildVariantName);
+      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
     }
     PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
     if (!testPlugins.isEmpty()) {
       TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
-      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
+
     }
     PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
     if (!dynamicFeaturePlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
     }
     return null;
   }
@@ -265,5 +307,30 @@ class AndroidUtils {
     srcDirs.addAll(sourceSet.getResDirectories());
     srcDirs.addAll(sourceSet.getResourcesDirectories());
     return srcDirs;
+  }
+
+  public static class AndroidVariantAndExtension {
+
+    private final BaseExtension extension;
+    private final BaseVariant variant;
+    private final boolean variantProvidedByUser;
+
+    public AndroidVariantAndExtension(BaseExtension baseExtension, @Nullable BaseVariant baseVariant, @Nullable String userConfiguredVariantName) {
+      this.extension = baseExtension;
+      this.variant = baseVariant;
+      this.variantProvidedByUser = variant != null && variant.getName().equals(userConfiguredVariantName);
+    }
+
+    public BaseExtension getExtension() {
+      return extension;
+    }
+
+    public BaseVariant getVariant() {
+      return variant;
+    }
+
+    public boolean isVariantProvidedByUser() {
+      return variantProvidedByUser;
+    }
   }
 }

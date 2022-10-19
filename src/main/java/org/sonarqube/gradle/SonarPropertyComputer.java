@@ -56,11 +56,12 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.sonarqube.gradle.android.AndroidUtils;
 import org.sonarsource.scanner.api.Utils;
 
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.exists;
-import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
+import static org.sonarqube.gradle.android.AndroidUtils.isAndroidProject;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
 import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
 import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
@@ -69,8 +70,8 @@ public class SonarPropertyComputer {
   private static final Logger LOGGER = Logging.getLogger(SonarPropertyComputer.class);
   private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
 
-  static final String SONAR_SOURCES_PROP = "sonar.sources";
-  static final String SONAR_TESTS_PROP = "sonar.tests";
+  public static final String SONAR_SOURCES_PROP = "sonar.sources";
+  public static final String SONAR_TESTS_PROP = "sonar.tests";
 
   private final Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap;
   private final Project targetProject;

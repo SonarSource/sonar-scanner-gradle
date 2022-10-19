@@ -39,14 +39,17 @@ android {
       applicationId "com.example.myapp.demo"
       versionName "1.0-demo"
       dimension "tier"
+      minSdkVersion 21
     }
     full {
       applicationId "com.example.myapp.full"
       versionName "1.0-full"
       dimension "tier"
+      minSdkVersion 25
     }
     minApi23 {
       dimension "minApi"
+      minSdkVersion 23
     }
 
     minApi18 {
