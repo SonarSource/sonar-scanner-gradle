@@ -39,6 +39,7 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
+import org.gradle.util.GradleVersion;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
@@ -48,7 +49,7 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
  */
 public class SonarQubePlugin implements Plugin<Project> {
-  
+
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
   private ActionBroadcast<SonarQubeProperties> addBroadcaster(Map<String, ActionBroadcast<SonarQubeProperties>> actionBroadcastMap, Project project) {
@@ -99,6 +100,17 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarQubeTask.dependsOn(getJavaCompileTasks(project));
     sonarQubeTask.mustRunAfter(getJacocoTasks(project));
     sonarQubeTask.dependsOn(getAndroidCompileTasks(project));
+    setNotCompatibleWithConfigurationCache(sonarQubeTask);
+  }
+
+  private static void setNotCompatibleWithConfigurationCache(SonarQubeTask sonarQubeTask) {
+    if (isGradleVersionGreaterOrEqualTo("7.4.0")) {
+      sonarQubeTask.notCompatibleWithConfigurationCache("Plugin is not compatible with configuration cache");
+    }
+  }
+
+  private static boolean isGradleVersionGreaterOrEqualTo(String version) {
+    return GradleVersion.current().compareTo(GradleVersion.version(version)) >=0;
   }
 
   private static Callable<Iterable<? extends Task>> getJacocoTasks(Project project) {
