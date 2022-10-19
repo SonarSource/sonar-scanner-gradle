@@ -1,0 +1,37 @@
+buildscript {
+    repositories { 
+      mavenCentral()
+      mavenLocal()
+    }
+    dependencies { classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}' }
+}
+
+apply plugin: 'java'
+apply plugin: 'org.sonarqube'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+allprojects {  
+  ext.baseVersion = "0.1"
+  ext.snapshotVersion = true
+  
+  group = "org.sonar.tests"
+  version = "$baseVersion" + (snapshotVersion ? "-SNAPSHOT" : "")
+}
+
+sonar {
+    properties {
+        property "sonar.projectName", "Simple Java Gradle Project"
+        property "sonar.projectKey", project.ext.pkey
+    }
+}
+
+project.afterEvaluate {
+    project.ext.pkey = "org.codehaus.sonar:example-java-gradle"
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
