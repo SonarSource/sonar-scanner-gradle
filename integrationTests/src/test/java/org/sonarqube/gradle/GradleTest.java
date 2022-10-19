@@ -21,12 +21,10 @@ package org.sonarqube.gradle;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.Arrays.stream;
@@ -35,7 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 
 public class GradleTest extends AbstractGradleIT {
-
 
   @Test
   public void testSimpleJavaProject() throws Exception {
@@ -215,6 +212,12 @@ public class GradleTest extends AbstractGradleIT {
   }
 
   @Test
+  public void testLazyConfiguration() throws Exception {
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-lazy-configuration", emptyMap(), "test");
+    assertThat(props.getProperty("sonar.projectKey")).isEqualTo("org.codehaus.sonar:example-java-gradle");
+  }
+
+  @Test
   public void testJaCoCoProperties() throws Exception {
     String project;
     if (getGradleVersion().isLowerThan("7")) {
@@ -237,13 +240,7 @@ public class GradleTest extends AbstractGradleIT {
     runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.dumpToFile=asd", "--configuration-cache");
     RunResult runResult = runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.dumpToFile=asd", "--configuration-cache");
 
-    //Versions lower than 7.4.0 doesn't support org.gradle.api.internal.AbstractTask#notCompatibleWithConfigurationCache, so it is not possible to prevent configuration cache
-    if (getGradleVersion().isLowerThan("7.4.0")) {
-      assertThat(runResult.getLog()).contains("no properties configured, was it skipped in all projects?");
-      assertThat(runResult.getLog()).contains("BUILD SUCCESSFUL");
-    } else {
-      assertThat(runResult.getLog()).doesNotContain("no properties configured, was it skipped in all projects?");
-      assertThat(runResult.getLog()).contains("BUILD SUCCESSFUL");
-    }
+    assertThat(runResult.getLog()).doesNotContain("no properties configured, was it skipped in all projects?");
+    assertThat(runResult.getLog()).contains("BUILD SUCCESSFUL");
   }
 }

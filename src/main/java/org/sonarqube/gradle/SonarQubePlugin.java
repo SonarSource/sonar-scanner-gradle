@@ -32,7 +32,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
-import org.gradle.api.internal.ConventionMapping;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -49,7 +48,6 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
  */
 public class SonarQubePlugin implements Plugin<Project> {
-
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
   private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
@@ -97,10 +95,8 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
-    ConventionMapping conventionMapping = sonarTask.getConventionMapping();
-    // this will call the SonarPropertyComputer to populate the properties of the task just before running it
-    conventionMapping.map("properties", () -> new SonarPropertyComputer(actionBroadcastMap, project)
-      .computeSonarProperties());
+    sonarTask.setProperties(project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties())
+      .map(m -> m.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()))));
 
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.dependsOn(getJavaCompileTasks(project));

@@ -25,12 +25,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
@@ -53,6 +53,8 @@ public class SonarTask extends ConventionTask {
   private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
 
   private LogOutput logOutput = new DefaultLogOutput();
+
+  private Provider<Map<String, String>> properties;
 
   private static class DefaultLogOutput implements LogOutput {
     @Override
@@ -100,30 +102,28 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  private Map<String, String> sonarProperties;
-
   @TaskAction
   public void run() {
     if (SonarExtension.SONAR_DEPRECATED_TASK_NAME.equals(this.getName())) {
       LOGGER.warn("Task 'sonarqube' is deprecated. Use 'sonar' instead.");
     }
-    Map<String, String> properties = getProperties();
 
-    if (properties.isEmpty()) {
+    Map<String, String> mapProperties = getProperties().get();
+    if (mapProperties.isEmpty()) {
       LOGGER.warn("Skipping Sonar analysis: no properties configured, was it skipped in all projects?");
       return;
     }
 
     if (LOGGER.isDebugEnabled()) {
-      properties.put("sonar.verbose", "true");
+      mapProperties.put("sonar.verbose", "true");
     }
 
-    if (isSkippedWithProperty(properties)) {
+    if (isSkippedWithProperty(mapProperties)) {
       return;
     }
 
     EmbeddedScanner scanner = EmbeddedScanner.create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current(), getLogOutput())
-      .addGlobalProperties(properties);
+      .addGlobalProperties(mapProperties);
     scanner.start();
     scanner.execute(new HashMap<>());
   }
@@ -151,12 +151,12 @@ public class SonarTask extends ConventionTask {
    * {@code null} values are not permitted.
    */
   @Input
-  public Map<String, String> getProperties() {
-    if (sonarProperties == null) {
-      sonarProperties = new LinkedHashMap<>();
-    }
+  public Provider<Map<String, String>> getProperties() {
+    return properties;
+  }
 
-    return sonarProperties;
+  void setProperties(Provider<Map<String, String>> properties) {
+    this.properties = properties;
   }
 
   /**
