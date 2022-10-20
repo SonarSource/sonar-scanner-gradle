@@ -40,7 +40,7 @@ import org.junit.rules.TemporaryFolder;
 public abstract class AbstractGradleIT {
 
   @Rule
-  public TemporaryFolder temp = new TemporaryFolder();
+  public TemporaryFolder temp = TemporaryFolder.builder().build();
 
   private static Semver gradleVersion;
   private static Semver androidGradleVersion;
@@ -112,7 +112,10 @@ public abstract class AbstractGradleIT {
   protected RunResult runGradlewWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File projectBaseDir = new File(this.getClass().getResource(project).toURI());
     String projectDir = project.startsWith("/") ? "." + project : project;
-    File tempProjectDir = temp.newFolder(projectDir);
+    File tempProjectDir = new File(temp.getRoot(), projectDir);
+    if (!tempProjectDir.exists()){
+      tempProjectDir = temp.newFolder(projectDir);
+    }
     File outputFile = temp.newFile();
     FileUtils.copyDirectory(projectBaseDir, tempProjectDir);
     List<String> command = new ArrayList<>();
@@ -133,7 +136,7 @@ public abstract class AbstractGradleIT {
       .redirectErrorStream(true);
     if (getJavaVersion() > 8) {
       // Fix jacoco java 17 compatibility
-      pb.environment().put("GRADLE_OPTS", "-Xmx1024m --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED");
+      pb.environment().put("GRADLE_OPTS", "-Xmx1024m --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED");
     } else {
       pb.environment().put("GRADLE_OPTS", "-Xmx1024m");
     }
