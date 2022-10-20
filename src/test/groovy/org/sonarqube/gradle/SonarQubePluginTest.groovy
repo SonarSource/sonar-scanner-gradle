@@ -27,6 +27,7 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.initialization.GradlePropertiesController
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
+import org.junit.jupiter.api.Assertions
 import spock.lang.Specification
 
 import static org.hamcrest.Matchers.contains
@@ -330,6 +331,72 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results/test") as String
         properties["sonar.junit.reportPaths"] == new File(project.buildDir, "test-results/test") as String
         properties["sonar.sourceEncoding"] == "ISO-8859-1"
+    }
+
+
+    def "properties with list of file path should be escaped correctly"() {
+        def rootProject = ProjectBuilder.builder().withName("root").build()
+        def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-escaped-project")).build()
+
+        project.pluginManager.apply(SonarQubePlugin)
+
+        project.pluginManager.apply(GroovyPlugin)
+
+        project.sourceSets.main.groovy.srcDirs = ["sr,c"]
+        project.sourceSets.main.groovy.srcDirs += ["src"]
+        project.sourceSets.test.groovy.srcDirs = ["tes,t"]
+        project.sourceSets.test.groovy.srcDirs += ["test"]
+        project.sourceSets.main.output.classesDirs.setFrom(new File(project.buildDir, "comma,out"))
+        project.sourceSets.main.java.outputDir = new File(project.buildDir, "comma,out")
+        project.sourceSets.main.compileClasspath += project.files("lib/comma,lib.jar")
+        project.sourceSets.main.compileClasspath += project.files("lib/comma,quote\"lib.jar")
+        project.sourceSets.main.compileClasspath += project.files("lib/otherLib.jar")
+        project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
+        project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
+        project.sourceSets.test.compileClasspath += project.files("lib/comma,junit.jar")
+        project.compileJava.options.encoding = 'ISO-8859-1'
+
+        def testResultsDir = new File(project.buildDir, "test-results/test")
+        testResultsDir.mkdirs()
+        new File(testResultsDir, 'TEST-.xml').createNewFile()
+
+        when:
+        Map<String, String> properties = project.tasks.sonarqube.properties
+
+        then:
+        valueShouldBeEscaped(properties["sonar.sources"], new File(project.projectDir, "sr,c") as String)
+        valueShouldNotBeEscaped(properties["sonar.sources"], new File(project.projectDir, "src") as String)
+        valueShouldBeEscaped(properties["sonar.tests"], new File(project.projectDir, "tes,t") as String)
+        valueShouldNotBeEscaped(properties["sonar.tests"], new File(project.projectDir, "test") as String)
+        valueShouldBeEscaped(properties["sonar.java.binaries"], new File(project.buildDir, "comma,out") as String)
+        valueShouldBeEscaped(properties["sonar.groovy.binaries"], new File(project.buildDir, "comma,out") as String)
+        valueShouldBeEscaped(properties["sonar.java.libraries"], new File(project.projectDir, "lib/comma,lib.jar") as String)
+        valueShouldBeEscaped(properties["sonar.java.libraries"], new File(project.projectDir, "lib/comma,quote\"lib.jar") as String)
+        valueShouldNotBeEscaped(properties["sonar.java.libraries"], new File(project.projectDir, "lib/otherLib.jar") as String)
+        valueShouldNotBeEscaped(properties["sonar.java.test.binaries"], new File(project.buildDir, "test-out") as String)
+        valueShouldNotBeEscaped(properties["sonar.java.test.libraries"], new File(project.projectDir, "lib/junit.jar") as String)
+        valueShouldBeEscaped(properties["sonar.java.test.libraries"], new File(project.projectDir, "lib/comma,junit.jar") as String)
+        valueShouldBeEscaped(properties["sonar.binaries"], new File(project.buildDir, "comma,out") as String)
+        valueShouldBeEscaped(properties["sonar.libraries"], new File(project.projectDir, "lib/comma,lib.jar") as String)
+
+
+        properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results/test") as String
+        properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results/test") as String
+        properties["sonar.junit.reportPaths"] == new File(project.buildDir, "test-results/test") as String
+        properties["sonar.sourceEncoding"] == "ISO-8859-1"
+    }
+
+    private static void valueShouldBeEscaped(Object propertiesList, String propertyValue) {
+        Assertions.assertTrue(((String) propertiesList).contains(getEscapedValue(propertyValue)));
+    }
+
+    private static void valueShouldNotBeEscaped(Object propertiesList, String propertyValue) {
+        Assertions.assertFalse(((String) propertiesList).contains(getEscapedValue(propertyValue)));
+        Assertions.assertTrue(((String) propertiesList).contains(propertyValue));
+    }
+
+    private static String getEscapedValue(String propertyValue) {
+        "\"" + propertyValue.replace("\"", "\\\"") + "\""
     }
 
     def "adds coverage properties for 'groovy' projects"() {
