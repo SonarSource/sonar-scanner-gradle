@@ -368,7 +368,7 @@ class SonarQubePluginTest extends Specification {
         new File(testResultsDir, 'TEST-.xml').createNewFile()
 
         when:
-        Map<String, String> properties = (Map<String, String>)project.tasks.sonar.properties.get()
+        Map<String, String> properties = (Map<String, String>) project.tasks.sonar.properties.get()
 
         then:
         valueShouldBeEscaped(properties["sonar.sources"], new File(project.projectDir, "sr,c") as String)
