@@ -31,6 +31,8 @@ import com.android.build.gradle.api.BaseVariant;
 import com.android.build.gradle.api.TestVariant;
 import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
+import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
+import com.android.build.gradle.tasks.factory.AndroidUnitTest;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -39,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,9 +49,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginCollection;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +86,8 @@ class AndroidUtils {
 
   private static void configureForAndroid(Project project, BaseVariant variant, Map<String, Object> properties) {
     List<File> bootClassPath = getBootClasspath(project);
+    configureTestReports(project, variant, properties);
+
     if (project.getPlugins().hasPlugin("com.android.test")) {
       // Instrumentation tests only
       populateSonarQubeProps(properties, bootClassPath, variant, true);
@@ -99,6 +106,48 @@ class AndroidUtils {
         }
       }
     }
+  }
+
+  private static void configureTestReports(Project project, BaseVariant variant, Map<String, Object> map) {
+    if (!(variant instanceof TestedVariant)) {
+      return;
+    }
+
+    if (GradleVersion.current().compareTo(GradleVersion.version("6.0")) < 0) {
+      // API to get task variant name is not available
+      return;
+    }
+
+    List<DirectoryProperty> directories = new LinkedList<>();
+
+    // junit tests
+    UnitTestVariant unitTestVariant = ((TestedVariant) variant).getUnitTestVariant();
+    if (unitTestVariant != null) {
+      directories.addAll(project.getTasks().withType(AndroidUnitTest.class).stream()
+        .filter(task -> unitTestVariant.getName().equals(task.getVariantName()))
+        .map(task -> task.getReports().getJunitXml().getOutputLocation())
+        .collect(Collectors.toList()));
+    }
+
+    // instrumentation tests
+    TestVariant testVariant = ((TestedVariant) variant).getTestVariant();
+    if (testVariant != null) {
+      directories.addAll(project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
+        .filter(t -> testVariant.getName().equals(t.getVariantName()) && t.getReportsDir().isPresent())
+        .map(DeviceProviderInstrumentTestTask::getReportsDir)
+        .collect(Collectors.toList()));
+    }
+
+    if (directories.isEmpty()) {
+      return;
+    }
+
+    List<File> value = directories.stream()
+      .filter(Provider::isPresent)
+      .map(d -> d.get().getAsFile())
+      .filter(file -> file.isDirectory() && file.list().length > 0)
+      .collect(Collectors.toList());
+    map.put("sonar.junit.reportPaths", value);
   }
 
   @Nullable

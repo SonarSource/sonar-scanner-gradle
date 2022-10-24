@@ -21,11 +21,11 @@ package org.sonarqube.gradle;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Properties;
 import org.junit.Test;
 
 import static java.util.Arrays.stream;
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.junit.Assume.assumeTrue;
@@ -78,7 +78,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testUsingDefaultVariant() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/android-gradle-default-variant");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-default-variant", emptyMap(), "test");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -109,6 +109,9 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
+    if (getGradleVersion().isGreaterThan("6.0")) {
+      assertThat(props.getProperty("sonar.junit.reportPaths")).contains(baseDir.resolve("build/test-results/testDemoMinApi23DebugUnitTest").toString());
+    }
   }
 
   @Test
@@ -179,7 +182,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testSpecifyVariant() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/android-gradle-nondefault-variant");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-nondefault-variant", emptyMap(), "test");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -204,6 +207,9 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
+    if (getGradleVersion().isGreaterThan("6.0")) {
+      assertThat(props.getProperty("sonar.junit.reportPaths")).contains(baseDir.resolve("build/test-results/testFullMinApi23ReleaseUnitTest").toString());
+    }
   }
 
   @Test
@@ -346,7 +352,7 @@ public class AndroidTest extends AbstractGradleIT {
 
     // First flavor that is picked up seems to be the flavor2
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithFeatureModule", null, Collections.emptyMap(), "sonar", "--dry-run", "--max-workers=1");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithFeatureModule", null, emptyMap(), "sonar", "--dry-run", "--max-workers=1");
 
     assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
       ":app:compileFlavor2DebugAndroidTestJavaWithJavac SKIPPED",
@@ -458,7 +464,7 @@ public class AndroidTest extends AbstractGradleIT {
 
     // First flavor that is picked up seems to be the flavor1
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, Collections.emptyMap(), "sonar", "--dry-run", "--max-workers=1");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, emptyMap(), "sonar", "--dry-run", "--max-workers=1");
 
     assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
       ":app:compileFlavor1DebugAndroidTestJavaWithJavac SKIPPED",

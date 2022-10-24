@@ -113,7 +113,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static boolean isGradleVersionGreaterOrEqualTo(String version) {
-    return GradleVersion.current().compareTo(GradleVersion.version(version)) >=0;
+    return GradleVersion.current().compareTo(GradleVersion.version(version)) >= 0;
   }
 
   private static Callable<Iterable<? extends Task>> getJacocoTasks(Project project) {
