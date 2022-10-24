@@ -32,3 +32,6 @@ Desktop.ini
 build/
 out/
 /bin/
+
+#----Specific file for testing that doesn't work on windows
+comma,quote"lib.jar

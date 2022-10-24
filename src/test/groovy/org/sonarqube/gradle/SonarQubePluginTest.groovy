@@ -25,9 +25,11 @@ import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.initialization.GradlePropertiesController
+import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import spock.lang.Specification
 
 import static org.hamcrest.Matchers.contains
@@ -340,8 +342,8 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.sourceEncoding"] == "ISO-8859-1"
     }
 
-
     def "properties with list of file path should be escaped correctly"() {
+        Assumptions.assumeFalse(SystemUtils.IS_OS_WINDOWS)
         def rootProject = ProjectBuilder.builder().withName("root").build()
         def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-escaped-project")).build()
 
@@ -366,6 +368,9 @@ class SonarQubePluginTest extends Specification {
         def testResultsDir = new File(project.buildDir, "test-results/test")
         testResultsDir.mkdirs()
         new File(testResultsDir, 'TEST-.xml').createNewFile()
+
+        //File is created on the fly as double quotes are not supported on windows
+        new File(project.projectDir, "lib/comma,quote\"lib.jar").createNewFile()
 
         when:
         Map<String, String> properties = (Map<String, String>) project.tasks.sonar.properties.get()
