@@ -120,12 +120,12 @@ public class SonarUtils {
   static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {
     properties.putIfAbsent(key, new LinkedHashSet<String>());
     StreamSupport.stream(valuesToAppend.spliterator(), false)
-      .forEach(v -> ((Collection<String>) properties.get(key)).add(v.toString()));
+      .forEach(((Collection<Object>) properties.get(key))::add);
   }
 
   static void appendProp(Map<String, Object> properties, String key, Object valueToAppend) {
     properties.putIfAbsent(key, new LinkedHashSet<String>());
-    ((Collection<String>) properties.get(key)).add(valueToAppend.toString());
+    ((Collection<Object>) properties.get(key)).add(valueToAppend);
   }
 
   @Nullable

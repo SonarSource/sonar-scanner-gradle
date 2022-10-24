@@ -155,7 +155,7 @@ public class SonarPropertyComputer {
 
   private static void convertProperties(Map<String, Object> rawProperties, final String projectPrefix, final Map<String, Object> properties) {
     for (Map.Entry<String, Object> entry : rawProperties.entrySet()) {
-      String value = convertValue(entry.getValue());
+      String value = convertValue(entry.getValue(), false);
       if (value != null) {
         properties.put(convertKey(entry.getKey(), projectPrefix), value);
       }
@@ -166,19 +166,30 @@ public class SonarPropertyComputer {
     return projectPrefix.isEmpty() ? key : (projectPrefix + "." + key);
   }
 
-  private static String convertValue(@Nullable Object value) {
+  private static String convertValue(@Nullable Object value, boolean escapeFilePath) {
     if (value == null) {
       return null;
     }
     if (value instanceof Iterable<?>) {
       String joined = StreamSupport.stream(((Iterable<Object>) value).spliterator(), false)
-        .map(SonarPropertyComputer::convertValue)
+        .map(v -> SonarPropertyComputer.convertValue(v, true))
         .filter(Objects::nonNull)
         .collect(Collectors.joining(","));
       return joined.isEmpty() ? null : joined;
     } else {
+      if (value instanceof File && escapeFilePath) {
+        return getEscapedFilePath((File) value);
+      }
       return value.toString();
     }
+  }
+
+  private static String getEscapedFilePath(File file) {
+    String filePath = file.toString();
+    if (filePath.contains(",")) {
+      return "\"" + filePath.replace("\"", "\\\"") + "\"";
+    }
+    return filePath;
   }
 
   private static void configureSourceEncoding(Project project, final Map<String, Object> properties) {
