@@ -254,8 +254,6 @@ public class SonarPropertyComputer {
     if (testTask instanceof Test) {
       configureTestReports((Test) testTask, properties);
       configureJaCoCoCoverageReport((Test) testTask, addForGroovy, project, properties);
-    } else {
-      LOGGER.warn("Non standard test task: unable to automatically find test execution and coverage reports paths");
     }
   }
 
