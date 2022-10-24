@@ -250,7 +250,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":app.sonar.java.test.libraries")).contains("hamcrest-core-1.3.jar");
     assertThat(props.getProperty(":app.sonar.java.source")).isEqualTo("1.8");
     assertThat(props.getProperty(":app.sonar.java.target")).isEqualTo("1.8");
-    assertThat(props.getProperty("sonar.android.detected")).contains("true");
+    assertThat(props.getProperty(":app.sonar.android.detected")).contains("true");
   }
 
   @Test
