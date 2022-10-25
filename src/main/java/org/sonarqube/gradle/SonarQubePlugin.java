@@ -36,6 +36,8 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Provider;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
@@ -95,8 +97,17 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
-    sonarTask.setProperties(project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties())
-      .map(m -> m.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()))));
+    Provider<Map<String, String>> conventionProvider = project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties())
+      .map(m -> m.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue())));
+
+    if (isGradleVersionGreaterOrEqualTo("6.1")) {
+      MapProperty<String, String> mapProperty = project.getObjects().mapProperty(String.class, String.class);
+      mapProperty.convention(conventionProvider);
+      mapProperty.finalizeValueOnRead();
+      sonarTask.setProperties(mapProperty);
+    } else {
+      sonarTask.setProperties(conventionProvider);
+    }
 
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.dependsOn(getJavaCompileTasks(project));
@@ -113,7 +124,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static boolean isGradleVersionGreaterOrEqualTo(String version) {
-    return GradleVersion.current().compareTo(GradleVersion.version(version)) >=0;
+    return GradleVersion.current().compareTo(GradleVersion.version(version)) >= 0;
   }
 
   private static Callable<Iterable<? extends Task>> getJacocoTasks(Project project) {
