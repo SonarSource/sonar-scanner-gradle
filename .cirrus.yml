@@ -83,29 +83,6 @@ build_task:
       path: "**/test-results/**/*.xml"
       format: junit
 
-gradle_qa_java8_task:
-  depends_on:
-    - build
-  <<: *ONLY_SONARSOURCE_QA
-  gke_container:
-    <<: *CONTAINER_DEFINITION
-    cpu: 2
-    memory: 2G
-  env:
-    matrix:
-      - GRADLE_VERSION: 6.8.3
-        ANDROID_GRADLE_VERSION: 4.2.0
-      - GRADLE_VERSION: 5.6.4
-        ANDROID_GRADLE_VERSION: 3.3.2
-      - GRADLE_VERSION: 4.6
-        ANDROID_GRADLE_VERSION: 3.2.1
-  gradle_cache:
-    folder: ~/.gradle/caches
-  script:
-    - ./cirrus/cirrus-qa.sh
-  cleanup_before_cache_script:
-    - ./cirrus/cleanup-gradle-cache.sh
-
 gradle_qa_java11_task:
   depends_on:
     - build
@@ -120,6 +97,8 @@ gradle_qa_java11_task:
         ANDROID_GRADLE_VERSION: 7.1.0
       - GRADLE_VERSION: 6.8.3
         ANDROID_GRADLE_VERSION: 4.2.0
+      - GRADLE_VERSION: 5.6.4
+        ANDROID_GRADLE_VERSION: 3.5.4
   gradle_cache:
     folder: ~/.gradle/caches
   script:
@@ -149,7 +128,6 @@ gradle_qa_java17_task:
 promote_task:
   depends_on:
     - build
-    - gradle_qa_java8
     - gradle_qa_java11
     - gradle_qa_java17
   <<: *ONLY_SONARSOURCE_QA

@@ -25,11 +25,7 @@ dependencies {
 }
 
 android {
-  compileSdkVersion 23
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
-  }
+  compileSdkVersion 30
 }
 
 android.variantFilter { variant ->
