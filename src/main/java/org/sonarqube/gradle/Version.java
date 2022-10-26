@@ -21,7 +21,7 @@ package org.sonarqube.gradle;
 
 import java.util.Comparator;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 
 public class Version implements Comparable<Version> {
   private final int major;
@@ -89,7 +89,7 @@ public class Version implements Comparable<Version> {
   }
 
   @Override
-  public int compareTo(@NotNull Version o) {
+  public int compareTo(@Nonnull Version o) {
     return Comparator.comparingInt(Version::major)
       .thenComparing(Version::minor)
       .compare(this, o);

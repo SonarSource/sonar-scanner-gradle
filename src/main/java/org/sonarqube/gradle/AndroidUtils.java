@@ -32,6 +32,7 @@ import com.android.build.gradle.api.BaseVariant;
 import com.android.build.gradle.api.TestVariant;
 import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
+import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import com.android.build.gradle.tasks.factory.AndroidUnitTest;
 import com.android.build.gradle.internal.dsl.ProductFlavor;
@@ -52,6 +53,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
@@ -61,7 +63,6 @@ import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.NotNull;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
@@ -75,8 +76,8 @@ import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
  * Only access this class when running on an Android application
  */
 class AndroidUtils {
-
   private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
+  private static final String SONAR_ANDROID_LINT_REPORT_PATHS_PROP = "sonar.androidLint.reportPaths";
 
   private AndroidUtils() {
   }
@@ -101,6 +102,7 @@ class AndroidUtils {
     populateSonarQubeAndroidProperties(android, properties);
 
     configureTestReports(project, variant, properties);
+    configureLintReports(project, variant, properties);
 
     if (project.getPlugins().hasPlugin("com.android.test")) {
       // Instrumentation tests only
@@ -125,7 +127,7 @@ class AndroidUtils {
   private static void populateSonarQubeAndroidProperties(AndroidVariantAndExtension android, Map<String, Object> properties) {
     properties.put(AndroidProperties.ANDROID_DETECTED, true);
 
-    if(!isMinSdkSupported()) {
+    if (!isMinSdkSupported()) {
       return;
     }
 
@@ -186,6 +188,17 @@ class AndroidUtils {
       .filter(file -> file.isDirectory() && file.list().length > 0)
       .collect(Collectors.toList());
     map.put("sonar.junit.reportPaths", value);
+  }
+
+  private static void configureLintReports(Project project, BaseVariant variant, Map<String, Object> properties) {
+    if (getAndroidPluginVersion().compareTo(Version.of("7.0")) >= 0) {
+      project.getTasks().withType(AndroidLintTask.class).stream()
+        .filter(a -> a.getXmlReportOutputFile().isPresent())
+        .filter(a -> a.getVariantName().equals(variant.getName()))
+        .map(a -> a.getXmlReportOutputFile().get().getAsFile())
+        .findFirst()
+        .ifPresent(output -> properties.put(SONAR_ANDROID_LINT_REPORT_PATHS_PROP, output));
+    }
   }
 
   @Nullable
@@ -322,7 +335,7 @@ class AndroidUtils {
     }
   }
 
-  @NotNull
+  @Nonnull
   private static Collection<File> getLibraries(ApkVariant variant) {
     try {
       Method methodOnAndroidBefore30 = variant.getClass().getMethod("getCompileLibraries");
