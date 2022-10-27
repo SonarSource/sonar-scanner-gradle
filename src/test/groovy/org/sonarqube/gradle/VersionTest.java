@@ -23,9 +23,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class VersionTest {
+class VersionTest {
   @Test
-  public void parses_versions() {
+  void parses_versions() {
     assertVersion(Version.of("1.2.3"), 1, 2);
     assertVersion(Version.of("1"), 1, 0);
     assertVersion(Version.of("11.2.3"), 11, 2);
@@ -35,7 +35,7 @@ public class VersionTest {
   }
 
   @Test
-  public void equals_and_hashcode() {
+  void equals_and_hashcode() {
     assertThat(Version.of(1, 1)).isEqualTo(Version.of(1, 1));
     assertThat(Version.of(1, 2)).isNotEqualTo(Version.of(1, 1));
     assertThat(Version.of(2, 1)).isNotEqualTo(Version.of(1, 1));
@@ -44,7 +44,7 @@ public class VersionTest {
   }
 
   @Test
-  public void compares_versions() {
+  void compares_versions() {
     assertThat(Version.of(1, 2)).isGreaterThan(Version.of(1, 1));
     assertThat(Version.of(2, 1)).isGreaterThan(Version.of(1, 1));
     assertThat(Version.of(3, 2)).isGreaterThan(Version.of(2, 9));

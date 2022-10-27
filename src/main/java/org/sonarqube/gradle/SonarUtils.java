@@ -34,8 +34,6 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 
-import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
-
 public class SonarUtils {
 
   static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
