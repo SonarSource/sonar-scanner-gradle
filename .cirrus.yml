@@ -177,6 +177,6 @@ release_to_plugin_portal_task:
     JFROG_PROMOTER: ENCRYPTED[!d38f13ad87f3698c0a72ee63a662a4e096a6150cc960f74061266ff9c49d28aded04eefc351b432368a772986b54fa1e!]
   script:
     - source cirrus-env RELEASE
-    - gradle --info --stacktrace --console plain "-Pgradle.publish.key=${GRADLE_PUBLISH_KEY}" "-Pgradle.publish.secret=${GRADLE_PUBLISH_SECRET}" "-DbuildNumber=${BUILD_NUMBER}" publishPlugins
+    - ./gradlew --info --stacktrace --console plain "-Pgradle.publish.key=${GRADLE_PUBLISH_KEY}" "-Pgradle.publish.secret=${GRADLE_PUBLISH_SECRET}" "-DbuildNumber=${BUILD_NUMBER}" publishPlugins
     - jfrog config import "${JFROG_PROMOTER}"
     - jfrog rt build-promote --status released "${CIRRUS_REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-releases
