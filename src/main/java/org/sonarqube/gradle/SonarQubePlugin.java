@@ -19,7 +19,6 @@
  */
 package org.sonarqube.gradle;
 
-import com.android.build.gradle.api.BaseVariant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -153,10 +152,12 @@ public class SonarQubePlugin implements Plugin<Project> {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
       .map(p -> {
-        BaseVariant variant = AndroidUtils.findVariant(p, p.getExtensions().getByType(SonarExtension.class).getAndroidVariant());
+        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p,
+          p.getExtensions().getByType(SonarExtension.class).getAndroidVariant());
+
         List<Task> allCompileTasks = new ArrayList<>();
-        if (variant != null) {
-          final String compileTaskPrefix = "compile" + capitalize(variant.getName());
+        if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
+          final String compileTaskPrefix = "compile" + capitalize(androidVariantAndExtension.getVariant().getName());
           boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allCompileTasks);
           boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allCompileTasks);
           // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
