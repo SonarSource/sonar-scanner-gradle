@@ -97,8 +97,6 @@ gradle_qa_java8_task:
         ANDROID_GRADLE_VERSION: 4.2.0
       - GRADLE_VERSION: 5.6.4
         ANDROID_GRADLE_VERSION: 3.3.2
-      - GRADLE_VERSION: 4.6
-        ANDROID_GRADLE_VERSION: 3.2.1
   gradle_cache:
     folder: ~/.gradle/caches
   script:

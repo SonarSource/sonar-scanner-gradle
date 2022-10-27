@@ -131,7 +131,7 @@ public class SonarUtils {
   }
 
   @Nullable
-  static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
+  public static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
     List<T> list = Collections.unmodifiableList(new ArrayList<>(collection));
     return list.isEmpty() ? null : list;
   }

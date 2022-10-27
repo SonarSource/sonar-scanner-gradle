@@ -20,7 +20,7 @@
     <androidGradle.version>4.2.0</androidGradle.version>
     <jdk.min.version>1.8</jdk.min.version>
   </properties>
-  
+
   <build>
     <filters>
       <filter>../gradle.properties</filter>

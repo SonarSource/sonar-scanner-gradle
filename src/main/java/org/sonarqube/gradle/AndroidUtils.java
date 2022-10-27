@@ -21,6 +21,7 @@ package org.sonarqube.gradle;
 
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.AppPlugin;
+import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.DynamicFeaturePlugin;
 import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.LibraryPlugin;
@@ -33,6 +34,8 @@ import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import com.android.build.gradle.tasks.factory.AndroidUnitTest;
+import com.android.build.gradle.internal.dsl.ProductFlavor;
+import com.android.builder.model.ApiVersion;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -44,9 +47,11 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
@@ -77,9 +82,9 @@ class AndroidUtils {
   }
 
   static void configureForAndroid(Project project, String userConfiguredBuildVariantName, final Map<String, Object> properties) {
-    BaseVariant variant = findVariant(project, userConfiguredBuildVariantName);
-    if (variant != null) {
-      configureForAndroid(project, variant, properties);
+    AndroidVariantAndExtension android = findVariantAndExtension(project, userConfiguredBuildVariantName);
+    if (android != null && android.getVariant() != null) {
+      configureForAndroid(project, android, properties);
     } else {
       LOGGER.warn("No variant found for '{}'. No android specific configuration will be done", project.getName());
     }
@@ -89,8 +94,12 @@ class AndroidUtils {
     return Version.of(ANDROID_GRADLE_PLUGIN_VERSION);
   }
 
-  private static void configureForAndroid(Project project, BaseVariant variant, Map<String, Object> properties) {
+  private static void configureForAndroid(Project project, AndroidVariantAndExtension android, Map<String, Object> properties) {
     List<File> bootClassPath = getBootClasspath(project);
+    BaseVariant variant = android.getVariant();
+
+    populateSonarQubeAndroidProperties(android, properties);
+
     configureTestReports(project, variant, properties);
 
     if (project.getPlugins().hasPlugin("com.android.test")) {
@@ -109,6 +118,31 @@ class AndroidUtils {
         if (testVariant != null) {
           populateSonarQubeProps(properties, bootClassPath, testVariant, true);
         }
+      }
+    }
+  }
+
+  private static void populateSonarQubeAndroidProperties(AndroidVariantAndExtension android, Map<String, Object> properties) {
+    properties.put(AndroidProperties.ANDROID_DETECTED, true);
+
+    if(!isMinSdkSupported()) {
+      return;
+    }
+
+    if (android.isVariantProvidedByUser()) {
+      ApiVersion minSdkVersion = android.getVariant().getMergedFlavor().getMinSdkVersion();
+      if (minSdkVersion != null) {
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdkVersion.getApiLevel());
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdkVersion.getApiLevel());
+      }
+    } else {
+      Set<Integer> minSdks = Stream.concat(android.getExtension().getProductFlavors().stream().map(ProductFlavor::getMinSdk),
+          Stream.of(android.getExtension().getDefaultConfig().getMinSdk()))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+      if (!minSdks.isEmpty()) {
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, Collections.min(minSdks));
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, Collections.max(minSdks));
       }
     }
   }
@@ -200,27 +234,32 @@ class AndroidUtils {
   }
 
   @Nullable
-  static BaseVariant findVariant(Project project, @Nullable String userConfiguredBuildVariantName) {
+  static AndroidVariantAndExtension findVariantAndExtension(Project project, @Nullable String userConfiguredBuildVariantName) {
     String testBuildType = getTestBuildType(project);
     PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
     if (!appPlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
     }
     PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
     if (!libPlugins.isEmpty()) {
       LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      return findVariant(new ArrayList<>(androidExtension.getLibraryVariants()), testBuildType, userConfiguredBuildVariantName);
+      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getLibraryVariants()), testBuildType, userConfiguredBuildVariantName);
+      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
     }
     PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
     if (!testPlugins.isEmpty()) {
       TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
-      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
+
     }
     PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
     if (!dynamicFeaturePlugins.isEmpty()) {
       AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      return findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
+      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
     }
     return null;
   }
@@ -295,6 +334,11 @@ class AndroidUtils {
     }
   }
 
+  private static boolean isMinSdkSupported() {
+    // Retrieving minSdk was introduced in Android Gradle plugin 4.1+. 4.1+ runs only with Gradle 6.5+
+    return GradleVersion.current().compareTo(GradleVersion.version("6.5")) >= 0;
+  }
+
   @Nullable
   private static JavaCompile getJavaCompiler(BaseVariant variant) {
     if (GradleVersion.current().compareTo(GradleVersion.version("4.10.1")) >= 0) {
@@ -318,5 +362,30 @@ class AndroidUtils {
     srcDirs.addAll(sourceSet.getResDirectories());
     srcDirs.addAll(sourceSet.getResourcesDirectories());
     return srcDirs;
+  }
+
+  static class AndroidVariantAndExtension {
+
+    private final BaseExtension extension;
+    private final BaseVariant variant;
+    private final boolean variantProvidedByUser;
+
+    AndroidVariantAndExtension(BaseExtension baseExtension, @Nullable BaseVariant baseVariant, @Nullable String userConfiguredVariantName) {
+      this.extension = baseExtension;
+      this.variant = baseVariant;
+      this.variantProvidedByUser = variant != null && variant.getName().equals(userConfiguredVariantName);
+    }
+
+    BaseExtension getExtension() {
+      return extension;
+    }
+
+    BaseVariant getVariant() {
+      return variant;
+    }
+
+    boolean isVariantProvidedByUser() {
+      return variantProvidedByUser;
+    }
   }
 }

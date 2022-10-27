@@ -40,6 +40,10 @@ public class AndroidTest extends AbstractGradleIT {
     return getAndroidGradleVersion().isLowerThan("4.0.0");
   }
 
+  private boolean supportObtainingAndroidMinSdkVersion() {
+    return getAndroidGradleVersion().isGreaterThanOrEqualTo("4.1.0");
+  }
+
   @Test
   public void testAndroidProjectJdk8Retrolambda() throws Exception {
     Properties props = runGradlewSonarSimulationMode("/android-gradle-retrolambda");
@@ -112,6 +116,13 @@ public class AndroidTest extends AbstractGradleIT {
     if (getGradleVersion().isGreaterThan("6.0")) {
       assertThat(props.getProperty("sonar.junit.reportPaths")).contains(baseDir.resolve("build/test-results/testDemoMinApi23DebugUnitTest").toString());
     }
+    assertThat(props.getProperty("sonar.android.detected")).contains("true");
+
+    if (supportObtainingAndroidMinSdkVersion()) {
+      assertThat(props.getProperty("sonar.android.minsdkversion.min")).contains("21");
+      assertThat(props.getProperty("sonar.android.minsdkversion.max")).contains("25");
+    }
+
   }
 
   @Test
@@ -178,6 +189,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":mydynamicfeature.sonar.java.libraries")).contains("android.jar");
     assertThat(props.getProperty(":mydynamicfeature.sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty(":mydynamicfeature.sonar.java.test.libraries")).contains("junit-4.12.jar");
+    assertThat(props.getProperty(":mydynamicfeature.sonar.android.detected")).contains("true");
   }
 
   @Test
@@ -207,6 +219,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
+    assertThat(props.getProperty("sonar.android.detected")).contains("true");
     if (getGradleVersion().isGreaterThan("6.0")) {
       assertThat(props.getProperty("sonar.junit.reportPaths")).contains(baseDir.resolve("build/test-results/testFullMinApi23ReleaseUnitTest").toString());
     }
@@ -251,6 +264,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":app.sonar.java.test.libraries")).contains("hamcrest-core-1.3.jar");
     assertThat(props.getProperty(":app.sonar.java.source")).isEqualTo("1.8");
     assertThat(props.getProperty(":app.sonar.java.target")).isEqualTo("1.8");
+    assertThat(props.getProperty(":app.sonar.android.detected")).contains("true");
   }
 
   @Test
@@ -507,6 +521,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
+    assertThat(props.getProperty("sonar.android.detected")).contains("true");
   }
 
 }
