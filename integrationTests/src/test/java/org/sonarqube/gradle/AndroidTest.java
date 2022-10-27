@@ -19,9 +19,15 @@
  */
 package org.sonarqube.gradle;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+import org.junit.Assume;
 import org.junit.Test;
 
 import static java.util.Arrays.stream;
@@ -523,5 +529,20 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
     assertThat(props.getProperty("sonar.android.detected")).contains("true");
   }
+
+
+  @Test
+  public void testAndroidLintReport() throws Exception {
+    Assume.assumeTrue(getAndroidGradleVersion().isGreaterThan("7.0.0"));
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-android-studio-lint", Collections.emptyMap(), "lint", "lintFullRelease");
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(Paths.get(props.getProperty(":app.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app/build/reports/lint-results-debug.xml"));
+    assertThat(Paths.get(props.getProperty(":app2.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app2/build/reports/lint-results-debug.xml"));
+    assertThat(Paths.get(props.getProperty(":app3.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("/custom/path/to/report.xml"));
+    assertThat(Paths.get(props.getProperty(":app4.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app4/build/reports/lint-results-fullRelease.xml"));
+
+  }
+
 
 }

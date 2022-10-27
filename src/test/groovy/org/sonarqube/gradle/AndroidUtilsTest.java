@@ -25,6 +25,7 @@ import com.android.build.gradle.api.ApplicationVariant;
 import com.android.build.gradle.api.BaseVariant;
 import com.android.build.gradle.internal.dsl.DefaultConfig;
 import com.android.build.gradle.internal.dsl.ProductFlavor;
+import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.builder.model.ApiVersion;
 import com.android.builder.model.BuildType;
 import java.util.ArrayList;
@@ -38,12 +39,15 @@ import org.gradle.api.Project;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.PluginCollection;
 import org.gradle.api.plugins.PluginContainer;
+import org.gradle.api.tasks.TaskCollection;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -84,6 +88,12 @@ class AndroidUtilsTest {
     when(buildType.getName()).thenReturn("debug");
     when(baseVariant.getName()).thenReturn("lollipopDebug");
     when(baseVariant.getJavaCompileProvider()).thenReturn(javaCompilerProvider);
+
+    TaskContainer container = mock(TaskContainer.class);
+    when(project.getTasks()).thenReturn(container);
+    TaskCollection<AndroidLintTask> taskCollection = mock(TaskCollection.class);
+    when(taskCollection.stream()).thenReturn(Stream.empty());
+    when(container.withType(AndroidLintTask.class)).thenReturn(taskCollection);
   }
 
   @Test

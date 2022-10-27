@@ -1,0 +1,55 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:${androidGradle.version}'
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}"
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'org.sonarqube'
+
+allprojects {
+    group = "com.test.app"
+    version = "1.0.0"
+    description = "Test"
+
+    repositories {
+        maven {
+            url 'https://maven.google.com'
+        }
+        mavenCentral()
+    }
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "com.test.app:app"
+        property "sonar.projectName", "Test app"
+        property "sonar.exclusions", "**/BuildConfig.class,**/R.java,**/R\$*.java,src/main/gen/**/*,src/main/assets/**/*"
+    }
+
+}
+
+project(":app3"){
+    sonar {
+        properties {
+            property "sonar.androidLint.reportPaths", "/custom/path/to/report.xml"
+        }
+    }
+}
+
+project(":app4"){
+    sonar {
+        androidVariant "fullRelease"
+    }
+}
