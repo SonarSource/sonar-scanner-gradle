@@ -58,6 +58,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
+import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
 import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
@@ -82,6 +83,10 @@ class AndroidUtils {
     } else {
       LOGGER.warn("No variant found for '{}'. No android specific configuration will be done", project.getName());
     }
+  }
+
+  static Version getAndroidPluginVersion() {
+    return Version.of(ANDROID_GRADLE_PLUGIN_VERSION);
   }
 
   private static void configureForAndroid(Project project, BaseVariant variant, Map<String, Object> properties) {
@@ -112,8 +117,7 @@ class AndroidUtils {
     if (!(variant instanceof TestedVariant)) {
       return;
     }
-
-    if (GradleVersion.current().compareTo(GradleVersion.version("6.0")) < 0) {
+    if (getAndroidPluginVersion().compareTo(Version.of("3.3")) < 0 || GradleVersion.current().compareTo(GradleVersion.version("6.0")) < 0) {
       // API to get task variant name is not available
       return;
     }
