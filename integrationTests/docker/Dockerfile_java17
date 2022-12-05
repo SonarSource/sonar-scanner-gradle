@@ -1,4 +1,5 @@
-FROM us.gcr.io/sonarqube-team/base:j17-latest
+ARG CIRRUS_AWS_ACCOUNT=275878209202
+FROM ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j17-latest
 
 USER root
 
@@ -16,8 +17,8 @@ RUN echo "Installing android-sdk" \
 
 ENV ANDROID_HOME=/opt/android-sdk-linux  PATH=$PATH:/opt/android-sdk-linux/cmdline-tools/bin
 
-RUN yes |sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "extras;android;m2repository" \
-  && yes |sdkmanager --sdk_root=$ANDROID_HOME --licenses
+RUN echo y | sdkmanager --sdk_root=$ANDROID_HOME "platform-tools" "extras;android;m2repository" \
+  && yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses || true
 
 RUN chmod -R 755 $ANDROID_HOME \
   && chown -R sonarsource: $ANDROID_HOME

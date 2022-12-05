@@ -1,6 +1,3 @@
-# content of service-account-credentials.json, used to access to Google Cloud Platform
-gcp_credentials: ENCRYPTED[0006392fac64aa1d1fa874595c4ec576060fde31e860d8b1f4c2e015bc44522c46638ba15e73356d76867e06b320cdf7]
-
 #
 # ENV VARIABLES
 #
@@ -30,33 +27,45 @@ env:
 #
 container_definition: &CONTAINER_DEFINITION
   dockerfile: integrationTests/docker/Dockerfile
-  builder_image_project: sonarqube-team
-  builder_image_name: docker-builder-v20200915
-  cluster_name: cirrus-ci-cluster
-  zone: us-central1-a
+  docker_arguments:
+    CIRRUS_AWS_ACCOUNT: ${CIRRUS_AWS_ACCOUNT}
+  cluster_name: ${CIRRUS_CLUSTER_NAME}
+  builder_role: cirrus-builder
+  builder_image: docker-builder-v*
+  builder_instance_type: t2.small
+  builder_subnet_id: ${CIRRUS_AWS_SUBNET}
+  region: eu-central-1
   namespace: default
 
 container_definition_11: &CONTAINER_DEFINITION_11
   dockerfile: integrationTests/docker/Dockerfile_java11
-  builder_image_project: sonarqube-team
-  builder_image_name: docker-builder-v20200915
-  cluster_name: cirrus-ci-cluster
-  zone: us-central1-a
+  docker_arguments:
+    CIRRUS_AWS_ACCOUNT: ${CIRRUS_AWS_ACCOUNT}
+  cluster_name: ${CIRRUS_CLUSTER_NAME}
+  builder_role: cirrus-builder
+  builder_image: docker-builder-v*
+  builder_instance_type: t2.small
+  builder_subnet_id: ${CIRRUS_AWS_SUBNET}
+  region: eu-central-1
   namespace: default
 
 container_definition_17: &CONTAINER_DEFINITION_17
   dockerfile: integrationTests/docker/Dockerfile_java17
-  builder_image_project: sonarqube-team
-  builder_image_name: docker-builder-v20200915
-  cluster_name: cirrus-ci-cluster
-  zone: us-central1-a
+  docker_arguments:
+    CIRRUS_AWS_ACCOUNT: ${CIRRUS_AWS_ACCOUNT}
+  cluster_name: ${CIRRUS_CLUSTER_NAME}
+  builder_role: cirrus-builder
+  builder_image: docker-builder-v*
+  builder_instance_type: t2.small
+  builder_subnet_id: ${CIRRUS_AWS_SUBNET}
+  region: eu-central-1
   namespace: default
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
 build_task:
-  gke_container:
+  eks_container:
     <<: *CONTAINER_DEFINITION_11
     cpu: 1.5
     memory: 4G
@@ -82,7 +91,7 @@ gradle_qa_java8_task:
   depends_on:
     - build
   <<: *ONLY_SONARSOURCE_QA
-  gke_container:
+  eks_container:
     <<: *CONTAINER_DEFINITION
     cpu: 2
     memory: 2G
@@ -103,7 +112,7 @@ gradle_qa_java11_task:
   depends_on:
     - build
   <<: *ONLY_SONARSOURCE_QA
-  gke_container:
+  eks_container:
     <<: *CONTAINER_DEFINITION_11
     cpu: 2
     memory: 2G
@@ -124,7 +133,7 @@ gradle_qa_java17_task:
   depends_on:
     - build
   <<: *ONLY_SONARSOURCE_QA
-  gke_container:
+  eks_container:
     <<: *CONTAINER_DEFINITION_17
     cpu: 2
     memory: 2G
@@ -146,7 +155,7 @@ promote_task:
     - gradle_qa_java11
     - gradle_qa_java17
   <<: *ONLY_SONARSOURCE_QA
-  gke_container:
+  eks_container:
     <<: *CONTAINER_DEFINITION
     cpu: 0.5
     memory: 500M
@@ -166,7 +175,7 @@ release_to_plugin_portal_task:
   stateful: 'true'
   depends_on:
     - promote
-  gke_container:
+  eks_container:
     <<: *CONTAINER_DEFINITION_11
     cpu: 1.5
     memory: 4G
