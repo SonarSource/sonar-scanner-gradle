@@ -255,9 +255,9 @@ class SonarQubePluginTest extends Specification {
 
         project.sourceSets.main.java.srcDirs = ["src"]
         project.sourceSets.test.java.srcDirs = ["test"]
-        project.sourceSets.main.java.outputDir = new File(project.buildDir, "out")
+        project.sourceSets.main.java.destinationDirectory.set(new File(project.buildDir, "out"))
         project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
-        project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
+        project.sourceSets.test.java.destinationDirectory.set(new File(project.buildDir, "test-out"))
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 
@@ -313,9 +313,9 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.main.groovy.srcDirs = ["src"]
         project.sourceSets.test.groovy.srcDirs = ["test"]
         project.sourceSets.main.output.classesDirs.setFrom(new File(project.buildDir, "out"))
-        project.sourceSets.main.java.outputDir = new File(project.buildDir, "out")
+        project.sourceSets.main.java.destinationDirectory.set(new File(project.buildDir, "out"))
         project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
-        project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
+        project.sourceSets.test.java.destinationDirectory.set(new File(project.buildDir, "test-out"))
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 

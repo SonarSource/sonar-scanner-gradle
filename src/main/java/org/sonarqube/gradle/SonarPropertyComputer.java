@@ -410,23 +410,15 @@ public class SonarPropertyComputer {
   }
 
   private static boolean isReportEnabled(Report report) {
-    if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
-      return report.getRequired().getOrElse(false);
-    } else {
-      return report.isEnabled();
-    }
+    return report.getRequired().getOrElse(false);
   }
 
   @CheckForNull
   private static File getDestination(Report report) {
-    if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
-      FileSystemLocation location = report.getOutputLocation().getOrNull();
-      if (location != null) {
-        return location.getAsFile();
-      }
-      return null;
-    } else {
-      return report.getDestination();
+    FileSystemLocation location = report.getOutputLocation().getOrNull();
+    if (location != null) {
+      return location.getAsFile();
     }
+    return null;
   }
 }
