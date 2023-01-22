@@ -48,6 +48,7 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.reporting.Report;
 import org.gradle.api.reporting.SingleFileReport;
+import org.gradle.api.reporting.internal.SimpleReport;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.compile.JavaCompile;
@@ -410,23 +411,20 @@ public class SonarPropertyComputer {
   }
 
   private static boolean isReportEnabled(Report report) {
-    if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
-      return report.getRequired().getOrElse(false);
-    } else {
-      return report.isEnabled();
-    }
+    return report.getRequired().getOrElse(false);
   }
 
   @CheckForNull
   private static File getDestination(Report report) {
-    if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
+    if (report instanceof SimpleReport) {
+        SimpleReport simple = (SimpleReport) report;
+        return simple.getOutputLocation().getAsFile().get();
+    } else {
       FileSystemLocation location = report.getOutputLocation().getOrNull();
       if (location != null) {
         return location.getAsFile();
       }
       return null;
-    } else {
-      return report.getDestination();
     }
   }
 }
