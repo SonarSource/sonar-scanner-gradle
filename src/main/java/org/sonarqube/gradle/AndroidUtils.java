@@ -1,6 +1,6 @@
 /*
  * SonarQube Scanner for Gradle
- * Copyright (C) 2015-2022 SonarSource
+ * Copyright (C) 2015-2023 SonarSource
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
