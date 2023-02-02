@@ -37,7 +37,7 @@ import org.gradle.api.Action;
  *   }
  * }
  * </pre>
- * <h3>Sonar Properties</h3>
+ * <h2>Sonar Properties</h2>
  * <p>
  * The Sonar configuration is provided by using the {@link #properties(org.gradle.api.Action)} method and specifying properties.
  * Certain properties are required, such as {@code "sonar.host.url"} which provides the address of the server.
