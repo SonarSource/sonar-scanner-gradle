@@ -172,6 +172,16 @@ class AndroidUtils {
     // instrumentation tests
     TestVariant testVariant = ((TestedVariant) variant).getTestVariant();
     if (testVariant != null) {
+      List<DeviceProviderInstrumentTestTask> testTasks = project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
+        .filter(t -> testVariant.getName().equals(t.getVariantName()) && t.getReportsDir().isPresent())
+          .collect(Collectors.toList());
+
+      if (getAndroidPluginVersion().compareTo(Version.of("4.2")) < 0) {
+
+      } else {
+
+      }
+
       directories.addAll(project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
         .filter(t -> testVariant.getName().equals(t.getVariantName()) && t.getReportsDir().isPresent())
         .map(DeviceProviderInstrumentTestTask::getReportsDir)
