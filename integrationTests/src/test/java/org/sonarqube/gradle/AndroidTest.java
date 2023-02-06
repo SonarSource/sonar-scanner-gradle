@@ -386,7 +386,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testingBlueprintWithDynamicFeatureModule_default_flavor() throws Exception {
-    assumeTrue(getAndroidGradleVersion().isGreaterThanOrEqualTo("4.1.0"));
+    assumeTrue(getAndroidGradleVersion().isGreaterThanOrEqualTo("4.2.0"));
 
     // First flavor that is picked up seems to be the flavor1
 

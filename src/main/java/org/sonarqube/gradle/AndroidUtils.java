@@ -32,10 +32,10 @@ import com.android.build.gradle.api.BaseVariant;
 import com.android.build.gradle.api.TestVariant;
 import com.android.build.gradle.api.UnitTestVariant;
 import com.android.build.gradle.internal.api.TestedVariant;
+import com.android.build.gradle.internal.dsl.ProductFlavor;
 import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import com.android.build.gradle.tasks.factory.AndroidUnitTest;
-import com.android.build.gradle.internal.dsl.ProductFlavor;
 import com.android.builder.model.ApiVersion;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
@@ -172,20 +173,20 @@ class AndroidUtils {
     // instrumentation tests
     TestVariant testVariant = ((TestedVariant) variant).getTestVariant();
     if (testVariant != null) {
-      List<DeviceProviderInstrumentTestTask> testTasks = project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
-        .filter(t -> testVariant.getName().equals(t.getVariantName()) && t.getReportsDir().isPresent())
-          .collect(Collectors.toList());
 
+      Function<DeviceProviderInstrumentTestTask, DirectoryProperty> testTaskToDirectoryProperty;
       if (getAndroidPluginVersion().compareTo(Version.of("4.2")) < 0) {
-
+        // SONARGRADL-101 a File is returned instead of a DirectoryProperty
+        testTaskToDirectoryProperty = AndroidUtils::getReportsDirBeforeGradle42;
       } else {
-
+        testTaskToDirectoryProperty = DeviceProviderInstrumentTestTask::getReportsDir;
       }
 
-      directories.addAll(project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
-        .filter(t -> testVariant.getName().equals(t.getVariantName()) && t.getReportsDir().isPresent())
-        .map(DeviceProviderInstrumentTestTask::getReportsDir)
-        .collect(Collectors.toList()));
+      project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
+        .filter(t -> testVariant.getName().equals(t.getVariantName()))
+        .map(testTaskToDirectoryProperty)
+        .filter(DirectoryProperty::isPresent)
+        .forEach(directories::add);
     }
 
     if (directories.isEmpty()) {
@@ -198,6 +199,16 @@ class AndroidUtils {
       .filter(file -> file.isDirectory() && file.list().length > 0)
       .collect(Collectors.toList());
     map.put("sonar.junit.reportPaths", value);
+  }
+
+  private static DirectoryProperty getReportsDirBeforeGradle42(DeviceProviderInstrumentTestTask testTask) {
+    try {
+      Method getReportsDir = testTask.getClass().getMethod("getReportsDir");
+      File dir = (File) getReportsDir.invoke(testTask);
+      return testTask.getProject().getObjects().directoryProperty().fileValue(dir);
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      throw new IllegalStateException("Unable to get tests directory", e);
+    }
   }
 
   private static void configureLintReports(Project project, BaseVariant variant, Map<String, Object> properties) {
