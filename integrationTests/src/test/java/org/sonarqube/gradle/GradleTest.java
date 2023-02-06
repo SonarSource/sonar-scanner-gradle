@@ -30,6 +30,7 @@ import org.junit.Test;
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.data.MapEntry.entry;
 
 public class GradleTest extends AbstractGradleIT {
@@ -51,6 +52,14 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("commons-io-2.5.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains(baseDir.resolve("build/classes/java/main").toString());
+  }
+
+  /**
+   * SONARGRADL-100
+   */
+  @Test
+  public void testDebugModeEnabled() throws Exception {
+    assertThatCode(() -> runGradlewSonarSimulationModeWithEnv("/java-gradle-simple", emptyMap(), "-d")).doesNotThrowAnyException();
   }
 
   @Test
