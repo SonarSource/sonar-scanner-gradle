@@ -375,13 +375,7 @@ class AndroidUtils {
 
   @Nullable
   private static JavaCompile getJavaCompiler(BaseVariant variant) {
-    if (GradleVersion.current().compareTo(GradleVersion.version("4.10.1")) >= 0) {
-      // TaskProvider was introduced in Gradle 4.8. The android plugin added #getJavaCompileProvider in v3.3.0
-      // v3.3.0 of the plugin only runs in Gradle 4.10.1+.
-      return variant.getJavaCompileProvider().getOrNull();
-    } else {
-      return variant.getJavaCompile();
-    }
+    return variant.getJavaCompileProvider().getOrNull();
   }
 
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
