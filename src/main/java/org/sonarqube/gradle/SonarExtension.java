@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle;
 
+import javax.annotation.CheckForNull;
 import org.gradle.api.Action;
 
 /**
@@ -102,6 +103,7 @@ public class SonarExtension {
   /**
    * @return Name of the variant to analyze. If null we'll take the first release variant
    */
+  @CheckForNull
   public String getAndroidVariant() {
     return androidVariant;
   }
