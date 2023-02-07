@@ -22,6 +22,8 @@ package org.sonarqube.gradle;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import org.gradle.api.provider.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -410,23 +412,54 @@ public class SonarPropertyComputer {
   }
 
   private static boolean isReportEnabled(Report report) {
-    if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
-      return report.getRequired().getOrElse(false);
-    } else {
-      return report.isEnabled();
+    try {
+      if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
+        return report.getRequired().getOrElse(false);
+      } else {
+        Method isEnabledGradle5 = report.getClass().getMethod("isEnabled");
+        return (boolean) isEnabledGradle5.invoke(report);
+      }
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      throw new IllegalArgumentException("Unable to check if report is enabled.", e);
     }
   }
 
   @CheckForNull
   private static File getDestination(Report report) {
-    if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
-      FileSystemLocation location = report.getOutputLocation().getOrNull();
-      if (location != null) {
-        return location.getAsFile();
+    try {
+      if (GradleVersion.version("7.0").compareTo(GradleVersion.current()) <= 0) {
+        return getDestinationNewApi(report);
+      } else {
+        return getDestinationOldApi(report);
       }
-      return null;
-    } else {
-      return report.getDestination();
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      throw new IllegalArgumentException("Unable to check the destination of the report.", e);
     }
+  }
+
+  /**
+   * For Gradle 7+
+   */
+  private static File getDestinationNewApi(Report report) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Provider<? extends FileSystemLocation> provider;
+    if (GradleVersion.version("8.0").compareTo(GradleVersion.current()) <= 0) {
+      provider = report.getOutputLocation();
+    } else {
+      Method getOutputLocationGradle7 = report.getClass().getMethod("getOutputLocation");
+      provider = (Provider<? extends FileSystemLocation>) getOutputLocationGradle7.invoke(report, new Object[0]);
+    }
+    FileSystemLocation location = provider.getOrNull();
+    if (location != null) {
+      return location.getAsFile();
+    }
+    return null;
+  }
+
+  /**
+   * Available in Gradle 5 to Gradle 7
+   */
+  private static File getDestinationOldApi(Report report) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    Method getDestinationGradle5 = report.getClass().getMethod("getDestination");
+    return (File) getDestinationGradle5.invoke(report);
   }
 }
