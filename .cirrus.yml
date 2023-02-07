@@ -143,7 +143,7 @@ gradle_qa_java17_task:
     matrix:
       - GRADLE_VERSION: 7.4.1
         ANDROID_GRADLE_VERSION: 7.1.0
-      - GRADLE_VERSION: 8.0-rc-2
+      - GRADLE_VERSION: 8.0-rc-3
   gradle_cache:
     folder: ~/.gradle/caches
   script:
