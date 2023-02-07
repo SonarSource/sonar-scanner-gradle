@@ -110,6 +110,17 @@ class SonarQubePluginTest extends Specification {
         properties.isEmpty()
     }
 
+    def "skipping all projects with old extension does nothing"() {
+        when:
+        parentProject.allprojects { sonarqube { skipProject = true } }
+        parentSonarTask().run()
+        def properties = parentSonarTask().properties.get()
+
+        then:
+        noExceptionThrown()
+        properties.isEmpty()
+    }
+
     def "adds a sonar task once in multimodule projects"() {
         when:
         parentProject.allprojects { pluginManager.apply(SonarQubePlugin) }

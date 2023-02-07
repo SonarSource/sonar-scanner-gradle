@@ -83,7 +83,7 @@ class AndroidUtils {
   private AndroidUtils() {
   }
 
-  static void configureForAndroid(Project project, String userConfiguredBuildVariantName, final Map<String, Object> properties) {
+  static void configureForAndroid(Project project, @Nullable String userConfiguredBuildVariantName, final Map<String, Object> properties) {
     AndroidVariantAndExtension android = findVariantAndExtension(project, userConfiguredBuildVariantName);
     if (android != null && android.getVariant() != null) {
       configureForAndroid(project, android, properties);

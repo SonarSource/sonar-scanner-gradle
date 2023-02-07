@@ -24,9 +24,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -128,7 +130,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getJacocoTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
+      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && notSkipped(p))
       .map(p -> p.getTasks().withType(JacocoReport.class))
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
@@ -136,24 +138,41 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getJavaTestTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && notSkipped(p))
       .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
       .collect(Collectors.toList());
   }
 
   private static Callable<Iterable<? extends Task>> getJavaCompileTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && notSkipped(p))
       .flatMap(p -> Stream.of(p.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME), p.getTasks().getByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME)))
       .collect(Collectors.toList());
   }
 
+  static boolean notSkipped(Project p) {
+    return getSonarExtensions(p).stream().noneMatch(SonarExtension::isSkipProject);
+  }
+
+  private static List<SonarExtension> getSonarExtensions(Project p) {
+    return Stream.of(SonarExtension.SONAR_EXTENSION_NAME, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME)
+      .map(name -> (SonarExtension) p.getExtensions().getByName(name))
+      .collect(Collectors.toList());
+  }
+
+  @Nullable
+  static String getConfiguredAndroidVariant(Project p) {
+    return getSonarExtensions(p).stream()
+      .map(SonarExtension::getAndroidVariant)
+      .filter(Objects::nonNull)
+      .findFirst().orElse(null);
+  }
+
   private static Callable<Iterable<? extends Task>> getAndroidCompileTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> isAndroidProject(p) && !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
+      .filter(p -> isAndroidProject(p) && notSkipped(p))
       .map(p -> {
-        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p,
-          p.getExtensions().getByType(SonarExtension.class).getAndroidVariant());
+        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
 
         List<Task> allCompileTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {

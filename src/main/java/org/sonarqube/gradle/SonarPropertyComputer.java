@@ -90,15 +90,14 @@ public class SonarPropertyComputer {
   }
 
   private void computeSonarProperties(Project project, Map<String, Object> properties, String prefix) {
-    SonarExtension extension = project.getExtensions().getByType(SonarExtension.class);
-    if (extension.isSkipProject()) {
+    if (!SonarQubePlugin.notSkipped(project)) {
       return;
     }
 
     Map<String, Object> rawProperties = new LinkedHashMap<>();
     addGradleDefaults(project, rawProperties);
     if (isAndroidProject(project)) {
-      AndroidUtils.configureForAndroid(project, extension.getAndroidVariant(), rawProperties);
+      AndroidUtils.configureForAndroid(project, SonarQubePlugin.getConfiguredAndroidVariant(project), rawProperties);
     }
 
     ActionBroadcast<SonarProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
