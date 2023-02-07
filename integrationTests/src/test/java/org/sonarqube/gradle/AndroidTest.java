@@ -29,14 +29,21 @@ import java.util.List;
 import java.util.Properties;
 import org.junit.Assume;
 import org.junit.Test;
+import org.junit.BeforeClass;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeNotNull;
 
 public class AndroidTest extends AbstractGradleIT {
+
+  @BeforeClass
+  public static void beforeAll() {
+    assumeNotNull(getAndroidGradleVersion());
+  }
 
   private boolean shouldExpectOldJavaBinariesDir() {
     return getAndroidGradleVersion().isLowerThan("3.5.0");

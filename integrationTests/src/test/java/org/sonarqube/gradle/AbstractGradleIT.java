@@ -48,7 +48,13 @@ public abstract class AbstractGradleIT {
   static {
     try {
       gradleVersion = new Semver(IOUtils.toString(AbstractGradleIT.class.getResource("/gradleversion.txt"), StandardCharsets.UTF_8), SemverType.LOOSE);
-      androidGradleVersion = new Semver(IOUtils.toString(AbstractGradleIT.class.getResource("/androidgradleversion.txt"), StandardCharsets.UTF_8), SemverType.LOOSE);
+
+      String androidGradleVersionString = IOUtils.toString(AbstractGradleIT.class.getResource("/androidgradleversion.txt"), StandardCharsets.UTF_8);
+      if ("NOT_AVAILABLE".equals(androidGradleVersionString)) {
+        androidGradleVersion = null;
+      } else {
+        androidGradleVersion = new Semver(androidGradleVersionString, SemverType.LOOSE);
+      }
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
