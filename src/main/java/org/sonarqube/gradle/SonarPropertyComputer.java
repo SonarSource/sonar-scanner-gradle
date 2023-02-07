@@ -23,11 +23,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import org.gradle.api.provider.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +46,10 @@ import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.reporting.Report;
 import org.gradle.api.reporting.SingleFileReport;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
@@ -320,21 +318,7 @@ public class SonarPropertyComputer {
   }
 
   private static Collection<File> getOutputDirs(SourceSet sourceSet) {
-    Collection<File> result;
-    if (GradleVersion.version("4.0").compareTo(GradleVersion.current()) <= 0) {
-      result = sourceSet.getOutput().getClassesDirs().getFiles();
-    } else {
-      SourceSetOutput output = sourceSet.getOutput();
-      try {
-        // old API with a method that was removed
-        File file = (File) SourceSetOutput.class.getMethod("getClassesDir").invoke(output);
-        return Collections.singletonList(file);
-      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-        LOGGER.warn("Failed to find classes output directories");
-        return Collections.emptyList();
-      }
-    }
-    return exists(result);
+    return exists(sourceSet.getOutput().getClassesDirs().getFiles());
   }
 
   private static Collection<File> getLibraries(SourceSet main) {
