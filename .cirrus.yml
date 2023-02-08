@@ -79,6 +79,7 @@ build_task:
     folder: ~/.gradle/caches
   script:
     - source cirrus-env BUILD
+    - source cirrus/define-gradle.sh
     - regular_gradle_build_deploy_analyze
   on_failure:
     reports_artifacts:
