@@ -193,7 +193,7 @@ public class SonarPropertyComputer {
   }
 
   private static void configureSourceEncoding(Project project, final Map<String, Object> properties) {
-    project.getTasks().withType(JavaCompile.class, compile -> {
+    project.getTasks().withType(JavaCompile.class).configureEach(compile -> {
       String encoding = compile.getOptions().getEncoding();
       if (encoding != null) {
         properties.put("sonar.sourceEncoding", encoding);
@@ -258,7 +258,7 @@ public class SonarPropertyComputer {
   }
 
   private static void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
-    project.getTasks().withType(JacocoReport.class, jacocoReportTask -> {
+    project.getTasks().withType(JacocoReport.class).configureEach(jacocoReportTask -> {
       SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
       File reportDestination = getDestination(xmlReport);
       if (isReportEnabled(xmlReport) && reportDestination != null && reportDestination.exists()) {
