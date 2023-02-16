@@ -9,7 +9,6 @@ plugins {
   id 'maven-publish'
   id "com.gradle.plugin-publish" version "0.21.0"
   // Eat your own dog food :)
-  id "org.sonarqube" version "4.0-SNAPSHOT"
   id "com.jfrog.artifactory" version "4.24.23"
   id "com.github.hierynomus.license" version "0.16.1"
   id "pl.droidsonroids.jacoco.testkit" version "1.0.9"
@@ -108,12 +107,6 @@ pluginBundle {
   }
 }
 
-sonarqube {
-  properties {
-    property 'sonar.projectName', projectName
-  }
-}
-
 license {
   header = rootProject.file('HEADER')
   mapping {
@@ -144,8 +137,6 @@ jacocoTestReport {
     xml.required = true
   }
 }
-
-tasks['sonarqube'].dependsOn jacocoTestReport
 
 // Add required information to deploy on central
 publishing {
