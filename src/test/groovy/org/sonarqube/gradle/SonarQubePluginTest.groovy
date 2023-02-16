@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle
 
+import org.gradle.api.Project
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.GroovyPlugin
@@ -266,9 +267,10 @@ class SonarQubePluginTest extends Specification {
 
         project.sourceSets.main.java.srcDirs = ["src"]
         project.sourceSets.test.java.srcDirs = ["test"]
-        project.sourceSets.main.java.outputDir = new File(project.buildDir, "out")
+
+
+        setOutputDirs(project, "out", "test-out");
         project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
-        project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 
@@ -324,9 +326,8 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.main.groovy.srcDirs = ["src"]
         project.sourceSets.test.groovy.srcDirs = ["test"]
         project.sourceSets.main.output.classesDirs.setFrom(new File(project.buildDir, "out"))
-        project.sourceSets.main.java.outputDir = new File(project.buildDir, "out")
+        setOutputDirs(project, "out", "test-out");
         project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
-        project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
 
@@ -367,11 +368,12 @@ class SonarQubePluginTest extends Specification {
         project.sourceSets.test.groovy.srcDirs = ["tes,t"]
         project.sourceSets.test.groovy.srcDirs += ["test"]
         project.sourceSets.main.output.classesDirs.setFrom(new File(project.buildDir, "comma,out"))
-        project.sourceSets.main.java.outputDir = new File(project.buildDir, "comma,out")
+        setOutputDirs(project, "comma,out", "test-out");
         project.sourceSets.main.compileClasspath += project.files("lib/comma,lib.jar")
         project.sourceSets.main.compileClasspath += project.files("lib/comma,quote\"lib.jar")
         project.sourceSets.main.compileClasspath += project.files("lib/otherLib.jar")
-        project.sourceSets.test.java.outputDir = new File(project.buildDir, "test-out")
+
+
         project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
         project.sourceSets.test.compileClasspath += project.files("lib/comma,junit.jar")
         project.compileJava.options.encoding = 'ISO-8859-1'
@@ -688,6 +690,17 @@ class SonarQubePluginTest extends Specification {
 
     private SonarTask parentSonarTask() {
         parentProject.tasks.sonar as SonarTask
+    }
+
+    private void setOutputDirs(Project project, String mainDir, String testDir) {
+        if (project.sourceSets.main.java.hasProperty("outputDir")) {
+            //for Gradle 7 and lower compatibility
+            project.sourceSets.main.java.outputDir = new File(project.buildDir, mainDir)
+            project.sourceSets.test.java.outputDir = new File(project.buildDir, testDir)
+        } else {
+            project.sourceSets.main.java.destinationDirectory = new File(project.buildDir, mainDir)
+            project.sourceSets.test.java.destinationDirectory = new File(project.buildDir, testDir)
+        }
     }
 
 }

@@ -46,6 +46,7 @@ import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.reporting.Report;
 import org.gradle.api.reporting.SingleFileReport;
@@ -426,10 +427,10 @@ public class SonarPropertyComputer {
   private static File getDestinationNewApi(Report report) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Provider<? extends FileSystemLocation> provider;
     if (GradleVersion.version("8.0").compareTo(GradleVersion.current()) <= 0) {
-      provider = report.getOutputLocation();
+      Method getOutputLocationGradle8 = report.getClass().getMethod("getOutputLocation");
+      provider = (Property<? extends FileSystemLocation>) getOutputLocationGradle8.invoke(report, new Object[0]);
     } else {
-      Method getOutputLocationGradle7 = report.getClass().getMethod("getOutputLocation");
-      provider = (Provider<? extends FileSystemLocation>) getOutputLocationGradle7.invoke(report, new Object[0]);
+      provider = report.getOutputLocation();
     }
     FileSystemLocation location = provider.getOrNull();
     if (location != null) {
