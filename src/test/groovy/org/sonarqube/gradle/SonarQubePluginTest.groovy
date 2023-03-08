@@ -646,6 +646,16 @@ class SonarQubePluginTest extends Specification {
         properties["sonar.some.key"] == "win"
     }
 
+    def "doesn't add sonar properties for skipped child project when using old sonarqube task"() {
+        childProject2.sonarqube.skipProject = true
+
+        when:
+        def properties = parentSonarTask().properties.get()
+
+        then:
+        !properties.any { key, value -> value.contains("child2") }
+    }
+
     def "doesn't add sonar properties for skipped child projects"() {
         childProject.sonar.skipProject = true
 

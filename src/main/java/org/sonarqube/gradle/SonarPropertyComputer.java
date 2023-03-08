@@ -122,11 +122,11 @@ public class SonarPropertyComputer {
     convertProperties(rawProperties, prefix, properties);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
-      .filter(p -> !p.getExtensions().getByType(SonarExtension.class).isSkipProject())
+      .filter(SonarQubePlugin::notSkipped)
       .collect(Collectors.toList());
 
     List<Project> skippedChildProjects = project.getChildProjects().values().stream()
-      .filter(p -> p.getExtensions().getByType(SonarExtension.class).isSkipProject())
+      .filter(p -> !SonarQubePlugin.notSkipped(p))
       .collect(Collectors.toList());
 
     if (!skippedChildProjects.isEmpty()) {
