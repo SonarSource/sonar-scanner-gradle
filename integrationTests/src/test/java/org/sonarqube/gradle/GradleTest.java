@@ -76,7 +76,7 @@ public class GradleTest extends AbstractGradleIT {
     RunResult result = runGradlewSonarWithEnv("/java-gradle-simple", env);
 
     System.out.println(result.getLog());
-    assertThat(result.getExitValue()).isEqualTo(0);
+    assertThat(result.getExitValue()).isZero();
     assertThat(result.getLog()).contains("Sonar Scanner analysis skipped");
   }
 
@@ -153,14 +153,13 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(props).contains(entry("sonar.projectKey", "com.mygroup:root_project"));
     assertThat(props.get("sonar.modules").toString().split(",")).containsOnly(":toplevel1", ":toplevel2");
 
-    assertThat(props).contains(entry(":toplevel1.sonar.moduleKey", "com.mygroup:root_project:toplevel1"));
-    assertThat(props).contains(entry(":toplevel2.sonar.moduleKey", "com.mygroup:root_project:toplevel2"));
-
-    assertThat(props).contains(entry(":toplevel1.sonar.modules", ":toplevel1:plugins"));
-    assertThat(props).contains(entry(":toplevel2.sonar.modules", ":toplevel2:plugins"));
-
-    assertThat(props).contains(entry(":toplevel1.:toplevel1:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel1:plugins"));
-    assertThat(props).contains(entry(":toplevel2.:toplevel2:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel2:plugins"));
+    assertThat(props)
+      .contains(entry(":toplevel1.sonar.moduleKey", "com.mygroup:root_project:toplevel1"))
+      .contains(entry(":toplevel2.sonar.moduleKey", "com.mygroup:root_project:toplevel2"))
+      .contains(entry(":toplevel1.sonar.modules", ":toplevel1:plugins"))
+      .contains(entry(":toplevel2.sonar.modules", ":toplevel2:plugins"))
+      .contains(entry(":toplevel1.:toplevel1:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel1:plugins"))
+      .contains(entry(":toplevel2.:toplevel2:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel2:plugins"));
   }
 
   // SONARGRADL-5
@@ -197,7 +196,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testFlatProjectStructure() throws Exception {
     Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-flat", "build", emptyMap());
-    assertThat(Paths.get(props.getProperty("sonar.projectBaseDir")).getFileName().toString()).isEqualTo("multi-module-flat");
+    assertThat(Paths.get(props.getProperty("sonar.projectBaseDir")).getFileName().toString()).hasToString("multi-module-flat");
   }
 
   @Test
@@ -251,5 +250,17 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(runResult.getLog()).doesNotContain("no properties configured, was it skipped in all projects?");
     assertThat(runResult.getLog()).contains("BUILD SUCCESSFUL");
+  }
+
+  @Test
+  public void testKotlinMultiplatformProjectStructure() throws Exception {
+    Properties props = runGradlewSonarSimulationMode("/kotlin-multiplatform");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(baseDir.getFileName().toString()).hasToString("kotlin-multiplatform");
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/classes/kotlin/jvm/main"));
+    assertThat(props.getProperty("sonar.sources")).contains("src/jvmMain/kotlin");
+    assertThat(props.getProperty("sonar.sources")).contains("src/jsMain/kotlin");
   }
 }
