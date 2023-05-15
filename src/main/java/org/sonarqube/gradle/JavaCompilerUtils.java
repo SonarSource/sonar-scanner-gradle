@@ -89,6 +89,7 @@ public class JavaCompilerUtils {
   // Inspired by
   // https://github.com/gradle/gradle/blob/d3e4faca3df507176b67d9b3bb3ee91bf2aa070c/subprojects/language-java/src/main/java/org/gradle/api/tasks/compile/JavaCompile.java#L400
   private static void configureCompatibilityOptions(JavaCompile compileTask, JavaCompilerConfiguration config) {
+    config.setEnablePreview(compileTask.getOptions().getAllCompilerArgs().stream().anyMatch(it -> it.equals("--enable-preview")));
     if (areToolchainsSupported() && ToolchainUtils.hasToolchains(compileTask)) {
       ToolchainUtils.configureCompatibilityOptions(compileTask, config);
     } else {

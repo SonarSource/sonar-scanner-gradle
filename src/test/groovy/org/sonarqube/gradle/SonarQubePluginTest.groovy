@@ -239,6 +239,27 @@ class SonarQubePluginTest extends Specification {
         properties[":parent:child.sonar.java.target"] == "8"
     }
 
+    def "enable preview"() {
+        parentProject.pluginManager.apply(JavaPlugin)
+        parentProject.compileJava.options.compilerArgs.add("--enable-preview")
+
+        when:
+        def properties = parentSonarTask().properties.get()
+
+        then:
+        properties["sonar.java.enablePreview"] == "true"
+    }
+
+    def "disable preview"() {
+        parentProject.pluginManager.apply(JavaPlugin)
+
+        when:
+        def properties = parentSonarTask().properties.get()
+
+        then:
+        properties["sonar.java.enablePreview"] == "false"
+    }
+
     def "compute source and target properties for 'groovy' projects"() {
         parentProject.pluginManager.apply(GroovyPlugin)
         childProject.pluginManager.apply(GroovyPlugin)
