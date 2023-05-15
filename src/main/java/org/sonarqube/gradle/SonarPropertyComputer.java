@@ -26,7 +26,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +40,7 @@ import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileSystemLocation;
+import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -57,6 +60,8 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension;
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet;
 import org.sonarsource.scanner.api.Utils;
 
 import static org.sonarqube.gradle.SonarUtils.appendProp;
@@ -300,21 +305,46 @@ public class SonarPropertyComputer {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
-    List<File> sourceDirectories = nonEmptyOrNull(main.getAllJava().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
+    List<File> sourceDirectories = getSourceFiles(project, main, "Main");
     properties.put(SONAR_SOURCES_PROP, sourceDirectories);
-    SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
-    List<File> testDirectories = nonEmptyOrNull(test.getAllJava().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
-    properties.put(SONAR_TESTS_PROP, testDirectories);
 
     Collection<File> mainClassDirs = getOutputDirs(main);
     Collection<File> mainLibraries = getLibraries(main);
     setMainClasspathProps(properties, addForGroovy, mainClassDirs, mainLibraries);
+
+    SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
+    List<File> testDirectories = getSourceFiles(project, test, "Test");
+    properties.put(SONAR_TESTS_PROP, testDirectories);
 
     Collection<File> testClassDirs = getOutputDirs(test);
     Collection<File> testLibraries = getLibraries(test);
     setTestClasspathProps(properties, testClassDirs, testLibraries);
 
     return sourceDirectories != null || testDirectories != null;
+  }
+
+  private static @Nullable List<File> getSourceFiles(Project project, SourceSet sourceSet, String sourceSetNameSuffix) {
+    List<File> sourceDirectories = sourceSet.getAllJava().getSrcDirs()
+      .stream()
+      .filter(File::exists).collect(Collectors.toCollection(LinkedList::new));
+
+    sourceDirectories.addAll(getKotlinMultiplatformSourceDirectories(project, sourceSetNameSuffix));
+
+    return nonEmptyOrNull(sourceDirectories);
+  }
+
+  private static List<File> getKotlinMultiplatformSourceDirectories(Project project, String sourceSetNameSuffix) {
+    KotlinMultiplatformExtension extension = (KotlinMultiplatformExtension) project.getExtensions().findByName("kotlin");
+
+    if (extension == null) return Collections.emptyList();
+
+    return extension.getSourceSets().stream()
+      .filter(kotlinSourceSet -> kotlinSourceSet.getName().endsWith(sourceSetNameSuffix))
+      .map(KotlinSourceSet::getKotlin)
+      .map(SourceDirectorySet::getSrcDirs)
+      .flatMap(Collection::stream)
+      .filter(File::exists)
+      .collect(Collectors.toList());
   }
 
   private static Collection<File> getOutputDirs(SourceSet sourceSet) {
