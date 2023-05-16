@@ -27,6 +27,7 @@ class JavaCompilerConfiguration {
   private String target;
   private String source;
   private String jdkHome;
+  private boolean enablePreview;
   private final String taskName;
 
   JavaCompilerConfiguration(String taskName) {
@@ -49,6 +50,10 @@ class JavaCompilerConfiguration {
     return Optional.ofNullable(jdkHome);
   }
 
+  public boolean getEnablePreview() {
+    return enablePreview;
+  }
+
   public String getTaskName() {
     return taskName;
   }
@@ -57,7 +62,8 @@ class JavaCompilerConfiguration {
     return Objects.equals(one.jdkHome, two.jdkHome)
       && Objects.equals(one.release, two.release)
       && Objects.equals(one.source, two.source)
-      && Objects.equals(one.target, two.target);
+      && Objects.equals(one.target, two.target)
+      && one.enablePreview == two.enablePreview;
   }
 
   public void setJdkHome(String jdkHome) {
@@ -74,5 +80,9 @@ class JavaCompilerConfiguration {
 
   public void setSource(String source) {
     this.source = source;
+  }
+
+  public void setEnablePreview(boolean enablePreview) {
+    this.enablePreview = enablePreview;
   }
 }

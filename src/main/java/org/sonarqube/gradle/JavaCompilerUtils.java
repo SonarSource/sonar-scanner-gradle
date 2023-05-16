@@ -89,11 +89,12 @@ public class JavaCompilerUtils {
   // Inspired by
   // https://github.com/gradle/gradle/blob/d3e4faca3df507176b67d9b3bb3ee91bf2aa070c/subprojects/language-java/src/main/java/org/gradle/api/tasks/compile/JavaCompile.java#L400
   private static void configureCompatibilityOptions(JavaCompile compileTask, JavaCompilerConfiguration config) {
+    config.setEnablePreview(compileTask.getOptions().getCompilerArgs().stream().anyMatch(it -> it.equals("--enable-preview")));
     if (areToolchainsSupported() && ToolchainUtils.hasToolchains(compileTask)) {
       ToolchainUtils.configureCompatibilityOptions(compileTask, config);
     } else {
       Optional<String> release = getRelease(compileTask.getOptions());
-      Optional<String> parsedVersion = parseArguments(compileTask.getOptions());
+      Optional<String> parsedVersion = parseReleaseArgument(compileTask.getOptions());
 
       if (release.isPresent()) {
         config.setRelease(release.get());
@@ -106,7 +107,7 @@ public class JavaCompilerUtils {
     }
   }
 
-  private static Optional<String> parseArguments(CompileOptions options) {
+  private static Optional<String> parseReleaseArgument(CompileOptions options) {
     List<String> compilerArgs = options.getCompilerArgs();
     for (int i = 0; i < compilerArgs.size(); i++) {
       if ("--release".equals(compilerArgs.get(i)) && i < compilerArgs.size() - 1) {

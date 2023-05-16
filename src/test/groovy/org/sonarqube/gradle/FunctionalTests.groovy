@@ -259,5 +259,68 @@ class FunctionalTests extends Specification {
         // sonar.java.jdkHome will be the runtime JDK used to run Gradle, so we can't really assert its particular value
         // just check that it points to a valid path
         new File(props."sonar.java.jdkHome").exists()
+        props."sonar.java.enablePreview" == "false"
+    }
+
+    def "enable preview without JDK toolchain"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        
+        compileJava {
+          options.compilerArgs.addAll("--enable-preview")
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withGradleVersion("6.6")
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonarqube").outcome == SUCCESS
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.java.enablePreview" == "true"
+    }
+
+    def "enable preview with JDK toolchain"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        compileJava {
+          javaCompiler = javaToolchains.compilerFor {
+            languageVersion = JavaLanguageVersion.of(8)
+          }
+          options.compilerArgs.addAll("--enable-preview")
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withGradleVersion("6.7.1")
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonarqube").outcome == SUCCESS
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.java.enablePreview" == "true"
     }
 }

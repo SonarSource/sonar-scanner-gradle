@@ -38,6 +38,7 @@ public class SonarUtils {
 
   static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
   static final String SONAR_JAVA_TARGET_PROP = "sonar.java.target";
+  static final String SONAR_JAVA_ENABLE_PREVIEW_PROP = "sonar.java.enablePreview";
 
   private SonarUtils() {
     // Utility class
@@ -111,6 +112,7 @@ public class SonarUtils {
       config.getSource().ifPresent(s -> properties.put(SONAR_JAVA_SOURCE_PROP, s));
       config.getTarget().ifPresent(t -> properties.put(SONAR_JAVA_TARGET_PROP, t));
     }
+    properties.put(SONAR_JAVA_ENABLE_PREVIEW_PROP, config.getEnablePreview());
   }
 
   static List<File> exists(Collection<File> files) {
