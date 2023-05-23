@@ -102,14 +102,8 @@ gradlePlugin {
 pluginBundle {
     website = docUrl
     vcsUrl = githubUrl
-
     tags = listOf("sonarqube", "sonar", "quality", "qa")
-
-    // TODO
-    mavenCoordinates {
-        groupId = project.group as String
-        artifactId = "sonarqube-gradle-plugin"
-    }
+    group = project.group as String
 }
 
 sonarqube {
@@ -125,20 +119,6 @@ license {
     exclude("**/version.txt")
 }
 
-
-val bomFile = layout.buildDirectory.file("reports/bom.json")
-tasks.cyclonedxBom {
-    setIncludeConfigs(includeConfigs + listOf("runtimeClasspath"))
-    outputs.file(bomFile)
-    outputs.upToDateWhen { false }
-}
-
-val bomArtifact = artifacts.add("archives", bomFile.get().asFile) {
-    type = "json"
-    classifier = "cyclonedx"
-    builtBy("cyclonedxBom")
-}
-
 jacoco {
     toolVersion = "0.8.7"
 }
@@ -151,6 +131,19 @@ tasks.jacocoTestReport {
 
 tasks.sonarqube {
     dependsOn(tasks.jacocoTestReport)
+}
+
+val bomFile = layout.buildDirectory.file("reports/bom.json")
+tasks.cyclonedxBom {
+    setIncludeConfigs(includeConfigs + listOf("runtimeClasspath"))
+    outputs.file(bomFile)
+    outputs.upToDateWhen { false }
+}
+
+val bomArtifact = artifacts.add("archives", bomFile.get().asFile) {
+    type = "json"
+    classifier = "cyclonedx"
+    builtBy("cyclonedxBom")
 }
 
 publishing {
@@ -200,13 +193,18 @@ artifactory {
             setPassword(System.getenv("ARTIFACTORY_DEPLOY_PASSWORD"))
         }
         defaults {
-            setProperty("build.name", "sonar-scanner-gradle")
-            setProperty("build.number", System.getenv("BUILD_NUMBER"))
-            setProperty("pr.branch.target", System.getenv("PULL_REQUEST_BRANCH_TARGET"))
-            setProperty("pr.number", System.getenv("PULL_REQUEST_NUMBER"))
-            setProperty("vcs.branch", System.getenv("GIT_BRANCH"))
-            setProperty("vcs.revision", System.getenv("GIT_COMMIT"))
-            setProperty("version", project.version as String)
+            setProperty(
+                "properties",
+                mapOf(
+                    "build.name" to "sonar-scanner-gradle",
+                    "build.number" to System.getenv("BUILD_NUMBER"),
+                    "pr.branch.target" to System.getenv("PULL_REQUEST_BRANCH_TARGET"),
+                    "pr.number" to System.getenv("PULL_REQUEST_NUMBER"),
+                    "vcs.branch" to System.getenv("GIT_BRANCH"),
+                    "vcs.revision" to System.getenv("GIT_COMMIT"),
+                    "version" to project.version as String,
+                )
+            )
             publications("mavenJava")
             setPublishPom(true)
             setPublishIvy(false)
