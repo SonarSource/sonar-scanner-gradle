@@ -4,7 +4,7 @@ plugins {
     jacoco
     `maven-publish`
     id("com.gradle.plugin-publish") version "0.21.0"
-    id("org.sonarqube") version "4.0.0.2929"
+//    id("org.sonarqube") version "4.0.0.2929"
     id("com.jfrog.artifactory") version "4.24.23"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.9"
@@ -103,11 +103,11 @@ pluginBundle {
     group = project.group as String
 }
 
-sonarqube {
-    properties {
-        property("sonar.projectName", projectTitle)
-    }
-}
+//sonarqube {
+//    properties {
+//        property("sonar.projectName", projectTitle)
+//    }
+//}
 
 license {
     header = rootProject.file("HEADER")
@@ -126,9 +126,9 @@ tasks.jacocoTestReport {
     }
 }
 
-tasks.sonarqube {
-    dependsOn(tasks.jacocoTestReport)
-}
+//tasks.sonarqube {
+//    dependsOn(tasks.jacocoTestReport)
+//}
 
 val bomFile = layout.buildDirectory.file("reports/bom.json")
 tasks.cyclonedxBom {
