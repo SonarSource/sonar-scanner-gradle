@@ -199,30 +199,22 @@ artifactory {
             setUsername(System.getenv("ARTIFACTORY_DEPLOY_USERNAME"))
             setPassword(System.getenv("ARTIFACTORY_DEPLOY_PASSWORD"))
         }
-        defaults(
-            delegateClosureOf<groovy.lang.GroovyObject> {
-                setProperty(
-                    "properties",
-                    mapOf(
-                        "build.name" to "sonar-scanner-gradle",
-                        "build.number" to System.getenv("BUILD_NUMBER"),
-                        "pr.branch.target" to System.getenv("PULL_REQUEST_BRANCH_TARGET"),
-                        "pr.number" to System.getenv("PULL_REQUEST_NUMBER"),
-                        "vcs.branch" to System.getenv("GIT_BRANCH"),
-                        "vcs.revision" to System.getenv("GIT_COMMIT"),
-                        "version" to project.version as String,
-                    )
-                )
-                // TODO: try to call the function directly: line 201
-                invokeMethod("publications", "pluginMaven")
-                setProperty("publishPom", true) // Publish generated POM files to Artifactory (true by default)
-                setProperty("publishIvy", false) // Publish generated Ivy descriptor files to Artifactory (true by default)
-            }
-        )
+        defaults {
+            setProperty("build.name", "sonar-scanner-gradle")
+            setProperty("build.number", System.getenv("BUILD_NUMBER"))
+            setProperty("pr.branch.target", System.getenv("PULL_REQUEST_BRANCH_TARGET"))
+            setProperty("pr.number", System.getenv("PULL_REQUEST_NUMBER"))
+            setProperty("vcs.branch", System.getenv("GIT_BRANCH"))
+            setProperty("vcs.revision", System.getenv("GIT_COMMIT"))
+            setProperty("version", project.version as String)
+            publications("mavenJava")
+            setPublishPom(true)
+            setPublishIvy(false)
+        }
     }
-    clientConfig.info.buildName = "sonar-kotlin"
+    clientConfig.info.buildName = "sonar-scanner-gradle"
     clientConfig.info.buildNumber = System.getenv("BUILD_NUMBER")
-    // The name of this variable is important because it"s used by the delivery process when extracting version from Artifactory build info.
+    // The name of this variable is important because it's used by the delivery process when extracting version from Artifactory build info.
     clientConfig.info.addEnvironmentProperty("PROJECT_VERSION", version.toString())
 }
 
