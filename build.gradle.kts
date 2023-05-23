@@ -9,7 +9,6 @@ plugins {
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.9"
     id("org.cyclonedx.bom") version "1.5.0"
-    //TODO: clarify that order is not significant
     signing
 }
 
@@ -90,11 +89,13 @@ dependencies {
 }
 
 gradlePlugin {
-    val sonarqubePlugin by plugins.creating {
-        displayName = projectTitle
-        description = project.description
-        id = "org.sonarqube"
-        implementationClass = "org.sonarqube.gradle.SonarQubePlugin"
+    plugins {
+        create("sonarqubePlugin") {
+            displayName = projectTitle
+            description = project.description
+            id = "org.sonarqube"
+            implementationClass = "org.sonarqube.gradle.SonarQubePlugin"
+        }
     }
 }
 
@@ -104,6 +105,7 @@ pluginBundle {
 
     tags = listOf("sonarqube", "sonar", "quality", "qa")
 
+    // TODO
     mavenCoordinates {
         groupId = project.group as String
         artifactId = "sonarqube-gradle-plugin"
@@ -118,8 +120,7 @@ sonarqube {
 
 license {
     header = rootProject.file("HEADER")
-    // TODO: verify this is correct
-    mapping(mapOf("java" to "SLASHSTAR_STYLE"))
+    mapping("java", "SLASHSTAR_STYLE")
     strictCheck = true
     exclude("**/version.txt")
 }
@@ -152,7 +153,6 @@ tasks.sonarqube {
     dependsOn(tasks.jacocoTestReport)
 }
 
-// TODO: double-check
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
@@ -182,7 +182,7 @@ publishing {
                 }
             }
         }
-        create<MavenPublication>("cyclonedx") {
+        create<MavenPublication>("cyclone") {
             artifact(bomArtifact)
         }
     }
