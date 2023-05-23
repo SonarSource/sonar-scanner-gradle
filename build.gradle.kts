@@ -56,18 +56,15 @@ repositories {
     maven {
         url = uri("https://repox.jfrog.io/repox/${repository}")
 
-
         // The environment variables ARTIFACTORY_PRIVATE_USERNAME and ARTIFACTORY_PRIVATE_PASSWORD are used on QA env (Jenkins)
         // On local box, please add artifactoryUsername and artifactoryPassword to ~/.gradle/gradle.properties
-        val username = System.getenv("ARTIFACTORY_PRIVATE_USERNAME")
-        val artifactoryUsername = username ?: project.findProperty("artifactoryUsername") ?: ""
-        val password = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD")
-        val artifactoryPassword = password ?: project.findProperty("artifactoryPassword") ?: ""
+        val artifactoryUsername = System.getenv("ARTIFACTORY_PRIVATE_USERNAME") ?: project.findProperty("artifactoryUsername") ?: ""
+        val artifactoryPassword = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: project.findProperty("artifactoryPassword") ?: ""
 
         if (artifactoryUsername is String && artifactoryUsername.isNotEmpty() && artifactoryPassword is String && artifactoryPassword.isNotEmpty()) {
             credentials {
-                setUsername(artifactoryUsername)
-                setPassword(artifactoryPassword)
+                username = artifactoryUsername
+                password = artifactoryPassword
             }
         }
     }

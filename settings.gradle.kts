@@ -1,5 +1,3 @@
-rootProject.name = "sonar-scanner-gradle"
-
 var isCiServer = System.getenv().containsKey("CIRRUS_CI")
 var buildCacheHost = System.getenv().getOrDefault("CIRRUS_HTTP_CACHE_HOST", "localhost:12321")
 
