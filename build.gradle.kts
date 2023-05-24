@@ -170,6 +170,7 @@ publishing {
                 }
             }
         }
+
 //        create<MavenPublication>("cyclonedx") {
 //            artifact(bomArtifact)
 //        }
