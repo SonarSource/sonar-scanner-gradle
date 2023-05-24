@@ -4,7 +4,7 @@ buildscript {
             url "https://plugins.gradle.org/m2/"
         }
     }
-    dependencies { classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:4.0.0.2929" }
+    dependencies { classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3" }
 }
 
 // To apply a third-party plugin from an external build script,
