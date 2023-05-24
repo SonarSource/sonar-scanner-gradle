@@ -4,7 +4,6 @@ plugins {
     jacoco
     `maven-publish`
     id("com.gradle.plugin-publish") version "0.21.0"
-//    id("org.sonarqube") version "4.0.0.2929"
     id("com.jfrog.artifactory") version "4.24.23"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.9"
@@ -100,11 +99,7 @@ pluginBundle {
     website = docUrl
     vcsUrl = githubUrl
     tags = listOf("sonarqube", "sonar", "quality", "qa")
-
-    mavenCoordinates {
-        groupId = project.group as String
-        artifactId = "sonarqube-gradle-plugin"
-    }
+    group = project.group as String
 }
 
 
@@ -169,11 +164,8 @@ publishing {
                     }
                 }
             }
+            artifact(bomArtifact)
         }
-
-//        create<MavenPublication>("cyclonedx") {
-//            artifact(bomArtifact)
-//        }
     }
 }
 
