@@ -143,7 +143,7 @@ val bomArtifact = artifacts.add("archives", bomFile.get().asFile) {
 
 publishing {
     publications {
-        create<MavenPublication>("mavenJava") {
+        create<MavenPublication>("pluginMaven") {
             pom {
                 name.set(projectTitle)
                 description.set(project.description)
@@ -170,9 +170,9 @@ publishing {
                 }
             }
         }
-        create<MavenPublication>("cyclonedx") {
-            artifact(bomArtifact)
-        }
+//        create<MavenPublication>("cyclonedx") {
+//            artifact(bomArtifact)
+//        }
     }
 }
 
@@ -187,45 +187,23 @@ artifactory {
             setUsername(System.getenv("ARTIFACTORY_DEPLOY_USERNAME"))
             setPassword(System.getenv("ARTIFACTORY_DEPLOY_PASSWORD"))
         }
-        defaults(
-            delegateClosureOf<groovy.lang.GroovyObject> {
-                setProperty(
-                    "properties",
-                    mapOf(
-                        "build.name" to "sonar-scanner-gradle",
-                        "build.number" to System.getenv("BUILD_NUMBER"),
-                        "pr.branch.target" to System.getenv("PULL_REQUEST_BRANCH_TARGET"),
-                        "pr.number" to System.getenv("PULL_REQUEST_NUMBER"),
-                        "vcs.branch" to System.getenv("GIT_BRANCH"),
-                        "vcs.revision" to System.getenv("GIT_COMMIT"),
-                        "version" to project.version as String,
-
-                        "publishPom" to "true",
-                        "publishIvy" to "false"
-                    )
+        defaults {
+            setProperty(
+                "properties",
+                mapOf(
+                    "build.name" to "sonar-scanner-gradle",
+                    "build.number" to System.getenv("BUILD_NUMBER"),
+                    "pr.branch.target" to System.getenv("PULL_REQUEST_BRANCH_TARGET"),
+                    "pr.number" to System.getenv("PULL_REQUEST_NUMBER"),
+                    "vcs.branch" to System.getenv("GIT_BRANCH"),
+                    "vcs.revision" to System.getenv("GIT_COMMIT"),
+                    "version" to project.version as String,
                 )
-                invokeMethod("publications", "mavenJava")
-                setProperty("publishPom", true) // Publish generated POM files to Artifactory (true by default)
-                setProperty("publishIvy", false) // Publish generated Ivy descriptor files to Artifactory (true by default)
-            }
-        )
-//        defaults {
-//            setProperty(
-//                "properties",
-//                mapOf(
-//                    "build.name" to "sonar-scanner-gradle",
-//                    "build.number" to System.getenv("BUILD_NUMBER"),
-//                    "pr.branch.target" to System.getenv("PULL_REQUEST_BRANCH_TARGET"),
-//                    "pr.number" to System.getenv("PULL_REQUEST_NUMBER"),
-//                    "vcs.branch" to System.getenv("GIT_BRANCH"),
-//                    "vcs.revision" to System.getenv("GIT_COMMIT"),
-//                    "version" to project.version as String,
-//                )
-//            )
-//            publications("mavenJava")
-//            setPublishPom(true)
-//            setPublishIvy(false)
-//        }
+            )
+            publications("pluginMaven")
+            setPublishPom(true)
+            setPublishIvy(false)
+        }
     }
     clientConfig.info.buildName = "sonar-scanner-gradle"
     clientConfig.info.buildNumber = System.getenv("BUILD_NUMBER")
