@@ -1,7 +1,21 @@
 buildscript {
     repositories {
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url "https://maven.google.com"
+        }
+        def repository = project.hasProperty('qa') ? 'sonarsource-qa' : 'sonarsource'
+        maven {
+            url "https://repox.jfrog.io/repox/${repository}"
+            // The environment variables ARTIFACTORY_PRIVATE_USERNAME and ARTIFACTORY_PRIVATE_PASSWORD are used on QA env (Jenkins)
+            // On local box, please add artifactoryUsername and artifactoryPassword to ~/.gradle/gradle.properties
+            def artifactoryUsername = System.env.'ARTIFACTORY_PRIVATE_USERNAME' ?: (project.hasProperty('artifactoryUsername') ? project.getProperty('artifactoryUsername') : '')
+            def artifactoryPassword = System.env.'ARTIFACTORY_PRIVATE_PASSWORD' ?: (project.hasProperty('artifactoryPassword') ? project.getProperty('artifactoryPassword') : '')
+            if (artifactoryUsername && artifactoryPassword) {
+                credentials {
+                    username = artifactoryUsername
+                    password = artifactoryPassword
+                }
+            }
         }
     }
     dependencies { classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.3" }

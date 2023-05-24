@@ -12,11 +12,6 @@ plugins {
     signing
 }
 
-apply(from = "sonarqube-build.gradle")
-
-tasks.getByName("sonarqube").dependsOn(tasks.jacocoTestReport)
-
-
 val projectTitle: String by project
 
 val docUrl = "http://redirect.sonarsource.com/doc/gradle.html"
@@ -126,7 +121,8 @@ tasks.jacocoTestReport {
     }
 }
 
-
+apply(from = "sonarqube-build.gradle")
+tasks.getByName("sonarqube").dependsOn(tasks.jacocoTestReport)
 
 val bomFile = layout.buildDirectory.file("reports/bom.json")
 tasks.cyclonedxBom {
@@ -170,7 +166,7 @@ publishing {
                 }
             }
         }
-        create<MavenPublication>("cyclone") {
+        create<MavenPublication>("cyclonedx") {
             artifact(bomArtifact)
         }
     }
