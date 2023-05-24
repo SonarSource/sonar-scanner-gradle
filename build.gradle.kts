@@ -100,7 +100,11 @@ pluginBundle {
     website = docUrl
     vcsUrl = githubUrl
     tags = listOf("sonarqube", "sonar", "quality", "qa")
-    group = project.group as String
+
+    mavenCoordinates {
+        groupId = project.group as String
+        artifactId = "sonarqube-gradle-plugin"
+    }
 }
 
 
