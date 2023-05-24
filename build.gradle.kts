@@ -12,6 +12,11 @@ plugins {
     signing
 }
 
+apply(from = "sonarqube-build.gradle")
+
+tasks.getByName("sonarqube").dependsOn(tasks.jacocoTestReport)
+
+
 val projectTitle: String by project
 
 val docUrl = "http://redirect.sonarsource.com/doc/gradle.html"
@@ -103,11 +108,6 @@ pluginBundle {
     group = project.group as String
 }
 
-//sonarqube {
-//    properties {
-//        property("sonar.projectName", projectTitle)
-//    }
-//}
 
 license {
     header = rootProject.file("HEADER")
@@ -126,9 +126,7 @@ tasks.jacocoTestReport {
     }
 }
 
-//tasks.sonarqube {
-//    dependsOn(tasks.jacocoTestReport)
-//}
+
 
 val bomFile = layout.buildDirectory.file("reports/bom.json")
 tasks.cyclonedxBom {

@@ -1,0 +1,18 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies { classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:4.0.0.2929" }
+}
+
+// To apply a third-party plugin from an external build script,
+// you have to use the plugin's fully qualified class name, rather than its ID
+apply plugin: org.sonarqube.gradle.SonarQubePlugin
+
+sonarqube {
+    properties {
+        property("sonar.projectName", projectTitle)
+    }
+}
