@@ -16,8 +16,8 @@
 
   <properties>
     <!-- Default version when running ITs on dev machines. Value overridden in .cirrus.yml -->
-    <gradle.version>6.8.3</gradle.version>
-    <androidGradle.version>4.2.0</androidGradle.version>
+    <gradle.version>7.5.1</gradle.version>
+    <androidGradle.version>7.1.0</androidGradle.version>
     <jdk.min.version>11</jdk.min.version>
   </properties>
 
