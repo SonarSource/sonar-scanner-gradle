@@ -73,7 +73,7 @@ By default, Integration Tests are skipped during the build. To run them, you nee
 
 * Install the SNAPSHOT version of the root project in the local Maven repository.  
 * Import the `integationTests` project as a Maven project and ensure that Android SDK is set.  
-* Set `ANDROID_SDK_HOME` environment variable
+* Set `ANDROID_HOME` environment variable
 * Run the following command from the `integrationTests` project:
     ```
     mvn clean install
