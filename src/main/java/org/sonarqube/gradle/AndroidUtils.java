@@ -349,10 +349,12 @@ class AndroidUtils {
     if (javaCompile != null) {
       libraries.addAll(javaCompile.getClasspath().filter(File::exists).getFiles());
     }
+
+    Collection<File> destinationDirs = javaCompile != null ? Collections.singleton(javaCompile.getDestinationDir()) : Collections.emptySet();
     if (isTest) {
-      setTestClasspathProps(properties, javaCompile != null ? Collections.singleton(javaCompile.getDestinationDir()) : Collections.emptySet(), libraries);
+      setTestClasspathProps(properties, destinationDirs, libraries);
     } else {
-      setMainClasspathProps(properties, false, javaCompile != null ? Collections.singleton(javaCompile.getDestinationDir()) : Collections.emptySet(), libraries);
+      setMainClasspathProps(properties, destinationDirs, libraries, false);
     }
   }
 

@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileSystemLocation;
+import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -57,6 +58,8 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension;
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet;
 import org.sonarsource.scanner.api.Utils;
 
 import static org.sonarqube.gradle.SonarUtils.appendProp;
@@ -219,13 +222,25 @@ public class SonarPropertyComputer {
   private static void configureForJava(final Project project, final Map<String, Object> properties) {
     project.getPlugins().withType(JavaBasePlugin.class, javaBasePlugin -> populateJdkProperties(project, properties));
 
-    project.getPlugins().withType(JavaPlugin.class, javaPlugin -> {
-      boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, false);
-      if (hasSourceOrTest) {
-        configureSourceEncoding(project, properties);
-        extractTestProperties(project, properties, false);
-      }
-    });
+    project.getPlugins()
+      .withType(JavaPlugin.class, javaPlugin -> configureSourceDirsAndJavaClasspath(project, properties, false));
+  }
+
+  private static void configureForKotlinMultiplatform(Project project, Map<String, Object> properties, KotlinMultiplatformExtension kotlinMultiplatformExtension) {
+    Collection<File> sourceDirectories = getKotlinMultiplatformSourceFiles(kotlinMultiplatformExtension, "Main");
+    properties.put(SONAR_SOURCES_PROP, sourceDirectories);
+
+    Collection<File> testDirectories = getKotlinMultiplatformSourceFiles(kotlinMultiplatformExtension, "Test");
+    properties.put(SONAR_TESTS_PROP, testDirectories);
+
+    if (sourceDirectories != null || testDirectories != null) {
+      configureSourceEncoding(project, properties);
+      extractTestProperties(project, properties, false);
+    }
+
+    // TODO: replace with `(JavaPluginExtension) project.getExtensions().findByName("java");` once we drop support for Gradle < 7.1.0
+    project.getPlugins()
+      .withType(JavaPlugin.class, javaPlugin -> configureJavaClasspath(project, properties, false));
   }
 
   /**
@@ -235,13 +250,8 @@ public class SonarPropertyComputer {
   private static void configureForGroovy(final Project project, final Map<String, Object> properties) {
     project.getPlugins().withType(GroovyBasePlugin.class, groovyBasePlugin -> populateJdkProperties(project, properties));
 
-    project.getPlugins().withType(GroovyPlugin.class, groovyPlugin -> {
-      boolean hasSourceOrTest = configureSourceDirsAndJavaClasspath(project, properties, true);
-      if (hasSourceOrTest) {
-        configureSourceEncoding(project, properties);
-        extractTestProperties(project, properties, true);
-      }
-    });
+    project.getPlugins()
+      .withType(GroovyPlugin.class, groovyPlugin -> configureSourceDirsAndJavaClasspath(project, properties, true));
   }
 
   private static void populateJdkProperties(final Project project, final Map<String, Object> properties) {
@@ -250,14 +260,14 @@ public class SonarPropertyComputer {
   }
 
   private static void extractTestProperties(Project project, Map<String, Object> properties, boolean addForGroovy) {
-    Task testTask = project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME);
+    Task testTask = project.getTasks().findByName(JavaPlugin.TEST_TASK_NAME);
     if (testTask instanceof Test) {
       configureTestReports((Test) testTask, properties);
-      configureJaCoCoCoverageReport((Test) testTask, addForGroovy, project, properties);
+      configureJaCoCoCoverageReport((Test) testTask, project, properties, addForGroovy);
     }
   }
 
-  private static void configureJaCoCoCoverageReport(final Test testTask, final boolean addForGroovy, Project project, final Map<String, Object> properties) {
+  private static void configureJaCoCoCoverageReport(final Test testTask, Project project, final Map<String, Object> properties, final boolean addForGroovy) {
     project.getTasks().withType(JacocoReport.class, jacocoReportTask -> {
       SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
       File reportDestination = getDestination(xmlReport);
@@ -296,32 +306,64 @@ public class SonarPropertyComputer {
     }
   }
 
-  private static boolean configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, final boolean addForGroovy) {
+  private static void configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
     JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
-    List<File> sourceDirectories = nonEmptyOrNull(main.getAllJava().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
+    Collection<File> sourceDirectories = getJavaSourceFiles(main);
     properties.put(SONAR_SOURCES_PROP, sourceDirectories);
+
     SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
-    List<File> testDirectories = nonEmptyOrNull(test.getAllJava().getSrcDirs().stream().filter(File::exists).collect(Collectors.toList()));
+    Collection<File> testDirectories = getJavaSourceFiles(test);
     properties.put(SONAR_TESTS_PROP, testDirectories);
 
-    Collection<File> mainClassDirs = getOutputDirs(main);
-    Collection<File> mainLibraries = getLibraries(main);
-    setMainClasspathProps(properties, addForGroovy, mainClassDirs, mainLibraries);
+    if (sourceDirectories != null || testDirectories != null) {
+      configureSourceEncoding(project, properties);
+      extractTestProperties(project, properties, addForGroovy);
+    }
 
-    Collection<File> testClassDirs = getOutputDirs(test);
-    Collection<File> testLibraries = getLibraries(test);
-    setTestClasspathProps(properties, testClassDirs, testLibraries);
-
-    return sourceDirectories != null || testDirectories != null;
+    configureJavaClasspath(project, properties, addForGroovy);
   }
 
-  private static Collection<File> getOutputDirs(SourceSet sourceSet) {
+  private static void configureJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
+    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+
+    SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
+    Collection<File> mainClassDirs = getJavaOutputDirs(main);
+    Collection<File> mainLibraries = getJavaLibraries(main);
+    setMainClasspathProps(properties, mainClassDirs, mainLibraries, addForGroovy);
+
+    SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
+    Collection<File> testClassDirs = getJavaOutputDirs(test);
+    Collection<File> testLibraries = getJavaLibraries(test);
+    setTestClasspathProps(properties, testClassDirs, testLibraries);
+  }
+
+  private static @Nullable Collection<File> getJavaSourceFiles(SourceSet sourceSet) {
+    List<File> sourceDirectories = sourceSet.getAllJava().getSrcDirs()
+      .stream()
+      .filter(File::exists)
+      .collect(Collectors.toList());
+
+    return nonEmptyOrNull(sourceDirectories);
+  }
+
+  private static Collection<File> getJavaOutputDirs(SourceSet sourceSet) {
     return exists(sourceSet.getOutput().getClassesDirs().getFiles());
   }
 
-  private static Collection<File> getLibraries(SourceSet main) {
+  private static @Nullable Collection<File> getKotlinMultiplatformSourceFiles(KotlinMultiplatformExtension extension, String sourceSetNameSuffix) {
+    Collection<File> sourceFiles = extension.getSourceSets().stream()
+      .filter(kotlinSourceSet -> kotlinSourceSet.getName().endsWith(sourceSetNameSuffix))
+      .map(KotlinSourceSet::getKotlin)
+      .map(SourceDirectorySet::getSrcDirs)
+      .flatMap(Collection::stream)
+      .filter(File::exists)
+      .collect(Collectors.toList());
+    return nonEmptyOrNull(sourceFiles);
+  }
+
+  private static Collection<File> getJavaLibraries(SourceSet main) {
     List<File> libraries = exists(main.getCompileClasspath().getFiles());
 
     File runtimeJar = getRuntimeJar();
@@ -376,7 +418,11 @@ public class SonarPropertyComputer {
       properties.put("sonar.working.directory", new File(project.getBuildDir(), "sonar"));
     }
 
-    if (project.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
+    KotlinMultiplatformExtension kotlinMultiplatformExtension = (KotlinMultiplatformExtension) project.getExtensions().findByName("kotlin");
+
+    if (kotlinMultiplatformExtension != null) {
+      configureForKotlinMultiplatform(project, properties, kotlinMultiplatformExtension);
+    } else if (project.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
       // Groovy extends the Java plugin, so no need to configure twice
       configureForGroovy(project, properties);
     } else {

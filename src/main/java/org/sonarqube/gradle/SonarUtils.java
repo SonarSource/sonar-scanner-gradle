@@ -89,7 +89,7 @@ public class SonarUtils {
     appendProps(properties, "sonar.java.test.libraries", exists(testLibraries));
   }
 
-  static void setMainClasspathProps(Map<String, Object> properties, boolean addForGroovy, Collection<File> mainClassDirs, Collection<File> mainLibraries) {
+  static void setMainClasspathProps(Map<String, Object> properties, Collection<File> mainClassDirs, Collection<File> mainLibraries, boolean addForGroovy) {
     appendProps(properties, "sonar.java.binaries", exists(mainClassDirs));
     if (addForGroovy) {
       appendProps(properties, "sonar.groovy.binaries", exists(mainClassDirs));

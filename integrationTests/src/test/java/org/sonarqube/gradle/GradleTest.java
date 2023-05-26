@@ -252,4 +252,28 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(runResult.getLog()).doesNotContain("no properties configured, was it skipped in all projects?");
     assertThat(runResult.getLog()).contains("BUILD SUCCESSFUL");
   }
+
+  @Test
+  public void testKotlinMultiplatformProject() throws Exception {
+    Assume.assumeTrue("Tests only applies to version 6.8.3 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.8.3"));
+    Properties props = runGradlewSonarSimulationMode("/kotlin-multiplatform");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(baseDir.getFileName().toString()).hasToString("kotlin-multiplatform");
+
+    String[] binaries = props.getProperty("sonar.java.binaries").split(",");
+    String[] sources = props.getProperty("sonar.sources").split(",");
+
+    assertThat(binaries).containsExactlyInAnyOrder(
+      baseDir.resolve("build/classes/kotlin/jvm/main").toString(),
+      baseDir.resolve("build/classes/java/main").toString()
+    );
+
+    assertThat(sources).containsExactlyInAnyOrder(
+      baseDir.resolve("src/commonMain/kotlin").toString(),
+      baseDir.resolve("src/jvmMain/kotlin").toString(),
+      baseDir.resolve("src/jvmMain/java").toString()
+    );
+  }
 }
