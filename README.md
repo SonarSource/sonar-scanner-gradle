@@ -68,6 +68,16 @@ To debug, simply add the parameter:
 
 Now debug remotely by connecting to the port 5005.
 
+### Integration Tests
+By default, Integration Tests are skipped during the build. To run them, you need to follow these steps:
+
+* Install the SNAPSHOT version of the root project in the local Maven repository.  
+* Import the `integationTests` project as a Maven project and ensure that Android SDK is set.  
+* Set `ANDROID_HOME` environment variable
+* Run the following command from the `integrationTests` project:
+    ```
+    mvn clean install
+    ```
 
 ### Install a SNAPSHOT in the local Maven repository
 
