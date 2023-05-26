@@ -7,14 +7,12 @@ buildscript {
   dependencies {
     classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}'
     classpath 'com.android.tools.build:gradle:${androidGradle.version}'
-    classpath 'me.tatarka:gradle-retrolambda:3.7.1'
   }
 }
 
 apply plugin: 'jacoco'
 apply plugin: 'com.android.application'
 apply plugin: 'org.sonarqube'
-apply plugin: 'me.tatarka.retrolambda'
 
 repositories {
   google()
@@ -27,11 +25,7 @@ dependencies {
 }
 
 android {
-  compileSdkVersion 23
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
-  }
+  compileSdkVersion 30
 }
 
 sonar {
