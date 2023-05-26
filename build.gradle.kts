@@ -17,8 +17,8 @@ val docUrl = "http://redirect.sonarsource.com/doc/gradle.html"
 val githubUrl = "https://github.com/SonarSource/sonar-scanner-gradle"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_11
-    targetCompatibility = JavaVersion.VERSION_1_11
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
     withJavadocJar()
     withSourcesJar()
 }
