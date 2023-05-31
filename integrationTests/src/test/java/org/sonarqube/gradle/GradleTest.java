@@ -276,4 +276,19 @@ public class GradleTest extends AbstractGradleIT {
       baseDir.resolve("src/jvmMain/java").toString()
     );
   }
+
+  @Test
+  public void testKotlinJvmProject() throws Exception {
+    Properties props = runGradlewSonarSimulationMode("/kotlin-jvm");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(baseDir.getFileName().toString()).hasToString("kotlin-jvm");
+
+    String[] binaries = props.getProperty("sonar.java.binaries").split(",");
+    String[] sources = props.getProperty("sonar.sources").split(",");
+
+    assertThat(binaries).containsExactly(baseDir.resolve("build/classes/kotlin/main").toString());
+    assertThat(sources).containsExactly(baseDir.resolve("src/main/kotlin").toString());
+  }
 }
