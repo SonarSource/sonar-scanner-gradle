@@ -1,6 +1,7 @@
 plugins {
     id("java-gradle-plugin")
     java
+    groovy
     jacoco
     `maven-publish`
     id("com.gradle.plugin-publish") version "0.21.0"

@@ -58,7 +58,7 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension;
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension;
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet;
 import org.sonarsource.scanner.api.Utils;
 
@@ -75,6 +75,8 @@ public class SonarPropertyComputer {
 
   static final String SONAR_SOURCES_PROP = "sonar.sources";
   static final String SONAR_TESTS_PROP = "sonar.tests";
+  public static final String MAIN_SOURCE_SET_SUFFIX = "main";
+  public static final String TEST_SOURCE_SET_SUFFIX = "test";
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
@@ -226,11 +228,11 @@ public class SonarPropertyComputer {
       .withType(JavaPlugin.class, javaPlugin -> configureSourceDirsAndJavaClasspath(project, properties, false));
   }
 
-  private static void configureForKotlinMultiplatform(Project project, Map<String, Object> properties, KotlinMultiplatformExtension kotlinMultiplatformExtension) {
-    Collection<File> sourceDirectories = getKotlinMultiplatformSourceFiles(kotlinMultiplatformExtension, "Main");
+  private static void configureForKotlin(Project project, Map<String, Object> properties, KotlinProjectExtension kotlinProjectExtension) {
+    Collection<File> sourceDirectories = getKotlinSourceFiles(kotlinProjectExtension, MAIN_SOURCE_SET_SUFFIX);
     properties.put(SONAR_SOURCES_PROP, sourceDirectories);
 
-    Collection<File> testDirectories = getKotlinMultiplatformSourceFiles(kotlinMultiplatformExtension, "Test");
+    Collection<File> testDirectories = getKotlinSourceFiles(kotlinProjectExtension, TEST_SOURCE_SET_SUFFIX);
     properties.put(SONAR_TESTS_PROP, testDirectories);
 
     if (sourceDirectories != null || testDirectories != null) {
@@ -352,9 +354,9 @@ public class SonarPropertyComputer {
     return exists(sourceSet.getOutput().getClassesDirs().getFiles());
   }
 
-  private static @Nullable Collection<File> getKotlinMultiplatformSourceFiles(KotlinMultiplatformExtension extension, String sourceSetNameSuffix) {
+  private static @Nullable Collection<File> getKotlinSourceFiles(KotlinProjectExtension extension, String sourceSetNameSuffix) {
     Collection<File> sourceFiles = extension.getSourceSets().stream()
-      .filter(kotlinSourceSet -> kotlinSourceSet.getName().endsWith(sourceSetNameSuffix))
+      .filter(kotlinSourceSet -> kotlinSourceSet.getName().toLowerCase().endsWith(sourceSetNameSuffix))
       .map(KotlinSourceSet::getKotlin)
       .map(SourceDirectorySet::getSrcDirs)
       .flatMap(Collection::stream)
@@ -418,10 +420,10 @@ public class SonarPropertyComputer {
       properties.put("sonar.working.directory", new File(project.getBuildDir(), "sonar"));
     }
 
-    KotlinMultiplatformExtension kotlinMultiplatformExtension = (KotlinMultiplatformExtension) project.getExtensions().findByName("kotlin");
+    KotlinProjectExtension kotlinProjectExtension = (KotlinProjectExtension) project.getExtensions().findByName("kotlin");
 
-    if (kotlinMultiplatformExtension != null) {
-      configureForKotlinMultiplatform(project, properties, kotlinMultiplatformExtension);
+    if (kotlinProjectExtension != null) {
+      configureForKotlin(project, properties, kotlinProjectExtension);
     } else if (project.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
       // Groovy extends the Java plugin, so no need to configure twice
       configureForGroovy(project, properties);

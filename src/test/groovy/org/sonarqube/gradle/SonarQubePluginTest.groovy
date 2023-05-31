@@ -31,6 +31,7 @@ import org.gradle.initialization.GradlePropertiesController
 import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.junit.jupiter.api.Assertions
@@ -723,6 +724,39 @@ class SonarQubePluginTest extends Specification {
     then:
     properties["sonar.java.jdkHome"] != null
   }
+
+  def KOTLIN_JVM_SOURCE_FILE =  "src/test/projects/kotlin-jvm-project/src/main/kotlin/Sample.kt"
+
+  def "add Kotlin jvm sources"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent")
+      .withParent(rootProject)
+      .withProjectDir(new File("src/test/projects/kotlin-jvm-project"))
+      .build()
+
+    setupKotlinJvmExtension(project)
+    project.pluginManager.apply(SonarQubePlugin)
+
+    when:
+    def properties = project.tasks.sonar.properties.get()
+
+    then:
+    properties["sonar.sources"] == KOTLIN_JVM_SOURCE_FILE
+  }
+
+  private void setupKotlinJvmExtension(Project project) {
+    def kotlinJvmMainSourceSet = mockKotlinSourceSet("main", Set.of(new File(KOTLIN_JVM_SOURCE_FILE)))
+
+    def kotlinSourceSetContainer = mock(NamedDomainObjectContainer<KotlinSourceSet>.class)
+    // return a new stream on each invocation
+    when(kotlinSourceSetContainer.stream()).then(invocation -> Arrays.stream(kotlinJvmMainSourceSet))
+
+    def kotlinJvmExtension = mock(KotlinJvmProjectExtension.class)
+    when(kotlinJvmExtension.getSourceSets()).thenReturn(kotlinSourceSetContainer)
+
+    project.extensions.add("kotlin", kotlinJvmExtension)
+  }
+
 
   def JVM_SOURCE_FILE_JAVA = "src/test/projects/kotlin-multiplatform-project/src/jvmMain/java/me/user/application/Sample.java"
   def JVM_SOURCE_FILE_KOTLIN = "src/test/projects/kotlin-multiplatform-project/src/jvmMain/kotlin/me.user.application/Sample.kt"
