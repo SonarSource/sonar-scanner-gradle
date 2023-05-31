@@ -75,8 +75,8 @@ public class SonarPropertyComputer {
 
   static final String SONAR_SOURCES_PROP = "sonar.sources";
   static final String SONAR_TESTS_PROP = "sonar.tests";
-  public static final String MAIN_SOURCE_SET_SUFFIX = "main";
-  public static final String TEST_SOURCE_SET_SUFFIX = "test";
+  private static final String MAIN_SOURCE_SET_SUFFIX = "main";
+  private static final String TEST_SOURCE_SET_SUFFIX = "test";
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
