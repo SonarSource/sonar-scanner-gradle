@@ -97,15 +97,6 @@ buildscript {
 apply plugin: 'org.sonarqube'
 ```
 
-### Release and deploy on Gradle plugin repository
-
-Follow the [Scanner for Gradle Release Process](https://xtranet-sonarsource.atlassian.net/wiki/spaces/SSG/pages/1181729/Scanner+for+Gradle+Release+Process)
-
-https://plugins.gradle.org/docs/publish-plugin
-
-    ./gradlew release
-
-
 License
 -------
 
