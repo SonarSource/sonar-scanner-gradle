@@ -1,0 +1,12 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+    dependencies { classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}") }
+}
+
+apply plugin: 'org.sonarqube'
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'

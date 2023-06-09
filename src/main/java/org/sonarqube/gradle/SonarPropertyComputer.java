@@ -19,26 +19,10 @@
  */
 package org.sonarqube.gradle;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
+import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileSystemLocation;
-import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -58,16 +42,27 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension;
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet;
 import org.sonarsource.scanner.api.Utils;
 
-import static org.sonarqube.gradle.SonarUtils.appendProp;
-import static org.sonarqube.gradle.SonarUtils.exists;
-import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
-import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
-import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
-import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import static org.sonarqube.gradle.SonarUtils.*;
 
 public class SonarPropertyComputer {
   private static final Logger LOGGER = Logging.getLogger(SonarPropertyComputer.class);
@@ -228,7 +223,7 @@ public class SonarPropertyComputer {
       .withType(JavaPlugin.class, javaPlugin -> configureSourceDirsAndJavaClasspath(project, properties, false));
   }
 
-  private static void configureForKotlin(Project project, Map<String, Object> properties, KotlinProjectExtension kotlinProjectExtension) {
+  private static void configureForKotlin(Project project, Map<String, Object> properties, Object kotlinProjectExtension) {
     Collection<File> sourceDirectories = getKotlinSourceFiles(kotlinProjectExtension, MAIN_SOURCE_SET_SUFFIX);
     properties.put(SONAR_SOURCES_PROP, sourceDirectories);
 
@@ -354,15 +349,47 @@ public class SonarPropertyComputer {
     return exists(sourceSet.getOutput().getClassesDirs().getFiles());
   }
 
-  private static @Nullable Collection<File> getKotlinSourceFiles(KotlinProjectExtension extension, String sourceSetNameSuffix) {
-    Collection<File> sourceFiles = extension.getSourceSets().stream()
-      .filter(kotlinSourceSet -> kotlinSourceSet.getName().toLowerCase().endsWith(sourceSetNameSuffix))
-      .map(KotlinSourceSet::getKotlin)
-      .map(SourceDirectorySet::getSrcDirs)
-      .flatMap(Collection::stream)
-      .filter(File::exists)
-      .collect(Collectors.toList());
-    return nonEmptyOrNull(sourceFiles);
+  private static @Nullable Collection<File> getKotlinSourceFiles(Object extension, String sourceSetNameSuffix) {
+    try {
+      Method getSourceSetsMethod = extension.getClass().getMethod("getSourceSets");
+      NamedDomainObjectContainer<?> sourceSets = (NamedDomainObjectContainer) getSourceSetsMethod.invoke(extension);
+      Collection<File> sourceFiles = sourceSets.stream()
+              .map(InternalKotlinSourceSet::of)
+              .filter(s -> s.name.toLowerCase(Locale.ROOT).endsWith(sourceSetNameSuffix))
+              .flatMap(s -> s.srcDirs.stream())
+              .filter(File::exists)
+              .collect(Collectors.toList());
+      return nonEmptyOrNull(sourceFiles);
+    } catch (Exception e) {
+      LOGGER.warn("Sonar plugin wasn't able to locate Kotlin source sets. Continue without sources. Root cause: " + e.getMessage());
+      return null;
+    }
+  }
+
+  private static class InternalKotlinSourceSet {
+    private String name;
+    private Collection<File> srcDirs;
+
+    private InternalKotlinSourceSet() {}
+
+    private static InternalKotlinSourceSet of(Object rawSourceSet) {
+      InternalKotlinSourceSet internalKotlinSourceSet = new InternalKotlinSourceSet();
+
+      try {
+        Method getName = rawSourceSet.getClass().getMethod("getName");
+        internalKotlinSourceSet.name = (String) getName.invoke(rawSourceSet);
+
+        Method getKotlin = rawSourceSet.getClass().getMethod("getKotlin");
+        Object kotlin = getKotlin.invoke(rawSourceSet);
+        Method getSrcDirs = kotlin.getClass().getMethod("getSrcDirs");
+        internalKotlinSourceSet.srcDirs = (Collection<File>) getSrcDirs.invoke(kotlin);
+
+      } catch (Exception e) {
+        LOGGER.warn("Sonar plugin wasn't able to locate source set. Root cause: " + e.getMessage());
+      }
+
+      return internalKotlinSourceSet;
+    }
   }
 
   private static Collection<File> getJavaLibraries(SourceSet main) {
@@ -420,10 +447,9 @@ public class SonarPropertyComputer {
       properties.put("sonar.working.directory", new File(project.getBuildDir(), "sonar"));
     }
 
-    KotlinProjectExtension kotlinProjectExtension = (KotlinProjectExtension) project.getExtensions().findByName("kotlin");
-
-    if (kotlinProjectExtension != null) {
-      configureForKotlin(project, properties, kotlinProjectExtension);
+    Object kotlinExtension = project.getExtensions().findByName("kotlin");
+    if (kotlinExtension != null && kotlinExtension.getClass().getName().startsWith("org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension")) {
+      configureForKotlin(project, properties, kotlinExtension);
     } else if (project.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
       // Groovy extends the Java plugin, so no need to configure twice
       configureForGroovy(project, properties);

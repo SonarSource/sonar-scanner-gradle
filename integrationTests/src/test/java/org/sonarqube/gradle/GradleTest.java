@@ -278,6 +278,30 @@ public class GradleTest extends AbstractGradleIT {
   }
 
   @Test
+  public void testKotlinMultiplatformWithSubmoduleProject() throws Exception {
+    Assume.assumeTrue("Tests only applies to version 6.8.3 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.8.3"));
+    Properties props = runGradlewSonarSimulationMode("/kotlin-multiplatform-with-submodule");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(baseDir.getFileName().toString()).hasToString("kotlin-multiplatform-with-submodule");
+
+    String[] binaries = props.getProperty(":submodule.sonar.java.binaries").split(",");
+    String[] sources = props.getProperty(":submodule.sonar.sources").split(",");
+
+    assertThat(binaries).containsExactlyInAnyOrder(
+            baseDir.resolve("submodule/build/classes/kotlin/jvm/main").toString(),
+            baseDir.resolve("submodule/build/classes/java/main").toString()
+    );
+
+    assertThat(sources).containsExactlyInAnyOrder(
+            baseDir.resolve("submodule/src/commonMain/kotlin").toString(),
+            baseDir.resolve("submodule/src/jvmMain/kotlin").toString(),
+            baseDir.resolve("submodule/src/jvmMain/java").toString()
+    );
+  }
+
+  @Test
   public void testKotlinJvmProject() throws Exception {
     Properties props = runGradlewSonarSimulationMode("/kotlin-jvm");
 
@@ -290,5 +314,20 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(binaries).containsExactly(baseDir.resolve("build/classes/kotlin/main").toString());
     assertThat(sources).containsExactly(baseDir.resolve("src/main/kotlin").toString());
+  }
+
+  @Test
+  public void testKotlinJvmWithSubmoduleProject() throws Exception {
+    Properties props = runGradlewSonarSimulationMode("/kotlin-jvm-submodule");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(baseDir.getFileName().toString()).hasToString("kotlin-jvm-submodule");
+
+    String[] binaries = props.getProperty(":submodule.sonar.java.binaries").split(",");
+    String[] sources = props.getProperty(":submodule.sonar.sources").split(",");
+
+    assertThat(binaries).containsExactly(baseDir.resolve("submodule/build/classes/kotlin/main").toString());
+    assertThat(sources).containsExactly(baseDir.resolve("submodule/src/main/kotlin").toString());
   }
 }
