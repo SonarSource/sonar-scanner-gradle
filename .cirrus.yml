@@ -88,6 +88,31 @@ build_task:
       path: "**/test-results/**/*.xml"
       format: junit
 
+ws_scan_task:
+  eks_container:
+    <<: *CONTAINER_DEFINITION_11
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  depends_on:
+    - build
+  # run only on master and long-term branches
+  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*")
+  env:
+    WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
+  maven_cache:
+    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+  whitesource_script:
+    - source cirrus-env QA
+    - ./gradlew clean build -x test
+    - source ./export_ws_variables.sh
+    - source ws_scan.sh
+  allow_failures: "true"
+  always:
+    ws_artifacts:
+      path: "whitesource/**/*"
+
 gradle_qa_java11_task:
   depends_on:
     - build
