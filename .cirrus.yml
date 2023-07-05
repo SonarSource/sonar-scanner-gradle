@@ -61,6 +61,12 @@ container_definition_17: &CONTAINER_DEFINITION_17
   region: eu-central-1
   namespace: default
 
+setup_gradle_cache_template: &SETUP_GRADLE_CACHE
+  gradle_cache:
+    folder: .gradle/caches
+  create_gradle_directory_script:
+    - mkdir -p "${CIRRUS_WORKING_DIR}/.gradle"
+
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
@@ -88,29 +94,31 @@ build_task:
       path: "**/test-results/**/*.xml"
       format: junit
 
-ws_scan_task:
-  eks_container:
-    <<: *CONTAINER_DEFINITION_11
-    cpu: 1.5
-    memory: 4G
-  gradle_cache:
-    folder: ~/.gradle/caches
+mend_scan_task:
+  <<: *SETUP_GRADLE_CACHE
   depends_on:
     - build
-  # run only on master and long-term branches
-  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH == "irina/SONARGRADL-125")
+  # run only on master and long-living branches
+  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH == "irina/SONARGRADL-125")
+  eks_container:
+    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j18-latest
+    region: eu-central-1
+    cluster_name: ${CIRRUS_CLUSTER_NAME}
+    namespace: default
+    cpu: 4
+    memory: 2G
   env:
     WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  whitesource_script:
+  mend_script:
     - source cirrus-env QA
     - ./gradlew clean build -x test
     - source ./export_ws_variables.sh
     - source ws_scan.sh
   allow_failures: "true"
   always:
-    ws_artifacts:
+    ws_scan_artifacts:
       path: "whitesource/**/*"
 
 gradle_qa_java11_task:
