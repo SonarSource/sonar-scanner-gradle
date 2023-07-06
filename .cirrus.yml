@@ -114,7 +114,7 @@ mend_scan_task:
   mend_script:
     - source cirrus-env QA
     - ./gradlew clean build -x test
-    - source ./export_ws_variables.sh
+    - source export_ws_variables_from_gradle.sh
     - source ws_scan.sh
   allow_failures: "true"
   always:
