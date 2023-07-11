@@ -441,6 +441,7 @@ public class SonarPropertyComputer {
     properties.put("sonar.projectDescription", project.getDescription());
     properties.put("sonar.projectVersion", project.getVersion());
     properties.put("sonar.projectBaseDir", project.getProjectDir());
+    properties.put("sonar.kotlin.gradleProjectRoot", project.getRootProject().getProjectDir().getAbsolutePath());
 
     if (project.equals(targetProject)) {
       // Root project of the analysis
