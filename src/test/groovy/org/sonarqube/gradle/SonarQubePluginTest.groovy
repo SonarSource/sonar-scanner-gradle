@@ -807,7 +807,6 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-
     properties["sonar.kotlin.gradleProjectRoot"] == rootProject.projectDir as String
   }
 
