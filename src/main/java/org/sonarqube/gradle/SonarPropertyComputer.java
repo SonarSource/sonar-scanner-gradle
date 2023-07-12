@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -225,10 +226,14 @@ public class SonarPropertyComputer {
 
   private static void configureForKotlin(Project project, Map<String, Object> properties, Object kotlinProjectExtension) {
     Collection<File> sourceDirectories = getKotlinSourceFiles(kotlinProjectExtension, MAIN_SOURCE_SET_SUFFIX);
-    properties.put(SONAR_SOURCES_PROP, sourceDirectories);
+    if (sourceDirectories != null) {
+      SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, sourceDirectories);
+    }
 
     Collection<File> testDirectories = getKotlinSourceFiles(kotlinProjectExtension, TEST_SOURCE_SET_SUFFIX);
-    properties.put(SONAR_TESTS_PROP, testDirectories);
+    if (testDirectories != null) {
+      SonarUtils.appendProps(properties, SONAR_TESTS_PROP, testDirectories);
+    }
 
     if (sourceDirectories != null || testDirectories != null) {
       configureSourceEncoding(project, properties);
@@ -308,11 +313,15 @@ public class SonarPropertyComputer {
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
     Collection<File> sourceDirectories = getJavaSourceFiles(main);
-    properties.put(SONAR_SOURCES_PROP, sourceDirectories);
+    if (sourceDirectories != null) {
+      SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, sourceDirectories);
+    }
 
     SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
     Collection<File> testDirectories = getJavaSourceFiles(test);
-    properties.put(SONAR_TESTS_PROP, testDirectories);
+    if (testDirectories != null) {
+      SonarUtils.appendProps(properties, SONAR_TESTS_PROP, testDirectories);
+    }
 
     if (sourceDirectories != null || testDirectories != null) {
       configureSourceEncoding(project, properties);
@@ -443,6 +452,8 @@ public class SonarPropertyComputer {
     properties.put("sonar.projectBaseDir", project.getProjectDir());
     properties.put("sonar.kotlin.gradleProjectRoot", project.getRootProject().getProjectDir().getAbsolutePath());
 
+    addKotlinBuildScriptsToSources(project, properties);
+
     if (project.equals(targetProject)) {
       // Root project of the analysis
       properties.put("sonar.working.directory", new File(project.getBuildDir(), "sonar"));
@@ -457,6 +468,18 @@ public class SonarPropertyComputer {
     } else {
       configureForJava(project, properties);
     }
+  }
+
+  private static void addKotlinBuildScriptsToSources(Project project, Map<String, Object> properties) {
+    List<File> buildScripts = project.getAllprojects().stream()
+            .map(Project::getBuildFile)
+            .filter(file -> file.getAbsolutePath().endsWith("kts"))
+            .collect(Collectors.toList());
+
+    var settingsFile = Path.of(project.getProjectDir().getAbsolutePath(), "settings.gradle.kts").toFile();
+    if (settingsFile.exists()) buildScripts.add(settingsFile);
+
+    if (!buildScripts.isEmpty()) SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, buildScripts);
   }
 
   private String computeProjectKey() {
