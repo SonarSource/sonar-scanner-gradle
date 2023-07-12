@@ -782,6 +782,34 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
   }
 
+  def "handles root project property correctly if plugin is applied to root project"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).build()
+
+    rootProject.allprojects { version = 1.3 }
+    rootProject.pluginManager.apply(SonarQubePlugin)
+
+    when:
+    def properties = rootProject.tasks.sonar.properties.get()
+
+    then:
+    properties["sonar.kotlin.gradleProjectRoot"] == rootProject.projectDir as String
+  }
+
+  def "handles root project property correctly if plugin is applied to the subproject"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).build()
+
+    rootProject.allprojects { version = 1.3 }
+    project.pluginManager.apply(SonarQubePlugin)
+
+    when:
+    def properties = project.tasks.sonar.properties.get()
+
+    then:
+    properties["sonar.kotlin.gradleProjectRoot"] == rootProject.projectDir as String
+  }
+
   private void setupKotlinMultiplatformExtension(Project project) {
     def jvMainSourceSet = mockKotlinSourceSet("jvmMain", Set.of(new File(JVM_SOURCE_FILE_JAVA), new File(JVM_SOURCE_FILE_KOTLIN)))
     def jsMainSourceSet = mockKotlinSourceSet("jsMain", Set.of(new File(JVM_SOURCE_FILE_JS)))
