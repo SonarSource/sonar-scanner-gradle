@@ -471,10 +471,10 @@ public class SonarPropertyComputer {
   }
 
   private static void addKotlinBuildScriptsToSources(Project project, Map<String, Object> properties) {
-    List<File> buildScripts = project.getAllprojects().stream()
-            .map(Project::getBuildFile)
-            .filter(file -> file.getAbsolutePath().endsWith("kts"))
-            .collect(Collectors.toList());
+    List<File> buildScripts = new ArrayList<>();
+
+    File buildFile = project.getBuildFile();
+    if (buildFile.getAbsolutePath().endsWith(".kts")) buildScripts.add(buildFile);
 
     var settingsFile = Path.of(project.getProjectDir().getAbsolutePath(), "settings.gradle.kts").toFile();
     if (settingsFile.exists()) buildScripts.add(settingsFile);

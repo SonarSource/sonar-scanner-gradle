@@ -168,6 +168,32 @@ class GradleKtsTests extends Specification {
 
     }
 
+    def "add .gradle.kts files to sources only once"() {
+        given:
+        addBuildKts()
+        addSettingsKts()
+        Path subProjectBuildFile = addSubProject()
+
+        when:
+        GradleRunner.create()
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .build()
+
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+
+        then:
+        props[":subproject.sonar.sources"] == subProjectBuildFile.toRealPath().toString()
+
+        def sonarSources = props["sonar.sources"].split(",")
+        Assertions.assertThat(sonarSources)
+                .containsExactlyInAnyOrder(settingsFile.toRealPath().toString(), buildFile.toRealPath().toString())
+
+    }
+
     private def addSettings() {
         settingsFile = testProjectDir.resolve('settings.gradle')
         settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -197,6 +223,22 @@ class GradleKtsTests extends Specification {
                          id("org.sonarqube")
                      }
                      """
+    }
+
+    private def addSubProject() {
+        settingsFile << """
+                        include("subproject")
+                        """
+        Path subProject = testProjectDir.resolve('subproject')
+        Files.createDirectory(subProject)
+        Path subProjectBuildFile = subProject.resolve('build.gradle.kts')
+        subProjectBuildFile << """
+                     plugins {
+                         java
+                     }
+                     """
+
+        return subProjectBuildFile
     }
 }
 
