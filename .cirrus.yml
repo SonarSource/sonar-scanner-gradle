@@ -113,7 +113,7 @@ mend_scan_task:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
   mend_script:
     - source cirrus-env QA
-    - ./gradlew clean build -x test
+    #- ./gradlew clean build -x test
     - source ./export_ws_variables.sh
     - source ws_scan.sh
   allow_failures: "true"
