@@ -31,6 +31,12 @@ Make sure that you follow our [code style](https://github.com/SonarSource/sonar-
 Developer documentation
 -----------------------
 
+### Building the project
+To build the plugin and run the tests, you will need Java 11.
+```bash
+./gradlew clean build
+```
+
 ### How the plugin works
 When the plugin is applied to a project, it will add to that project the Sonar task. It will also add to the project and all it's subprojects the Sonar extension.
 For multi-module projects, the plugin will only apply to the first project where it gets called. The goal is to allow the usage of `allprojects {}`, for example.
