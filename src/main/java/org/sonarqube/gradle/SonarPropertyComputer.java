@@ -19,6 +19,24 @@
  */
 package org.sonarqube.gradle;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -44,26 +62,12 @@ import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.Utils;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static org.sonarqube.gradle.SonarUtils.*;
+import static org.sonarqube.gradle.SonarUtils.appendProp;
+import static org.sonarqube.gradle.SonarUtils.exists;
+import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
+import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
+import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
+import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
 
 public class SonarPropertyComputer {
   private static final Logger LOGGER = Logging.getLogger(SonarPropertyComputer.class);
@@ -97,7 +101,7 @@ public class SonarPropertyComputer {
     }
 
     Map<String, Object> rawProperties = new LinkedHashMap<>();
-    addGradleDefaults(project, rawProperties);
+    addGradleDefaults(project, rawProperties, properties);
     if (isAndroidProject(project)) {
       AndroidUtils.configureForAndroid(project, SonarQubePlugin.getConfiguredAndroidVariant(project), rawProperties);
     }
@@ -363,11 +367,11 @@ public class SonarPropertyComputer {
       Method getSourceSetsMethod = extension.getClass().getMethod("getSourceSets");
       NamedDomainObjectContainer<?> sourceSets = (NamedDomainObjectContainer) getSourceSetsMethod.invoke(extension);
       Collection<File> sourceFiles = sourceSets.stream()
-              .map(InternalKotlinSourceSet::of)
-              .filter(s -> s.name.toLowerCase(Locale.ROOT).endsWith(sourceSetNameSuffix))
-              .flatMap(s -> s.srcDirs.stream())
-              .filter(File::exists)
-              .collect(Collectors.toList());
+        .map(InternalKotlinSourceSet::of)
+        .filter(s -> s.name.toLowerCase(Locale.ROOT).endsWith(sourceSetNameSuffix))
+        .flatMap(s -> s.srcDirs.stream())
+        .filter(File::exists)
+        .collect(Collectors.toList());
       return nonEmptyOrNull(sourceFiles);
     } catch (Exception e) {
       LOGGER.warn("Sonar plugin wasn't able to locate Kotlin source sets. Continue without sources. Root cause: " + e.getMessage());
@@ -379,7 +383,8 @@ public class SonarPropertyComputer {
     private String name;
     private Collection<File> srcDirs;
 
-    private InternalKotlinSourceSet() {}
+    private InternalKotlinSourceSet() {
+    }
 
     private static InternalKotlinSourceSet of(Object rawSourceSet) {
       InternalKotlinSourceSet internalKotlinSourceSet = new InternalKotlinSourceSet();
@@ -445,18 +450,20 @@ public class SonarPropertyComputer {
     }
   }
 
-  private void addGradleDefaults(final Project project, final Map<String, Object> properties) {
+  private void addGradleDefaults(final Project project, final Map<String, Object> properties, Map<String, Object> parentProperties) {
     properties.put("sonar.projectName", project.getName());
     properties.put("sonar.projectDescription", project.getDescription());
     properties.put("sonar.projectVersion", project.getVersion());
     properties.put("sonar.projectBaseDir", project.getProjectDir());
     properties.put("sonar.kotlin.gradleProjectRoot", project.getRootProject().getProjectDir().getAbsolutePath());
 
-    addKotlinBuildScriptsToSources(project, properties);
 
     if (project.equals(targetProject)) {
       // Root project of the analysis
       properties.put("sonar.working.directory", new File(project.getBuildDir(), "sonar"));
+      addKotlinBuildScriptsToSources(project, properties);
+    } else {
+      addKotlinBuildScriptsToParentSources(project, parentProperties);
     }
 
     Object kotlinExtension = project.getExtensions().findByName("kotlin");
@@ -471,6 +478,22 @@ public class SonarPropertyComputer {
   }
 
   private static void addKotlinBuildScriptsToSources(Project project, Map<String, Object> properties) {
+    List<File> buildScripts = getBuildScripts(project);
+    if (!buildScripts.isEmpty()) {
+      SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, buildScripts);
+    }
+  }
+
+  //When adding the build scripts to the parent properties, the value will already be a comma separated string
+  private static void addKotlinBuildScriptsToParentSources(Project project, Map<String, Object> properties) {
+    List<File> buildScripts = getBuildScripts(project);
+    for (File file : buildScripts) {
+      String newValue = ((String) properties.get(SONAR_SOURCES_PROP)) + "," + getEscapedFilePath(file);
+      properties.put(SONAR_SOURCES_PROP, newValue);
+    }
+  }
+
+  private static List<File> getBuildScripts(Project project) {
     List<File> buildScripts = new ArrayList<>();
 
     File buildFile = project.getBuildFile();
@@ -478,8 +501,7 @@ public class SonarPropertyComputer {
 
     var settingsFile = Path.of(project.getProjectDir().getAbsolutePath(), "settings.gradle.kts").toFile();
     if (settingsFile.exists()) buildScripts.add(settingsFile);
-
-    if (!buildScripts.isEmpty()) SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, buildScripts);
+    return buildScripts;
   }
 
   private String computeProjectKey() {
