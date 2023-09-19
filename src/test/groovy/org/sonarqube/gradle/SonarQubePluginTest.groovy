@@ -946,4 +946,25 @@ class SonarQubePluginTest extends Specification {
     return Paths.get(pathString).normalize().toAbsolutePath();
   }
 
+  def "avoid nested paths inside sonar.sources"() {
+    def project = ProjectBuilder.builder().withName("root").withProjectDir(new File("src/test/projects/java-nested-sources")).build()
+
+    project.pluginManager.apply(JavaPlugin)
+    project.pluginManager.apply(SonarQubePlugin)
+
+    when:
+    def properties = project.tasks.sonar.properties.get()
+
+    then:
+    def pck1 = new File(project.projectDir, "src/main/java/pck") as String
+//    print pck1
+//    print "\n==============\n"
+//    for (p in properties["sonar.sources"].split(",")){
+//      print p
+//      print "\n"
+//    }
+    assert pck1 in properties["sonar.sources"]
+
+  }
+
 }
