@@ -728,8 +728,6 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.java.jdkHome"] != null
   }
 
-  def KOTLIN_JVM_SOURCE_FILE = "src/test/projects/kotlin-jvm-project/src/main/kotlin/Sample.kt"
-
   def JVM_SOURCE_FILE_JAVA = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jvmMain/java/me/user/application/Sample.java")
   def JVM_SOURCE_FILE_KOTLIN = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jvmMain/kotlin/me.user.application/Sample.kt")
   def JVM_SOURCE_FILE_JS = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jsMain/kotlin/Sample.js")
