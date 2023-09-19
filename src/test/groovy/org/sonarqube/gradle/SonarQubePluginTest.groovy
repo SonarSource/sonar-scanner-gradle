@@ -31,13 +31,16 @@ import org.gradle.initialization.GradlePropertiesController
 import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import spock.lang.Specification
 
+import java.nio.file.Paths
+import java.util.stream.Collectors
+
+import static org.assertj.core.api.Assertions.assertThat
 import static org.hamcrest.Matchers.contains
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
@@ -725,11 +728,9 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.java.jdkHome"] != null
   }
 
-  def KOTLIN_JVM_SOURCE_FILE =  "src/test/projects/kotlin-jvm-project/src/main/kotlin/Sample.kt"
-
-  def JVM_SOURCE_FILE_JAVA = "src/test/projects/kotlin-multiplatform-project/src/jvmMain/java/me/user/application/Sample.java"
-  def JVM_SOURCE_FILE_KOTLIN = "src/test/projects/kotlin-multiplatform-project/src/jvmMain/kotlin/me.user.application/Sample.kt"
-  def JVM_SOURCE_FILE_JS = "src/test/projects/kotlin-multiplatform-project/src/jsMain/kotlin/Sample.js"
+  def JVM_SOURCE_FILE_JAVA = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jvmMain/java/me/user/application/Sample.java")
+  def JVM_SOURCE_FILE_KOTLIN = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jvmMain/kotlin/me.user.application/Sample.kt")
+  def JVM_SOURCE_FILE_JS = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jsMain/kotlin/Sample.js")
 
   def "add Kotlin multiplatform sources"() {
     def rootProject = ProjectBuilder.builder().withName("root").build()
@@ -746,7 +747,7 @@ class SonarQubePluginTest extends Specification {
 
     then:
     def sonarSources = properties["sonar.sources"].split(",")
-    org.assertj.core.api.Assertions.assertThat(sonarSources)
+    assertThat(normalizePathArray(sonarSources))
       .containsExactlyInAnyOrder(JVM_SOURCE_FILE_KOTLIN, JVM_SOURCE_FILE_JAVA, JVM_SOURCE_FILE_JS)
 
     properties["sonar.java.binaries"] == null
@@ -775,7 +776,7 @@ class SonarQubePluginTest extends Specification {
 
     then:
     def sonarSources = properties["sonar.sources"].split(",")
-    org.assertj.core.api.Assertions.assertThat(sonarSources)
+    assertThat(normalizePathArray(sonarSources))
       .containsExactlyInAnyOrder(JVM_SOURCE_FILE_KOTLIN, JVM_SOURCE_FILE_JAVA, JVM_SOURCE_FILE_JS)
 
     properties["sonar.java.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
@@ -847,6 +848,16 @@ class SonarQubePluginTest extends Specification {
       project.sourceSets.main.java.destinationDirectory = new File(project.buildDir, mainDir)
       project.sourceSets.test.java.destinationDirectory = new File(project.buildDir, testDir)
     }
+  }
+
+  private List<String> normalizePathArray(String[] pathStrings) {
+    return Arrays.stream(pathStrings)
+      .map(this::normalizePathString)
+      .collect(Collectors.toList())
+  }
+
+  private String normalizePathString(String pathString) {
+    return Paths.get(pathString).normalize().toAbsolutePath();
   }
 
 }
