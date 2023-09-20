@@ -125,7 +125,7 @@ tasks.jacocoTestReport {
 
 apply(from = "sonarqube-build.gradle.kts")
 
-tasks.getByName("sonarqube").dependsOn(tasks.jacocoTestReport)
+tasks.getByName("sonar").dependsOn(tasks.jacocoTestReport)
 
 val bomFile = layout.buildDirectory.file("reports/bom.json")
 tasks.cyclonedxBom {
