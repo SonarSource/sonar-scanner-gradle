@@ -850,6 +850,32 @@ class SonarQubePluginTest extends Specification {
     }
   }
 
+  def "multi module project build files should be inside root sonar.sources"() {
+    def parent = ProjectBuilder.builder().withName("java-multi-module")
+      .withProjectDir(new File("src/test/projects/java-multi-module")).build()
+    def module1 = ProjectBuilder.builder().withName("module1")
+      .withProjectDir(new File("src/test/projects/java-multi-module/module1"))
+      .withParent(parent)
+      .build()
+    def module2 = ProjectBuilder.builder().withName("module2")
+      .withProjectDir(new File("src/test/projects/java-multi-module/module2"))
+      .withParent(parent)
+      .build()
+    parent.pluginManager.apply(JavaPlugin)
+    parent.pluginManager.apply(SonarQubePlugin)
+    def props = parent.tasks.sonar.properties.get()
+    when:
+    def parentSources = props["sonar.sources"]
+    def module1Sources = props[":module1.sonar.sources"]
+    def module2Sources = props[":module2.sonar.sources"]
+    then:
+    assert normalizePathArray(parentSources.split(",")).contains(normalizePathString("src/test/projects/java-multi-module/build.gradle.kts"))
+    assert normalizePathArray(parentSources.split(",")).contains(normalizePathString("src/test/projects/java-multi-module/module1/build.gradle.kts"))
+    assert normalizePathArray(parentSources.split(",")).contains(normalizePathString("src/test/projects/java-multi-module/module2/build.gradle.kts"))
+    assert module1Sources.length() == 0
+    assert module2Sources.length() == 0
+  }
+
   private List<String> normalizePathArray(String[] pathStrings) {
     return Arrays.stream(pathStrings)
       .map(this::normalizePathString)
