@@ -23,6 +23,7 @@ android {
         }
     }
     dynamicFeatures = [':mydynamicfeature']
+    namespace "com.example.myapplication"
 }
 
 dependencies {

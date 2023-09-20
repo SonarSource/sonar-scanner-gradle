@@ -32,6 +32,7 @@ android {
     }
   }
   flavorDimensions "tier", "minApi"
+  namespace "org.hello"
   productFlavors {
     demo {
       applicationId "com.example.myapp.demo"

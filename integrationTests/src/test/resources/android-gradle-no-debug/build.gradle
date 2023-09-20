@@ -26,6 +26,7 @@ dependencies {
 
 android {
   compileSdkVersion 30
+  namespace "org.hello"
 }
 
 android.variantFilter { variant ->

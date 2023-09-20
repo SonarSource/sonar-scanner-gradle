@@ -4,7 +4,6 @@ plugins {
 }
 android {
     compileSdkVersion 31
-    namespace 'com.example.test4.myapplication'
     defaultConfig {
         minSdkVersion 31
         targetSdkVersion 31
@@ -35,6 +34,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    namespace 'com.example.test4.myapplication'
 }
 
 dependencies {
