@@ -57,10 +57,19 @@ public class AndroidTest extends AbstractGradleIT {
 
     assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
       .isEqualTo(baseDir.resolve("build/intermediates/javac/demoMinApi23Debug/classes"));
-    assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
-      .containsOnly(
-        baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/classes"),
-        baseDir.resolve("build/intermediates/javac/demoMinApi23DebugAndroidTest/classes"));
+    // For Android Gradle Plugin version 8 and greater, the debugAndroidTest artifacts are no longer present in the same folder
+    if (getAndroidGradleVersion().isGreaterThanOrEqualTo("8.0.0")) {
+      assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/classes")
+        );
+    } else {
+      assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
+        .containsOnly(
+          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/classes"),
+          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugAndroidTest/classes")
+        );
+    }
 
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");

@@ -22,6 +22,7 @@ android {
     lintOptions {
         abortOnError false
     }
+    namespace "com.example.android.testing.blueprint.test"
 }
 
 dependencies {

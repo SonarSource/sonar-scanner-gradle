@@ -19,6 +19,7 @@ android {
             testCoverageEnabled = true
         }
     }
+    namespace "com.example.test.myapplication"
 }
 
 dependencies {

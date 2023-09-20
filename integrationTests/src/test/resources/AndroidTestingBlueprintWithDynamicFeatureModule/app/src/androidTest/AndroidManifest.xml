@@ -13,8 +13,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.android.testing.blueprint">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-sdk android:targetSdkVersion="30" android:minSdkVersion="21"
         tools:overrideLibrary="android.support.test.uiautomator.v18"/>

@@ -28,6 +28,7 @@ android {
         flavor1 { dimension "dim" }
         flavor2 { dimension "dim" }
     }
+    namespace "com.example.android.testing.blueprint.androidfeaturemodule"
 }
 
 dependencies {

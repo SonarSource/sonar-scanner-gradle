@@ -69,6 +69,7 @@ android {
         }
     }
     dynamicFeatures = [':module_android_feature']
+    namespace "com.example.android.testing.blueprint"
 }
 
 dependencies {

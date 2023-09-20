@@ -66,6 +66,7 @@ android {
             events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
         }
     }
+    namespace "com.example.android.testing.blueprint"
 }
 
 dependencies {
