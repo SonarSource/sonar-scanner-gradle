@@ -865,13 +865,15 @@ class SonarQubePluginTest extends Specification {
     parent.pluginManager.apply(SonarQubePlugin)
     def props = parent.tasks.sonar.properties.get()
     when:
-    def parentSources = props["sonar.sources"]
+    def parentSources = props["sonar.sources"].split(",")
     def module1Sources = props[":module1.sonar.sources"]
     def module2Sources = props[":module2.sonar.sources"]
     then:
-    assert normalizePathArray(parentSources.split(",")).contains(normalizePathString("src/test/projects/java-multi-module/build.gradle.kts"))
-    assert normalizePathArray(parentSources.split(",")).contains(normalizePathString("src/test/projects/java-multi-module/module1/build.gradle.kts"))
-    assert normalizePathArray(parentSources.split(",")).contains(normalizePathString("src/test/projects/java-multi-module/module2/build.gradle.kts"))
+    assert parentSources.size() == 4
+    assert normalizePathArray(parentSources).contains(normalizePathString("src/test/projects/java-multi-module/build.gradle.kts"))
+    assert normalizePathArray(parentSources).contains(normalizePathString("src/test/projects/java-multi-module/settings.gradle.kts"))
+    assert normalizePathArray(parentSources).contains(normalizePathString("src/test/projects/java-multi-module/module1/build.gradle.kts"))
+    assert normalizePathArray(parentSources).contains(normalizePathString("src/test/projects/java-multi-module/module2/build.gradle.kts"))
     assert module1Sources.length() == 0
     assert module2Sources.length() == 0
   }

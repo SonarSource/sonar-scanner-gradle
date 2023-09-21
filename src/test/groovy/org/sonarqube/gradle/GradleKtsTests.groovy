@@ -186,11 +186,16 @@ class GradleKtsTests extends Specification {
         props.load(outFile.newDataInputStream())
 
         then:
-        props[":subproject.sonar.sources"] == ""
+        def subProjectSonarSources = props[":subproject.sonar.sources"]
+        Assertions.assertThat(subProjectSonarSources).isEmpty()
 
         def sonarSources = props["sonar.sources"].split(",")
         Assertions.assertThat(sonarSources)
-            .containsExactlyInAnyOrder(settingsFile.toRealPath().toString(), buildFile.toRealPath().toString(), subProjectBuildFile.toRealPath().toString())
+            .containsExactlyInAnyOrder(
+              settingsFile.toRealPath().toString(),
+              buildFile.toRealPath().toString(),
+              subProjectBuildFile.toRealPath().toString()
+            )
 
     }
 
