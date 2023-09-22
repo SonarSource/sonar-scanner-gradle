@@ -811,6 +811,47 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.kotlin.gradleProjectRoot"] == rootProject.projectDir as String
   }
 
+  def "Add implicit compile dependencies by default"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    rootProject.pluginManager.apply(JavaPlugin)
+
+    when:
+    rootProject.pluginManager.apply(SonarQubePlugin)
+
+    then:
+    def sonarTask = rootProject.tasks.sonar
+    sonarTask.getDependsOn().size() == 2
+    sonarTask.getMustRunAfter().getDependencies(sonarTask).size() == 1
+  }
+
+  def "Do not add implicit compile dependencies if 'sonar.skipCompile' property is true"() {
+    System.setProperty("sonar.skipCompile", "true")
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    rootProject.pluginManager.apply(JavaPlugin)
+
+    when:
+    rootProject.pluginManager.apply(SonarQubePlugin)
+
+    then:
+    def sonarTask = rootProject.tasks.sonar
+    sonarTask.getDependsOn().size() == 0
+    sonarTask.getMustRunAfter().getDependencies(sonarTask).size() == 3
+  }
+
+  def "Add implicit compile dependencies if 'sonar.skipCompile' property is false"() {
+    System.setProperty("sonar.skipCompile", "false")
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    rootProject.pluginManager.apply(JavaPlugin)
+
+    when:
+    rootProject.pluginManager.apply(SonarQubePlugin)
+
+    then:
+    def sonarTask = rootProject.tasks.sonar
+    sonarTask.getDependsOn().size() == 2
+    sonarTask.getMustRunAfter().getDependencies(sonarTask).size() == 1
+  }
+
   private void setupKotlinMultiplatformExtension(Project project) {
     def jvMainSourceSet = mockKotlinSourceSet("jvmMain", Set.of(new File(JVM_SOURCE_FILE_JAVA), new File(JVM_SOURCE_FILE_KOTLIN)))
     def jsMainSourceSet = mockKotlinSourceSet("jsMain", Set.of(new File(JVM_SOURCE_FILE_JS)))
