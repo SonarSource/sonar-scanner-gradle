@@ -21,6 +21,7 @@ package org.sonarqube.gradle
 
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.logging.LogLevel
@@ -809,6 +810,63 @@ class SonarQubePluginTest extends Specification {
 
     then:
     properties["sonar.kotlin.gradleProjectRoot"] == rootProject.projectDir as String
+  }
+
+  def "Add implicit compile dependencies by default"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    rootProject.pluginManager.apply(JavaPlugin)
+
+    when:
+    rootProject.pluginManager.apply(SonarQubePlugin)
+
+    then:
+    def sonarTask = rootProject.tasks.sonar
+    dependsOnTasks(sonarTask).size() == 2
+    dependsOnTasks(sonarTask).containsAll(["compileJava", "compileTestJava"])
+    mustRunAfterTasks(sonarTask) == ["test"]
+  }
+
+  def "Do not add implicit compile dependencies if 'sonar.skipCompile' property is true"() {
+    System.setProperty("sonar.skipCompile", "true")
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    rootProject.pluginManager.apply(JavaPlugin)
+
+    when:
+    rootProject.pluginManager.apply(SonarQubePlugin)
+
+    then:
+    def sonarTask = rootProject.tasks.sonar
+
+    dependsOnTasks(sonarTask) == []
+    mustRunAfterTasks(sonarTask).size() == 3
+    mustRunAfterTasks(sonarTask).containsAll(["test", "compileJava", "compileTestJava"])
+  }
+
+  def "Add implicit compile dependencies if 'sonar.skipCompile' property is false"() {
+    System.setProperty("sonar.skipCompile", "false")
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    rootProject.pluginManager.apply(JavaPlugin)
+
+    when:
+    rootProject.pluginManager.apply(SonarQubePlugin)
+
+    then:
+    def sonarTask = rootProject.tasks.sonar
+    dependsOnTasks(sonarTask).size() == 2
+    dependsOnTasks(sonarTask).containsAll(["compileJava", "compileTestJava"])
+
+    mustRunAfterTasks(sonarTask) == ["test"]
+  }
+
+  private List<String> mustRunAfterTasks(Task sonarTask) {
+    sonarTask.getMustRunAfter().getDependencies(sonarTask)
+            .stream().map(t -> (t as Task).name)
+            .collect(Collectors.toList())
+  }
+  private List<String> dependsOnTasks(Task sonarTask) {
+    sonarTask.getTaskDependencies().getDependencies(sonarTask)
+            .stream().map(t -> (t as Task).name)
+            .collect(Collectors.toList())
   }
 
   private void setupKotlinMultiplatformExtension(Project project) {

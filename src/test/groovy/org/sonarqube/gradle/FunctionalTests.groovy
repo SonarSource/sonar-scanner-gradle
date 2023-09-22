@@ -323,4 +323,72 @@ class FunctionalTests extends Specification {
         props.load(outFile.newDataInputStream())
         props."sonar.java.enablePreview" == "true"
     }
+
+    def "warn if using implicit compilation"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+            plugins {
+                id 'org.sonarqube'
+            }
+            """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":sonar").outcome == SUCCESS
+
+        result.output.contains("The 'sonar' task depends on compile tasks. This behavior is now deprecated and will be removed in version 5.x. To avoid implicit compilation, set property 'sonar.skipCompile' to 'true' and make sure your project is compiled, before analysis has started.")
+    }
+
+    def "do not warn if implicit compilation is disabled"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+            plugins {
+                id 'org.sonarqube'
+            }
+            """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonar', '-Dsonar.skipCompile=true', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":sonar").outcome == SUCCESS
+        !result.output.contains("The 'sonar' task depends on compile tasks. This behavior is now deprecated and will be removed in version 5.x. To avoid implicit compilation, set property 'sonar.skipCompile' to 'true' and make sure your project is compiled, before analysis has started.")
+    }
+
+    def "warn if `sonar.skipCompile` is set to false"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+            plugins {
+                id 'org.sonarqube'
+            }
+            """
+
+        when:
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonar', '-Dsonar.skipCompile=false', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .build()
+
+        then:
+        result.task(":sonar").outcome == SUCCESS
+
+        result.output.contains("The 'sonar' task depends on compile tasks. This behavior is now deprecated and will be removed in version 5.x. To avoid implicit compilation, set property 'sonar.skipCompile' to 'true' and make sure your project is compiled, before analysis has started.")
+    }
 }
