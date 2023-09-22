@@ -483,9 +483,12 @@ public class SonarPropertyComputer {
       .collect(Collectors.toList());
 
     var settingsFile = Path.of(project.getProjectDir().getAbsolutePath(), "settings.gradle.kts").toFile();
-    if (settingsFile.exists() && SonarQubePlugin.notSkipped(project)) buildScripts.add(settingsFile);
-
-    if (!buildScripts.isEmpty()) SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, buildScripts);
+    if (settingsFile.exists()) {
+      buildScripts.add(settingsFile);
+    }
+    if (!buildScripts.isEmpty()) {
+      SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, buildScripts);
+    }
   }
 
   private String computeProjectKey() {
