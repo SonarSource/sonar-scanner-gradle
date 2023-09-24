@@ -82,7 +82,7 @@ By default, Integration Tests are skipped during the build. To run them, you nee
 * Set `ANDROID_HOME` environment variable
 * Run the following command from the `integrationTests` project:
     ```
-    mvn clean install
+    mvn --errors --batch-mode clean verify
     ```
 
 ### Install a SNAPSHOT in the local Maven repository

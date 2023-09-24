@@ -19,9 +19,9 @@ mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=$NEW_VERSION -D
 
 # Execute ITs
 if [ -v ANDROID_GRADLE_VERSION ]; then
-  mvn -e -B clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=$ANDROID_GRADLE_VERSION
+  mvn --errors --batch-mode clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=$ANDROID_GRADLE_VERSION
 else
-  mvn -e -B clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=NOT_AVAILABLE
+  mvn --errors --batch-mode clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=NOT_AVAILABLE
 fi
 
 
