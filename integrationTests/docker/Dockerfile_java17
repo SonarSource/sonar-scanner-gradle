@@ -9,8 +9,9 @@ ENV SDK_TOOLS=commandlinetools-linux-8092744_latest.zip
 
 #Installing android sdk
 RUN echo "Installing android-sdk" \
-  && mkdir --parent /opt/android-sdk-linux/{add-ons,platforms,platform-tools,temp} \
+  && mkdir -p /opt/android-sdk-linux/ \
   && cd /opt/android-sdk-linux \
+  && mkdir add-ons platforms platform-tools temp \
   && curl --remote-name https://dl.google.com/android/repository/$SDK_TOOLS \
   && unzip $SDK_TOOLS \
   && rm $SDK_TOOLS
