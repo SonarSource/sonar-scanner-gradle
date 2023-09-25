@@ -28,6 +28,9 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.initialization.GradlePropertiesController
 import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils
 import org.gradle.testfixtures.ProjectBuilder
@@ -947,23 +950,30 @@ class SonarQubePluginTest extends Specification {
   }
 
   def "avoid nested paths inside sonar.sources"() {
-    def project = ProjectBuilder.builder().withName("root").withProjectDir(new File("src/test/projects/java-nested-sources")).build()
-
+    def dir = new File("src/test/projects/java-nested-sources")
+    def project = ProjectBuilder.builder()
+      .withName("java-nested-sources")
+      .withProjectDir(dir)
+      .build()
     project.pluginManager.apply(JavaPlugin)
+
+    JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class)
+    SourceSetContainer sourceSets = javaExtension.getSourceSets();
+    SourceSet mainSourceSet = sourceSets.getByName("main");
+    mainSourceSet.getJava().srcDir("src/main/java/pck");
+    mainSourceSet.getJava().srcDir("src/main/java/pck2");
     project.pluginManager.apply(SonarQubePlugin)
 
     when:
     def properties = project.tasks.sonar.properties.get()
+    def sources = properties["sonar.sources"].split(",")
+    def srcMainJavaPath = normalizePathString((dir as String) + "/src/main/java")
+    def buildFilePath = normalizePathString((dir as String) + "/build.gradle.kts")
 
     then:
-    def pck1 = new File(project.projectDir, "src/main/java/pck") as String
-//    print pck1
-//    print "\n==============\n"
-//    for (p in properties["sonar.sources"].split(",")){
-//      print p
-//      print "\n"
-//    }
-    assert pck1 in properties["sonar.sources"]
+    assert sources.size() == 2
+    assert normalizePathArray(sources).contains(buildFilePath)
+    assert normalizePathArray(sources).contains(srcMainJavaPath)
 
   }
 

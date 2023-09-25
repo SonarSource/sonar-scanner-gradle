@@ -235,12 +235,12 @@ public class SonarPropertyComputer {
   private static void configureForKotlin(Project project, Map<String, Object> properties, Object kotlinProjectExtension) {
     Collection<File> sourceDirectories = getKotlinSourceFiles(kotlinProjectExtension, MAIN_SOURCE_SET_SUFFIX);
     if (sourceDirectories != null) {
-      SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, sourceDirectories);
+      SonarUtils.appendSourcesProp(properties, sourceDirectories, false);
     }
 
     Collection<File> testDirectories = getKotlinSourceFiles(kotlinProjectExtension, TEST_SOURCE_SET_SUFFIX);
     if (testDirectories != null) {
-      SonarUtils.appendProps(properties, SONAR_TESTS_PROP, testDirectories);
+      SonarUtils.appendSourcesProp(properties, testDirectories, true);
     }
 
     if (sourceDirectories != null || testDirectories != null) {
@@ -322,13 +322,13 @@ public class SonarPropertyComputer {
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
     Collection<File> sourceDirectories = getJavaSourceFiles(main);
     if (sourceDirectories != null) {
-      SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, sourceDirectories);
+      SonarUtils.appendSourcesProp(properties, sourceDirectories, false);
     }
 
     SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
     Collection<File> testDirectories = getJavaSourceFiles(test);
     if (testDirectories != null) {
-      SonarUtils.appendProps(properties, SONAR_TESTS_PROP, testDirectories);
+      SonarUtils.appendSourcesProp(properties, testDirectories, true);
     }
 
     if (sourceDirectories != null || testDirectories != null) {
@@ -487,7 +487,7 @@ public class SonarPropertyComputer {
       buildScripts.add(settingsFile);
     }
     if (!buildScripts.isEmpty()) {
-      SonarUtils.appendProps(properties, SONAR_SOURCES_PROP, buildScripts);
+      SonarUtils.appendSourcesProp(properties, buildScripts, false);
     }
   }
 

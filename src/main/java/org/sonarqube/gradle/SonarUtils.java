@@ -125,6 +125,24 @@ public class SonarUtils {
       .forEach(((Collection<Object>) properties.get(key))::add);
   }
 
+  static void appendSourcesProp(Map<String, Object> properties, Iterable<File> filesToAppend, boolean testSources) {
+    List<File> filteredList = filterOutSubFiles(filesToAppend);
+    appendProps(properties, testSources ? SonarPropertyComputer.SONAR_TESTS_PROP : SonarPropertyComputer.SONAR_SOURCES_PROP, filteredList);
+  }
+
+  static List<File> filterOutSubFiles(Iterable<File> files) {
+    return StreamSupport.stream(files.spliterator(), false)
+      .filter(file -> {
+        for (File other : files) {
+          if (!file.equals(other) && file.getAbsolutePath().startsWith(other.getAbsolutePath())) {
+            return false;
+          }
+        }
+        return true;
+      })
+      .collect(Collectors.toList());
+  }
+
   static void appendProp(Map<String, Object> properties, String key, Object valueToAppend) {
     properties.putIfAbsent(key, new LinkedHashSet<String>());
     ((Collection<Object>) properties.get(key)).add(valueToAppend);
