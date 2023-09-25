@@ -733,6 +733,7 @@ class SonarQubePluginTest extends Specification {
   }
 
   def JVM_SOURCE_FILE_JAVA = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jvmMain/java/me/user/application/Sample.java")
+  def JVM_SOURCE_FILE_JAVA_TEST = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jvmTest/java/me/user/application/SampleTest.java")
   def JVM_SOURCE_FILE_KOTLIN = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jvmMain/kotlin/me.user.application/Sample.kt")
   def JVM_SOURCE_FILE_JS = normalizePathString("src/test/projects/kotlin-multiplatform-project/src/jsMain/kotlin/Sample.js")
 
@@ -753,6 +754,9 @@ class SonarQubePluginTest extends Specification {
     def sonarSources = properties["sonar.sources"].split(",")
     assertThat(normalizePathArray(sonarSources))
       .containsExactlyInAnyOrder(JVM_SOURCE_FILE_KOTLIN, JVM_SOURCE_FILE_JAVA, JVM_SOURCE_FILE_JS)
+    def sonarTestSources = properties["sonar.tests"].split(",")
+    assertThat(normalizePathArray(sonarTestSources))
+      .containsExactlyInAnyOrder(JVM_SOURCE_FILE_JAVA_TEST)
 
     properties["sonar.java.binaries"] == null
     properties["sonar.java.libraries"] == null
@@ -874,11 +878,12 @@ class SonarQubePluginTest extends Specification {
 
   private void setupKotlinMultiplatformExtension(Project project) {
     def jvMainSourceSet = mockKotlinSourceSet("jvmMain", Set.of(new File(JVM_SOURCE_FILE_JAVA), new File(JVM_SOURCE_FILE_KOTLIN)))
+    def jvTestSourceSet = mockKotlinSourceSet("jvmTest", Set.of(new File(JVM_SOURCE_FILE_JAVA_TEST)))
     def jsMainSourceSet = mockKotlinSourceSet("jsMain", Set.of(new File(JVM_SOURCE_FILE_JS)))
 
     def kotlinSourceSetContainer = mock(NamedDomainObjectContainer<KotlinSourceSet>.class)
     // return a new stream on each invocation
-    when(kotlinSourceSetContainer.stream()).then(invocation -> Arrays.stream(jvMainSourceSet, jsMainSourceSet))
+    when(kotlinSourceSetContainer.stream()).then(invocation -> Arrays.stream(jvMainSourceSet, jvTestSourceSet, jsMainSourceSet))
 
     def multiplatformExtension = mock(KotlinMultiplatformExtension.class)
     when(multiplatformExtension.getSourceSets()).thenReturn(kotlinSourceSetContainer)
