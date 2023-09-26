@@ -60,14 +60,13 @@ class AndroidUtilsTest {
   private ProductFlavor flavor;
   private AppExtension appExtension;
   private BaseVariant baseVariant;
-  private PluginContainer pluginContainer;
 
   @BeforeEach
   public void setup() {
     project = mock(Project.class);
     ExtensionContainer extensionsContainer = mock(ExtensionContainer.class);
     appExtension = mock(AppExtension.class);
-    pluginContainer = mock(PluginContainer.class);
+    PluginContainer pluginContainer = mock(PluginContainer.class);
     PluginCollection<AppPlugin> pluginCollection = mock(PluginCollection.class);
     baseVariant = mock(BaseVariant.class);
     BaseVariant[] baseVariants = {baseVariant};
@@ -124,38 +123,22 @@ class AndroidUtilsTest {
     when(baseVariant.getMergedFlavor()).thenReturn(mergedFlavor);
     when(baseVariant.getName()).thenReturn("myVariant");
 
+    // Set up a sourceSet with a file to test the presence of sonar.sources
+    SourceProvider javaSource = mock(SourceProvider.class);
+    File file = mock(File.class);
+    when(file.exists()).thenReturn(true);
+    when(file.getAbsolutePath()).thenReturn("src/main/java/manifest.xml");
+    when(javaSource.getManifestFile()).thenReturn(file);
+    when(baseVariant.getSourceSets()).thenReturn(List.of(javaSource));
+
     Map<String, Object> resultProperties = new HashMap<>();
     AndroidUtils.configureForAndroid(project, "myVariant", resultProperties);
 
     assertEquals(true, resultProperties.get("sonar.android.detected"));
     assertEquals(30, resultProperties.get("sonar.android.minsdkversion.min"));
     assertEquals(30, resultProperties.get("sonar.android.minsdkversion.max"));
-  }
-
-  @Test
-  void configureForAndroid_presenceOfSourceFiles() {
-    com.android.builder.model.ProductFlavor mergedFlavor = mock(com.android.builder.model.ProductFlavor.class);
-    ApiVersion apiVersion = mock(ApiVersion.class);
-    when(mergedFlavor.getMinSdkVersion()).thenReturn(apiVersion);
-    when(apiVersion.getApiLevel()).thenReturn(30);
-    when(baseVariant.getMergedFlavor()).thenReturn(mergedFlavor);
-    when(baseVariant.getName()).thenReturn("myVariant");
-    when(pluginContainer.hasPlugin("com.android.test")).thenReturn(true);
-
-    List<SourceProvider> sourceSets = new ArrayList<>();
-    SourceProvider javaSource = mock(SourceProvider.class);
-    File file = mock(File.class);
-    when(file.exists()).thenReturn(true);
-    when(file.getAbsolutePath()).thenReturn("src/main/java/manifest.xml");
-    when(javaSource.getManifestFile()).thenReturn(file);
-    sourceSets.add(javaSource);
-    when(baseVariant.getSourceSets()).thenReturn(sourceSets);
-
-    Map<String, Object> resultProperties = new HashMap<>();
-    AndroidUtils.configureForAndroid(project, "myVariant", resultProperties);
-    Set<File> sources = (Set<File>) resultProperties.get("sonar.tests");
+    Set<File> sources = (Set<File>) resultProperties.get("sonar.sources");
     assertTrue(sources.contains(file));
-
   }
 
 }
