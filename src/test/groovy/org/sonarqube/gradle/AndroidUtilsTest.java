@@ -138,6 +138,7 @@ class AndroidUtilsTest {
     assertEquals(30, resultProperties.get("sonar.android.minsdkversion.min"));
     assertEquals(30, resultProperties.get("sonar.android.minsdkversion.max"));
     Set<File> sources = (Set<File>) resultProperties.get("sonar.sources");
+    assertEquals(1, sources.size());
     assertTrue(sources.contains(file));
   }
 
