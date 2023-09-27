@@ -28,10 +28,13 @@ import com.android.build.gradle.internal.dsl.ProductFlavor;
 import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.builder.model.ApiVersion;
 import com.android.builder.model.BuildType;
+import com.android.builder.model.SourceProvider;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.gradle.api.DomainObjectSet;
 import org.gradle.api.NamedDomainObjectContainer;
@@ -47,7 +50,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -120,12 +123,23 @@ class AndroidUtilsTest {
     when(baseVariant.getMergedFlavor()).thenReturn(mergedFlavor);
     when(baseVariant.getName()).thenReturn("myVariant");
 
+    // Set up a sourceSet with a file to test the presence of sonar.sources
+    SourceProvider javaSource = mock(SourceProvider.class);
+    File file = mock(File.class);
+    when(file.exists()).thenReturn(true);
+    when(file.getAbsolutePath()).thenReturn("src/main/java/manifest.xml");
+    when(javaSource.getManifestFile()).thenReturn(file);
+    when(baseVariant.getSourceSets()).thenReturn(List.of(javaSource));
+
     Map<String, Object> resultProperties = new HashMap<>();
     AndroidUtils.configureForAndroid(project, "myVariant", resultProperties);
 
     assertEquals(true, resultProperties.get("sonar.android.detected"));
     assertEquals(30, resultProperties.get("sonar.android.minsdkversion.min"));
     assertEquals(30, resultProperties.get("sonar.android.minsdkversion.max"));
+    Set<File> sources = (Set<File>) resultProperties.get("sonar.sources");
+    assertEquals(1, sources.size());
+    assertTrue(sources.contains(file));
   }
 
 }

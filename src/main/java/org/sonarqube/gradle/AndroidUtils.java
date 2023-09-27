@@ -66,9 +66,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
-import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_SOURCES_PROP;
-import static org.sonarqube.gradle.SonarPropertyComputer.SONAR_TESTS_PROP;
-import static org.sonarqube.gradle.SonarUtils.appendProps;
+import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
 import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
 import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
@@ -329,7 +327,7 @@ class AndroidUtils {
       ArrayList::addAll);
     List<File> sourcesOrTests = nonEmptyOrNull(srcDirs.stream().filter(File::exists).collect(Collectors.toList()));
     if (sourcesOrTests != null) {
-      appendProps(properties, isTest ? SONAR_TESTS_PROP : SONAR_SOURCES_PROP, sourcesOrTests);
+      appendSourcesProp(properties, sourcesOrTests, isTest);
     }
 
     JavaCompile javaCompile = getJavaCompiler(variant);
