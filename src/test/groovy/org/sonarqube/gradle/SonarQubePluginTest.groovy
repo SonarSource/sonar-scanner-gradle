@@ -833,8 +833,8 @@ class SonarQubePluginTest extends Specification {
     mustRunAfterTasks(sonarTask) == ["test"]
   }
 
-  def "Do not add implicit compile dependencies if 'sonar.skipCompile' property is true"() {
-    System.setProperty("sonar.skipCompile", "true")
+  def "Do not add implicit compile dependencies if 'sonar.gradle.skipCompile' property is true"() {
+    System.setProperty("sonar.gradle.skipCompile", "true")
     def rootProject = ProjectBuilder.builder().withName("root").build()
     rootProject.pluginManager.apply(JavaPlugin)
 
@@ -849,8 +849,8 @@ class SonarQubePluginTest extends Specification {
     mustRunAfterTasks(sonarTask).containsAll(["test", "compileJava", "compileTestJava"])
   }
 
-  def "Add implicit compile dependencies if 'sonar.skipCompile' property is false"() {
-    System.setProperty("sonar.skipCompile", "false")
+  def "Add implicit compile dependencies if 'sonar.gradle.skipCompile' property is false"() {
+    System.setProperty("sonar.gradle.skipCompile", "false")
     def rootProject = ProjectBuilder.builder().withName("root").build()
     rootProject.pluginManager.apply(JavaPlugin)
 

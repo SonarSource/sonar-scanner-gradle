@@ -110,7 +110,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       sonarTask.setProperties(conventionProvider);
     }
 
-    boolean skipImplicitCompilation = Boolean.getBoolean("sonar.skipCompile");
+    boolean skipImplicitCompilation = Boolean.getBoolean("sonar.gradle.skipCompile");
 
     if (skipImplicitCompilation) {
       sonarTask.mustRunAfter(getJavaCompileTasks(project));
@@ -118,7 +118,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     } else {
       LOGGER.warn(
               "The '{}' task depends on compile tasks. This behavior is now deprecated and will be removed in version 5.x. " +
-                      "To avoid implicit compilation, set property 'sonar.skipCompile' to 'true' " +
+                      "To avoid implicit compilation, set property 'sonar.gradle.skipCompile' to 'true' " +
                       "and make sure your project is compiled, before analysis has started.",
               sonarTask.getName()
       );
