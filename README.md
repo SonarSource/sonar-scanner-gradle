@@ -3,13 +3,18 @@ SonarScanner for Gradle
 
 [![Build Status](https://api.cirrus-ci.com/github/SonarSource/sonar-scanner-gradle.svg)](https://cirrus-ci.com/github/SonarSource/sonar-scanner-gradle) [![Quality Gate](https://next.sonarqube.com/sonarqube/api/project_badges/measure?project=org.sonarsource.scanner.gradle%3Asonarqube-gradle-plugin&metric=alert_status)](https://next.sonarqube.com/sonarqube/dashboard?id=org.sonarsource.scanner.gradle%3Asonarqube-gradle-plugin)
 
+About Sonar
+-----------
+
+Sonar's [Clean Code solutions](https://www.sonarsource.com/solutions/clean-code/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-scanner-cli-docker) help developers deliver high-quality, efficient code standards that benefit the entire team or organization.
+
 User documentation
 ------------------
 
 https://redirect.sonarsource.com/doc/gradle.html
 
-Have Question or Feedback?
---------------------------
+Have Questions or Feedback?
+---------------------------
 
 For support questions ("How do I?", "I got this error, why?", ...), please head to the [SonarSource forum](https://community.sonarsource.com/c/help). There are chances that a question similar to yours has already been answered. 
 
@@ -38,7 +43,7 @@ To build the plugin and run the tests, you will need Java 11.
 ```
 
 ### How the plugin works
-When the plugin is applied to a project, it will add to that project the Sonar task. It will also add to the project and all it's subprojects the Sonar extension.
+When the plugin is applied to a project, it will add to that project the Sonar task. It will also add to the project and all its subprojects the Sonar extension.
 For multi-module projects, the plugin will only apply to the first project where it gets called. The goal is to allow the usage of `allprojects {}`, for example.
 
 **Sonar extension**
@@ -51,7 +56,7 @@ If all projects are skipped (by adding `skipProject=true` to the sonar DSL), the
 
 
 ### Using the plugin directly in a project (no need to build/install it in advance)
-A composite build can be used to substitute plugins by an included build.
+A composite build can be used to substitute plugins with an included build.
 
 In the target project, apply the `sonarqube` plugin:
 ```
