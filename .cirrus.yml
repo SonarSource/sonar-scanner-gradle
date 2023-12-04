@@ -121,12 +121,12 @@ mend_scan_task:
     ws_scan_artifacts:
       path: "whitesource/**/*"
 
-gradle_qa_java11_task:
+gradle_qa_task:
   depends_on:
     - build
   <<: *ONLY_SONARSOURCE_QA
   eks_container:
-    <<: *CONTAINER_DEFINITION_11
+    <<: *CONTAINER_DEFINITION_17
     cpu: 2
     memory: 2G
   env:
@@ -137,23 +137,6 @@ gradle_qa_java11_task:
         ANDROID_GRADLE_VERSION: 4.2.0
       - GRADLE_VERSION: 5.6.4
         ANDROID_GRADLE_VERSION: 3.5.4
-  gradle_cache:
-    folder: ~/.gradle/caches
-  script:
-    - ./cirrus/cirrus-qa.sh
-  cleanup_before_cache_script:
-    - ./cirrus/cleanup-gradle-cache.sh
-
-gradle_qa_java17_task:
-  depends_on:
-    - build
-  <<: *ONLY_SONARSOURCE_QA
-  eks_container:
-    <<: *CONTAINER_DEFINITION_17
-    cpu: 2
-    memory: 2G
-  env:
-    matrix:
       - GRADLE_VERSION: 8.2.1
         ANDROID_GRADLE_VERSION: 8.1.1
       - GRADLE_VERSION: 7.4.1
@@ -169,8 +152,7 @@ gradle_qa_java17_task:
 promote_task:
   depends_on:
     - build
-    - gradle_qa_java11
-    - gradle_qa_java17
+    - gradle_qa
   <<: *ONLY_SONARSOURCE_QA
   eks_container:
     <<: *CONTAINER_DEFINITION
