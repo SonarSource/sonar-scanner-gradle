@@ -37,18 +37,6 @@ container_definition: &CONTAINER_DEFINITION
   region: eu-central-1
   namespace: default
 
-container_definition_11: &CONTAINER_DEFINITION_11
-  dockerfile: integrationTests/docker/Dockerfile_java11
-  docker_arguments:
-    CIRRUS_AWS_ACCOUNT: ${CIRRUS_AWS_ACCOUNT}
-  cluster_name: ${CIRRUS_CLUSTER_NAME}
-  builder_role: cirrus-builder
-  builder_image: docker-builder-v*
-  builder_instance_type: t2.small
-  builder_subnet_id: ${CIRRUS_AWS_SUBNET}
-  region: eu-central-1
-  namespace: default
-
 container_definition_17: &CONTAINER_DEFINITION_17
   dockerfile: integrationTests/docker/Dockerfile_java17
   docker_arguments:
@@ -72,7 +60,7 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 
 build_task:
   eks_container:
-    <<: *CONTAINER_DEFINITION_11
+    <<: *CONTAINER_DEFINITION_17
     cpu: 1.5
     memory: 4G
   env:
@@ -175,7 +163,7 @@ release_to_plugin_portal_task:
   depends_on:
     - promote
   eks_container:
-    <<: *CONTAINER_DEFINITION_11
+    <<: *CONTAINER_DEFINITION_17
     cpu: 1.5
     memory: 4G
   gradle_cache:
