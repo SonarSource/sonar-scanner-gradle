@@ -37,18 +37,6 @@ container_definition: &CONTAINER_DEFINITION
   region: eu-central-1
   namespace: default
 
-container_definition_11: &CONTAINER_DEFINITION_11
-  dockerfile: integrationTests/docker/Dockerfile_java11
-  docker_arguments:
-    CIRRUS_AWS_ACCOUNT: ${CIRRUS_AWS_ACCOUNT}
-  cluster_name: ${CIRRUS_CLUSTER_NAME}
-  builder_role: cirrus-builder
-  builder_image: docker-builder-v*
-  builder_instance_type: t2.small
-  builder_subnet_id: ${CIRRUS_AWS_SUBNET}
-  region: eu-central-1
-  namespace: default
-
 container_definition_17: &CONTAINER_DEFINITION_17
   dockerfile: integrationTests/docker/Dockerfile_java17
   docker_arguments:
@@ -72,7 +60,7 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 
 build_task:
   eks_container:
-    <<: *CONTAINER_DEFINITION_11
+    <<: *CONTAINER_DEFINITION_17
     cpu: 1.5
     memory: 4G
   env:
@@ -121,30 +109,7 @@ mend_scan_task:
     ws_scan_artifacts:
       path: "whitesource/**/*"
 
-gradle_qa_java11_task:
-  depends_on:
-    - build
-  <<: *ONLY_SONARSOURCE_QA
-  eks_container:
-    <<: *CONTAINER_DEFINITION_11
-    cpu: 2
-    memory: 2G
-  env:
-    matrix:
-      - GRADLE_VERSION: 7.5.1
-        ANDROID_GRADLE_VERSION: 7.1.0
-      - GRADLE_VERSION: 6.8.3
-        ANDROID_GRADLE_VERSION: 4.2.0
-      - GRADLE_VERSION: 5.6.4
-        ANDROID_GRADLE_VERSION: 3.5.4
-  gradle_cache:
-    folder: ~/.gradle/caches
-  script:
-    - ./cirrus/cirrus-qa.sh
-  cleanup_before_cache_script:
-    - ./cirrus/cleanup-gradle-cache.sh
-
-gradle_qa_java17_task:
+gradle_qa_task:
   depends_on:
     - build
   <<: *ONLY_SONARSOURCE_QA
@@ -154,10 +119,16 @@ gradle_qa_java17_task:
     memory: 2G
   env:
     matrix:
+      - GRADLE_VERSION: 7.5.1
+        ANDROID_GRADLE_VERSION: 7.1.0
       - GRADLE_VERSION: 8.2.1
         ANDROID_GRADLE_VERSION: 8.1.1
       - GRADLE_VERSION: 7.4.1
         ANDROID_GRADLE_VERSION: 7.1.0
+      - GRADLE_VERSION: 7.4.1
+        ANDROID_GRADLE_VERSION: 4.2.0
+      - GRADLE_VERSION: 7.4.1
+        ANDROID_GRADLE_VERSION: 3.5.4
       - GRADLE_VERSION: 8.0
   gradle_cache:
     folder: ~/.gradle/caches
@@ -169,8 +140,7 @@ gradle_qa_java17_task:
 promote_task:
   depends_on:
     - build
-    - gradle_qa_java11
-    - gradle_qa_java17
+    - gradle_qa
   <<: *ONLY_SONARSOURCE_QA
   eks_container:
     <<: *CONTAINER_DEFINITION
@@ -193,7 +163,7 @@ release_to_plugin_portal_task:
   depends_on:
     - promote
   eks_container:
-    <<: *CONTAINER_DEFINITION_11
+    <<: *CONTAINER_DEFINITION_17
     cpu: 1.5
     memory: 4G
   gradle_cache:

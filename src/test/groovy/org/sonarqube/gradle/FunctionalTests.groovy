@@ -31,6 +31,8 @@ import java.nio.file.StandardCopyOption
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class FunctionalTests extends Specification {
+    String gradleVersion = "7.6.2"
+
     @TempDir
     Path testProjectDir
     Path settingsFile
@@ -89,7 +91,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion("6.7.1")
+                .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
                 .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
@@ -123,7 +125,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion("6.7.1")
+                .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
                 .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
@@ -153,7 +155,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion("6.7.1")
+                .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
                 .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
@@ -178,7 +180,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion("6.7.1")
+                .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
                 .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
@@ -207,7 +209,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion("6.7.1")
+                .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
                 .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
@@ -243,7 +245,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion("6.6")
+                .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
                 .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
@@ -278,7 +280,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-          .withGradleVersion("6.6")
+          .withGradleVersion(gradleVersion)
           .withProjectDir(testProjectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
@@ -310,7 +312,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-          .withGradleVersion("6.7.1")
+          .withGradleVersion(gradleVersion)
           .withProjectDir(testProjectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
