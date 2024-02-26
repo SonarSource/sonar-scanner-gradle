@@ -99,6 +99,7 @@ mend_scan_task:
     WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+    fingerprint_key: 2024-02-26
   mend_script:
     - source cirrus-env QA
     - ./gradlew clean build -x test
