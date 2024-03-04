@@ -25,8 +25,8 @@ env:
 #
 # RE-USABLE CONFIGS
 #
-container_definition: &CONTAINER_DEFINITION
-  dockerfile: integrationTests/docker/Dockerfile
+container_definition_11: &CONTAINER_DEFINITION_11
+  dockerfile: integrationTests/docker/Dockerfile_java11
   docker_arguments:
     CIRRUS_AWS_ACCOUNT: ${CIRRUS_AWS_ACCOUNT}
   cluster_name: ${CIRRUS_CLUSTER_NAME}
@@ -74,7 +74,7 @@ build_task:
   script:
     - source cirrus-env BUILD
     - source cirrus/define-gradle.sh
-    - regular_gradle_build_deploy_analyze
+    - regular_gradle_build_deploy_analyze -Dsonar.gradle.skipCompile=true
   on_failure:
     reports_artifacts:
       path: "**/build/reports/**/*"
@@ -123,13 +123,30 @@ gradle_qa_task:
         ANDROID_GRADLE_VERSION: 7.1.0
       - GRADLE_VERSION: 8.2.1
         ANDROID_GRADLE_VERSION: 8.1.1
-      - GRADLE_VERSION: 7.4.1
-        ANDROID_GRADLE_VERSION: 7.1.0
-      - GRADLE_VERSION: 7.4.1
-        ANDROID_GRADLE_VERSION: 4.2.0
-      - GRADLE_VERSION: 7.4.1
-        ANDROID_GRADLE_VERSION: 3.5.4
       - GRADLE_VERSION: 8.0
+  gradle_cache:
+    folder: ~/.gradle/caches
+  script:
+    - ./cirrus/cirrus-qa.sh
+  cleanup_before_cache_script:
+    - ./cirrus/cleanup-gradle-cache.sh
+
+gradle_qa_java11_task:
+  depends_on:
+    - build
+  <<: *ONLY_SONARSOURCE_QA
+  eks_container:
+    <<: *CONTAINER_DEFINITION_11
+    cpu: 2
+    memory: 2G
+  env:
+    matrix:
+      - GRADLE_VERSION: 7.5.1
+        ANDROID_GRADLE_VERSION: 7.1.0
+      - GRADLE_VERSION: 6.8.3
+        ANDROID_GRADLE_VERSION: 4.2.0
+      - GRADLE_VERSION: 5.6.4
+        ANDROID_GRADLE_VERSION: 3.5.4
   gradle_cache:
     folder: ~/.gradle/caches
   script:
@@ -141,9 +158,10 @@ promote_task:
   depends_on:
     - build
     - gradle_qa
+    - gradle_qa_java11
   <<: *ONLY_SONARSOURCE_QA
   eks_container:
-    <<: *CONTAINER_DEFINITION
+    <<: *CONTAINER_DEFINITION_17
     cpu: 0.5
     memory: 500M
   env:
