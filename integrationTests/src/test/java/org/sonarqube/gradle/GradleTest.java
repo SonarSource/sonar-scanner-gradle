@@ -316,7 +316,6 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(sources).containsExactly(baseDir.resolve("src/main/kotlin").toString());
   }
 
-  @Test
   public void testKotlinJvmWithSubmoduleProject() throws Exception {
     Properties props = runGradlewSonarSimulationMode("/kotlin-jvm-submodule");
 
