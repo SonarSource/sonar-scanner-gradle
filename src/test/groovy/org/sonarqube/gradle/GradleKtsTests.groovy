@@ -199,6 +199,27 @@ class GradleKtsTests extends Specification {
 
     }
 
+    def "don't add .gradle.kts files if sources are overridden"() {
+        given:
+        addBuildKtsWithCustomSources()
+        addSettingsKts()
+
+        when:
+        GradleRunner.create()
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .build()
+
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+
+        then:
+        props["sonar.sources"] == "src/main/custom"
+
+    }
+
     private def addSettings() {
         settingsFile = testProjectDir.resolve('settings.gradle')
         settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -226,6 +247,22 @@ class GradleKtsTests extends Specification {
                      plugins {
                          java
                          id("org.sonarqube")
+                     }
+                     """
+    }
+
+    private def addBuildKtsWithCustomSources() {
+        buildFile = testProjectDir.resolve('build.gradle.kts')
+        buildFile << """
+                     plugins {
+                         java
+                         id("org.sonarqube")
+                     }
+                     
+                     sonar {
+                         properties {
+                             property("sonar.sources", "src/main/custom")
+                         }
                      }
                      """
     }
