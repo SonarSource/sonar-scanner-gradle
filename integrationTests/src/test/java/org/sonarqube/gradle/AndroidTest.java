@@ -21,8 +21,11 @@ package org.sonarqube.gradle;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.stream.Stream;
+
 import org.junit.Test;
 import org.junit.BeforeClass;
 
@@ -43,7 +46,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testUsingDefaultVariant() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-default-variant", emptyMap(), "test");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-default-variant", emptyMap(), "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -57,6 +60,7 @@ public class AndroidTest extends AbstractGradleIT {
 
     assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
       .isEqualTo(baseDir.resolve("build/intermediates/javac/demoMinApi23Debug/classes"));
+
     // For Android Gradle Plugin version 8 and greater, the debugAndroidTest artifacts are no longer present in the same folder
     if (getAndroidGradleVersion().isGreaterThanOrEqualTo("8.0.0")) {
       assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
@@ -83,7 +87,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testAndroidDynamicFeature() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/android-gradle-dynamic-feature");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-dynamic-feature", emptyMap(), "test", "compileDebugAndroidTestJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -105,7 +109,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(stream(props.getProperty(":app.sonar.java.test.binaries").split(",")).map(Paths::get))
       .containsOnly(
         baseDir.resolve("app/build/intermediates/javac/debugUnitTest/classes"),
-        baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/classes"));
+        baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/classes")
+      );
 
     assertThat(props.getProperty(":app.sonar.java.libraries")).contains("android.jar");
     assertThat(props.getProperty(":app.sonar.java.libraries")).doesNotContain("junit-4.12.jar");
@@ -124,7 +129,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(stream(props.getProperty(":mydynamicfeature.sonar.java.test.binaries").split(",")).map(Paths::get))
       .containsOnly(
         baseDir.resolve("mydynamicfeature/build/intermediates/javac/debugUnitTest/classes"),
-        baseDir.resolve("mydynamicfeature/build/intermediates/javac/debugAndroidTest/classes"));
+        baseDir.resolve("mydynamicfeature/build/intermediates/javac/debugAndroidTest/classes")
+      );
 
     assertThat(props.getProperty(":mydynamicfeature.sonar.java.libraries")).contains("android.jar");
     assertThat(props.getProperty(":mydynamicfeature.sonar.java.libraries")).doesNotContain("junit-4.12.jar");
@@ -159,7 +165,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testMultiModule() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/multi-module-android-studio");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-android-studio", emptyMap(), "test", "compileDebugAndroidTestJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -180,7 +186,8 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(stream(props.getProperty(":app.sonar.java.test.binaries").split(",")).map(Paths::get))
       .containsOnly(
         baseDir.resolve("app/build/intermediates/javac/debugUnitTest/classes"),
-        baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/classes"));
+        baseDir.resolve("app/build/intermediates/javac/debugAndroidTest/classes")
+      );
 
     assertThat(props.getProperty(":app.sonar.java.libraries")).contains("android.jar");
     assertThat(props.getProperty(":app.sonar.java.libraries")).doesNotContain("hamcrest-core-1.3.jar");
@@ -195,7 +202,16 @@ public class AndroidTest extends AbstractGradleIT {
 
     // First flavor that is picked up seems to be the flavor1
 
-    Properties props = runGradlewSonarSimulationMode("/AndroidTestingBlueprintWithDynamicFeatureModule");
+    Properties props = runGradlewSonarSimulationModeWithEnv(
+      "/AndroidTestingBlueprintWithDynamicFeatureModule",
+      emptyMap(),
+      "assembleDebug",
+      "compileFlavor1DebugUnitTestJavaWithJavac",
+      "compileFlavor1DebugAndroidTestJavaWithJavac",
+      "compileDebugAndroidTestJavaWithJavac",
+      "compileDebugUnitTestJavaWithJavac",
+      "compileTestJava"
+    );
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -284,26 +300,30 @@ public class AndroidTest extends AbstractGradleIT {
   }
 
   @Test
-  public void testingBlueprintWithDynamicFeatureModule_task_dependencies() throws Exception {
+  public void testSonarTaskHasNoDependencies() throws Exception {
     // First flavor that is picked up seems to be the flavor1
 
     RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, emptyMap(), "sonar", "--dry-run", "--max-workers=1");
 
-    assertThat(stream(result.getLog().split("\\r?\\n")).sorted()).containsSubsequence(
-      ":app:compileFlavor1DebugAndroidTestJavaWithJavac SKIPPED",
-      ":app:compileFlavor1DebugUnitTestJavaWithJavac SKIPPED",
-      ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
-      ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
-      ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
-      ":module-plain-java:compileTestJava SKIPPED",
-      ":module_android_feature:compileFlavor1DebugJavaWithJavac SKIPPED",
-      ":sonar SKIPPED");
+    Stream<String> logs = stream(result.getLog().split("\\r?\\n")).sorted();
+
+    assertThat(logs)
+      .contains(":sonar SKIPPED")
+      .doesNotContainAnyElementsOf(Arrays.asList(
+        ":app:compileFlavor1DebugAndroidTestJavaWithJavac SKIPPED",
+        ":app:compileFlavor1DebugUnitTestJavaWithJavac SKIPPED",
+        ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
+        ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
+        ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
+        ":module-plain-java:compileTestJava SKIPPED",
+        ":module_android_feature:compileFlavor1DebugJavaWithJavac SKIPPED")
+      );
   }
 
   // SONARGRADL-22
   @Test
   public void noDebugVariant() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/android-gradle-no-debug");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-no-debug", emptyMap(), "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -338,6 +358,4 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(Paths.get(props.getProperty(":app4.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app4/build/reports/lint-results-fullRelease.xml"));
 
   }
-
-
 }
