@@ -21,6 +21,7 @@ package org.sonarqube.gradle;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -37,7 +38,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testSimpleJavaProject() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/java-gradle-simple");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-simple", Collections.emptyMap(), "compileJava", "compileTestJava");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -108,7 +109,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testCustomConfiguration() throws Exception {
 
-    Properties props = runGradlewSonarSimulationMode("/java-gradle-custom-config");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-custom-config", emptyMap(), "compileJava", "compileTestJava");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -124,7 +125,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void mixJavaGroovyProject() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), "test");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), "build");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -166,7 +167,7 @@ public class GradleTest extends AbstractGradleIT {
   // SONARGRADL-5
   @Test
   public void testMultimoduleProjectWithSourceInRoot() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/multi-module-source-in-root");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-source-in-root", emptyMap(), "compileJava", "compileTestJava");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -236,7 +237,7 @@ public class GradleTest extends AbstractGradleIT {
       // Use report.required
       project = "/java-gradle-jacoco-after-7";
     }
-    Properties props = runGradlewSonarSimulationModeWithEnv(project, emptyMap(), "test", "jacocoTestReport");
+    Properties props = runGradlewSonarSimulationModeWithEnv(project, emptyMap(), "processResources", "processTestResources", "test", "jacocoTestReport");
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
     assertThat(props.getProperty("sonar.jacoco.reportPaths")).contains(baseDir.resolve("build/jacoco/test.exec").toString());
     assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths")).contains(baseDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString());
@@ -256,7 +257,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testKotlinMultiplatformProject() throws Exception {
     Assume.assumeTrue("Tests only applies to version 6.8.3 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.8.3"));
-    Properties props = runGradlewSonarSimulationMode("/kotlin-multiplatform");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform", emptyMap(), "compileCommonMainKotlinMetadata", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -280,7 +281,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testKotlinMultiplatformWithSubmoduleProject() throws Exception {
     Assume.assumeTrue("Tests only applies to version 6.8.3 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.8.3"));
-    Properties props = runGradlewSonarSimulationMode("/kotlin-multiplatform-with-submodule");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform-with-submodule", emptyMap(), "compileCommonMainKotlinMetadata", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -303,7 +304,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testKotlinJvmProject() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/kotlin-jvm");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-jvm", emptyMap(), "compileKotlin", "compileTestKotlin");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -318,7 +319,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testKotlinJvmWithSubmoduleProject() throws Exception {
-    Properties props = runGradlewSonarSimulationMode("/kotlin-jvm-submodule");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-jvm-submodule", emptyMap(), "compileKotlin", "compileTestKotlin");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
