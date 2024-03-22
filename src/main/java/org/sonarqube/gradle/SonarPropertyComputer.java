@@ -107,17 +107,13 @@ public class SonarPropertyComputer {
     if (isAndroidProject(project)) {
       AndroidUtils.configureForAndroid(project, SonarQubePlugin.getConfiguredAndroidVariant(project), rawProperties);
     }
-
-    ActionBroadcast<SonarProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
-    if (actionBroadcast != null) {
-      evaluateSonarPropertiesBlocks(actionBroadcast, rawProperties);
-    }
-    if (project.equals(targetProject)) {
-      addEnvironmentProperties(rawProperties);
-      addSystemProperties(rawProperties);
+    if (isRootProject(project)) {
       addKotlinBuildScriptsToSources(project, rawProperties);
     }
 
+    overrideWithUserDefinedProperties(project, rawProperties);
+
+    // This is required if "sonar.sources" are neither found nor defined by user
     rawProperties.putIfAbsent(SONAR_SOURCES_PROP, "");
 
     if (project.equals(targetProject)) {
@@ -156,6 +152,20 @@ public class SonarPropertyComputer {
     properties.put(convertKey("sonar.modules", prefix), String.join(",", moduleIds));
   }
 
+  private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties) {
+    ActionBroadcast<SonarProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
+    if (actionBroadcast != null) {
+      evaluateSonarPropertiesBlocks(actionBroadcast, rawProperties);
+    }
+    if (isRootProject(project)) {
+      addEnvironmentProperties(rawProperties);
+      addSystemProperties(rawProperties);
+    }
+  }
+
+  private boolean isRootProject(Project project) {
+    return project.equals(targetProject);
+  }
 
   private static void evaluateSonarPropertiesBlocks(ActionBroadcast<? super SonarProperties> propertiesActions, Map<String, Object> properties) {
     SonarProperties sqProperties = new SonarProperties(properties);
