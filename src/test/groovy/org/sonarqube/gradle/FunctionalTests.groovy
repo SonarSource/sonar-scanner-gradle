@@ -325,4 +325,34 @@ class FunctionalTests extends Specification {
         props.load(outFile.newDataInputStream())
         props."sonar.java.enablePreview" == "true"
     }
+
+    def "don't crash if compiler arg isn't String"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        
+        compileJava {
+          options.compilerArgs = [
+            file("/")
+          ]
+        }
+        """
+
+        when:
+        GradleRunner.create()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+
+        then:
+        noExceptionThrown()
+    }
 }
