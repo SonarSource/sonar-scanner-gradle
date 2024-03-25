@@ -157,15 +157,11 @@ promote_task:
     cpu: 0.5
     memory: 500M
   env:
-    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
-  script: |
-    source cirrus-env PROMOTE
-    jfrog rt bpr \
-      --url "${ARTIFACTORY_URL}" \
-      --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
-      --status it-passed \
-      "${CIRRUS_REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-builds
-    burgr-notify-promotion
+    ARTIFACTORY_PROMOTE_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+  script:
+    - source cirrus-env PROMOTE
+    - cirrus_jfrog_promote multi
+    - burgr-notify-promotion
 
 release_to_plugin_portal_task:
   only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != ""
