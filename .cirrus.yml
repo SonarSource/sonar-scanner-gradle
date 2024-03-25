@@ -157,7 +157,12 @@ promote_task:
     cpu: 0.5
     memory: 500M
   env:
-    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+    ARTIFACTORY_PROMOTE_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+  script:
+    - source cirrus-env PROMOTE
+    - cirrus_jfrog_promote multi
+    - burgr-notify-promotion
+
   script: |
     source cirrus-env PROMOTE
     jfrog rt bpr \
