@@ -320,7 +320,7 @@ class AndroidUtils {
     }
   }
 
-  private static void populateSonarQubeProps(Map<String, Object> properties, List<File> bootClassPath, BaseVariant variant, boolean isTest) {
+  private static void populateSonarQubeProps(Map<String, Object> properties, @Nullable List<File> bootClassPath, BaseVariant variant, boolean isTest) {
     List<File> srcDirs = variant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
       ArrayList::new,
       ArrayList::addAll,

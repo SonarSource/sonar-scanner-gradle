@@ -56,8 +56,6 @@ import org.gradle.api.reporting.SingleFileReport;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
-import org.gradle.testing.jacoco.plugins.JacocoPlugin;
-import org.gradle.testing.jacoco.plugins.JacocoTaskExtension;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.Utils;
@@ -77,6 +75,7 @@ public class SonarPropertyComputer {
   static final String SONAR_TESTS_PROP = "sonar.tests";
   private static final String MAIN_SOURCE_SET_SUFFIX = "main";
   private static final String TEST_SOURCE_SET_SUFFIX = "test";
+  public static final String SONAR_PROJECT_BASE_DIR = "sonar.projectBaseDir";
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
@@ -89,9 +88,7 @@ public class SonarPropertyComputer {
   public Map<String, Object> computeSonarProperties() {
     Map<String, Object> properties = new LinkedHashMap<>();
     computeSonarProperties(targetProject, properties, "");
-    if (properties.containsKey("sonar.projectBaseDir")) {
-      properties.put("sonar.projectBaseDir", SonarUtils.findProjectBaseDir(properties));
-    }
+    properties.computeIfPresent(SONAR_PROJECT_BASE_DIR, (k, v) -> SonarUtils.findProjectBaseDir(properties));
     if(SonarQubePlugin.notSkipped(targetProject)){
       properties.put("sonar.kotlin.gradleProjectRoot", targetProject.getRootProject().getProjectDir().getAbsolutePath());
     }
@@ -255,7 +252,7 @@ public class SonarPropertyComputer {
 
     if (sourceDirectories != null || testDirectories != null) {
       configureSourceEncoding(project, properties);
-      extractTestProperties(project, properties, false);
+      extractTestProperties(project, properties);
     }
 
     // TODO: replace with `(JavaPluginExtension) project.getExtensions().findByName("java");` once we drop support for Gradle < 7.1.0
@@ -279,15 +276,15 @@ public class SonarPropertyComputer {
       config -> SonarUtils.populateJdkProperties(properties, config));
   }
 
-  private static void extractTestProperties(Project project, Map<String, Object> properties, boolean addForGroovy) {
+  private static void extractTestProperties(Project project, Map<String, Object> properties) {
     Task testTask = project.getTasks().findByName(JavaPlugin.TEST_TASK_NAME);
     if (testTask instanceof Test) {
       configureTestReports((Test) testTask, properties);
-      configureJaCoCoCoverageReport((Test) testTask, project, properties, addForGroovy);
+      configureJaCoCoCoverageReport(project, properties);
     }
   }
 
-  private static void configureJaCoCoCoverageReport(final Test testTask, Project project, final Map<String, Object> properties, final boolean addForGroovy) {
+  private static void configureJaCoCoCoverageReport(Project project, final Map<String, Object> properties) {
     project.getTasks().withType(JacocoReport.class, jacocoReportTask -> {
       SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
       File reportDestination = getDestination(xmlReport);
@@ -331,7 +328,7 @@ public class SonarPropertyComputer {
 
     if (sourceDirectories != null || testDirectories != null) {
       configureSourceEncoding(project, properties);
-      extractTestProperties(project, properties, addForGroovy);
+      extractTestProperties(project, properties);
     }
 
     configureJavaClasspath(project, properties, addForGroovy);
@@ -455,7 +452,7 @@ public class SonarPropertyComputer {
     properties.put("sonar.projectName", project.getName());
     properties.put("sonar.projectDescription", project.getDescription());
     properties.put("sonar.projectVersion", project.getVersion());
-    properties.put("sonar.projectBaseDir", project.getProjectDir());
+    properties.put(SONAR_PROJECT_BASE_DIR, project.getProjectDir());
 
     if (project.equals(targetProject)) {
       // Root project of the analysis
