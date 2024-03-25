@@ -349,8 +349,8 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    properties["sonar.jacoco.reportPath"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
-    properties["sonar.jacoco.reportPaths"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
+    !properties.containsKey("sonar.jacoco.reportPath")
+    !properties.containsKey("sonar.jacoco.reportPaths")
   }
 
   def "adds additional default properties for 'groovy' projects"() {
@@ -476,7 +476,7 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    properties["sonar.groovy.jacoco.reportPath"].contains(new File(project.buildDir, "jacoco/test.exec") as String)
+    !properties.containsKey("sonar.groovy.jacoco.reportPath")
   }
 
   def "only adds existing directories"() {

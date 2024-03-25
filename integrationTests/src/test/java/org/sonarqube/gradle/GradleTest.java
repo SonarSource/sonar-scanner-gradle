@@ -134,8 +134,9 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/groovy"));
     assertThat(Paths.get(props.getProperty("sonar.junit.reportsPath"))).isEqualTo(baseDir.resolve("build/test-results/test"));
     assertThat(Paths.get(props.getProperty("sonar.junit.reportPaths"))).isEqualTo(baseDir.resolve("build/test-results/test"));
-    assertThat(Paths.get(props.getProperty("sonar.groovy.jacoco.reportPath"))).isEqualTo(baseDir.resolve("build/jacoco/test.exec"));
-    assertThat(Paths.get(props.getProperty("sonar.jacoco.reportPath"))).isEqualTo(baseDir.resolve("build/jacoco/test.exec"));
+    assertThat(props)
+      .doesNotContainKey("sonar.groovy.jacoco.reportPath")
+      .doesNotContainKey("sonar.jacoco.reportPath");
   }
 
   @Test
@@ -239,7 +240,7 @@ public class GradleTest extends AbstractGradleIT {
     }
     Properties props = runGradlewSonarSimulationModeWithEnv(project, emptyMap(), "processResources", "processTestResources", "test", "jacocoTestReport");
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
-    assertThat(props.getProperty("sonar.jacoco.reportPaths")).contains(baseDir.resolve("build/jacoco/test.exec").toString());
+    assertThat(props).doesNotContainKey("sonar.jacoco.reportPaths");
     assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths")).contains(baseDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString());
   }
 

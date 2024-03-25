@@ -298,18 +298,6 @@ public class SonarPropertyComputer {
           "Coverage for this task will not be reported.");
       }
     });
-    // for backward compatibility we are also setting properties used by SonarJava's JaCoCo sensor
-    project.getPlugins().withType(JacocoPlugin.class, jacocoPlugin -> {
-      JacocoTaskExtension jacocoTaskExtension = testTask.getExtensions().getByType(JacocoTaskExtension.class);
-      File destinationFile = jacocoTaskExtension.getDestinationFile();
-      if (destinationFile != null && destinationFile.exists()) {
-        properties.put("sonar.jacoco.reportPath", destinationFile);
-        appendProp(properties, "sonar.jacoco.reportPaths", destinationFile);
-        if (addForGroovy) {
-          properties.put("sonar.groovy.jacoco.reportPath", destinationFile);
-        }
-      }
-    });
   }
 
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
