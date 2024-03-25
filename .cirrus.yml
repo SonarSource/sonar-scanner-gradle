@@ -163,15 +163,6 @@ promote_task:
     - cirrus_jfrog_promote multi
     - burgr-notify-promotion
 
-  script: |
-    source cirrus-env PROMOTE
-    jfrog rt bpr \
-      --url "${ARTIFACTORY_URL}" \
-      --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
-      --status it-passed \
-      "${CIRRUS_REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-builds
-    burgr-notify-promotion
-
 release_to_plugin_portal_task:
   only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != ""
   stateful: 'true'
