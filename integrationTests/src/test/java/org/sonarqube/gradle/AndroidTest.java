@@ -41,7 +41,6 @@ public class AndroidTest extends AbstractGradleIT {
   @BeforeClass
   public static void beforeAll() {
     assumeNotNull(getAndroidGradleVersion());
-    assumeTrue(getAndroidGradleVersion().isGreaterThan("7.0.0"));
   }
 
   @Test
