@@ -21,6 +21,7 @@ package org.sonarqube.gradle
 
 
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -64,7 +65,7 @@ class FunctionalTests extends Specification {
         def result = GradleRunner.create()
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -97,7 +98,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -131,7 +132,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -161,7 +162,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -186,7 +187,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -215,7 +216,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -251,7 +252,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -286,7 +287,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -318,7 +319,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -350,7 +351,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -376,7 +377,7 @@ class FunctionalTests extends Specification {
           .forwardOutput()
           .withArguments('sonar', '--info',
             '-Dsonar.gradle.scanAll=true',
-            '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+            '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -416,7 +417,7 @@ class FunctionalTests extends Specification {
                          '-Dsonar.gradle.scanAll=true',
                          sonarSourcesOverride != null ? '-Dsonar.sources=' + sonarSourcesOverride : null,
                          sonarTestsOverride != null ? '-Dsonar.tests=' + sonarTestsOverride : null,
-                         '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath()]
+                         '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath()]
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
@@ -463,7 +464,7 @@ class FunctionalTests extends Specification {
         when:
         var arguments = ['sonar', '--info',
                          '-Dsonar.gradle.scanAll=true',
-                         '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath()]
+                         '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath()]
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
           .withProjectDir(projectDir.toFile())
@@ -515,7 +516,7 @@ class FunctionalTests extends Specification {
                         '-Dsonar.gradle.scanAll=true',
                         '-Dsonar.coverageReportPaths=my-first-coverage-report.xml,my-second-coverage-report.xml',
                         '-Dsonar.coverage.jacoco.xmlReportPaths=' + thirdCoverageReport.toRealPath().toString(),
-                        '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                        '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .withDebug(true)
                 .build()
@@ -549,5 +550,29 @@ class FunctionalTests extends Specification {
         testSources.size() == 2
         testSources[0].endsWith("""${projectPath}integrationTests${File.separator}run-all.sh""")
         testSources[1].endsWith("""${projectPath}test-license.sh""")
+    }
+
+    def "task fails with an IllegalStateException when failing to reach the server"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        GradleRunner.create()
+                .withProjectDir(projectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonar', '-Dsonar.host.url=http://localhost:0')
+                .withPluginClasspath()
+                .build()
+
+        then:
+        def exception = thrown(RuntimeException.class)
+        assert exception instanceof UnexpectedBuildFailure
+        // The cause of the issue is not reported here but we can find it in the error message
+        assert exception.message.contains("java.lang.IllegalStateException: Failed to get server version")
     }
 }
