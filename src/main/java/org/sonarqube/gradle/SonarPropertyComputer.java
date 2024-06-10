@@ -66,8 +66,7 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 import org.sonarqube.gradle.SonarUtils.InputFileType;
-import org.sonarsource.scanner.api.ScanProperties;
-import org.sonarsource.scanner.api.Utils;
+import org.sonarsource.scanner.lib.EnvironmentConfig;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
@@ -191,7 +190,7 @@ public class SonarPropertyComputer {
       var sonarProps = new SonarProperties(new HashMap<>());
       actionBroadcastMap.get(project.getPath()).execute(sonarProps);
 
-      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties().keySet(), Utils.loadEnvironmentProperties(System.getenv()).keySet(), sonarProps.getProperties().keySet())
+      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties().keySet(), EnvironmentConfig.load(System.getenv()).keySet(), sonarProps.getProperties().keySet())
         .flatMap(Collection::stream)
         .map(String.class::cast)
         .anyMatch(k -> ScanProperties.PROJECT_SOURCE_DIRS.endsWith(k) || ScanProperties.PROJECT_TEST_DIRS.endsWith(k));
@@ -337,8 +336,8 @@ public class SonarPropertyComputer {
   }
 
   private static void addEnvironmentProperties(Map<String, Object> properties) {
-    for (Map.Entry<Object, Object> e : Utils.loadEnvironmentProperties(System.getenv()).entrySet()) {
-      properties.put(e.getKey().toString(), e.getValue().toString());
+    for (Map.Entry<String, String> e : EnvironmentConfig.load(System.getenv()).entrySet()) {
+      properties.put(e.getKey(), e.getValue());
     }
   }
 

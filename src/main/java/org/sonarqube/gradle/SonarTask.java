@@ -36,9 +36,9 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
-import org.sonarsource.scanner.api.EmbeddedScanner;
-import org.sonarsource.scanner.api.LogOutput;
-import org.sonarsource.scanner.api.ScanProperties;
+import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
+import org.sonarsource.scanner.lib.ScannerEngineFacade;
+import org.sonarsource.scanner.lib.internal.batch.LogOutput;
 
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
@@ -125,10 +125,13 @@ public class SonarTask extends ConventionTask {
       return;
     }
 
-    EmbeddedScanner scanner = EmbeddedScanner.create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current(), getLogOutput())
-      .addGlobalProperties(mapProperties);
-    scanner.start();
-    scanner.execute(new HashMap<>());
+    ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper.create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
+      .addBootstrapProperties(mapProperties);
+    try (ScannerEngineFacade engineFacade = scanner.bootstrap()) {
+      engineFacade.analyze(new HashMap<>());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private String getPluginVersion() {
@@ -142,7 +145,7 @@ public class SonarTask extends ConventionTask {
   }
 
   private static boolean isSkippedWithProperty(Map<String, String> properties) {
-    if ("true".equalsIgnoreCase(properties.getOrDefault(ScanProperties.SKIP, "false"))) {
+    if ("true".equalsIgnoreCase(properties.getOrDefault("sonar.skip", "false"))) {
       LOGGER.warn("Sonar Scanner analysis skipped");
       return true;
     }
