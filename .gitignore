@@ -35,3 +35,6 @@ out/
 
 #----Specific file for testing that doesn't work on windows
 comma,quote"lib.jar
+
+#----Specific file generated during tests
+file-access.properties

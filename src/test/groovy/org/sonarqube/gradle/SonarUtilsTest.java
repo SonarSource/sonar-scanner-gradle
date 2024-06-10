@@ -20,11 +20,14 @@
 package org.sonarqube.gradle;
 
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
 import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -70,5 +73,41 @@ public class SonarUtilsTest {
       "m1.sonar.projectBaseDir", "E:\\project\\m1"
     );
     assertEquals(Paths.get("C:\\project\\build").toAbsolutePath().toString(), SonarUtils.findProjectBaseDir(properties));
+  }
+
+  @Test
+  void testJoinAsCsv() {
+    List<String> values = Arrays.asList("/home/users/me/artifact-123,456.jar", "/opt/lib");
+    assertThat(SonarUtils.joinAsCsv(values)).isEqualTo("\"/home/users/me/artifact-123,456.jar\",/opt/lib");
+
+    values = Arrays.asList("/opt/lib", "/home/users/me/artifact-123,456.jar");
+    assertThat(SonarUtils.joinAsCsv(values)).isEqualTo("/opt/lib,\"/home/users/me/artifact-123,456.jar\"");
+
+    values = Arrays.asList("/opt/lib", "/home/users/me");
+    assertThat(SonarUtils.joinAsCsv(values)).isEqualTo("/opt/lib,/home/users/me");
+  }
+
+  @Test
+  void testSplitAsCsv() {
+    String[] expectedValues = {"/home/users/me/artifact-123,456.jar", "/opt/lib", "src/main/java"};
+    // Single escaped value
+    assertThat(SonarUtils.splitAsCsv("\"/home/users/me/artifact-123,456.jar\",/opt/lib,src/main/java"))
+      .containsOnly(expectedValues);
+    assertThat(SonarUtils.splitAsCsv("/opt/lib,\"/home/users/me/artifact-123,456.jar\",src/main/java"))
+      .containsOnly("/opt/lib", "/home/users/me/artifact-123,456.jar", "src/main/java");
+    assertThat(SonarUtils.splitAsCsv("/opt/lib,src/main/java,\"/home/users/me/artifact-123,456.jar\""))
+      .containsOnly(expectedValues);
+
+    // Consecutive escaped values
+    assertThat(SonarUtils.splitAsCsv("/opt/lib,\"src/main/java\",\"/home/users/me/artifact-123,456.jar\""))
+      .containsOnly(expectedValues);
+    assertThat(SonarUtils.splitAsCsv("\"/opt/lib\",\"src/main/java\",\"/home/users/me/artifact-123,456.jar\""))
+      .containsOnly(expectedValues);
+    assertThat(SonarUtils.splitAsCsv("\"/opt/lib\",\"/home/users/me/artifact-123,456.jar\",src/main/java"))
+      .containsOnly("/opt/lib", "/home/users/me/artifact-123,456.jar", "src/main/java");
+
+    // Interleaved escaped values
+    assertThat(SonarUtils.splitAsCsv("\"/opt/lib\",src/main/java,\"/home/users/me/artifact-123,456.jar\""))
+      .containsOnly(expectedValues);
   }
 }

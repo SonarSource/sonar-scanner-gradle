@@ -23,17 +23,23 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
@@ -58,6 +64,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.sonarsource.scanner.api.ScanProperties;
 import org.sonarsource.scanner.api.Utils;
 
 import static org.sonarqube.gradle.SonarUtils.appendProp;
@@ -71,8 +78,7 @@ public class SonarPropertyComputer {
   private static final Logger LOGGER = Logging.getLogger(SonarPropertyComputer.class);
   private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
 
-  static final String SONAR_SOURCES_PROP = "sonar.sources";
-  static final String SONAR_TESTS_PROP = "sonar.tests";
+  private static final String SONAR_GRADLE_SCAN_ALL = "sonar.gradle.scanAll";
   private static final String MAIN_SOURCE_SET_SUFFIX = "main";
   private static final String TEST_SOURCE_SET_SUFFIX = "test";
   public static final String SONAR_PROJECT_BASE_DIR = "sonar.projectBaseDir";
@@ -87,20 +93,34 @@ public class SonarPropertyComputer {
 
   public Map<String, Object> computeSonarProperties() {
     Map<String, Object> properties = new LinkedHashMap<>();
-    computeSonarProperties(targetProject, properties, "");
+
+    computeSonarProperties(targetProject, properties);
+
     properties.computeIfPresent(SONAR_PROJECT_BASE_DIR, (k, v) -> SonarUtils.findProjectBaseDir(properties));
-    if(SonarQubePlugin.notSkipped(targetProject)){
+
+    if (SonarQubePlugin.notSkipped(targetProject)) {
       properties.put("sonar.kotlin.gradleProjectRoot", targetProject.getRootProject().getProjectDir().getAbsolutePath());
     }
+
     return properties;
   }
 
-  private void computeSonarProperties(Project project, Map<String, Object> properties, String prefix) {
-    if (!SonarQubePlugin.notSkipped(project)) {
+  private void computeSonarProperties(Project project, Map<String, Object> properties) {
+    computeDefaultProperties(project, properties, "");
+
+    if (shouldApplyScanAll(project, properties)) {
+      computeScanAllProperties(project, properties);
+    }
+  }
+
+  private void computeDefaultProperties(Project project, Map<String, Object> properties, String prefix) {
+    if (SonarQubePlugin.isSkipped(project)) {
       return;
     }
     Map<String, Object> rawProperties = new LinkedHashMap<>();
+
     addGradleDefaults(project, rawProperties);
+
     if (isAndroidProject(project)) {
       AndroidUtils.configureForAndroid(project, SonarQubePlugin.getConfiguredAndroidVariant(project), rawProperties);
     }
@@ -111,7 +131,7 @@ public class SonarPropertyComputer {
     overrideWithUserDefinedProperties(project, rawProperties);
 
     // This is required if "sonar.sources" are neither found nor defined by user
-    rawProperties.putIfAbsent(SONAR_SOURCES_PROP, "");
+    rawProperties.putIfAbsent(ScanProperties.PROJECT_SOURCE_DIRS, "");
 
     if (project.equals(targetProject)) {
       rawProperties.putIfAbsent("sonar.projectKey", computeProjectKey());
@@ -127,11 +147,11 @@ public class SonarPropertyComputer {
       .collect(Collectors.toList());
 
     List<Project> skippedChildProjects = project.getChildProjects().values().stream()
-      .filter(p -> !SonarQubePlugin.notSkipped(p))
+      .filter(SonarQubePlugin::isSkipped)
       .collect(Collectors.toList());
 
     if (!skippedChildProjects.isEmpty()) {
-      LOGGER.debug("Skipping collecting Sonar properties on: " + Arrays.toString(skippedChildProjects.toArray(new Project[0])));
+      LOGGER.debug("Skipping collecting Sonar properties on: {}", skippedChildProjects);
     }
 
     if (enabledChildProjects.isEmpty()) {
@@ -140,13 +160,88 @@ public class SonarPropertyComputer {
 
     List<String> moduleIds = new ArrayList<>();
 
+    String toPrefix = prefix.isEmpty() ? "" : (prefix + ".");
     for (Project childProject : enabledChildProjects) {
       String moduleId = childProject.getPath();
       moduleIds.add(moduleId);
-      String modulePrefix = (prefix.length() > 0) ? (prefix + "." + moduleId) : moduleId;
-      computeSonarProperties(childProject, properties, modulePrefix);
+      String modulePrefix = toPrefix + moduleId;
+      computeDefaultProperties(childProject, properties, modulePrefix);
     }
+
     properties.put(convertKey("sonar.modules", prefix), String.join(",", moduleIds));
+  }
+
+  private boolean shouldApplyScanAll(Project project, Map<String, Object> properties) {
+    // when the parent module is skipped, the properties are empty thus the scan all logic is not applied
+    var scanAllValue = (String) properties.getOrDefault(SONAR_GRADLE_SCAN_ALL, "false");
+    var scanAllEnabled = "true".equalsIgnoreCase(scanAllValue.trim());
+
+    if (scanAllEnabled) {
+      LOGGER.info("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.");
+
+      // Collecting the properties configured in the Gradle build configuration
+      var sonarProps = new SonarProperties(new HashMap<>());
+      actionBroadcastMap.get(project.getPath()).execute(sonarProps);
+
+      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties().keySet(), Utils.loadEnvironmentProperties(System.getenv()).keySet(), sonarProps.getProperties().keySet())
+        .flatMap(Collection::stream)
+        .map(String.class::cast)
+        .anyMatch(k -> ScanProperties.PROJECT_SOURCE_DIRS.endsWith(k) || ScanProperties.PROJECT_TEST_DIRS.endsWith(k));
+
+      if (sourcesOrTestsAlreadySet) {
+        LOGGER.warn("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources or sonar.tests has been overridden.");
+        return false;
+      }
+    }
+
+    return scanAllEnabled;
+  }
+
+  private static void computeScanAllProperties(Project project, Map<String, Object> properties) {
+    // Collecting the existing sources from all modules, i.e. 'sonar.sources' and all 'submodule.sonar.sources'
+    Set<Path> allModulesExistingSources = properties.entrySet()
+      .stream()
+      .filter(e -> e.getKey().endsWith(ScanProperties.PROJECT_SOURCE_DIRS))
+      .map(Map.Entry::getValue)
+      .map(String.class::cast)
+      .map(SonarUtils::splitAsCsv)
+      .flatMap(Collection::stream)
+      .filter(Predicate.not(String::isBlank))
+      .map(Paths::get)
+      .collect(Collectors.toSet());
+
+    Set<Path> skippedDirs = project.getAllprojects()
+      .stream()
+      .filter(SonarQubePlugin::isSkipped)
+      .map(Project::getProjectDir)
+      .map(File::toPath)
+      .collect(Collectors.toSet());
+
+    SourceCollector visitor = new SourceCollector(allModulesExistingSources, skippedDirs, Set.of(), false);
+
+    try {
+      Files.walkFileTree(project.getProjectDir().toPath(), visitor);
+    } catch (IOException e) {
+      LOGGER.error(String.valueOf(e));
+    }
+
+    List<Path> collectedSources = visitor.getCollectedSources().stream()
+      .map(Path::toAbsolutePath)
+      .collect(Collectors.toList());
+
+    Set<Path> existingSources = SonarUtils.splitAsCsv((String) properties.get(ScanProperties.PROJECT_SOURCE_DIRS))
+      .stream()
+      .filter(Predicate.not(String::isBlank))
+      .map(Paths::get)
+      .collect(Collectors.toSet());
+
+    List<String> mergedSources = Stream.of(existingSources, collectedSources)
+      .flatMap(Collection::stream)
+      .map(Path::toString)
+      .sorted()
+      .collect(Collectors.toList());
+
+    properties.put(ScanProperties.PROJECT_SOURCE_DIRS, SonarUtils.joinAsCsv(mergedSources));
   }
 
   private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties) {
@@ -366,11 +461,11 @@ public class SonarPropertyComputer {
       Method getSourceSetsMethod = extension.getClass().getMethod("getSourceSets");
       NamedDomainObjectContainer<?> sourceSets = (NamedDomainObjectContainer) getSourceSetsMethod.invoke(extension);
       Collection<File> sourceFiles = sourceSets.stream()
-              .map(InternalKotlinSourceSet::of)
-              .filter(s -> s.name.toLowerCase(Locale.ROOT).endsWith(sourceSetNameSuffix))
-              .flatMap(s -> s.srcDirs.stream())
-              .filter(File::exists)
-              .collect(Collectors.toList());
+        .map(InternalKotlinSourceSet::of)
+        .filter(s -> s.name.toLowerCase(Locale.ROOT).endsWith(sourceSetNameSuffix))
+        .flatMap(s -> s.srcDirs.stream())
+        .filter(File::exists)
+        .collect(Collectors.toList());
       return nonEmptyOrNull(sourceFiles);
     } catch (Exception e) {
       LOGGER.warn("Sonar plugin wasn't able to locate Kotlin source sets. Continue without sources. Root cause: " + e.getMessage());
@@ -382,7 +477,8 @@ public class SonarPropertyComputer {
     private String name;
     private Collection<File> srcDirs;
 
-    private InternalKotlinSourceSet() {}
+    private InternalKotlinSourceSet() {
+    }
 
     private static InternalKotlinSourceSet of(Object rawSourceSet) {
       InternalKotlinSourceSet internalKotlinSourceSet = new InternalKotlinSourceSet();

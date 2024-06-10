@@ -59,11 +59,11 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
 
         then:
         result.task(":sonarqube").outcome == SUCCESS
@@ -91,12 +91,12 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
 
         then:
         result.task(":sonarqube").outcome == SUCCESS
@@ -104,7 +104,7 @@ class FunctionalTests extends Specification {
         props.load(outFile.newDataInputStream())
         new File(props."sonar.java.jdkHome").exists()
         "${props."sonar.java.jdkHome"}${File.separator}bin${File.separator}java -version".execute()
-                .err.text.contains("\"1.8.")
+          .err.text.contains("\"1.8.")
         props."sonar.java.source" == '8'
         props."sonar.java.target" == '8'
     }
@@ -125,12 +125,12 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
 
         then:
         def props = new Properties()
@@ -155,12 +155,12 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
 
         then:
         def props = new Properties()
@@ -180,12 +180,12 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
 
         then:
         result.task(":sonarqube").outcome == SUCCESS
@@ -209,12 +209,12 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
 
         then:
         result.output.contains('Heterogeneous compiler configuration has been detected. Using compiler configuration from task: \'compileJava\'')
@@ -223,7 +223,7 @@ class FunctionalTests extends Specification {
         props.load(outFile.newDataInputStream())
         new File(props."sonar.java.jdkHome").exists()
         "${props."sonar.java.jdkHome"}${File.separator}bin${File.separator}java -version".execute()
-                .err.text.contains("\"1.8.")
+          .err.text.contains("\"1.8.")
         props."sonar.java.source" == '8'
         props."sonar.java.target" == '8'
     }
@@ -245,12 +245,12 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
 
         then:
         result.task(":sonarqube").outcome == SUCCESS
@@ -354,5 +354,128 @@ class FunctionalTests extends Specification {
 
         then:
         noExceptionThrown()
+    }
+
+    def "scan all is enabled"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonar', '--info',
+            '-Dsonar.gradle.scanAll=true',
+            '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonar").outcome == SUCCESS
+
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.gradle.scanAll" == "true"
+        result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
+
+        var sources = ((String) props."sonar.sources").split(",")
+        sources.size() == 3
+        sources[0].endsWith("""$testProjectDir/build.gradle""")
+        sources[1].endsWith("""$testProjectDir/gradle.properties""")
+        sources[2].endsWith("""$testProjectDir/settings.gradle""")
+    }
+
+    def "scan all is enabled but not applied because of overridden properties on the command line"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        var arguments = ['sonar', '--info',
+                         '-Dsonar.gradle.scanAll=true',
+                         sonarSourcesOverride != null ? '-Dsonar.sources=' + sonarSourcesOverride : null,
+                         sonarTestsOverride != null ? '-Dsonar.tests=' + sonarTestsOverride : null,
+                         '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath()]
+        def result = GradleRunner.create()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments(arguments.stream().filter { it != null }.toList())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonar").outcome == SUCCESS
+
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.gradle.scanAll" == "true"
+        result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
+        result.output.contains("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources or sonar.tests has been overridden.")
+
+        where:
+        sonarSourcesOverride | sonarTestsOverride
+        "src"                | null
+        null                 | "test"
+        "src"                | "test"
+    }
+
+    def "scan all is enabled but not applied because of overridden properties in build configuration"() {
+        given:
+        var sonarSourcesProperty = sonarSourcesOverride ? "property 'sonar.sources', '$sonarSourcesOverride'" : ""
+        var sonarTestsProperty = sonarTestsOverride ? "property 'sonar.tests', '$sonarTestsOverride'" : ""
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        
+        sonar {
+            properties {
+                $sonarSourcesProperty
+                $sonarTestsProperty
+            }
+        }
+        """
+
+        when:
+        var arguments = ['sonar', '--info',
+                         '-Dsonar.gradle.scanAll=true',
+                         '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath()]
+        def result = GradleRunner.create()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(testProjectDir.toFile())
+          .forwardOutput()
+          .withArguments(arguments.stream().filter { it != null }.toList())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonar").outcome == SUCCESS
+
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.gradle.scanAll" == "true"
+        result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
+        result.output.contains("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources or sonar.tests has been overridden.")
+
+        where:
+        sonarSourcesOverride | sonarTestsOverride
+        "src"                | null
+        null                 | "test"
+        "src"                | "test"
     }
 }

@@ -151,7 +151,11 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   static boolean notSkipped(Project p) {
-    return getSonarExtensions(p).stream().noneMatch(SonarExtension::isSkipProject);
+    return !isSkipped(p);
+  }
+
+  static boolean isSkipped(Project p) {
+    return getSonarExtensions(p).stream().anyMatch(SonarExtension::isSkipProject);
   }
 
   private static List<SonarExtension> getSonarExtensions(Project p) {
