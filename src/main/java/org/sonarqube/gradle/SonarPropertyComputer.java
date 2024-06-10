@@ -58,7 +58,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
-import org.sonarsource.scanner.api.Utils;
+import org.sonarsource.scanner.lib.EnvironmentConfig;
 
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.exists;
@@ -218,8 +218,8 @@ public class SonarPropertyComputer {
   }
 
   private static void addEnvironmentProperties(Map<String, Object> properties) {
-    for (Map.Entry<Object, Object> e : Utils.loadEnvironmentProperties(System.getenv()).entrySet()) {
-      properties.put(e.getKey().toString(), e.getValue().toString());
+    for (Map.Entry<String, String> e : EnvironmentConfig.load(System.getenv()).entrySet()) {
+      properties.put(e.getKey(), e.getValue());
     }
   }
 

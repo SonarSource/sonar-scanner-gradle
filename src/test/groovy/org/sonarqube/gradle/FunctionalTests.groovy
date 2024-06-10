@@ -61,12 +61,12 @@ class FunctionalTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
         then:
-        result.task(":sonarqube").outcome == SUCCESS
+        result.task(":sonar").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
         !props.containsKey("sonar.java.jdkHome")
@@ -94,12 +94,12 @@ class FunctionalTests extends Specification {
                 .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
         then:
-        result.task(":sonarqube").outcome == SUCCESS
+        result.task(":sonar").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
         new File(props."sonar.java.jdkHome").exists()
@@ -128,7 +128,7 @@ class FunctionalTests extends Specification {
                 .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -158,7 +158,7 @@ class FunctionalTests extends Specification {
                 .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -183,7 +183,7 @@ class FunctionalTests extends Specification {
                 .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -212,13 +212,13 @@ class FunctionalTests extends Specification {
                 .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('sonar', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
         then:
         result.output.contains('Heterogeneous compiler configuration has been detected. Using compiler configuration from task: \'compileJava\'')
-        result.task(":sonarqube").outcome == SUCCESS
+        result.task(":sonar").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
         new File(props."sonar.java.jdkHome").exists()
@@ -248,12 +248,12 @@ class FunctionalTests extends Specification {
                 .withGradleVersion(gradleVersion)
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
         then:
-        result.task(":sonarqube").outcome == SUCCESS
+        result.task(":sonar").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
         props."sonar.java.source" == '8'
@@ -283,12 +283,12 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(testProjectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
         then:
-        result.task(":sonarqube").outcome == SUCCESS
+        result.task(":sonar").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
         props."sonar.java.enablePreview" == "true"
@@ -315,12 +315,12 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(testProjectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonar', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
         then:
-        result.task(":sonarqube").outcome == SUCCESS
+        result.task(":sonar").outcome == SUCCESS
         def props = new Properties()
         props.load(outFile.newDataInputStream())
         props."sonar.java.enablePreview" == "true"
@@ -347,7 +347,7 @@ class FunctionalTests extends Specification {
           .withGradleVersion(gradleVersion)
           .withProjectDir(testProjectDir.toFile())
           .forwardOutput()
-          .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
