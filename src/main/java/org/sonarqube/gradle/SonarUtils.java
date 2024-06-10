@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
-import org.sonarsource.scanner.api.ScanProperties;
 
 public class SonarUtils {
 
