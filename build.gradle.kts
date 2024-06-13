@@ -77,7 +77,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
     testImplementation("com.android.tools.build:gradle:8.1.1")
     testImplementation(localGroovy())
-    testImplementation("org.assertj:assertj-core:3.11.1")
+    testImplementation("org.assertj:assertj-core:3.26.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     testImplementation("org.hamcrest:hamcrest-all:1.3")
     testImplementation("org.mockito:mockito-core:4.7.0")
