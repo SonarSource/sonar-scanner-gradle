@@ -80,7 +80,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.26.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     testImplementation("org.hamcrest:hamcrest-all:1.3")
-    testImplementation("org.mockito:mockito-core:4.7.0")
+    testImplementation("org.mockito:mockito-core:5.12.0")
     testImplementation("org.spockframework:spock-core:2.3-groovy-3.0") {
         exclude(module = "groovy-all")
     }
