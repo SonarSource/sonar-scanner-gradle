@@ -1,0 +1,4 @@
+
+sonar {
+  isSkipProject = true
+}

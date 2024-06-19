@@ -41,14 +41,13 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import spock.lang.Specification
 
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.stream.Collectors
 
 import static org.assertj.core.api.Assertions.assertThat
-import static org.hamcrest.Matchers.contains
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
-import static spock.util.matcher.HamcrestSupport.expect
 
 class SonarQubePluginTest extends Specification {
 
@@ -907,15 +906,22 @@ class SonarQubePluginTest extends Specification {
     parent.pluginManager.apply(SonarQubePlugin)
     def props = parent.tasks.sonar.properties.get()
     when:
-    def parentSources = props["sonar.sources"].split(",")
+    def parentSources = props["sonar.sources"].split(",").stream()
+      .map(s -> parent.projectDir.toPath().relativize(Path.of(s)).toString())
+    // the scan all collects also an unexpected file internally created by the test
+    //  .filter(s -> !s.endsWith("file-access.properties"))
+      .sorted()
+      .collect(Collectors.joining("\n"))
     def module1Sources = props[":module1.sonar.sources"]
     def module2Sources = props[":module2.sonar.sources"]
     then:
-    assert parentSources.size() == 4
-    assert normalizePathArray(parentSources).contains(normalizePathString("src/test/projects/java-multi-module/build.gradle.kts"))
-    assert normalizePathArray(parentSources).contains(normalizePathString("src/test/projects/java-multi-module/settings.gradle.kts"))
-    assert normalizePathArray(parentSources).contains(normalizePathString("src/test/projects/java-multi-module/module1/build.gradle.kts"))
-    assert normalizePathArray(parentSources).contains(normalizePathString("src/test/projects/java-multi-module/module2/build.gradle.kts"))
+    def expectedParentSources = """
+                build.gradle.kts
+                module1/build.gradle.kts
+                module2/build.gradle.kts
+                settings.gradle.kts
+                """.stripIndent().trim()
+    assert parentSources == expectedParentSources
     assert module1Sources.length() == 0
     assert module2Sources.length() == 0
   }
@@ -936,13 +942,9 @@ class SonarQubePluginTest extends Specification {
       .withName("java-nested-sources")
       .withProjectDir(dir)
       .build()
-    project.pluginManager.apply(JavaPlugin)
 
-    JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class)
-    SourceSetContainer sourceSets = javaExtension.getSourceSets();
-    SourceSet mainSourceSet = sourceSets.getByName("main");
-    mainSourceSet.getJava().srcDir("src/main/java/pck");
-    mainSourceSet.getJava().srcDir("src/main/java/pck2");
+    project.pluginManager.apply(JavaPlugin)
+    setSourceSets(project, List.of("src/main/java/pck", "src/main/java/pck2"))
     project.pluginManager.apply(SonarQubePlugin)
 
     when:
@@ -955,7 +957,149 @@ class SonarQubePluginTest extends Specification {
     assert sources.size() == 2
     assert normalizePathArray(sources).contains(buildFilePath)
     assert normalizePathArray(sources).contains(srcMainJavaPath)
-
   }
 
+  def "scan all detects scripts only within non skipped submodules"() {
+    def dir = new File("src/test/projects/java-multi-nested-modules")
+    def parent = ProjectBuilder.builder()
+      .withName("java-multi-nested-modules")
+      .withProjectDir(dir)
+      .build()
+    def module1 = ProjectBuilder.builder()
+      .withName("module1")
+      .withProjectDir(new File("src/test/projects/java-multi-nested-modules/module1"))
+      .withParent(parent)
+      .build()
+    def module2 = ProjectBuilder.builder()
+      .withName("module2")
+      .withProjectDir(new File("src/test/projects/java-multi-nested-modules/module2"))
+      .withParent(parent)
+      .build()
+    def submodule = ProjectBuilder.builder()
+      .withName("submodule")
+      .withProjectDir(new File("src/test/projects/java-multi-nested-modules/module2/submodule"))
+      .withParent(module2)
+      .build()
+
+    parent.pluginManager.apply(JavaPlugin)
+    module1.pluginManager.apply(JavaPlugin)
+    module2.pluginManager.apply(JavaPlugin)
+    submodule.pluginManager.apply(JavaPlugin)
+    parent.pluginManager.apply(SonarQubePlugin)
+
+    setSourceSets(parent, List.of("src/main/java"))
+    setSourceSets(module1, List.of("src/main/java"))
+    setSourceSets(module2, List.of("src/main/java"))
+    setSourceSets(submodule, List.of("src/main/java"))
+
+    parent.sonar.properties {
+      property "sonar.gradle.scanAll", "true"
+    }
+
+    module2.sonar.setSkipProject(true)
+
+    when:
+    def properties = parent.tasks.sonar.properties.get()
+    def sources = properties["sonar.sources"].split(",")
+      .stream()
+      .map(s -> parent.projectDir.toPath().relativize(Path.of(s)).toString())
+      // the scan all collects also an unexpected file internally created by the test
+      .filter(s -> !s.endsWith("file-access.properties"))
+      .sorted()
+      .collect(Collectors.joining("\n"))
+    def module1Sources = properties[":module1.sonar.sources"].split(",")
+
+    then:
+    def expectedSources = """
+                build.gradle.kts
+                module1/build.gradle.kts
+                module1/extras/pyScriptM1.py
+                module1/scriptM1.sh
+                module2/submodule/build.gradle.kts
+                settings.gradle.kts
+                """.stripIndent().trim()
+    assert sources == expectedSources
+
+    assert normalizePathArray(module1Sources).contains(normalizePathString("src/test/projects/java-multi-nested-modules/module1/src/main/java"))
+    assert properties[":module2.sonar.sources"] == null
+    assert properties[":module2.:module2:submodule.sonar.sources"] == null
+  }
+
+  def "scan all detects scripts in all modules"() {
+    def dir = new File("src/test/projects/java-multi-nested-modules")
+    def parent = ProjectBuilder.builder()
+      .withName("java-multi-nested-modules")
+      .withProjectDir(dir)
+      .build()
+    def module1 = ProjectBuilder.builder()
+      .withName("module1")
+      .withProjectDir(new File("src/test/projects/java-multi-nested-modules/module1"))
+      .withParent(parent)
+      .build()
+    def module2 = ProjectBuilder.builder()
+      .withName("module2")
+      .withProjectDir(new File("src/test/projects/java-multi-nested-modules/module2"))
+      .withParent(parent)
+      .build()
+    def submodule = ProjectBuilder.builder()
+      .withName("submodule")
+      .withProjectDir(new File("src/test/projects/java-multi-nested-modules/module2/submodule"))
+      .withParent(module2)
+      .build()
+
+    parent.pluginManager.apply(JavaPlugin)
+    module1.pluginManager.apply(JavaPlugin)
+    module2.pluginManager.apply(JavaPlugin)
+    submodule.pluginManager.apply(JavaPlugin)
+    parent.pluginManager.apply(SonarQubePlugin)
+
+    setSourceSets(parent, List.of("src/main/java"))
+    setSourceSets(module1, List.of("src/main/java"))
+    setSourceSets(module2, List.of("src/main/java"))
+    setSourceSets(submodule, List.of("src/main/java"))
+
+    parent.sonar.properties {
+      property "sonar.gradle.scanAll", "true"
+    }
+
+    when:
+    def properties = parent.tasks.sonar.properties.get()
+    def sources = properties["sonar.sources"].split(",")
+      .stream()
+      .map(s -> parent.projectDir.toPath().relativize(Path.of(s)).toString())
+      // the scan all collects also an unexpected file internally created by the test
+      .filter(s -> !s.endsWith("file-access.properties"))
+      .sorted()
+      .collect(Collectors.joining("\n"))
+    def module1Sources = properties[":module1.sonar.sources"].split(",")
+    def module2Sources = properties[":module2.sonar.sources"].split(",")
+    def submoduleSources = properties[":module2.:module2:submodule.sonar.sources"].split(",")
+
+    then:
+    def expectedSources = """
+                build.gradle.kts
+                module1/build.gradle.kts
+                module1/extras/pyScriptM1.py
+                module1/scriptM1.sh
+                module2/build.gradle.kts
+                module2/scriptM2.py
+                module2/settings.gradle.kts
+                module2/submodule/build.gradle.kts
+                module2/submodule/scriptM2S.sh
+                settings.gradle.kts""".stripIndent().trim()
+    assert sources == expectedSources
+
+    assert normalizePathArray(module1Sources).contains(normalizePathString("src/test/projects/java-multi-nested-modules/module1/src/main/java"))
+    assert normalizePathArray(module2Sources).contains(normalizePathString("src/test/projects/java-multi-nested-modules/module2/src/main/java"))
+    assert normalizePathArray(submoduleSources).contains(normalizePathString("src/test/projects/java-multi-nested-modules/module2/submodule/src/main/java"))
+  }
+
+  private static void setSourceSets(Project project, List<String> mainDirs) {
+    JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class)
+    SourceSetContainer sourceSets = javaExtension.getSourceSets();
+    SourceSet mainSourceSet = sourceSets.getByName("main");
+    for (String mainDir : mainDirs) {
+      mainSourceSet.getJava().srcDir(mainDir);
+    }
+  }
 }

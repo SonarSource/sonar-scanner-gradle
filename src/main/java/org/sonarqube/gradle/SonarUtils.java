@@ -23,6 +23,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
+import org.sonarsource.scanner.api.ScanProperties;
 
 public class SonarUtils {
 
@@ -127,7 +129,7 @@ public class SonarUtils {
 
   static void appendSourcesProp(Map<String, Object> properties, Iterable<File> filesToAppend, boolean testSources) {
     List<File> filteredList = filterOutSubFiles(filesToAppend);
-    appendProps(properties, testSources ? SonarPropertyComputer.SONAR_TESTS_PROP : SonarPropertyComputer.SONAR_SOURCES_PROP, filteredList);
+    appendProps(properties, testSources ? ScanProperties.PROJECT_TEST_DIRS : ScanProperties.PROJECT_SOURCE_DIRS, filteredList);
   }
 
   static List<File> filterOutSubFiles(Iterable<File> files) {
@@ -153,4 +155,61 @@ public class SonarUtils {
     List<T> list = Collections.unmodifiableList(new ArrayList<>(collection));
     return list.isEmpty() ? null : list;
   }
+
+  /**
+   * Joins a list of strings that may contain commas by wrapping those strings in double quotes, like in CSV format.
+   * <p>
+   * For example:
+   * values = { "/home/users/me/artifact-123,456.jar", "/opt/lib" }
+   * return is the string: "\"/home/users/me/artifact-123,456.jar\",/opt/lib"
+   *
+   * @param values
+   * @return a string having all the values separated by commas
+   * and each single value that contains a comma wrapped in double quotes
+   */
+  public static String joinAsCsv(List<String> values) {
+    return values.stream()
+      .map(SonarUtils::escapeCommas)
+      .collect(Collectors.joining(","));
+  }
+
+  private static String escapeCommas(String value) {
+    // escape only when needed
+    return value.contains(",") ? ("\"" + value + "\"") : value;
+  }
+
+  public static List<String> splitAsCsv(String joined) {
+    List<String> collected = new ArrayList<>();
+    if (joined.indexOf('"') == -1) {
+      return Arrays.asList(joined.split(","));
+    }
+    int start = 0;
+    int end = joined.length() - 1;
+    while (start < end && end < joined.length()) {
+      if (joined.charAt(start) == '"') {
+        end = joined.indexOf('"', start + 1);
+        String value = joined.substring(start + 1, end);
+        collected.add(value);
+        int nextComma = joined.indexOf(",", end);
+        if (nextComma == -1) {
+          break;
+        }
+        start = nextComma + 1;
+      } else {
+        int nextComma = joined.indexOf(",", start);
+        if (nextComma == -1) {
+          end = joined.length();
+        } else {
+          end = nextComma;
+        }
+        String value = joined.substring(start, end);
+        collected.add(value);
+        start = end + 1;
+      }
+      end = start + 1;
+    }
+
+    return collected;
+  }
+
 }

@@ -269,14 +269,12 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(binaries).containsExactlyInAnyOrder(
       baseDir.resolve("build/classes/kotlin/jvm/main").toString(),
-      baseDir.resolve("build/classes/java/main").toString()
-    );
+      baseDir.resolve("build/classes/java/main").toString());
 
     assertThat(sources).containsExactlyInAnyOrder(
       baseDir.resolve("src/commonMain/kotlin").toString(),
       baseDir.resolve("src/jvmMain/kotlin").toString(),
-      baseDir.resolve("src/jvmMain/java").toString()
-    );
+      baseDir.resolve("src/jvmMain/java").toString());
   }
 
   @Test
@@ -292,15 +290,13 @@ public class GradleTest extends AbstractGradleIT {
     String[] sources = props.getProperty(":submodule.sonar.sources").split(",");
 
     assertThat(binaries).containsExactlyInAnyOrder(
-            baseDir.resolve("submodule/build/classes/kotlin/jvm/main").toString(),
-            baseDir.resolve("submodule/build/classes/java/main").toString()
-    );
+      baseDir.resolve("submodule/build/classes/kotlin/jvm/main").toString(),
+      baseDir.resolve("submodule/build/classes/java/main").toString());
 
     assertThat(sources).containsExactlyInAnyOrder(
-            baseDir.resolve("submodule/src/commonMain/kotlin").toString(),
-            baseDir.resolve("submodule/src/jvmMain/kotlin").toString(),
-            baseDir.resolve("submodule/src/jvmMain/java").toString()
-    );
+      baseDir.resolve("submodule/src/commonMain/kotlin").toString(),
+      baseDir.resolve("submodule/src/jvmMain/kotlin").toString(),
+      baseDir.resolve("submodule/src/jvmMain/java").toString());
   }
 
   @Test
@@ -331,5 +327,44 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(binaries).containsExactly(baseDir.resolve("submodule/build/classes/kotlin/main").toString());
     assertThat(sources).containsExactly(baseDir.resolve("submodule/src/main/kotlin").toString());
+  }
+
+  @Test
+  public void testScanAllOnMultiModuleWithSubModulesProjectCollectsTheExpectedSources() throws Exception {
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-with-submodules", emptyMap(), "compileJava", "compileTestJava");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+    assertThat(baseDir.getFileName().toString()).hasToString("multi-module-with-submodules");
+
+    String scanAll = props.getProperty("sonar.gradle.scanAll");
+    assertThat(scanAll).isEqualTo("true");
+
+    // checking that the skippedModules are not included in the sonar.modules property, while the other non-skipped nested modules are
+    assertThat(props.getProperty("sonar.modules")).isEqualTo(":module");
+    assertThat(props.getProperty(":module.sonar.modules")).isEqualTo(":module:submodule");
+
+    // checking that the expected sources are collected when the scanAll property is set to true
+    String[] sources = props.getProperty("sonar.sources").split(",");
+    assertThat(sources)
+      .containsExactlyInAnyOrder(
+        baseDir.resolve("build.gradle.kts").toString(),
+        baseDir.resolve("settings.gradle.kts").toString(),
+        baseDir.resolve("module/build.gradle.kts").toString(),
+        baseDir.resolve("module/submodule/build.gradle.kts").toString(),
+        baseDir.resolve("module/submodule/submoduleScript.sh").toString(),
+        baseDir.resolve("gradlew").toString(),
+        baseDir.resolve("gradlew.bat").toString(),
+        // Will be fixed by SCANGRADLE-149
+        baseDir.resolve("skippedModule/skippedSubmodule/build.gradle.kts").toString(),
+        baseDir.resolve("gradle/wrapper/gradle-wrapper.properties").toString()
+      ).doesNotContain(
+        baseDir.resolve("skippedModule/build.gradle.kts").toString(),
+        baseDir.resolve("skippedModule/skippedSubmodule/skippedSubmoduleScript.sh").toString());
+
+    assertThat(props.getProperty(":module.sonar.sources")).isEqualTo(baseDir.resolve("module/src/main/java").toString());
+    assertThat(props.getProperty(":module.:module:submodule.sonar.sources")).isEqualTo(baseDir.resolve("module/submodule/src/main/java").toString());
+
+    assertThat(props.getProperty(":skippedModule.sonar.sources")).isNull();
+    assertThat(props.getProperty(":skippedModule.:skippedModule:skippedSubmodule.sonar.sources")).isNull();
   }
 }
