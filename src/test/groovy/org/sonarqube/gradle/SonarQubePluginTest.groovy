@@ -1015,7 +1015,6 @@ class SonarQubePluginTest extends Specification {
                 module1/build.gradle.kts
                 module1/extras/pyScriptM1.py
                 module1/scriptM1.sh
-                module2/submodule/build.gradle.kts
                 settings.gradle.kts
                 """.stripIndent().trim()
     assert sources == expectedSources
