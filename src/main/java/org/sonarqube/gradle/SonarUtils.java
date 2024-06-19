@@ -30,6 +30,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -37,6 +39,11 @@ import org.gradle.api.Project;
 import org.sonarsource.scanner.api.ScanProperties;
 
 public class SonarUtils {
+
+  private static final Pattern COVERAGE_REPORT_PATH_PROPERTY_PATTERN = Pattern.compile(
+    "^sonar\\.(coverageReportPaths|([^.]++\\.)++(xml)?reports?paths?)$",
+    Pattern.CASE_INSENSITIVE
+  );
 
   static final String SONAR_JAVA_SOURCE_PROP = "sonar.java.source";
   static final String SONAR_JAVA_TARGET_PROP = "sonar.java.target";
@@ -210,6 +217,30 @@ public class SonarUtils {
     }
 
     return collected;
+  }
+
+  /**
+   * Returns the paths listed under the external report parameters found in the properties.
+   *
+   * @param properties Properties to explore
+   * @return The set of paths that point to external reports
+   */
+  public static Set<Path> extractReportPaths(Map<String, Object> properties) {
+    return properties.entrySet()
+      .stream()
+      .filter(entry -> isExternalReportProperty(entry.getKey()))
+      .map(Map.Entry::getValue)
+      .filter(String.class::isInstance)
+      .map(String.class::cast)
+      .map(SonarUtils::splitAsCsv)
+      .flatMap(Collection::stream)
+      .map(String::trim)
+      .map(Path::of)
+      .collect(Collectors.toSet());
+  }
+
+  private static boolean isExternalReportProperty(String propertyName) {
+    return COVERAGE_REPORT_PATH_PROPERTY_PATTERN.matcher(propertyName.trim()).matches();
   }
 
 }

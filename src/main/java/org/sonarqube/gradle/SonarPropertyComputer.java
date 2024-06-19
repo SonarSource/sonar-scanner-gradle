@@ -26,14 +26,14 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -69,6 +69,8 @@ import org.sonarsource.scanner.api.Utils;
 
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.exists;
+import static org.sonarqube.gradle.SonarUtils.extractReportPaths;
+import static org.sonarqube.gradle.SonarUtils.findProjectBaseDir;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
 import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
@@ -96,7 +98,7 @@ public class SonarPropertyComputer {
 
     computeSonarProperties(targetProject, properties);
 
-    properties.computeIfPresent(SONAR_PROJECT_BASE_DIR, (k, v) -> SonarUtils.findProjectBaseDir(properties));
+    properties.computeIfPresent(SONAR_PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(properties));
 
     if (SonarQubePlugin.notSkipped(targetProject)) {
       properties.put("sonar.kotlin.gradleProjectRoot", targetProject.getRootProject().getProjectDir().getAbsolutePath());
@@ -216,7 +218,16 @@ public class SonarPropertyComputer {
       .map(File::toPath)
       .collect(Collectors.toSet());
 
-    SourceCollector visitor = new SourceCollector(allModulesExistingSources, skippedDirs, Set.of(), false);
+    Path root = Path.of(findProjectBaseDir(properties));
+    Set<Path> excludedFiles = extractReportPaths(properties).stream()
+      .map(originalPath -> {
+        if (originalPath.isAbsolute()) {
+          return originalPath;
+        }
+        return root.resolve(originalPath);
+      }).collect(Collectors.toSet());
+
+    SourceCollector visitor = new SourceCollector(allModulesExistingSources, skippedDirs, excludedFiles, false);
 
     try {
       Files.walkFileTree(project.getProjectDir().toPath(), visitor);
