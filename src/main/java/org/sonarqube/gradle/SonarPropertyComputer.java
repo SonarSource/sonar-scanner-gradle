@@ -220,12 +220,8 @@ public class SonarPropertyComputer {
 
     Path root = Path.of(findProjectBaseDir(properties));
     Set<Path> excludedFiles = extractReportPaths(properties).stream()
-      .map(originalPath -> {
-        if (originalPath.isAbsolute()) {
-          return originalPath;
-        }
-        return root.resolve(originalPath);
-      }).collect(Collectors.toSet());
+      .map(originalPath -> originalPath.isAbsolute() ? originalPath : root.resolve(originalPath))
+      .collect(Collectors.toSet());
 
     SourceCollector visitor = new SourceCollector(allModulesExistingSources, skippedDirs, excludedFiles, false);
 
