@@ -354,7 +354,10 @@ public class GradleTest extends AbstractGradleIT {
         baseDir.resolve("module/submodule/submoduleScript.sh").toString(),
         baseDir.resolve("gradlew").toString(),
         baseDir.resolve("gradlew.bat").toString(),
-        baseDir.resolve("gradle/wrapper/gradle-wrapper.properties").toString()
+        baseDir.resolve("gradle/wrapper/gradle-wrapper.properties").toString(),
+        baseDir.resolve(".gradle/8.7/gc.properties").toString(),
+        baseDir.resolve(".gradle/buildOutputCleanup/cache.properties").toString(),
+        baseDir.resolve(".gradle/vcs-1/gc.properties").toString()
       ).doesNotContain(
         baseDir.resolve("skippedModule/build.gradle.kts").toString(),
         baseDir.resolve("skippedModule/skippedSubmodule/skippedSubmoduleScript.sh").toString(),

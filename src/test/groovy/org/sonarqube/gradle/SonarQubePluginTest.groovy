@@ -1011,6 +1011,13 @@ class SonarQubePluginTest extends Specification {
 
     then:
     def expectedSources = """
+                .hidden/.hidden-file.txt
+                .hidden/file.txt
+                .hidden/folder/.hidden-nested-file.txt
+                .hidden/folder/nested-file.txt
+                .hidden/folder/public-id_rsa-prod
+                .hidden/folder/test-config.config
+                .hidden/prod-token
                 build.gradle.kts
                 module1/build.gradle.kts
                 module1/extras/pyScriptM1.py
@@ -1024,7 +1031,7 @@ class SonarQubePluginTest extends Specification {
     assert properties[":module2.:module2:submodule.sonar.sources"] == null
   }
 
-  def "scan all detects scripts in all modules"() {
+  def "scan all detects files in all modules"() {
     def dir = new File("src/test/projects/java-multi-nested-modules")
     def parent = ProjectBuilder.builder()
       .withName("java-multi-nested-modules")
@@ -1076,6 +1083,13 @@ class SonarQubePluginTest extends Specification {
 
     then:
     def expectedSources = """
+                .hidden/.hidden-file.txt
+                .hidden/file.txt
+                .hidden/folder/.hidden-nested-file.txt
+                .hidden/folder/nested-file.txt
+                .hidden/folder/public-id_rsa-prod
+                .hidden/folder/test-config.config
+                .hidden/prod-token
                 build.gradle.kts
                 module1/build.gradle.kts
                 module1/extras/pyScriptM1.py
@@ -1085,7 +1099,8 @@ class SonarQubePluginTest extends Specification {
                 module2/settings.gradle.kts
                 module2/submodule/build.gradle.kts
                 module2/submodule/scriptM2S.sh
-                settings.gradle.kts""".stripIndent().trim()
+                settings.gradle.kts
+                """.stripIndent().trim()
     assert sources == expectedSources
 
     assert normalizePathArray(module1Sources).contains(normalizePathString("src/test/projects/java-multi-nested-modules/module1/src/main/java"))

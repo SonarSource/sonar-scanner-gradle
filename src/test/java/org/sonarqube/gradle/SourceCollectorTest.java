@@ -1,4 +1,4 @@
-package org.sonarqube.gradle;/*
+/*
  * SonarQube Scanner for Gradle
  * Copyright (C) 2015-2024 SonarSource
  * mailto:info AT sonarsource DOT com
@@ -17,6 +17,7 @@ package org.sonarqube.gradle;/*
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
+package org.sonarqube.gradle;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SourceCollectorTest {
   @TempDir
@@ -46,81 +48,122 @@ class SourceCollectorTest {
   }
 
   @Test
+  void testSourceCollectorBuilder() {
+    assertThatThrownBy(() -> SourceCollector.builder().build())
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessage("Root path must be set");
+  }
+
+  @Test
   void testPrevisitDirectories() throws IOException {
-    Path srcMainJava = Paths.get("src", "main", "java");
+    Path src = createDirectory(simpleProjectBasedDir, "src");
+    Path srcMain = createDirectory(src, "main");
+    Path srcMainJava = createDirectory(srcMain, "java");
+    Path srcMainJs = createDirectory(srcMain, "js");
+
     Set<Path> existingSources = Collections.singleton(srcMainJava);
-    FileVisitor<Path> visitor = new SourceCollector(existingSources, Collections.emptySet(), Collections.emptySet(), false);
+    FileVisitor<Path> visitor = SourceCollector.builder()
+      .setRoot(simpleProjectBasedDir)
+      .setExistingSources(existingSources)
+      .build();
 
-    Path gitFolder = Paths.get(".git");
-    Path gitHooksFolder = Paths.get(".git", "hooks");
-    Path sources = Paths.get("scripts");
+    Path gitFolder = createDirectory(simpleProjectBasedDir, ".git");
+    Path gitHooksFolder = createDirectory(gitFolder, "hooks");
+    Path sources = createDirectory(simpleProjectBasedDir, "scripts");
 
-    assertThat(visitor.preVisitDirectory(gitFolder, null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(gitHooksFolder, null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(gitFolder, null)).isEqualTo(FileVisitResult.CONTINUE);
+    assertThat(visitor.preVisitDirectory(gitHooksFolder, null)).isEqualTo(FileVisitResult.CONTINUE);
 
-    assertThat(visitor.preVisitDirectory(Paths.get("src", "main", "java"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(Paths.get("bin"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(Paths.get("build"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(Paths.get("target"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(Paths.get("out"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(Paths.get("tmp"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(Paths.get("dist"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(Paths.get("nbdist"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
-    assertThat(visitor.preVisitDirectory(Paths.get("nbbuild"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(srcMainJava, null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(createDirectory(simpleProjectBasedDir, "bin"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(createDirectory(simpleProjectBasedDir, "build"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(createDirectory(simpleProjectBasedDir, "target"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(createDirectory(simpleProjectBasedDir, "out"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(createDirectory(simpleProjectBasedDir, "tmp"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(createDirectory(simpleProjectBasedDir, "dist"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(createDirectory(simpleProjectBasedDir, "nbdist"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(createDirectory(simpleProjectBasedDir, "nbbuild"), null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
 
     assertThat(visitor.preVisitDirectory(sources, null)).isEqualTo(FileVisitResult.CONTINUE);
-    assertThat(visitor.preVisitDirectory(Paths.get("src", "main", "js"), null)).isEqualTo(FileVisitResult.CONTINUE);
+    assertThat(visitor.preVisitDirectory(srcMainJs, null)).isEqualTo(FileVisitResult.CONTINUE);
   }
 
   @Test
   void visitorCollectsConsistently() throws IOException {
     // File in the existing source is not repeated in the collected files
-    SourceCollector visitor = new SourceCollector(Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false);
+    SourceCollector visitor = SourceCollector.builder().setRoot(emptyProjectBasedir).build();
     Files.walkFileTree(emptyProjectBasedir, visitor);
     assertThat(visitor.getCollectedSources()).isEmpty();
 
-    SourceCollector otherVisitor = new SourceCollector(Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false);
+    SourceCollector otherVisitor = SourceCollector.builder().setRoot(singleFileProjectBaseDir).build();
     Files.walkFileTree(singleFileProjectBaseDir, otherVisitor);
     assertThat(otherVisitor.getCollectedSources()).containsOnly(singleFileProjectBaseDir.resolve("pom.xml"));
 
-    SourceCollector visitorAvoidingPomXml = new SourceCollector(Collections.singleton(singleFileProjectBaseDir.resolve("pom.xml")), Collections.emptySet(), Collections.emptySet(),
-      false);
+    SourceCollector visitorAvoidingPomXml = SourceCollector.builder()
+      .setRoot(singleFileProjectBaseDir)
+      .setExistingSources(Collections.singleton(singleFileProjectBaseDir.resolve("pom.xml")))
+      .build();
     Files.walkFileTree(singleFileProjectBaseDir, visitorAvoidingPomXml);
     assertThat(visitorAvoidingPomXml.getCollectedSources()).isEmpty();
   }
 
   @Test
   void visitorIgnoresFilesInDirectoriesToIgnore() throws IOException {
-    Path simpleProjectPom = simpleProjectBasedDir.resolve("pom.xml");
-    simpleProjectPom.toFile().createNewFile();
-    Path rootJavaFile = simpleProjectBasedDir.resolve("ProjectRoot.java");
-    rootJavaFile.toFile().createNewFile();
-    Path subModule = simpleProjectBasedDir.resolve("submodule");
-    subModule.toFile().mkdirs();
-    Path fileInSubModule = subModule.resolve("ignore-me.php");
-    fileInSubModule.toFile().createNewFile();
+    Path simpleProjectPom = createFile(simpleProjectBasedDir, "pom.xml");
+    Path rootJavaFile = createFile(simpleProjectBasedDir, "ProjectRoot.java");
+    Path subModule = createDirectory(simpleProjectBasedDir, "submodule");
+    Path fileInSubModule = createFile(subModule, "ignore-me.php");
 
-    SourceCollector visitor = new SourceCollector(Collections.emptySet(), Collections.singleton(subModule), Collections.emptySet(), true);
+    SourceCollector visitor = SourceCollector.builder()
+      .setRoot(simpleProjectBasedDir)
+      .setDirectoriesToIgnore(Collections.singleton(subModule))
+      .setShouldCollectJavaAndKotlinSources(true)
+      .build();
     Files.walkFileTree(simpleProjectBasedDir, visitor);
     assertThat(visitor.getCollectedSources())
+      .contains(simpleProjectPom)
       .contains(rootJavaFile)
       .doesNotContain(fileInSubModule);
   }
 
   @Test
   void visitorIgnoresJavaAndKotlinFiles() throws IOException {
-    Path simpleProjectPom = simpleProjectBasedDir.resolve("pom.xml");
-    simpleProjectPom.toFile().createNewFile();
-    Path rootJavaFile = simpleProjectBasedDir.resolve("ProjectRoot.java");
-    rootJavaFile.toFile().createNewFile();
-    Path rootKotlinFile = simpleProjectBasedDir.resolve("ProjectRoot.kt");
-    rootKotlinFile.toFile().createNewFile();
+    Path simpleProjectPom = createFile(simpleProjectBasedDir, "pom.xml");
+    Path rootJavaFile = createFile(simpleProjectBasedDir, "ProjectRoot.java");
+    Path rootKotlinFile = createFile(simpleProjectBasedDir, "ProjectRoot.kt");
 
-    SourceCollector visitor = new SourceCollector(Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false);
+    SourceCollector visitor = SourceCollector.builder().setRoot(simpleProjectBasedDir).build();
     Files.walkFileTree(simpleProjectBasedDir, visitor);
     assertThat(visitor.getCollectedSources())
       .contains(simpleProjectPom)
       .doesNotContain(rootJavaFile)
       .doesNotContain(rootKotlinFile);
+  }
+
+  @Test
+  void visitorCollectsExpectedHiddenFiles() throws IOException {
+    Path hiddenDirectory = createDirectory(simpleProjectBasedDir, ".hidden");
+    Path hiddenFile = createFile(hiddenDirectory, "file.txt");
+    Path hiddenFile2 = createFile(hiddenDirectory, "configuration");
+    Path hiddenFile3 = createFile(hiddenDirectory, "non-relevant-file");
+
+    SourceCollector visitor = SourceCollector.builder().setRoot(simpleProjectBasedDir).build();
+    Files.walkFileTree(simpleProjectBasedDir, visitor);
+    assertThat(visitor.getCollectedSources())
+      .contains(hiddenFile)
+      .contains(hiddenFile2)
+      .doesNotContain(hiddenFile3);
+  }
+
+  private Path createFile(Path parent, String name) throws IOException {
+    Path file = parent.resolve(name);
+    file.toFile().createNewFile();
+    return file;
+  }
+
+  private Path createDirectory(Path parent, String name) {
+    Path directory = parent.resolve(name);
+    directory.toFile().mkdirs();
+    return directory;
   }
 }

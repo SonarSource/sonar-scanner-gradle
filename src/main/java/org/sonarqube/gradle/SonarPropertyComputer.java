@@ -216,7 +216,11 @@ public class SonarPropertyComputer {
       .map(File::toPath)
       .collect(Collectors.toSet());
 
-    SourceCollector visitor = new SourceCollector(allModulesExistingSources, skippedDirs, Set.of(), false);
+    SourceCollector visitor = SourceCollector.builder()
+      .setRoot(project.getProjectDir().toPath())
+      .setExistingSources(allModulesExistingSources)
+      .setDirectoriesToIgnore(skippedDirs)
+      .build();
 
     try {
       Files.walkFileTree(project.getProjectDir().toPath(), visitor);
