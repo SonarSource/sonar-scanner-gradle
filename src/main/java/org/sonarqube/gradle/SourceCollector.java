@@ -22,7 +22,6 @@ package org.sonarqube.gradle;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
@@ -121,10 +120,10 @@ public class SourceCollector implements FileVisitor<Path> {
     return FileVisitResult.CONTINUE;
   }
 
-  private boolean isHidden(Path path) throws IOException {
+  private boolean isHidden(Path path) {
     Path relativePath = root.relativize(path);
     while (relativePath != null && !relativePath.equals(root)) {
-      if (Files.isHidden(relativePath)) {
+      if (relativePath.toFile().isHidden()) {
         return true;
       }
       relativePath = relativePath.getParent();
@@ -146,8 +145,8 @@ public class SourceCollector implements FileVisitor<Path> {
   }
 
   @Override
-  public FileVisitResult visitFile(Path path, BasicFileAttributes basicFileAttributes) throws IOException {
-    if (!excludedFiles.contains(path) && existingSources.stream().noneMatch(path::equals)) {
+  public FileVisitResult visitFile(Path path, BasicFileAttributes basicFileAttributes) {
+    if (!basicFileAttributes.isSymbolicLink() && !excludedFiles.contains(path) && existingSources.stream().noneMatch(path::equals)) {
       String lowerCaseFileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
 
       boolean isHidden = isHidden(path);
@@ -179,6 +178,8 @@ public class SourceCollector implements FileVisitor<Path> {
     private Set<Path> directoriesToIgnore = new HashSet<>();
     private Set<Path> excludedFiles = new HashSet<>();
     private boolean shouldCollectJavaAndKotlinSources = false;
+
+    private Builder() { }
 
     public Builder setRoot(Path root) {
       this.root = root;
