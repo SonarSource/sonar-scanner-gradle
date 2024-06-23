@@ -78,6 +78,7 @@ public class SourceCollector implements FileVisitor<Path> {
   private static final Set<String> EXCLUDED_EXTENSIONS_WITHOUT_JAVA_AND_KOTLIN = Stream.concat(EXCLUDED_EXTENSIONS_WITH_JAVA_AND_KOTLIN.stream(), Stream.of(
     ".java",
     ".jav",
+    ".jsp",
     ".kt")).map(ext -> ext.toLowerCase(Locale.ROOT))
     .collect(Collectors.toSet());
 

@@ -116,11 +116,15 @@ class SourceCollectorTest {
     Path rootKotlinFile = simpleProjectBasedDir.resolve("ProjectRoot.kt");
     rootKotlinFile.toFile().createNewFile();
 
+    Path rootJSPFile = simpleProjectBasedDir.resolve("ProjectRoot.jsp");
+    rootJSPFile.toFile().createNewFile();
+
     SourceCollector visitor = new SourceCollector(Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false);
     Files.walkFileTree(simpleProjectBasedDir, visitor);
     assertThat(visitor.getCollectedSources())
       .contains(simpleProjectPom)
       .doesNotContain(rootJavaFile)
-      .doesNotContain(rootKotlinFile);
+      .doesNotContain(rootKotlinFile)
+      .doesNotContain(rootJSPFile);
   }
 }
