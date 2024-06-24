@@ -19,8 +19,10 @@
  */
 package org.sonarqube.gradle;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
@@ -28,12 +30,14 @@ import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-public class SonarUtilsTest {
+class SonarUtilsTest {
+
   @Test
-  public void get_project_base_dir() {
+  void get_project_base_dir() {
     Map<String, Object> properties = ImmutableMap.of(
       "sonar.projectBaseDir", "/project/build",
       "m1.sonar.projectBaseDir", "/project/m1",
@@ -65,7 +69,7 @@ public class SonarUtilsTest {
   }
 
   @Test
-  public void get_project_base_dir_with_different_roots() {
+  void get_project_base_dir_with_different_roots() {
     assumeTrue(SystemUtils.IS_OS_WINDOWS);
 
     Map<String, Object> properties = ImmutableMap.of(
@@ -109,5 +113,80 @@ public class SonarUtilsTest {
     // Interleaved escaped values
     assertThat(SonarUtils.splitAsCsv("\"/opt/lib\",src/main/java,\"/home/users/me/artifact-123,456.jar\""))
       .containsOnly(expectedValues);
+  }
+
+  @Test
+  void extractReportPaths_returns_an_empty_list_when_no_Coverage_report_paths() {
+    Map<String, Object> emptyProperties = Collections.emptyMap();
+    assertThat(SonarUtils.extractReportPaths(emptyProperties)).isEmpty();
+
+    Map<String, Object> unrelatedProperties = Map.of("sonar.not.a.real.parameter", "not-relevant-here");
+
+    assertThat(SonarUtils.extractReportPaths(unrelatedProperties)).isEmpty();
+  }
+
+  @Test
+  void extractReportPaths_returns_the_expected_paths_when_Coverage_report_paths_are_configured() {
+    Map<String, Object> properties = Map.of(
+      "sonar.coverageReportPaths", "path/to/generic-report.xml",
+      "sonar.lang.reportPaths", "path/to/other-report-for-lang.bin",
+      "sonar.lang.reportsPaths", "path/to/first-report-for-lang.bin, path/to/second-report-for-lang.bin",
+      "sonar.lang.coverage.reportPaths", "path/to/third-report-for-lang.bin, path/to/fourth-report-for-lang.bin",
+      "sonar.lang.coverage.reportPath", "path/to/fifth-report-for-lang.bin",
+      "sonar.very.fancy.lang.coverage.reportPath", "path/to/sixth-report-for-lang.bin",
+      "sonar.coverage.jacoco.xmlReportPaths", "path/to/seventh-report-for-lang.xml"
+    );
+
+    assertThat(SonarUtils.extractReportPaths(properties)).containsExactlyInAnyOrder(
+      Path.of("path/to/generic-report.xml"),
+      Path.of("path/to/other-report-for-lang.bin"),
+      Path.of("path/to/first-report-for-lang.bin"),
+      Path.of("path/to/second-report-for-lang.bin"),
+      Path.of("path/to/fourth-report-for-lang.bin"),
+      Path.of("path/to/fifth-report-for-lang.bin"),
+      Path.of("path/to/third-report-for-lang.bin"),
+      Path.of("path/to/sixth-report-for-lang.bin"),
+      Path.of("path/to/seventh-report-for-lang.xml")
+    );
+  }
+
+  @Test
+  void computeReportPaths_throws_an_IllegalStateException_when_sonar_dot_projectBaseDir_is_not_defined() {
+    Map<String, Object> emptyProperties = Collections.emptyMap();
+    assertThatThrownBy(() -> SonarUtils.computeReportPaths(emptyProperties))
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessage("Cannot compute absolute paths for reports because \"sonar.projectBaseDir\" is not defined.");
+  }
+
+  @Test
+  void computeReportPaths_returns_the_expected_absolute_paths() {
+    Path projectBaseDir = Path.of("not", "a", "real", "project", "baseDir").toAbsolutePath();
+    Path relativeReportFile = Path.of("my-relative-report.xml");
+    Path absoluteReportFile = Path.of("my-absolute-report.xml").toAbsolutePath();
+    Map<String, Object> minimalProperties = Map.of(
+      "sonar.projectBaseDir", projectBaseDir
+    );
+    assertThat(SonarUtils.computeReportPaths(minimalProperties)).isEmpty();
+
+    Map<String, Object> propertiesWithSingleReportPath = Map.of(
+      "sonar.projectBaseDir", projectBaseDir,
+      "sonar.lang.reportPaths", relativeReportFile.toString()
+    );
+
+    assertThat(SonarUtils.computeReportPaths(propertiesWithSingleReportPath))
+      .containsOnly(projectBaseDir.resolve(relativeReportFile))
+      .allMatch(Path::isAbsolute);
+
+    Map<String, Object> relativeAndAbsolutePathsMix = Map.of(
+      "sonar.projectBaseDir", projectBaseDir,
+      "sonar.lang.reportPaths", String.format("%s,%s", relativeReportFile.toString(), absoluteReportFile.toString())
+    );
+
+    assertThat(SonarUtils.computeReportPaths(relativeAndAbsolutePathsMix))
+      .containsOnly(
+        projectBaseDir.resolve(relativeReportFile),
+        absoluteReportFile
+      )
+      .allMatch(Path::isAbsolute);
   }
 }

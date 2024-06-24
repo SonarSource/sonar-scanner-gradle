@@ -478,4 +478,61 @@ class FunctionalTests extends Specification {
         null                 | "test"
         "src"                | "test"
     }
+
+    def "scan all excludes coverage report files"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+        def extraEmptyScriptThatShouldBeCollected = testProjectDir.resolve("empty-script.groovy")
+        def firstCoverageReport = testProjectDir.resolve("my-first-coverage-report.xml")
+        def secondCoverageReport = testProjectDir.resolve("my-second-coverage-report.xml")
+        def thirdCoverageReport = testProjectDir.resolve("my-third-coverage-report.xml")
+        Files.createFile(extraEmptyScriptThatShouldBeCollected)
+        Files.createFile(firstCoverageReport)
+        Files.createFile(secondCoverageReport)
+        Files.createFile(thirdCoverageReport)
+
+        when:
+        def result = GradleRunner.create()
+                .withGradleVersion(gradleVersion)
+                .withProjectDir(testProjectDir.toFile())
+                .forwardOutput()
+                .withArguments('sonar', '--info',
+                        '-Dsonar.gradle.scanAll=true',
+                        '-Dsonar.coverageReportPaths=my-first-coverage-report.xml,my-second-coverage-report.xml',
+                        '-Dsonar.coverage.jacoco.xmlReportPaths=' + thirdCoverageReport.toAbsolutePath().toString(),
+                        '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
+                .withPluginClasspath()
+                .withDebug(true)
+                .build()
+        print("Hello")
+        then:
+        result.task(":sonar").outcome == SUCCESS
+
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.gradle.scanAll" == "true"
+        props."sonar.coverageReportPaths" == "my-first-coverage-report.xml,my-second-coverage-report.xml"
+        props."sonar.coverage.jacoco.xmlReportPaths" == thirdCoverageReport.toAbsolutePath().toString()
+        result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
+
+        // Assert that the extra files (empty script and reports) exist on disk
+        Files.exists(extraEmptyScriptThatShouldBeCollected)
+        Files.exists(firstCoverageReport)
+        Files.exists(secondCoverageReport)
+        Files.exists(thirdCoverageReport)
+
+        // Test that the empty script is is collected but the reports are not collected
+        var sources = ((String) props."sonar.sources").split(",")
+        sources.size() == 4
+        sources[0].endsWith("""$testProjectDir/build.gradle""")
+        sources[1].endsWith("""$testProjectDir/empty-script.groovy""")
+        sources[2].endsWith("""$testProjectDir/gradle.properties""")
+        sources[3].endsWith("""$testProjectDir/settings.gradle""")
+    }
 }
