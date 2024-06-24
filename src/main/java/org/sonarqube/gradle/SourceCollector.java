@@ -127,7 +127,7 @@ public class SourceCollector implements FileVisitor<Path> {
 
   @Override
   public FileVisitResult visitFile(Path path, BasicFileAttributes basicFileAttributes) {
-    if (!excludedFiles.contains(path) && existingSources.stream().noneMatch(path::equals)) {
+    if (!basicFileAttributes.isSymbolicLink() && !excludedFiles.contains(path) && existingSources.stream().noneMatch(path::equals)) {
       String lowerCaseFileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
       if (excludedExtensions.stream().noneMatch(lowerCaseFileName::endsWith)) {
         collectedSources.add(path);
