@@ -239,6 +239,22 @@ public class SonarUtils {
       .collect(Collectors.toSet());
   }
 
+  /**
+   * Computes the absolute paths for the report paths extracted from the properties.
+   * @return The set of absolute paths to external and coverage reports
+   * @throws IllegalStateException if the property "sonar.projectBaseDir" is not defined in the properties argument
+   */
+  public static Set<Path> computeReportPaths(Map<String, Object> properties) {
+    if (!properties.containsKey("sonar.projectBaseDir")) {
+      throw new IllegalStateException("Cannot compute absolute paths for reports because \"sonar.projectBaseDir\" is not defined.");
+    }
+    Path projectBaseDir = Path.of(findProjectBaseDir(properties));
+    return extractReportPaths(properties)
+      .stream()
+      .map(originalPath -> originalPath.isAbsolute() ? originalPath : projectBaseDir.resolve(originalPath))
+      .collect(Collectors.toSet());
+  }
+
   private static boolean isReportPathProperty(String propertyName) {
     return REPORT_PATH_PROPERTY_PATTERN.matcher(propertyName.trim()).matches();
   }

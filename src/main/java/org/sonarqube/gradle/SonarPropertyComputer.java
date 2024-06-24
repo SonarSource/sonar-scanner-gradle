@@ -68,8 +68,8 @@ import org.sonarsource.scanner.api.ScanProperties;
 import org.sonarsource.scanner.api.Utils;
 
 import static org.sonarqube.gradle.SonarUtils.appendProp;
+import static org.sonarqube.gradle.SonarUtils.computeReportPaths;
 import static org.sonarqube.gradle.SonarUtils.exists;
-import static org.sonarqube.gradle.SonarUtils.extractReportPaths;
 import static org.sonarqube.gradle.SonarUtils.findProjectBaseDir;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
@@ -218,10 +218,7 @@ public class SonarPropertyComputer {
       .map(File::toPath)
       .collect(Collectors.toSet());
 
-    Path root = Path.of(findProjectBaseDir(properties));
-    Set<Path> excludedFiles = extractReportPaths(properties).stream()
-      .map(originalPath -> originalPath.isAbsolute() ? originalPath : root.resolve(originalPath))
-      .collect(Collectors.toSet());
+    Set<Path> excludedFiles = computeReportPaths(properties);
 
     SourceCollector visitor = new SourceCollector(allModulesExistingSources, skippedDirs, excludedFiles, false);
 

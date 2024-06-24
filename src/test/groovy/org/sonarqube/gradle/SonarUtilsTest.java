@@ -30,6 +30,7 @@ import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -147,5 +148,45 @@ class SonarUtilsTest {
       Path.of("path/to/sixth-report-for-lang.bin"),
       Path.of("path/to/seventh-report-for-lang.xml")
     );
+  }
+
+  @Test
+  void computeReportPaths_throws_an_IllegalStateException_when_sonar_dot_projectBaseDir_is_not_defined() {
+    Map<String, Object> emptyProperties = Collections.emptyMap();
+    assertThatThrownBy(() -> SonarUtils.computeReportPaths(emptyProperties))
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessage("Cannot compute absolute paths for reports because \"sonar.projectBaseDir\" is not defined.");
+  }
+
+  @Test
+  void computeReportPaths_returns_the_expected_absolute_paths() {
+    Path projectBaseDir = Path.of("not", "a", "real", "project", "baseDir").toAbsolutePath();
+    Path relativeReportFile = Path.of("my-relative-report.xml");
+    Path absoluteReportFile = Path.of("my-absolute-report.xml").toAbsolutePath();
+    Map<String, Object> minimalProperties = Map.of(
+      "sonar.projectBaseDir", projectBaseDir
+    );
+    assertThat(SonarUtils.computeReportPaths(minimalProperties)).isEmpty();
+
+    Map<String, Object> propertiesWithSingleReportPath = Map.of(
+      "sonar.projectBaseDir", projectBaseDir,
+      "sonar.lang.reportPaths", relativeReportFile.toString()
+    );
+
+    assertThat(SonarUtils.computeReportPaths(propertiesWithSingleReportPath))
+      .containsOnly(projectBaseDir.resolve(relativeReportFile))
+      .allMatch(Path::isAbsolute);
+
+    Map<String, Object> relativeAndAbsolutePathsMix = Map.of(
+      "sonar.projectBaseDir", projectBaseDir,
+      "sonar.lang.reportPaths", String.format("%s,%s", relativeReportFile.toString(), absoluteReportFile.toString())
+    );
+
+    assertThat(SonarUtils.computeReportPaths(relativeAndAbsolutePathsMix))
+      .containsOnly(
+        projectBaseDir.resolve(relativeReportFile),
+        absoluteReportFile
+      )
+      .allMatch(Path::isAbsolute);
   }
 }
