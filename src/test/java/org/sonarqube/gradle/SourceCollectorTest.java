@@ -123,4 +123,32 @@ class SourceCollectorTest {
       .doesNotContain(rootJavaFile)
       .doesNotContain(rootKotlinFile);
   }
+
+  @Test
+  void visitorIgnoresExcludedFiles() throws IOException {
+    Path pythonScript = simpleProjectBasedDir.resolve("run.py");
+    pythonScript.toFile().createNewFile();
+    Path cppFile = simpleProjectBasedDir.resolve("hello.cpp");
+    cppFile.toFile().createNewFile();
+
+    SourceCollector visitor = new SourceCollector(Collections.emptySet(), Collections.emptySet(), Set.of(cppFile), false);
+    Files.walkFileTree(simpleProjectBasedDir, visitor);
+    assertThat(visitor.getCollectedSources())
+      .contains(pythonScript)
+      .doesNotContain(cppFile);
+  }
+
+  @Test
+  void visitorIgnoresSymbolicLinks() throws IOException {
+    Path simpleProjectPom = simpleProjectBasedDir.resolve("pom.xml");
+    simpleProjectPom.toFile().createNewFile();
+    Path link = simpleProjectBasedDir.resolve("pom.xml.symbolic.link");
+    Files.createSymbolicLink(link, simpleProjectPom);
+
+    SourceCollector visitor = new SourceCollector(Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false);
+    Files.walkFileTree(simpleProjectBasedDir, visitor);
+    assertThat(visitor.getCollectedSources())
+      .contains(simpleProjectPom)
+      .doesNotContain(link);
+  }
 }
