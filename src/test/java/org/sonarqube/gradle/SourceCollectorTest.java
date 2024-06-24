@@ -123,4 +123,18 @@ class SourceCollectorTest {
       .doesNotContain(rootJavaFile)
       .doesNotContain(rootKotlinFile);
   }
+
+  @Test
+  void visitorIgnoresSymbolicLinks() throws IOException {
+    Path simpleProjectPom = simpleProjectBasedDir.resolve("pom.xml");
+    simpleProjectPom.toFile().createNewFile();
+    Path link = simpleProjectBasedDir.resolve("pom.xml.symbolic.link");
+    Files.createSymbolicLink(link, simpleProjectPom);
+
+    SourceCollector visitor = new SourceCollector(Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false);
+    Files.walkFileTree(simpleProjectBasedDir, visitor);
+    assertThat(visitor.getCollectedSources())
+      .contains(simpleProjectPom)
+      .doesNotContain(link);
+  }
 }
