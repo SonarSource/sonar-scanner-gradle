@@ -80,11 +80,37 @@ public class SourceCollector implements FileVisitor<Path> {
     ".kt")).map(ext -> ext.toLowerCase(Locale.ROOT))
     .collect(Collectors.toSet());
 
-  private static final Set<String> INCLUDE_EXTENSIONS_FOR_HIDDEN_FILES = Set.of(".env", ".json", ".yml", ".yaml", ".properties", ".db", ".srcMainJava", ".py", ".xml", ".sh",
-    ".bash", ".ksh", ".zsh", ".bat", ".ps1", ".txt", ".config", ".settings", ".cnf");
+  private static final Set<String> INCLUDE_EXTENSIONS_FOR_HIDDEN_FILES = Set.of(
+    ".env",
+    ".json",
+    ".yml", ".yaml",
+    ".properties",
+    ".db",
+    ".htpasswd",
+    ".py",
+    ".xml",
+    ".sh", ".bash", ".ksh", ".zsh", ".bat",
+    ".ps1",
+    ".txt",
+    ".config",
+    ".settings",
+    ".cnf"
+  );
 
-  private static final Set<String> INCLUDE_HIDDEN_FILES_KEYWORDS = Set.of("config", "cfg", "credential", "token", "secret", "private", "access", "password", "pwd", "key", ".env.",
-    "history", "sessions", "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519");
+  private static final Set<String> INCLUDE_HIDDEN_FILES_KEYWORDS = Set.of(
+    "config", "cfg",
+    "credential",
+    "token",
+    "secret",
+    "private",
+    "access",
+    "password", "pwd",
+    "key",
+    ".env.",
+    "history",
+    "sessions",
+    "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519"
+  );
 
   private final Path root;
   private final Set<Path> existingSources;
