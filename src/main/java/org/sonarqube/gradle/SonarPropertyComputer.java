@@ -218,9 +218,12 @@ public class SonarPropertyComputer {
       .map(File::toPath)
       .collect(Collectors.toSet());
 
+    Set<Path> excludedFiles = computeReportPaths(properties);
+
     SourceCollector visitor = SourceCollector.builder()
       .setRoot(project.getProjectDir().toPath())
       .setExistingSources(allModulesExistingSources)
+      .setExcludedFiles(excludedFiles)
       .setDirectoriesToIgnore(skippedDirs)
       .build();
 
