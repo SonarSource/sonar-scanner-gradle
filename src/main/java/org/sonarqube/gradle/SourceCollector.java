@@ -35,6 +35,17 @@ import java.util.stream.StreamSupport;
 public class SourceCollector implements FileVisitor<Path> {
   private static final Set<String> EXCLUDED_DIRECTORIES = new HashSet<>(
     Arrays.asList(
+      ".cache",
+      ".env",
+      ".git",
+      ".gradle",
+      ".jruby",
+      ".m2",
+      ".node_modules",
+      ".npm",
+      ".pycache",
+      ".pytest_cache",
+      ".venv",
       "bin",
       "build",
       "dist",
@@ -42,18 +53,7 @@ public class SourceCollector implements FileVisitor<Path> {
       "nbdist",
       "out",
       "target",
-      "tmp",
-      ".gradle",
-      ".git",
-      ".npm",
-      ".venv",
-      ".cache",
-      ".env",
-      ".jruby",
-      ".m2",
-      ".node_modules",
-      ".pycache",
-      ".pytest_cache"
+      "tmp"
     )
   );
 
@@ -93,33 +93,44 @@ public class SourceCollector implements FileVisitor<Path> {
     .collect(Collectors.toSet());
 
   private static final Set<String> INCLUDE_EXTENSIONS_FOR_HIDDEN_FILES = Set.of(
-    ".env",
-    ".json",
-    ".yml", ".yaml",
-    ".properties",
-    ".db",
-    ".htpasswd",
-    ".xml",
-    ".sh", ".bash", ".ksh", ".zsh", ".bat", ".ps1",
-    ".txt",
+    ".bash",
+    ".bat",
+    ".cnf",
     ".config",
+    ".db",
+    ".env",
+    ".htpasswd",
+    ".json",
+    ".ksh",
+    ".properties",
+    ".ps1",
     ".settings",
-    ".cnf"
+    ".sh",
+    ".txt",
+    ".xml",
+    ".yaml",
+    ".yml",
+    ".zsh"
   );
 
   private static final Set<String> INCLUDE_HIDDEN_FILES_KEYWORDS = Set.of(
-    "config", "cfg",
-    "credential",
-    "token",
-    "secret",
-    "private",
-    "access",
-    "password", "pwd",
-    "key",
     ".env.",
+    "access",
+    "cfg",
+    "config",
+    "credential",
     "history",
+    "id_dsa",
+    "id_ecdsa",
+    "id_ed25519",
+    "id_rsa",
+    "key",
+    "password",
+    "private",
+    "pwd",
+    "secret",
     "sessions",
-    "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519"
+    "token"
   );
 
   private final Path root;
@@ -156,7 +167,7 @@ public class SourceCollector implements FileVisitor<Path> {
     return FileVisitResult.CONTINUE;
   }
 
-  private boolean isHidden(Path path) {
+  private static boolean isHidden(Path path) {
     return StreamSupport.stream(path.spliterator(), true)
       .anyMatch(token -> token.toString().startsWith("."));
   }
@@ -179,12 +190,13 @@ public class SourceCollector implements FileVisitor<Path> {
     if (!basicFileAttributes.isSymbolicLink() && !excludedFiles.contains(path) && existingSources.stream().noneMatch(path::equals)) {
       String lowerCaseFileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
 
-      boolean isHidden = isHidden(path);
-      boolean isHiddenFileToCollect = INCLUDE_HIDDEN_FILES_KEYWORDS.stream().anyMatch(lowerCaseFileName::contains)
-        || INCLUDE_EXTENSIONS_FOR_HIDDEN_FILES.stream().anyMatch(lowerCaseFileName::endsWith);
-      boolean isNotExcludedExtension = excludedExtensions.stream().noneMatch(lowerCaseFileName::endsWith);
-
-      if ((isHidden && isHiddenFileToCollect) || (!isHidden && isNotExcludedExtension)) {
+      if (isHidden(path)) {
+        boolean isHiddenFileToCollect = INCLUDE_HIDDEN_FILES_KEYWORDS.stream().anyMatch(lowerCaseFileName::contains)
+          || INCLUDE_EXTENSIONS_FOR_HIDDEN_FILES.stream().anyMatch(lowerCaseFileName::endsWith);
+        if (isHiddenFileToCollect) {
+          collectedSources.add(path);
+        }
+      } else if (excludedExtensions.stream().noneMatch(lowerCaseFileName::endsWith)) {
         collectedSources.add(path);
       }
     }
