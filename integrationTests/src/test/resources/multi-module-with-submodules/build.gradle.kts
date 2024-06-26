@@ -1,6 +1,6 @@
 plugins {
   java
-  id("org.sonarqube") version "5.1-SNAPSHOT"
+  id("org.sonarqube") version "${version}"
 }
 
 allprojects {
