@@ -35,6 +35,17 @@ import java.util.stream.StreamSupport;
 public class SourceCollector implements FileVisitor<Path> {
   private static final Set<String> EXCLUDED_DIRECTORIES = new HashSet<>(
     Arrays.asList(
+      ".cache",
+      ".env",
+      ".git",
+      ".gradle",
+      ".jruby",
+      ".m2",
+      ".node_modules",
+      ".npm",
+      ".pycache",
+      ".pytest_cache",
+      ".venv",
       "bin",
       "build",
       "dist",
@@ -81,6 +92,48 @@ public class SourceCollector implements FileVisitor<Path> {
     ".kt")).map(ext -> ext.toLowerCase(Locale.ROOT))
     .collect(Collectors.toSet());
 
+  private static final Set<String> INCLUDE_EXTENSIONS_FOR_HIDDEN_FILES = Set.of(
+    ".bash",
+    ".bat",
+    ".cnf",
+    ".config",
+    ".db",
+    ".env",
+    ".htpasswd",
+    ".json",
+    ".ksh",
+    ".properties",
+    ".ps1",
+    ".settings",
+    ".sh",
+    ".txt",
+    ".xml",
+    ".yaml",
+    ".yml",
+    ".zsh"
+  );
+
+  private static final Set<String> INCLUDE_HIDDEN_FILES_KEYWORDS = Set.of(
+    ".env.",
+    "access",
+    "cfg",
+    "config",
+    "credential",
+    "history",
+    "id_dsa",
+    "id_ecdsa",
+    "id_ed25519",
+    "id_rsa",
+    "key",
+    "password",
+    "private",
+    "pwd",
+    "secret",
+    "sessions",
+    "token"
+  );
+
+  private final Path root;
   private final Set<Path> existingSources;
   private final Set<Path> directoriesToIgnore;
   private final Set<Path> excludedFiles;
@@ -92,7 +145,12 @@ public class SourceCollector implements FileVisitor<Path> {
 
   private final Set<Path> collectedSources = new HashSet<>();
 
-  public SourceCollector(Set<Path> existingSources, Set<Path> directoriesToIgnore, Set<Path> excludedFiles, boolean shouldCollectJavaAndKotlinSources) {
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  private SourceCollector(Path root, Set<Path> existingSources, Set<Path> directoriesToIgnore, Set<Path> excludedFiles, boolean shouldCollectJavaAndKotlinSources) {
+    this.root = root;
     this.existingSources = existingSources;
     this.directoriesToIgnore = directoriesToIgnore;
     this.excludedFiles = excludedFiles;
@@ -100,12 +158,10 @@ public class SourceCollector implements FileVisitor<Path> {
   }
 
   @Override
-  public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes basicFileAttributes) throws IOException {
-    if (
-      isHidden(path) ||
-      isExcludedDirectory(path) ||
-      isCoveredByExistingSources(path)
-    ) {
+  public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes basicFileAttributes) {
+    boolean isHiddenAndTooFarDownTheTree = isHidden(path) && !isChildOrGrandChildOfRoot(path);
+
+    if (isHiddenAndTooFarDownTheTree || isExcludedDirectory(path) || isCoveredByExistingSources(path)) {
       return FileVisitResult.SKIP_SUBTREE;
     }
     return FileVisitResult.CONTINUE;
@@ -114,6 +170,10 @@ public class SourceCollector implements FileVisitor<Path> {
   private static boolean isHidden(Path path) {
     return StreamSupport.stream(path.spliterator(), true)
       .anyMatch(token -> token.toString().startsWith("."));
+  }
+
+  private boolean isChildOrGrandChildOfRoot(Path path) {
+    return root.equals(path.getParent()) || root.equals(path.getParent().getParent());
   }
 
   private boolean isExcludedDirectory(Path path) {
@@ -129,10 +189,18 @@ public class SourceCollector implements FileVisitor<Path> {
   public FileVisitResult visitFile(Path path, BasicFileAttributes basicFileAttributes) {
     if (!basicFileAttributes.isSymbolicLink() && !excludedFiles.contains(path) && existingSources.stream().noneMatch(path::equals)) {
       String lowerCaseFileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
-      if (excludedExtensions.stream().noneMatch(lowerCaseFileName::endsWith)) {
+
+      if (isHidden(path)) {
+        boolean isHiddenFileToCollect = INCLUDE_HIDDEN_FILES_KEYWORDS.stream().anyMatch(lowerCaseFileName::contains)
+          || INCLUDE_EXTENSIONS_FOR_HIDDEN_FILES.stream().anyMatch(lowerCaseFileName::endsWith);
+        if (isHiddenFileToCollect) {
+          collectedSources.add(path);
+        }
+      } else if (excludedExtensions.stream().noneMatch(lowerCaseFileName::endsWith)) {
         collectedSources.add(path);
       }
     }
+
     return FileVisitResult.CONTINUE;
   }
 
@@ -144,5 +212,47 @@ public class SourceCollector implements FileVisitor<Path> {
   @Override
   public FileVisitResult postVisitDirectory(Path path, IOException e) throws IOException {
     return FileVisitResult.CONTINUE;
+  }
+
+  public static class Builder {
+    private Path root = null;
+    private Set<Path> existingSources = new HashSet<>();
+    private Set<Path> directoriesToIgnore = new HashSet<>();
+    private Set<Path> excludedFiles = new HashSet<>();
+    private boolean shouldCollectJavaAndKotlinSources = false;
+
+    private Builder() { }
+
+    public Builder setRoot(Path root) {
+      this.root = root;
+      return this;
+    }
+
+    public Builder setExistingSources(Set<Path> existingSources) {
+      this.existingSources = existingSources;
+      return this;
+    }
+
+    public Builder setDirectoriesToIgnore(Set<Path> directoriesToIgnore) {
+      this.directoriesToIgnore = directoriesToIgnore;
+      return this;
+    }
+
+    public Builder setExcludedFiles(Set<Path> excludedFiles) {
+      this.excludedFiles = excludedFiles;
+      return this;
+    }
+
+    public Builder setShouldCollectJavaAndKotlinSources(boolean shouldCollectJavaAndKotlinSources) {
+      this.shouldCollectJavaAndKotlinSources = shouldCollectJavaAndKotlinSources;
+      return this;
+    }
+
+    public SourceCollector build() {
+      if (root == null) {
+        throw new IllegalStateException("Root path must be set");
+      }
+      return new SourceCollector(root, existingSources, directoriesToIgnore, excludedFiles, shouldCollectJavaAndKotlinSources);
+    }
   }
 }

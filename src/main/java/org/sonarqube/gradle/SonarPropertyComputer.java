@@ -220,7 +220,13 @@ public class SonarPropertyComputer {
 
     Set<Path> excludedFiles = computeReportPaths(properties);
 
-    SourceCollector visitor = new SourceCollector(allModulesExistingSources, skippedDirs, excludedFiles, false);
+    SourceCollector visitor = SourceCollector.builder()
+      .setRoot(project.getProjectDir().toPath())
+      .setExistingSources(allModulesExistingSources)
+      .setExcludedFiles(excludedFiles)
+      .setDirectoriesToIgnore(skippedDirs)
+      .build();
+
 
     try {
       Files.walkFileTree(project.getProjectDir().toPath(), visitor);
