@@ -505,7 +505,7 @@ class FunctionalTests extends Specification {
                 .withArguments('sonar', '--info',
                         '-Dsonar.gradle.scanAll=true',
                         '-Dsonar.coverageReportPaths=my-first-coverage-report.xml,my-second-coverage-report.xml',
-                        '-Dsonar.coverage.jacoco.xmlReportPaths=' + thirdCoverageReport.toAbsolutePath().toString(),
+                        '-Dsonar.coverage.jacoco.xmlReportPaths=' + thirdCoverageReport.toRealPath().toString(),
                         '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .withDebug(true)
@@ -518,7 +518,7 @@ class FunctionalTests extends Specification {
         props.load(outFile.newDataInputStream())
         props."sonar.gradle.scanAll" == "true"
         props."sonar.coverageReportPaths" == "my-first-coverage-report.xml,my-second-coverage-report.xml"
-        props."sonar.coverage.jacoco.xmlReportPaths" == thirdCoverageReport.toAbsolutePath().toString()
+        props."sonar.coverage.jacoco.xmlReportPaths" == thirdCoverageReport.toRealPath().toString()
         result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
 
         // Assert that the extra files (empty script and reports) exist on disk
