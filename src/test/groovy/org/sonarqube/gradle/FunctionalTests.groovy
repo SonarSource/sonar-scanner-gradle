@@ -42,6 +42,9 @@ class FunctionalTests extends Specification {
     def setup() {
         settingsFile = testProjectDir.resolve('settings.gradle')
         buildFile = testProjectDir.resolve('build.gradle')
+        testProjectDir.resolve('integrationTests').toFile().mkdir()
+        testProjectDir.resolve('integrationTests').resolve("run-all.sh") << "# a script file"
+        testProjectDir.resolve('test-license.sh') << "# a script file"
         outFile = testProjectDir.resolve('out.properties')
         // For JaCoCo coverage, see https://github.com/koral--/jacoco-gradle-testkit-plugin
         InputStream is = FunctionalTests.class.getClassLoader().getResourceAsStream('testkit-gradle.properties')
@@ -385,11 +388,16 @@ class FunctionalTests extends Specification {
         props."sonar.gradle.scanAll" == "true"
         result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
 
-        var sources = ((String) props."sonar.sources").split(",")
-        sources.size() == 3
-        sources[0].endsWith("""$testProjectDir/build.gradle""")
-        sources[1].endsWith("""$testProjectDir/gradle.properties""")
-        sources[2].endsWith("""$testProjectDir/settings.gradle""")
+        var mainSources = ((String) props."sonar.sources").split(",")
+        mainSources.size() == 3
+        mainSources[0].endsWith("""$testProjectDir/build.gradle""")
+        mainSources[1].endsWith("""$testProjectDir/gradle.properties""")
+        mainSources[2].endsWith("""$testProjectDir/settings.gradle""")
+
+        var testSources = ((String) props."sonar.tests").split(",")
+        testSources.size() == 2
+        testSources[0].endsWith("""$testProjectDir/integrationTests/run-all.sh""")
+        testSources[1].endsWith("""$testProjectDir/test-license.sh""")
     }
 
     def "scan all is enabled but not applied because of overridden properties on the command line"() {
@@ -528,11 +536,16 @@ class FunctionalTests extends Specification {
         Files.exists(thirdCoverageReport)
 
         // Test that the empty script is is collected but the reports are not collected
-        var sources = ((String) props."sonar.sources").split(",")
-        sources.size() == 4
-        sources[0].endsWith("""$testProjectDir/build.gradle""")
-        sources[1].endsWith("""$testProjectDir/empty-script.groovy""")
-        sources[2].endsWith("""$testProjectDir/gradle.properties""")
-        sources[3].endsWith("""$testProjectDir/settings.gradle""")
+        var mainSources = ((String) props."sonar.sources").split(",")
+        mainSources.size() == 4
+        mainSources[0].endsWith("""$testProjectDir/build.gradle""")
+        mainSources[1].endsWith("""$testProjectDir/empty-script.groovy""")
+        mainSources[2].endsWith("""$testProjectDir/gradle.properties""")
+        mainSources[3].endsWith("""$testProjectDir/settings.gradle""")
+
+        var testSources = ((String) props."sonar.tests").split(",")
+        testSources.size() == 2
+        testSources[0].endsWith("""$testProjectDir/integrationTests/run-all.sh""")
+        testSources[1].endsWith("""$testProjectDir/test-license.sh""")
     }
 }

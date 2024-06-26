@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,6 +68,7 @@ import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.api.ScanProperties;
 import org.sonarsource.scanner.api.Utils;
 
+import static java.util.stream.Collectors.groupingBy;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.computeReportPaths;
 import static org.sonarqube.gradle.SonarUtils.exists;
@@ -84,6 +86,22 @@ public class SonarPropertyComputer {
   private static final String MAIN_SOURCE_SET_SUFFIX = "main";
   private static final String TEST_SOURCE_SET_SUFFIX = "test";
   public static final String SONAR_PROJECT_BASE_DIR = "sonar.projectBaseDir";
+
+  /**
+   * Find test files given the path by looking for the keyword "test", for example:
+   * - script/test/run.sh
+   *          ^^^^
+   * But exclude not test related English words.
+   */
+  private static final Pattern TEST_FILE_PATH_PATTERN = Pattern.compile(
+    // Exclude valid English words ending with "test": contest, protest, detest, attest
+    "(?<!con|pro|de|at)" +
+      // Find path containing "test"
+      "test" +
+      // Exclude valid English words starting with "test":
+      // - testate, testator, testatrix, testament, testimonial, testimony, testiness, testy
+      "(?!ate|ator|atrix|ament|imonial|imony|iness|y)",
+    Pattern.CASE_INSENSITIVE);
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
@@ -228,17 +246,27 @@ public class SonarPropertyComputer {
       .build();
 
 
+    Path projectDir = project.getProjectDir().toPath();
     try {
-      Files.walkFileTree(project.getProjectDir().toPath(), visitor);
+      Files.walkFileTree(projectDir, visitor);
     } catch (IOException e) {
       LOGGER.error(String.valueOf(e));
     }
 
-    List<Path> collectedSources = visitor.getCollectedSources().stream()
+    Map<InputFileType, List<Path>> collectedSourceByType = visitor.getCollectedSources().stream()
       .map(Path::toAbsolutePath)
-      .collect(Collectors.toList());
+      .collect(groupingBy(path -> findProjectFileType(projectDir, path)));
 
-    Set<Path> existingSources = SonarUtils.splitAsCsv((String) properties.get(ScanProperties.PROJECT_SOURCE_DIRS))
+    List<Path> collectedMainSources = collectedSourceByType.getOrDefault(InputFileType.MAIN, List.of());
+    appendAdditionalSourceFiles(properties, ScanProperties.PROJECT_SOURCE_DIRS, collectedMainSources);
+
+    List<Path> collectedTestSources = collectedSourceByType.getOrDefault(InputFileType.TEST, List.of());
+    appendAdditionalSourceFiles(properties, ScanProperties.PROJECT_TEST_DIRS, collectedTestSources);
+  }
+
+  private static void appendAdditionalSourceFiles(Map<String, Object> properties, String sourcePropertyToUpdate, List<Path> collectedSources) {
+    String existingValue = (String) properties.getOrDefault(sourcePropertyToUpdate, "");
+    Set<Path> existingSources = existingValue.isBlank() ? Collections.emptySet() : SonarUtils.splitAsCsv(existingValue)
       .stream()
       .filter(Predicate.not(String::isBlank))
       .map(Paths::get)
@@ -250,7 +278,17 @@ public class SonarPropertyComputer {
       .sorted()
       .collect(Collectors.toList());
 
-    properties.put(ScanProperties.PROJECT_SOURCE_DIRS, SonarUtils.joinAsCsv(mergedSources));
+    properties.put(sourcePropertyToUpdate, SonarUtils.joinAsCsv(mergedSources));
+  }
+
+  public enum InputFileType {
+    MAIN, TEST
+  }
+
+  // VisibleForTesting
+  static InputFileType findProjectFileType(Path projectDir, Path filePath) {
+    String relativePath = projectDir.relativize(filePath).toString();
+    return TEST_FILE_PATH_PATTERN.matcher(relativePath).find() ? InputFileType.TEST : InputFileType.MAIN;
   }
 
   private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties) {
