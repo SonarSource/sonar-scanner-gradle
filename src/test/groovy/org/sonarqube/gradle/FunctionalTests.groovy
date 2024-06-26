@@ -386,11 +386,10 @@ class FunctionalTests extends Specification {
         result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
 
         var sources = ((String) props."sonar.sources").split(",")
-        sources.size() == 4
-        sources[0].endsWith("""$testProjectDir/.gradle/buildOutputCleanup/cache.properties""")
-        sources[1].endsWith("""$testProjectDir/build.gradle""")
-        sources[2].endsWith("""$testProjectDir/gradle.properties""")
-        sources[3].endsWith("""$testProjectDir/settings.gradle""")
+        sources.size() == 3
+        sources[0].endsWith("""$testProjectDir/build.gradle""")
+        sources[1].endsWith("""$testProjectDir/gradle.properties""")
+        sources[2].endsWith("""$testProjectDir/settings.gradle""")
     }
 
     def "scan all is enabled but not applied because of overridden properties on the command line"() {

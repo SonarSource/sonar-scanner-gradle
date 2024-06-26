@@ -355,11 +355,13 @@ public class GradleTest extends AbstractGradleIT {
         baseDir.resolve("gradlew").toString(),
         baseDir.resolve("gradlew.bat").toString(),
         baseDir.resolve("gradle/wrapper/gradle-wrapper.properties").toString(),
-        baseDir.resolve(".gradle/buildOutputCleanup/cache.properties").toString()
+        baseDir.resolve(".hiddenDir/file.txt").toString(),
+        baseDir.resolve(".hiddenConfig").toString()
       ).doesNotContain(
         baseDir.resolve("skippedModule/build.gradle.kts").toString(),
         baseDir.resolve("skippedModule/skippedSubmodule/skippedSubmoduleScript.sh").toString(),
-        baseDir.resolve("skippedModule/skippedSubmodule/build.gradle.kts").toString()
+        baseDir.resolve("skippedModule/skippedSubmodule/build.gradle.kts").toString(),
+        baseDir.resolve(".hiddenDir/script.py").toString()
       );
 
     assertThat(props.getProperty(":module.sonar.sources")).isEqualTo(baseDir.resolve("module/src/main/java").toString());

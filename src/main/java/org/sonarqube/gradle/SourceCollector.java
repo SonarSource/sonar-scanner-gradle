@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class SourceCollector implements FileVisitor<Path> {
   private static final Set<String> EXCLUDED_DIRECTORIES = new HashSet<>(
@@ -41,7 +42,18 @@ public class SourceCollector implements FileVisitor<Path> {
       "nbdist",
       "out",
       "target",
-      "tmp"
+      "tmp",
+      ".gradle",
+      ".git",
+      ".npm",
+      ".venv",
+      ".cache",
+      ".env",
+      ".jruby",
+      ".m2",
+      ".node_modules",
+      ".pycache",
+      ".pytest_cache"
     )
   );
 
@@ -87,10 +99,8 @@ public class SourceCollector implements FileVisitor<Path> {
     ".properties",
     ".db",
     ".htpasswd",
-    ".py",
     ".xml",
-    ".sh", ".bash", ".ksh", ".zsh", ".bat",
-    ".ps1",
+    ".sh", ".bash", ".ksh", ".zsh", ".bat", ".ps1",
     ".txt",
     ".config",
     ".settings",
@@ -128,7 +138,7 @@ public class SourceCollector implements FileVisitor<Path> {
     return new Builder();
   }
 
-  public SourceCollector(Path root, Set<Path> existingSources, Set<Path> directoriesToIgnore, Set<Path> excludedFiles, boolean shouldCollectJavaAndKotlinSources) {
+  private SourceCollector(Path root, Set<Path> existingSources, Set<Path> directoriesToIgnore, Set<Path> excludedFiles, boolean shouldCollectJavaAndKotlinSources) {
     this.root = root;
     this.existingSources = existingSources;
     this.directoriesToIgnore = directoriesToIgnore;
@@ -137,28 +147,22 @@ public class SourceCollector implements FileVisitor<Path> {
   }
 
   @Override
-  public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes basicFileAttributes) throws IOException {
-    boolean isHiddenDirectoryToSkip = isHidden(path) && !isChildOrGrandChildOfRoot(path);
+  public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes basicFileAttributes) {
+    boolean isHiddenAndTooFarDownTheTree = isHidden(path) && !isChildOrGrandChildOfRoot(path);
 
-    if (isHiddenDirectoryToSkip || isExcludedDirectory(path) || isCoveredByExistingSources(path)) {
+    if (isHiddenAndTooFarDownTheTree || isExcludedDirectory(path) || isCoveredByExistingSources(path)) {
       return FileVisitResult.SKIP_SUBTREE;
     }
     return FileVisitResult.CONTINUE;
   }
 
   private boolean isHidden(Path path) {
-    Path relativePath = root.relativize(path);
-    while (relativePath != null && !relativePath.equals(root)) {
-      if (relativePath.toFile().isHidden()) {
-        return true;
-      }
-      relativePath = relativePath.getParent();
-    }
-    return false;
+    return StreamSupport.stream(path.spliterator(), true)
+      .anyMatch(token -> token.toString().startsWith("."));
   }
 
   private boolean isChildOrGrandChildOfRoot(Path path) {
-    return path.getParent() != null && (path.getParent().equals(root) || path.getParent().getParent().equals(root));
+    return root.equals(path.getParent()) || root.equals(path.getParent().getParent());
   }
 
   private boolean isExcludedDirectory(Path path) {
