@@ -65,6 +65,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.sonarqube.gradle.SonarUtils.InputFileType;
 import org.sonarsource.scanner.api.ScanProperties;
 import org.sonarsource.scanner.api.Utils;
 
@@ -86,22 +87,6 @@ public class SonarPropertyComputer {
   private static final String MAIN_SOURCE_SET_SUFFIX = "main";
   private static final String TEST_SOURCE_SET_SUFFIX = "test";
   public static final String SONAR_PROJECT_BASE_DIR = "sonar.projectBaseDir";
-
-  /**
-   * Find test files given the path by looking for the keyword "test", for example:
-   * - script/test/run.sh
-   *          ^^^^
-   * But exclude not test related English words.
-   */
-  private static final Pattern TEST_FILE_PATH_PATTERN = Pattern.compile(
-    // Exclude valid English words ending with "test": contest, protest, detest, attest
-    "(?<!con|pro|de|at)" +
-      // Find path containing "test"
-      "test" +
-      // Exclude valid English words starting with "test":
-      // - testate, testator, testatrix, testament, testimonial, testimony, testiness, testy
-      "(?!ate|ator|atrix|ament|imonial|imony|iness|y)",
-    Pattern.CASE_INSENSITIVE);
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
@@ -255,7 +240,7 @@ public class SonarPropertyComputer {
 
     Map<InputFileType, List<Path>> collectedSourceByType = visitor.getCollectedSources().stream()
       .map(Path::toAbsolutePath)
-      .collect(groupingBy(path -> findProjectFileType(projectDir, path)));
+      .collect(groupingBy(path -> SonarUtils.findProjectFileType(projectDir, path)));
 
     List<Path> collectedMainSources = collectedSourceByType.getOrDefault(InputFileType.MAIN, List.of());
     appendAdditionalSourceFiles(properties, ScanProperties.PROJECT_SOURCE_DIRS, collectedMainSources);
@@ -279,16 +264,6 @@ public class SonarPropertyComputer {
       .collect(Collectors.toList());
 
     properties.put(sourcePropertyToUpdate, SonarUtils.joinAsCsv(mergedSources));
-  }
-
-  public enum InputFileType {
-    MAIN, TEST
-  }
-
-  // VisibleForTesting
-  static InputFileType findProjectFileType(Path projectDir, Path filePath) {
-    String relativePath = projectDir.relativize(filePath).toString();
-    return TEST_FILE_PATH_PATTERN.matcher(relativePath).find() ? InputFileType.TEST : InputFileType.MAIN;
   }
 
   private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties) {
