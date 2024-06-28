@@ -753,16 +753,13 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    pathList(project, "sonar.sources") == """
+    relativize(project, "sonar.sources") == """
       src/jsMain/kotlin/Sample.js
       src/jvmMain/java/me/user/application/Sample.java
       src/jvmMain/kotlin/me.user.application/Sample.kt
       """.stripIndent().trim()
 
-    pathList(project, "sonar.tests") == """
-      src/jvmTest/java/me/user/application/SampleTest.java
-      """.stripIndent().trim()
-
+    relativize(project, "sonar.tests") == "src/jvmTest/java/me/user/application/SampleTest.java"
     properties["sonar.java.binaries"] == null
     properties["sonar.java.libraries"] == null
   }
@@ -788,23 +785,15 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    pathList(project, "sonar.sources") == """
+    relativize(project, "sonar.sources") == """
       src/jsMain/kotlin/Sample.js
       src/jvmMain/java/me/user/application/Sample.java
       src/jvmMain/kotlin/me.user.application/Sample.kt
       """.stripIndent().trim()
 
-    pathList(project, "sonar.tests") == """
-      src/jvmTest/java/me/user/application/SampleTest.java
-      """.stripIndent().trim()
-
-    pathList(project, "sonar.java.libraries") == """
-      lib/SomeLib.jar
-      """.stripIndent().trim()
-
-    pathList(project, "sonar.java.binaries") == """
-      build/out
-      """.stripIndent().trim()
+    relativize(project, "sonar.tests") == "src/jvmTest/java/me/user/application/SampleTest.java"
+    relativize(project, "sonar.java.libraries") == "lib/SomeLib.jar"
+    relativize(project, "sonar.java.binaries") == "build/out"
   }
 
   def "handles root project property correctly if plugin is applied to root project"() {
@@ -921,16 +910,16 @@ class SonarQubePluginTest extends Specification {
     parent.pluginManager.apply(SonarQubePlugin)
 
     then:
-    pathList(parent, "sonar.sources") == """
+    relativize(parent, "sonar.sources") == """
       build.gradle.kts
       module1/build.gradle.kts
       module2/build.gradle.kts
       settings.gradle.kts
       """.stripIndent().trim()
 
-    pathList(parent, "sonar.tests") == ""
-    pathList(parent, ":module1.sonar.sources") == ""
-    pathList(parent, ":module2.sonar.sources") == ""
+    relativize(parent, "sonar.tests") == ""
+    relativize(parent, ":module1.sonar.sources") == ""
+    relativize(parent, ":module2.sonar.sources") == ""
   }
 
   private List<String> normalizePathArray(String[] pathStrings) {
@@ -941,18 +930,6 @@ class SonarQubePluginTest extends Specification {
 
   private String normalizePathString(String pathString) {
     return Paths.get(pathString).normalize().toAbsolutePath();
-  }
-
-  private String pathList(Project project, String propertyName) {
-    Map<String,String> properties = (Map<String,String>) project.tasks.sonar.properties.get()
-    return properties.getOrDefault(propertyName, "").split(",")
-      .stream()
-      .filter(s -> !s.isBlank())
-      .map(s -> project.projectDir.toPath().relativize(Path.of(s)).toString())
-      // filter out an unexpected file internally created by the test framework
-      .filter(s -> !s.endsWith("file-access.properties"))
-      .sorted()
-      .collect(Collectors.joining("\n"))
   }
 
   def "avoid nested paths inside sonar.sources"() {
@@ -967,8 +944,8 @@ class SonarQubePluginTest extends Specification {
     project.pluginManager.apply(SonarQubePlugin)
 
     when:
-    def mainSources = pathList(project, "sonar.sources")
-    def testSources = pathList(project, "sonar.tests")
+    def mainSources = relativize(project, "sonar.sources")
+    def testSources = relativize(project, "sonar.tests")
 
     then:
     mainSources == """
@@ -1019,9 +996,9 @@ class SonarQubePluginTest extends Specification {
 
     when:
     def props = parent.tasks.sonar.properties.get()
-    def mainSources = pathList(parent, "sonar.sources")
-    def testSources = pathList(parent, "sonar.tests")
-    def module1Sources = pathList(parent, ":module1.sonar.sources")
+    def mainSources = relativize(parent, "sonar.sources")
+    def testSources = relativize(parent, "sonar.tests")
+    def module1Sources = relativize(parent, ":module1.sonar.sources")
 
     then:
     mainSources == """
@@ -1038,13 +1015,9 @@ class SonarQubePluginTest extends Specification {
       settings.gradle.kts
       """.stripIndent().trim()
 
-    testSources == """
-      .hidden/folder/test-config.config
-      """.stripIndent().trim()
+    testSources == ".hidden/folder/test-config.config"
 
-    module1Sources == """
-      module1/src/main/java
-      """.stripIndent().trim()
+    module1Sources == "module1/src/main/java"
 
     !props.containsKey(":module2.sonar.sources")
     !props.containsKey(":module2.:module2:submodule.sonar.sources")
@@ -1088,11 +1061,11 @@ class SonarQubePluginTest extends Specification {
     }
 
     when:
-    def mainSources = pathList(parent, "sonar.sources")
-    def testSources = pathList(parent, "sonar.tests")
-    def module1Sources = pathList(parent, ":module1.sonar.sources")
-    def module2Sources = pathList(parent, ":module2.sonar.sources")
-    def submoduleSources = pathList(parent, ":module2.:module2:submodule.sonar.sources")
+    def mainSources = relativize(parent, "sonar.sources")
+    def testSources = relativize(parent, "sonar.tests")
+    def module1Sources = relativize(parent, ":module1.sonar.sources")
+    def module2Sources = relativize(parent, ":module2.sonar.sources")
+    def submoduleSources = relativize(parent, ":module2.:module2:submodule.sonar.sources")
 
     then:
     mainSources == """
@@ -1114,21 +1087,10 @@ class SonarQubePluginTest extends Specification {
       settings.gradle.kts
       """.stripIndent().trim()
 
-    testSources == """
-      .hidden/folder/test-config.config
-      """.stripIndent().trim()
-
-    module1Sources == """
-      module1/src/main/java
-      """.stripIndent().trim()
-
-    module2Sources == """
-      module2/src/main/java
-      """.stripIndent().trim()
-
-    submoduleSources == """
-      module2/submodule/src/main/java
-      """.stripIndent().trim()
+    testSources == ".hidden/folder/test-config.config"
+    module1Sources == "module1/src/main/java"
+    module2Sources == "module2/src/main/java"
+    submoduleSources == "module2/submodule/src/main/java"
   }
 
   private static void setSourceSets(Project project, List<String> mainDirs) {
@@ -1139,4 +1101,17 @@ class SonarQubePluginTest extends Specification {
       mainSourceSet.getJava().srcDir(mainDir);
     }
   }
+
+  private String relativize(Project project, String propertyName) {
+    Map<String,String> properties = (Map<String,String>) project.tasks.sonar.properties.get()
+    return properties.getOrDefault(propertyName, "").split(",")
+      .stream()
+      .filter(s -> !s.isBlank())
+      .map(s -> project.projectDir.toPath().relativize(Path.of(s)).toString())
+      // filter out an unexpected file internally created by the test framework
+      .filter(s -> !s.endsWith("file-access.properties"))
+      .sorted()
+      .collect(Collectors.joining("\n"))
+  }
+
 }
