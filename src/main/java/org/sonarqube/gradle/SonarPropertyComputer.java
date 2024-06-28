@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,9 +65,11 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.sonarqube.gradle.SonarUtils.InputFileType;
 import org.sonarsource.scanner.api.ScanProperties;
 import org.sonarsource.scanner.api.Utils;
 
+import static java.util.stream.Collectors.groupingBy;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.computeReportPaths;
 import static org.sonarqube.gradle.SonarUtils.exists;
@@ -228,17 +231,27 @@ public class SonarPropertyComputer {
       .build();
 
 
+    Path projectDir = project.getProjectDir().toPath();
     try {
-      Files.walkFileTree(project.getProjectDir().toPath(), visitor);
+      Files.walkFileTree(projectDir, visitor);
     } catch (IOException e) {
       LOGGER.error(String.valueOf(e));
     }
 
-    List<Path> collectedSources = visitor.getCollectedSources().stream()
+    Map<InputFileType, List<Path>> collectedSourceByType = visitor.getCollectedSources().stream()
       .map(Path::toAbsolutePath)
-      .collect(Collectors.toList());
+      .collect(groupingBy(path -> SonarUtils.findProjectFileType(projectDir, path)));
 
-    Set<Path> existingSources = SonarUtils.splitAsCsv((String) properties.get(ScanProperties.PROJECT_SOURCE_DIRS))
+    List<Path> collectedMainSources = collectedSourceByType.getOrDefault(InputFileType.MAIN, List.of());
+    appendAdditionalSourceFiles(properties, ScanProperties.PROJECT_SOURCE_DIRS, collectedMainSources);
+
+    List<Path> collectedTestSources = collectedSourceByType.getOrDefault(InputFileType.TEST, List.of());
+    appendAdditionalSourceFiles(properties, ScanProperties.PROJECT_TEST_DIRS, collectedTestSources);
+  }
+
+  private static void appendAdditionalSourceFiles(Map<String, Object> properties, String sourcePropertyToUpdate, List<Path> collectedSources) {
+    String existingValue = (String) properties.getOrDefault(sourcePropertyToUpdate, "");
+    Set<Path> existingSources = existingValue.isBlank() ? Collections.emptySet() : SonarUtils.splitAsCsv(existingValue)
       .stream()
       .filter(Predicate.not(String::isBlank))
       .map(Paths::get)
@@ -250,7 +263,7 @@ public class SonarPropertyComputer {
       .sorted()
       .collect(Collectors.toList());
 
-    properties.put(ScanProperties.PROJECT_SOURCE_DIRS, SonarUtils.joinAsCsv(mergedSources));
+    properties.put(sourcePropertyToUpdate, SonarUtils.joinAsCsv(mergedSources));
   }
 
   private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties) {

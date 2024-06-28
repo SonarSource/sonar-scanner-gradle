@@ -34,18 +34,21 @@ class FunctionalTests extends Specification {
     String gradleVersion = "7.6.2"
 
     @TempDir
-    Path testProjectDir
+    Path projectDir
     Path settingsFile
     Path buildFile
     Path outFile
 
     def setup() {
-        settingsFile = testProjectDir.resolve('settings.gradle')
-        buildFile = testProjectDir.resolve('build.gradle')
-        outFile = testProjectDir.resolve('out.properties')
+        settingsFile = projectDir.resolve('settings.gradle')
+        buildFile = projectDir.resolve('build.gradle')
+        projectDir.resolve('integrationTests').toFile().mkdir()
+        projectDir.resolve('integrationTests').resolve("run-all.sh") << "# a test script file"
+        projectDir.resolve('test-license.sh') << "# a test script file"
+        outFile = projectDir.resolve('out.properties')
         // For JaCoCo coverage, see https://github.com/koral--/jacoco-gradle-testkit-plugin
         InputStream is = FunctionalTests.class.getClassLoader().getResourceAsStream('testkit-gradle.properties')
-        Files.copy(is, testProjectDir.resolve('gradle.properties'), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(is, projectDir.resolve('gradle.properties'), StandardCopyOption.REPLACE_EXISTING)
     }
 
     def "no jdkHome, source and target for non 'java' projects"() {
@@ -59,7 +62,7 @@ class FunctionalTests extends Specification {
 
         when:
         def result = GradleRunner.create()
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -92,7 +95,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -126,7 +129,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -156,7 +159,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonar', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -181,7 +184,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -210,7 +213,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -246,7 +249,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -281,7 +284,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -313,7 +316,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -345,7 +348,7 @@ class FunctionalTests extends Specification {
         when:
         GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonarqube', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
@@ -369,7 +372,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments('sonar', '--info',
             '-Dsonar.gradle.scanAll=true',
@@ -385,11 +388,16 @@ class FunctionalTests extends Specification {
         props."sonar.gradle.scanAll" == "true"
         result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
 
-        var sources = ((String) props."sonar.sources").split(",")
-        sources.size() == 3
-        sources[0].endsWith("""$testProjectDir/build.gradle""")
-        sources[1].endsWith("""$testProjectDir/gradle.properties""")
-        sources[2].endsWith("""$testProjectDir/settings.gradle""")
+        var mainSources = ((String) props."sonar.sources").split(",")
+        mainSources.size() == 3
+        mainSources[0].endsWith("""$projectDir/build.gradle""")
+        mainSources[1].endsWith("""$projectDir/gradle.properties""")
+        mainSources[2].endsWith("""$projectDir/settings.gradle""")
+
+        var testSources = ((String) props."sonar.tests").split(",")
+        testSources.size() == 2
+        testSources[0].endsWith("""$projectDir/integrationTests/run-all.sh""")
+        testSources[1].endsWith("""$projectDir/test-license.sh""")
     }
 
     def "scan all is enabled but not applied because of overridden properties on the command line"() {
@@ -410,7 +418,7 @@ class FunctionalTests extends Specification {
                          '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath()]
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments(arguments.stream().filter { it != null }.toList())
           .withPluginClasspath()
@@ -457,7 +465,7 @@ class FunctionalTests extends Specification {
                          '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath()]
         def result = GradleRunner.create()
           .withGradleVersion(gradleVersion)
-          .withProjectDir(testProjectDir.toFile())
+          .withProjectDir(projectDir.toFile())
           .forwardOutput()
           .withArguments(arguments.stream().filter { it != null }.toList())
           .withPluginClasspath()
@@ -488,10 +496,10 @@ class FunctionalTests extends Specification {
             id 'org.sonarqube'
         }
         """
-        def extraEmptyScriptThatShouldBeCollected = testProjectDir.resolve("empty-script.groovy")
-        def firstCoverageReport = testProjectDir.resolve("my-first-coverage-report.xml")
-        def secondCoverageReport = testProjectDir.resolve("my-second-coverage-report.xml")
-        def thirdCoverageReport = testProjectDir.resolve("my-third-coverage-report.xml")
+        def extraEmptyScriptThatShouldBeCollected = projectDir.resolve("empty-script.groovy")
+        def firstCoverageReport = projectDir.resolve("my-first-coverage-report.xml")
+        def secondCoverageReport = projectDir.resolve("my-second-coverage-report.xml")
+        def thirdCoverageReport = projectDir.resolve("my-third-coverage-report.xml")
         Files.createFile(extraEmptyScriptThatShouldBeCollected)
         Files.createFile(firstCoverageReport)
         Files.createFile(secondCoverageReport)
@@ -500,7 +508,7 @@ class FunctionalTests extends Specification {
         when:
         def result = GradleRunner.create()
                 .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.toFile())
+                .withProjectDir(projectDir.toFile())
                 .forwardOutput()
                 .withArguments('sonar', '--info',
                         '-Dsonar.gradle.scanAll=true',
@@ -528,11 +536,16 @@ class FunctionalTests extends Specification {
         Files.exists(thirdCoverageReport)
 
         // Test that the empty script is is collected but the reports are not collected
-        var sources = ((String) props."sonar.sources").split(",")
-        sources.size() == 4
-        sources[0].endsWith("""$testProjectDir/build.gradle""")
-        sources[1].endsWith("""$testProjectDir/empty-script.groovy""")
-        sources[2].endsWith("""$testProjectDir/gradle.properties""")
-        sources[3].endsWith("""$testProjectDir/settings.gradle""")
+        var mainSources = ((String) props."sonar.sources").split(",")
+        mainSources.size() == 4
+        mainSources[0].endsWith("""$projectDir/build.gradle""")
+        mainSources[1].endsWith("""$projectDir/empty-script.groovy""")
+        mainSources[2].endsWith("""$projectDir/gradle.properties""")
+        mainSources[3].endsWith("""$projectDir/settings.gradle""")
+
+        var testSources = ((String) props."sonar.tests").split(",")
+        testSources.size() == 2
+        testSources[0].endsWith("""$projectDir/integrationTests/run-all.sh""")
+        testSources[1].endsWith("""$projectDir/test-license.sh""")
     }
 }

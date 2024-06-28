@@ -49,6 +49,22 @@ public class SonarUtils {
   static final String SONAR_JAVA_TARGET_PROP = "sonar.java.target";
   static final String SONAR_JAVA_ENABLE_PREVIEW_PROP = "sonar.java.enablePreview";
 
+  /**
+   * Find test files given the path by looking for the keyword "test", for example:
+   * - script/test/run.sh
+   *          ^^^^
+   * But exclude not test related English words. AI was used to find the most common words.
+   */
+  private static final Pattern TEST_FILE_PATH_PATTERN = Pattern.compile(
+    // Exclude valid English words ending with "test": attest, contest, detest, latest, protest
+    "(?<!at|con|de|la|pro)" +
+      // Find path containing "test"
+      "test" +
+      // Exclude valid English words starting with "test":
+      // - testate, testator, testatrix, testament, testimonial, testimony, testiness, testy
+      "(?!ate|ator|atrix|ament|imonial|imony|iness|y)",
+    Pattern.CASE_INSENSITIVE);
+
   private SonarUtils() {
     // Utility class
   }
@@ -257,6 +273,16 @@ public class SonarUtils {
 
   private static boolean isReportPathProperty(String propertyName) {
     return REPORT_PATH_PROPERTY_PATTERN.matcher(propertyName.trim()).matches();
+  }
+
+  public static InputFileType findProjectFileType(Path projectDir, Path filePath) {
+    String relativePath = projectDir.relativize(filePath).toString();
+    return TEST_FILE_PATH_PATTERN.matcher(relativePath).find() ? InputFileType.TEST : InputFileType.MAIN;
+  }
+
+  public enum InputFileType {
+    MAIN,
+    TEST
   }
 
 }

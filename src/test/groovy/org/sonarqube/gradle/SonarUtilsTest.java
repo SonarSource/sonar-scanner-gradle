@@ -28,11 +28,13 @@ import java.util.Map;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
 import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils;
 import org.junit.jupiter.api.Test;
+import org.sonarqube.gradle.SonarUtils.InputFileType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.sonarqube.gradle.SonarUtils.findProjectFileType;
 
 class SonarUtilsTest {
 
@@ -188,5 +190,32 @@ class SonarUtilsTest {
         absoluteReportFile
       )
       .allMatch(Path::isAbsolute);
+  }
+
+  @Test
+  void findProjectFileType_should_return_TEST_for_path_related_to_tests() {
+    String project = "my-project";
+    Path projectDir = Paths.get(project);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/integrationTests/run.sh"))).isEqualTo(InputFileType.TEST);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/integrationTests/run.sh"))).isEqualTo(InputFileType.TEST);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/run-allTests.sh"))).isEqualTo(InputFileType.TEST);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/run-allTests.sh"))).isEqualTo(InputFileType.TEST);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/test/run.sh"))).isEqualTo(InputFileType.TEST);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/test/run.sh"))).isEqualTo(InputFileType.TEST);
+  }
+
+  @Test
+  void findProjectFileType_should_return_MAIN_for_path_not_related_to_tests() {
+    String project = "my-project";
+    Path projectDir = Paths.get(project);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "detest-bad-code.md"))).isEqualTo(InputFileType.MAIN);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "generate-testimonial.sh"))).isEqualTo(InputFileType.MAIN);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "protest-for-freedom.json"))).isEqualTo(InputFileType.MAIN);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "run-testy-testiness-testimony.sh"))).isEqualTo(InputFileType.MAIN);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/build.sh"))).isEqualTo(InputFileType.MAIN);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/run-latest.sh"))).isEqualTo(InputFileType.MAIN);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/run.sh"))).isEqualTo(InputFileType.MAIN);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "script/runContest.sh"))).isEqualTo(InputFileType.MAIN);
+    assertThat(findProjectFileType(projectDir, Paths.get(project, "testate/write-testament-from-testator-and-testatrix.sh"))).isEqualTo(InputFileType.MAIN);
   }
 }

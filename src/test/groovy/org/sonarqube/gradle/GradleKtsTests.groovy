@@ -83,7 +83,7 @@ class GradleKtsTests extends Specification {
 
         then:
         props["sonar.sources"] == buildFile.toRealPath().toString()
-
+        !props.containsKey("sonar.tests")
     }
 
     def "add only settings file to sources when only settings file is in kotlin dsl"() {
@@ -104,7 +104,7 @@ class GradleKtsTests extends Specification {
 
         then:
         props["sonar.sources"] == settingsFile.toRealPath().toString()
-
+        !props.containsKey("sonar.tests")
     }
 
     def "add only build file to sources when no settings found"() {
@@ -124,7 +124,7 @@ class GradleKtsTests extends Specification {
 
         then:
         props["sonar.sources"] == buildFile.toRealPath().toString()
-
+        !props.containsKey("sonar.tests")
     }
 
     def "add nothing to sources when Groovy dsl is used"() {
@@ -145,7 +145,7 @@ class GradleKtsTests extends Specification {
 
         then:
         props["sonar.sources"] == ""
-
+        !props.containsKey("sonar.tests")
     }
 
     def "add nothing to sources when Groovy dsl is used and no settings"() {
@@ -165,7 +165,7 @@ class GradleKtsTests extends Specification {
 
         then:
         props["sonar.sources"] == ""
-
+        !props.containsKey("sonar.tests")
     }
 
     def "add .gradle.kts files to sources only once"() {
