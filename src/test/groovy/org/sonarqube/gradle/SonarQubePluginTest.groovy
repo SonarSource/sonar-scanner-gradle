@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle
 
+import org.codehaus.groovy.ant.Groovy
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -1012,13 +1013,13 @@ class SonarQubePluginTest extends Specification {
       module1/build.gradle.kts
       module1/extras/pyScriptM1.py
       module1/scriptM1.sh
-      module1/src/main/resources/application.properties
+      module1/src/main/resources/applicationM1.properties
       settings.gradle.kts
       """.stripIndent().trim()
 
     testSources == """
       .hidden/folder/test-config.config
-      module1/src/main/resources/application-test.properties
+      module1/src/main/resources/applicationM1-test.properties
       """.stripIndent().trim()
 
     module1Sources == "module1/src/main/java"
@@ -1083,7 +1084,7 @@ class SonarQubePluginTest extends Specification {
       module1/build.gradle.kts
       module1/extras/pyScriptM1.py
       module1/scriptM1.sh
-      module1/src/main/resources/application.properties
+      module1/src/main/resources/applicationM1.properties
       module2/build.gradle.kts
       module2/scriptM2.py
       module2/settings.gradle.kts
@@ -1094,7 +1095,7 @@ class SonarQubePluginTest extends Specification {
 
     testSources == """
       .hidden/folder/test-config.config
-      module1/src/main/resources/application-test.properties
+      module1/src/main/resources/applicationM1-test.properties
       """.stripIndent().trim()
     module1Sources == "module1/src/main/java"
     module2Sources == "module2/src/main/java"
