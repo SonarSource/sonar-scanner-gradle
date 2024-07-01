@@ -205,9 +205,9 @@ public class SonarPropertyComputer {
 
   private static void computeScanAllProperties(Project project, Map<String, Object> properties) {
     // Collecting the existing sources from all modules, i.e. 'sonar.sources' and all 'submodule.sonar.sources'
-    Set<Path> allModulesExistingSources = properties.entrySet()
+    Set<Path> allModulesExistingSourcesAndTests = properties.entrySet()
       .stream()
-      .filter(e -> e.getKey().endsWith(ScanProperties.PROJECT_SOURCE_DIRS))
+      .filter(e -> e.getKey().endsWith(ScanProperties.PROJECT_SOURCE_DIRS) || e.getKey().endsWith(ScanProperties.PROJECT_TEST_DIRS))
       .map(Map.Entry::getValue)
       .map(String.class::cast)
       .map(SonarUtils::splitAsCsv)
@@ -225,7 +225,7 @@ public class SonarPropertyComputer {
 
     SourceCollector visitor = SourceCollector.builder()
       .setRoot(project.getProjectDir().toPath())
-      .setExistingSources(allModulesExistingSources)
+      .setExistingSources(allModulesExistingSourcesAndTests)
       .setExcludedFiles(excludedFiles)
       .setDirectoriesToIgnore(skippedDirs)
       .build();
