@@ -136,7 +136,8 @@ public class SonarPropertyComputer {
 
     overrideWithUserDefinedProperties(project, rawProperties);
 
-    // This is required if "sonar.sources" or "sonar.tests" are neither found nor defined by user; possible undesired behaviors due to the copy of those properties from the parent
+    // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
+    // This can eventually lead to a double indexing issue in the scanner-engine.
     rawProperties.putIfAbsent(ScanProperties.PROJECT_SOURCE_DIRS, "");
     rawProperties.putIfAbsent(ScanProperties.PROJECT_TEST_DIRS, "");
 
