@@ -136,8 +136,9 @@ public class SonarPropertyComputer {
 
     overrideWithUserDefinedProperties(project, rawProperties);
 
-    // This is required if "sonar.sources" are neither found nor defined by user
+    // This is required if "sonar.sources" or "sonar.tests" are neither found nor defined by user; possible undesired behaviors due to the copy of those properties from the parent
     rawProperties.putIfAbsent(ScanProperties.PROJECT_SOURCE_DIRS, "");
+    rawProperties.putIfAbsent(ScanProperties.PROJECT_TEST_DIRS, "");
 
     if (project.equals(targetProject)) {
       rawProperties.putIfAbsent("sonar.projectKey", computeProjectKey());

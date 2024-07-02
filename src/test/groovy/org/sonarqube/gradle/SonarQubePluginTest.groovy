@@ -485,7 +485,7 @@ class SonarQubePluginTest extends Specification {
     def properties = parentSonarTask().properties.get()
 
     then:
-    !properties.containsKey("sonar.tests")
+    properties["sonar.tests"].isEmpty()
     !properties.containsKey("sonar.surefire.reportsPath")
     !properties.containsKey("sonar.junit.reportsPath")
   }
