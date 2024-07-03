@@ -19,7 +19,6 @@
  */
 package org.sonarqube.gradle
 
-import org.codehaus.groovy.ant.Groovy
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -58,6 +57,7 @@ class SonarQubePluginTest extends Specification {
   def leafProject = ProjectBuilder.builder().withName("leaf").withParent(childProject).build()
 
   def setup() {
+
     parentProject.apply plugin: SonarQubePlugin
     parentProject.repositories {
       mavenCentral()
@@ -485,7 +485,8 @@ class SonarQubePluginTest extends Specification {
     def properties = parentSonarTask().properties.get()
 
     then:
-    properties["sonar.tests"].isEmpty()
+    properties."sonar.sources" == ""
+    properties."sonar.tests" == ""
     !properties.containsKey("sonar.surefire.reportsPath")
     !properties.containsKey("sonar.junit.reportsPath")
   }
@@ -989,10 +990,6 @@ class SonarQubePluginTest extends Specification {
     setSourceSets(module2, List.of("src/main/java"))
     setSourceSets(submodule, List.of("src/main/java"))
 
-    parent.sonar.properties {
-      property "sonar.gradle.scanAll", "true"
-    }
-
     module2.sonar.setSkipProject(true)
 
     when:
@@ -1060,10 +1057,6 @@ class SonarQubePluginTest extends Specification {
     setSourceSets(module1, List.of("src/main/java"))
     setSourceSets(module2, List.of("src/main/java"))
     setSourceSets(submodule, List.of("src/main/java"))
-
-    parent.sonar.properties {
-      property "sonar.gradle.scanAll", "true"
-    }
 
     when:
     def mainSources = relativize(parent, "sonar.sources")

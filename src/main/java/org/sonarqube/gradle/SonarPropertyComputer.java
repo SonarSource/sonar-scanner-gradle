@@ -181,7 +181,10 @@ public class SonarPropertyComputer {
 
   private boolean shouldApplyScanAll(Project project, Map<String, Object> properties) {
     // when the parent module is skipped, the properties are empty thus the scan all logic is not applied
-    var scanAllValue = (String) properties.getOrDefault(SONAR_GRADLE_SCAN_ALL, "false");
+    if (SonarQubePlugin.isSkipped(project)) {
+      return false;
+    }
+    var scanAllValue = (String) properties.getOrDefault(SONAR_GRADLE_SCAN_ALL, "true");
     var scanAllEnabled = "true".equalsIgnoreCase(scanAllValue.trim());
 
     if (scanAllEnabled) {

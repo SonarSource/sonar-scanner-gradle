@@ -19,7 +19,6 @@
  */
 package org.sonarqube.gradle
 
-import org.assertj.core.api.Assertions
 import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Specification
 import spock.lang.TempDir
@@ -34,169 +33,14 @@ class GradleKtsTests extends Specification {
     Path settingsFile
     Path buildFile
     Path outFile
+    Path propertiesFile
 
     def setup() {
         outFile = testProjectDir.resolve('out.properties')
         // For JaCoCo coverage, see https://github.com/koral--/jacoco-gradle-testkit-plugin
         InputStream is = GradleKtsTests.class.getClassLoader().getResourceAsStream('testkit-gradle.properties')
-        Files.copy(is, testProjectDir.resolve('gradle.properties'), StandardCopyOption.REPLACE_EXISTING)
-    }
-
-    def "add build and settings gradle files to sources when both are in kotlin dsl"() {
-        given:
-        addBuildKts()
-        addSettingsKts()
-
-        when:
-        def result = GradleRunner.create()
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
-
-        def props = new Properties()
-        props.load(outFile.newDataInputStream())
-
-        then:
-        def sonarSources = props["sonar.sources"].split(",")
-        Assertions.assertThat(sonarSources)
-                .containsExactlyInAnyOrder(settingsFile.toRealPath().toString(), buildFile.toRealPath().toString())
-
-    }
-
-    def "add only build and file to sources when only build is in kotlin dsl"() {
-        given:
-        addBuildKts()
-        addSettings()
-
-        when:
-        def result = GradleRunner.create()
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
-
-        def props = new Properties()
-        props.load(outFile.newDataInputStream())
-
-        then:
-        props["sonar.sources"] == buildFile.toRealPath().toString()
-        props["sonar.tests"] == ""
-    }
-
-    def "add only settings file to sources when only settings file is in kotlin dsl"() {
-        given:
-        addBuild()
-        addSettingsKts()
-
-        when:
-        def result = GradleRunner.create()
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
-
-        def props = new Properties()
-        props.load(outFile.newDataInputStream())
-
-        then:
-        props["sonar.sources"] == settingsFile.toRealPath().toString()
-        props["sonar.tests"] == ""
-    }
-
-    def "add only build file to sources when no settings found"() {
-        given:
-        addBuildKts()
-
-        when:
-        def result = GradleRunner.create()
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
-
-        def props = new Properties()
-        props.load(outFile.newDataInputStream())
-
-        then:
-        props["sonar.sources"] == buildFile.toRealPath().toString()
-        props["sonar.tests"] == ""
-    }
-
-    def "add nothing to sources when Groovy dsl is used"() {
-        given:
-        addBuild()
-        addSettings()
-
-        when:
-        def result = GradleRunner.create()
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
-
-        def props = new Properties()
-        props.load(outFile.newDataInputStream())
-
-        then:
-        props["sonar.sources"] == ""
-        props["sonar.tests"] == ""
-    }
-
-    def "add nothing to sources when Groovy dsl is used and no settings"() {
-        given:
-        addBuild()
-
-        when:
-        def result = GradleRunner.create()
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
-
-        def props = new Properties()
-        props.load(outFile.newDataInputStream())
-
-        then:
-        props["sonar.sources"] == ""
-        props["sonar.tests"] == ""
-    }
-
-    def "add .gradle.kts files to sources only once"() {
-        given:
-        addBuildKts()
-        addSettingsKts()
-        Path subProjectBuildFile = addSubProject()
-
-        when:
-        GradleRunner.create()
-                .withProjectDir(testProjectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
-
-        def props = new Properties()
-        props.load(outFile.newDataInputStream())
-
-        then:
-        def subProjectSonarSources = props[":subproject.sonar.sources"]
-        Assertions.assertThat(subProjectSonarSources).isEmpty()
-
-        def sonarSources = props["sonar.sources"].split(",")
-        Assertions.assertThat(sonarSources)
-            .containsExactlyInAnyOrder(
-              settingsFile.toRealPath().toString(),
-              buildFile.toRealPath().toString(),
-              subProjectBuildFile.toRealPath().toString()
-            )
-
+        propertiesFile = testProjectDir.resolve('gradle.properties')
+        Files.copy(is, propertiesFile, StandardCopyOption.REPLACE_EXISTING)
     }
 
     def "don't add .gradle.kts files if sources are overridden"() {

@@ -206,7 +206,7 @@ public class SourceCollector implements FileVisitor<Path> {
 
   @Override
   public FileVisitResult visitFileFailed(Path path, IOException e) throws IOException {
-    return null;
+    throw e;
   }
 
   @Override

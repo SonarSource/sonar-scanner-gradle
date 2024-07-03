@@ -385,7 +385,6 @@ class FunctionalTests extends Specification {
 
         def props = new Properties()
         props.load(outFile.newDataInputStream())
-        props."sonar.gradle.scanAll" == "true"
         result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
 
         var mainSources = ((String) props."sonar.sources").split(",")
@@ -429,7 +428,6 @@ class FunctionalTests extends Specification {
 
         def props = new Properties()
         props.load(outFile.newDataInputStream())
-        props."sonar.gradle.scanAll" == "true"
         result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
         result.output.contains("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources or sonar.tests has been overridden.")
 
@@ -476,7 +474,6 @@ class FunctionalTests extends Specification {
 
         def props = new Properties()
         props.load(outFile.newDataInputStream())
-        props."sonar.gradle.scanAll" == "true"
         result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
         result.output.contains("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources or sonar.tests has been overridden.")
 
@@ -524,7 +521,6 @@ class FunctionalTests extends Specification {
 
         def props = new Properties()
         props.load(outFile.newDataInputStream())
-        props."sonar.gradle.scanAll" == "true"
         props."sonar.coverageReportPaths" == "my-first-coverage-report.xml,my-second-coverage-report.xml"
         props."sonar.coverage.jacoco.xmlReportPaths" == thirdCoverageReport.toRealPath().toString()
         result.output.contains("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.")
