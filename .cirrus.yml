@@ -154,14 +154,11 @@ promote_task:
   <<: *ONLY_SONARSOURCE_QA
   eks_container:
     <<: *CONTAINER_DEFINITION_17
-    cpu: 0.5
-    memory: 500M
+    cpu: 1
+    memory: 2G
   env:
     ARTIFACTORY_PROMOTE_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
-  script:
-    - source cirrus-env PROMOTE
-    - cirrus_jfrog_promote multi
-    - burgr-notify-promotion
+  script: cirrus_promote_gradle
 
 release_to_plugin_portal_task:
   only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != ""
