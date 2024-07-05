@@ -82,13 +82,9 @@ public abstract class AbstractGradleIT {
       Stream.of("-Dsonar.scanner.internal.dumpToFile=" + out.getAbsolutePath()),
       Arrays.stream(args))
       .toArray(String[]::new);
-    runGradlewSonarWithEnv(project, exeRelativePath, env, newArgs);
+    RunResult result = runGradlewSonarWithEnv(project, exeRelativePath, env, newArgs);
 
-    Properties props = new Properties();
-    try (FileReader fr = new FileReader(out)) {
-      props.load(fr);
-    }
-    return props;
+    return result.getDumpedProperties();
   }
 
   protected RunResult runGradlewSonarWithEnv(String project, Map<String, String> env, String... args) throws Exception {
@@ -152,7 +148,7 @@ public abstract class AbstractGradleIT {
 
     String output = FileUtils.readFileToString(outputFile, StandardCharsets.UTF_8);
 
-    return new RunResult(output, p.exitValue());
+    return new RunResult(output, p.exitValue(), getDumpedProperties(command));
   }
 
   private static int getJavaVersion() {
@@ -168,13 +164,33 @@ public abstract class AbstractGradleIT {
     return Integer.parseInt(version);
   }
 
+  private static Properties getDumpedProperties(List<String> command) throws IOException {
+    for (String part : command) {
+      if (part.trim().startsWith("-Dsonar.scanner.internal.dumpToFile=")) {
+        File dumpFile = new File(part.split("=")[1]);
+        return loadProperties(dumpFile);
+      }
+    }
+    return null;
+  }
+
+  private static Properties loadProperties(File out) throws IOException {
+    Properties props = new Properties();
+    try (FileReader fr = new FileReader(out)) {
+      props.load(fr);
+    }
+    return props;
+  }
+
   protected static class RunResult {
     private final String log;
     private final int exitValue;
+    private final Properties dumpedProperties;
 
-    RunResult(String log, int exitValue) {
+    RunResult(String log, int exitValue,  /* Nullable */ Properties dumpedProperties) {
       this.log = log;
       this.exitValue = exitValue;
+      this.dumpedProperties = dumpedProperties;
     }
 
     public String getLog() {
@@ -183,6 +199,10 @@ public abstract class AbstractGradleIT {
 
     public int getExitValue() {
       return exitValue;
+    }
+
+    public  Properties getDumpedProperties() {
+      return dumpedProperties;
     }
   }
 }
