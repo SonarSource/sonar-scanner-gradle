@@ -65,7 +65,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testSetLogLevel() throws Exception {
-    RunResult runResult = runGradlewSonarWithEnv("/java-gradle-log-level", emptyMap(), "-Dsonar.scanner.dumpToFile=asd");
+    RunResult runResult = runGradlewSonarWithEnv("/java-gradle-log-level", emptyMap(), "-Dsonar.scanner.internal.dumpToFile=asd");
     // This is a debug log entry
     assertThat(runResult.getLog()).contains("Work directory:");
   }
@@ -248,8 +248,8 @@ public class GradleTest extends AbstractGradleIT {
   public void testProjectWithConfigurationCacheDoubleExecutionsShouldWork() throws Exception {
     Assume.assumeTrue("Tests only applies to version 6.5.0 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.5.0"));
 
-    runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.dumpToFile=asd", "--configuration-cache");
-    RunResult runResult = runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.dumpToFile=asd", "--configuration-cache");
+    runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.internal.dumpToFile=asd", "--configuration-cache");
+    RunResult runResult = runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), "-Dsonar.scanner.internal.dumpToFile=asd", "--configuration-cache");
 
     assertThat(runResult.getLog()).doesNotContain("no properties configured, was it skipped in all projects?");
     assertThat(runResult.getLog()).contains("BUILD SUCCESSFUL");
