@@ -13,13 +13,8 @@ env:
 
   GITHUB_TOKEN: VAULT[development/github/token/licenses-ro token]
 
-  BURGR_URL: VAULT[development/kv/data/burgr data.url]
-  BURGR_USERNAME: VAULT[development/kv/data/burgr data.cirrus_username]
-  BURGR_PASSWORD: VAULT[development/kv/data/burgr data.cirrus_password]
-
   ### Project variables
   DEPLOY_PULL_REQUEST: true
-  ARTIFACTS: org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:jar,org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:json:cyclonedx
   CIRRUS_SHELL: bash
 
 #
