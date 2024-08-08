@@ -1,3 +1,4 @@
+rootProject.name = 'multi-module-android-studio-lint'
 include ':app'
 include ':app2'
 include ':app3'
