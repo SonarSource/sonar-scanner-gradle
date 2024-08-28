@@ -79,7 +79,7 @@ public abstract class AbstractGradleIT {
   protected Properties runGradlewSonarSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File out = temp.newFile();
     String[] newArgs = Stream.concat(
-      Stream.of("-Dsonar.scanner.dumpToFile=" + out.getAbsolutePath()),
+      Stream.of("-Dsonar.scanner.internal.dumpToFile=" + out.getAbsolutePath()),
       Arrays.stream(args))
       .toArray(String[]::new);
     runGradlewSonarWithEnv(project, exeRelativePath, env, newArgs);
