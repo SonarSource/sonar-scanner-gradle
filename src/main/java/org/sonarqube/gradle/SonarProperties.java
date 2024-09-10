@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -45,7 +46,7 @@ public class SonarProperties {
    * @param key the key of the property to be added
    * @param value the value of the property to be added
    */
-  public void property(String key, Object value) {
+  public void property(String key, @Nullable Object value) {
     properties.put(key, value);
   }
 
