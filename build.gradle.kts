@@ -109,7 +109,7 @@ license {
     header = rootProject.file("HEADER")
     mapping("java", "SLASHSTAR_STYLE")
     strictCheck = true
-    exclude("**/version.txt")
+    exclude("**/sonarqube-gradle-plugin-version.txt")
 }
 
 jacoco {
@@ -208,7 +208,7 @@ artifactory {
 }
 
 tasks.processResources {
-    filesMatching("**/version.txt") {
+    filesMatching("**/sonarqube-gradle-plugin-version.txt") {
         expand(mapOf("version" to project.version))
     }
 }
