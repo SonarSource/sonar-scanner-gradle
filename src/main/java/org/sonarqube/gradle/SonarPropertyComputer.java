@@ -48,14 +48,13 @@ import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileSystemLocation;
-import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.reporting.Report;
@@ -430,15 +429,15 @@ public class SonarPropertyComputer {
   }
 
   private static void configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+    JavaPluginExtension javaPluginExtension = project.getExtensions().findByType(JavaPluginExtension.class);
 
-    SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
+    SourceSet main = javaPluginExtension.getSourceSets().getAt("main");
     Collection<File> sourceDirectories = getJavaSourceFiles(main);
     if (sourceDirectories != null) {
       SonarUtils.appendSourcesProp(properties, sourceDirectories, false);
     }
 
-    SourceSet test = javaPluginConvention.getSourceSets().getAt("test");
+    SourceSet test = javaPluginExtension.getSourceSets().getAt("test");
     Collection<File> testDirectories = getJavaSourceFiles(test);
     if (testDirectories != null) {
       SonarUtils.appendSourcesProp(properties, testDirectories, true);
@@ -453,7 +452,7 @@ public class SonarPropertyComputer {
   }
 
   private static void configureJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+    JavaPluginExtension javaPluginConvention = project.getExtensions().findByType(JavaPluginExtension.class);
 
     SourceSet main = javaPluginConvention.getSourceSets().getAt("main");
     Collection<File> mainClassDirs = getJavaOutputDirs(main);
