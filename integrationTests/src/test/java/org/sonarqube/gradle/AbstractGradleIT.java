@@ -138,7 +138,7 @@ public abstract class AbstractGradleIT {
       .redirectErrorStream(true);
     if (getJavaVersion() > 8) {
       // Fix jacoco java 17 compatibility
-      pb.environment().put("GRADLE_OPTS", "-Xmx1024m --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED");
+      pb.environment().put("GRADLE_OPTS", "-Xmx1024m --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED -cp .;/tmp/cirrus-ci-build/.m2/repository/org/bouncycastle/bcprov-jdk18on/1.78.1/bcprov-jdk18on-1.78.1.jar --add-opens=java.base/java.lang.invoke=ALL-UNNAMED");
     } else {
       pb.environment().put("GRADLE_OPTS", "-Xmx1024m");
     }
