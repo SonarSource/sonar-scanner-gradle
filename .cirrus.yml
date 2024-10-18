@@ -111,7 +111,7 @@ gradle_qa_task:
   eks_container:
     <<: *CONTAINER_DEFINITION_17
     cpu: 2
-    memory: 2G
+    memory: 4G
   env:
     matrix:
       - GRADLE_VERSION: 7.5.1
