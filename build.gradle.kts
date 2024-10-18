@@ -70,7 +70,6 @@ repositories {
 }
 
 dependencies {
-    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
     implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.1.1.261")
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
     compileOnly("com.android.tools.build:gradle:8.1.1")

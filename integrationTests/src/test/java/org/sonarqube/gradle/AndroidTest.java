@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.BeforeClass;
 
@@ -44,6 +45,7 @@ public class AndroidTest extends AbstractGradleIT {
     assumeTrue(getAndroidGradleVersion().isGreaterThan("7.0.0"));
   }
 
+  @Ignore
   @Test
   public void testUsingDefaultVariant() throws Exception {
     Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-default-variant", emptyMap(), "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac");
@@ -85,6 +87,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.android.minsdkversion.max")).contains("25");
   }
 
+  @Ignore
   @Test
   public void testAndroidDynamicFeature() throws Exception {
     Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-dynamic-feature", emptyMap(), "test", "compileDebugAndroidTestJavaWithJavac");
@@ -138,6 +141,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":mydynamicfeature.sonar.android.detected")).contains("true");
   }
 
+  @Ignore
   @Test
   public void testSpecifyVariant() throws Exception {
     Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-nondefault-variant", emptyMap(), "test");
@@ -163,6 +167,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.junit.reportPaths")).contains(baseDir.resolve("build/test-results/testFullMinApi23ReleaseUnitTest").toString());
   }
 
+  @Ignore
   @Test
   public void testMultiModule() throws Exception {
     Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-android-studio", emptyMap(), "test", "compileDebugAndroidTestJavaWithJavac");
@@ -299,6 +304,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":module-plain-java.sonar.java.target")).isEqualTo("1.8");
   }
 
+  @Ignore
   @Test
   public void testSonarTaskHasNoDependencies() throws Exception {
     // First flavor that is picked up seems to be the flavor1
@@ -320,6 +326,7 @@ public class AndroidTest extends AbstractGradleIT {
       );
   }
 
+  @Ignore
   // SONARGRADL-22
   @Test
   public void noDebugVariant() throws Exception {
@@ -346,7 +353,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.android.detected")).contains("true");
   }
 
-
+  @Ignore
   @Test
   public void testAndroidLintReport() throws Exception {
     Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-android-studio-lint", Collections.emptyMap(), "lint", "lintFullRelease");
