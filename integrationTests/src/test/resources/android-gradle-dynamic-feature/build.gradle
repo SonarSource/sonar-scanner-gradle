@@ -1,7 +1,7 @@
 buildscript {
     repositories {
-        mavenCentral()
         mavenLocal()
+        mavenCentral()
         google()
     }
     dependencies {
@@ -15,8 +15,8 @@ apply plugin: "org.sonarqube"
 
 allprojects {
     repositories {
-        mavenCentral()
-        mavenLocal()
+    mavenLocal()
+    mavenCentral()
         google()
     }
 }
