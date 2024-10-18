@@ -26,6 +26,9 @@ allprojects {
         mavenCentral()
     }
 }
+dependencies {
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+}
 
 ext {
     minSdkVersion = 10
