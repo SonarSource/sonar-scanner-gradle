@@ -68,6 +68,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   @Override
   public void apply(Project project) {
+    System.out.println("------------------------ Install Sonar Gradle plugin");
     // don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to resolve recursively the configuration of all
     // the projects, failing if a project has a sonarqube configuration since the extension wasn't added to it yet.
     if (project.getExtensions().findByName(SonarExtension.SONAR_EXTENSION_NAME) == null) {
