@@ -126,7 +126,7 @@ public abstract class AbstractGradleIT {
     } else {
       command.add("/bin/bash");
     }
-    command.addAll(Arrays.asList("gradlew", "--stacktrace", "--no-daemon", "--debug", "--warning-mode", "all"));
+    command.addAll(Arrays.asList("gradlew", "--stacktrace", "--no-daemon", "--warning-mode", "all"));
     command.addAll(Arrays.asList(args));
     File exeDir = tempProjectDir;
     if (exeRelativePath != null) {
