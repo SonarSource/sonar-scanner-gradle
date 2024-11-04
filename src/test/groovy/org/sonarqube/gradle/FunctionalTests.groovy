@@ -390,14 +390,15 @@ class FunctionalTests extends Specification {
 
         var mainSources = ((String) props."sonar.sources").split(",")
         mainSources.size() == 3
-        mainSources[0].endsWith("""$projectDir/build.gradle""")
-        mainSources[1].endsWith("""$projectDir/gradle.properties""")
-        mainSources[2].endsWith("""$projectDir/settings.gradle""")
+        var projectPath = projectDir.toString() + File.separator
+        mainSources[0].endsWith("""${projectPath}build.gradle""")
+        mainSources[1].endsWith("""${projectPath}gradle.properties""")
+        mainSources[2].endsWith("""${projectPath}settings.gradle""")
 
         var testSources = ((String) props."sonar.tests").split(",")
         testSources.size() == 2
-        testSources[0].endsWith("""$projectDir/integrationTests/run-all.sh""")
-        testSources[1].endsWith("""$projectDir/test-license.sh""")
+        testSources[0].endsWith("""${projectPath}integrationTests${File.separator}run-all.sh""")
+        testSources[1].endsWith("""${projectPath}test-license.sh""")
     }
 
     def "scan all is enabled but not applied because of overridden properties on the command line"() {
@@ -538,14 +539,15 @@ class FunctionalTests extends Specification {
         // Test that the empty script is is collected but the reports are not collected
         var mainSources = ((String) props."sonar.sources").split(",")
         mainSources.size() == 4
-        mainSources[0].endsWith("""$projectDir/build.gradle""")
-        mainSources[1].endsWith("""$projectDir/empty-script.groovy""")
-        mainSources[2].endsWith("""$projectDir/gradle.properties""")
-        mainSources[3].endsWith("""$projectDir/settings.gradle""")
+        var projectPath = projectDir.toString() + File.separator
+        mainSources[0].endsWith("""${projectPath}build.gradle""")
+        mainSources[1].endsWith("""${projectPath}empty-script.groovy""")
+        mainSources[2].endsWith("""${projectPath}gradle.properties""")
+        mainSources[3].endsWith("""${projectPath}settings.gradle""")
 
         var testSources = ((String) props."sonar.tests").split(",")
         testSources.size() == 2
-        testSources[0].endsWith("""$projectDir/integrationTests/run-all.sh""")
-        testSources[1].endsWith("""$projectDir/test-license.sh""")
+        testSources[0].endsWith("""${projectPath}integrationTests${File.separator}run-all.sh""")
+        testSources[1].endsWith("""${projectPath}test-license.sh""")
     }
 }
