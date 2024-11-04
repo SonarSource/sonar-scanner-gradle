@@ -1116,7 +1116,7 @@ class SonarQubePluginTest extends Specification {
     return properties.getOrDefault(propertyName, "").split(",")
       .stream()
       .filter(s -> !s.isBlank())
-      .map(s -> project.projectDir.toPath().relativize(Path.of(s)).toString())
+      .map(s -> project.projectDir.toPath().relativize(Path.of(s)).toString().replace(File.separator, '/'))
       // filter out an unexpected file internally created by the test framework
       .filter(s -> !s.endsWith("file-access.properties"))
       .sorted()
