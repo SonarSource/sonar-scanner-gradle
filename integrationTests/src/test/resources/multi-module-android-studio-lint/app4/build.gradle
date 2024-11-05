@@ -3,10 +3,10 @@ plugins {
     id 'com.android.library'
 }
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
     defaultConfig {
-        minSdkVersion 31
-        targetSdkVersion 31
+        minSdkVersion 33
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
     }
