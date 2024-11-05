@@ -115,8 +115,8 @@ gradle_qa_task:
   env:
     matrix:
       # TODO The combination of AGP 8.3.0 and Gradle 8.3.0 should be restored as part of SCANGRADLE-162
-      #- GRADLE_VERSION: 8.4
-        # ANDROID_GRADLE_VERSION: 8.3.0
+      - GRADLE_VERSION: 8.4
+        ANDROID_GRADLE_VERSION: 8.3.0
       - GRADLE_VERSION: 8.10
       - GRADLE_VERSION: 8.4
       - GRADLE_VERSION: 8.3
