@@ -354,7 +354,7 @@ public class AndroidTest extends AbstractGradleIT {
 
     assertThat(Paths.get(props.getProperty(":app.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app/build/reports/lint-results-debug.xml"));
     assertThat(Paths.get(props.getProperty(":app2.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app2/build/reports/lint-results-debug.xml"));
-    assertThat(Paths.get(props.getProperty(":app3.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("/custom/path/to/report.xml"));
+    assertThat(props.getProperty(":app3.sonar.androidLint.reportPaths")).isEqualTo("/custom/path/to/report.xml");
     assertThat(Paths.get(props.getProperty(":app4.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app4/build/reports/lint-results-fullRelease.xml"));
 
   }
