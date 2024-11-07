@@ -39,6 +39,7 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
@@ -76,16 +77,18 @@ public class SonarQubePlugin implements Plugin<Project> {
       addExtensions(project, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME, actionBroadcastMap);
       LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
 
-      SonarTask sonarqubeTask = project.getTasks().create(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class);
-      sonarqubeTask.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
-      sonarqubeTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+      TaskContainer tasks = project.getTasks();
+      tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
+        task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
+        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        configureTask(task, project, actionBroadcastMap);
+      });
 
-      SonarTask sonarTask = project.getTasks().create(SonarExtension.SONAR_TASK_NAME, SonarTask.class);
-      sonarTask.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
-      sonarTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-
-      configureTask(sonarqubeTask, project, actionBroadcastMap);
-      configureTask(sonarTask, project, actionBroadcastMap);
+      tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
+        task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
+        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        configureTask(task, project, actionBroadcastMap);
+      });
     }
   }
 
