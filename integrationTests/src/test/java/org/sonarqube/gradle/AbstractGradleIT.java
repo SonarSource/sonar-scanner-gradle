@@ -81,8 +81,8 @@ public abstract class AbstractGradleIT {
   protected Properties runGradlewSonarSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
     File out = temp.newFile();
     String[] newArgs = Stream.concat(
-      Stream.of("-Dsonar.scanner.internal.dumpToFile=" + out.getAbsolutePath()),
-      Arrays.stream(args))
+        Stream.of("-Dsonar.scanner.internal.dumpToFile=" + out.getAbsolutePath()),
+        Arrays.stream(args))
       .toArray(String[]::new);
     RunResult result = runGradlewSonarWithEnv(project, exeRelativePath, env, newArgs);
 
@@ -117,7 +117,7 @@ public abstract class AbstractGradleIT {
     File projectBaseDir = new File(this.getClass().getResource(project).toURI());
     String projectDir = project.startsWith("/") ? "." + project : project;
     File tempProjectDir = new File(temp.getRoot(), projectDir);
-    if (!tempProjectDir.exists()){
+    if (!tempProjectDir.exists()) {
       tempProjectDir = temp.newFolder(projectDir);
     }
     File outputFile = temp.newFile();
@@ -154,7 +154,22 @@ public abstract class AbstractGradleIT {
     return new RunResult(output, p.exitValue(), getDumpedProperties(command));
   }
 
-  private static int getJavaVersion() {
+  protected List<String> getGradlewCommand() {
+    List<String> command = new ArrayList<>();
+    if (System.getProperty("os.name").startsWith("Windows")) {
+      command.addAll(Arrays.asList("cmd.exe", "/C", "gradlew.bat"));
+    } else {
+      command.add("/bin/bash");
+      command.add("gradlew");
+    }
+    return command;
+  }
+
+  protected void addSQToken(List<String> command, String token) {
+    command.add("-Dsonar.token=" + token);
+  }
+
+  protected static int getJavaVersion() {
     String version = System.getProperty("java.version");
     if (version.startsWith("1.")) {
       version = version.substring(2, 3);
@@ -168,7 +183,7 @@ public abstract class AbstractGradleIT {
   }
 
   @Nullable
-  private static Properties getDumpedProperties(List<String> command) throws IOException {
+  protected static Properties getDumpedProperties(List<String> command) throws IOException {
     for (String part : command) {
       if (part.trim().startsWith("-Dsonar.scanner.internal.dumpToFile=")) {
         File dumpFile = new File(part.split("=")[1]);
@@ -191,7 +206,7 @@ public abstract class AbstractGradleIT {
     private final int exitValue;
     private final Properties dumpedProperties;
 
-    RunResult(String log, int exitValue,  @Nullable Properties dumpedProperties) {
+    RunResult(String log, int exitValue, @Nullable Properties dumpedProperties) {
       this.log = log;
       this.exitValue = exitValue;
       this.dumpedProperties = dumpedProperties;

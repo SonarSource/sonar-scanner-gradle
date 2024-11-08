@@ -61,7 +61,7 @@ public class GradleTest extends AbstractGradleIT {
    * SONARGRADL-100
    */
   @Test
-  public void testDebugModeEnabled() throws Exception {
+  public void testDebugModeEnabled(){
     assertThatCode(() -> runGradlewSonarSimulationModeWithEnv("/java-gradle-simple", emptyMap(), "-d")).doesNotThrowAnyException();
   }
 

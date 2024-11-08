@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.sonarsource.parent</groupId>
+    <artifactId>parent</artifactId>
+    <version>80.0.0.2205</version>
+  </parent>
+
+  <groupId>org.sonarsource.scanner.maven</groupId>
+  <artifactId>property-dump-plugin</artifactId>
+  <version>1-SNAPSHOT</version>
+  <packaging>sonar-plugin</packaging>
+
+  <properties>
+    <jdk.min.version>17</jdk.min.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.sonarsource.api.plugin</groupId>
+      <artifactId>sonar-plugin-api</artifactId>
+      <version>10.12.0.2522</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.30</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.sonarsource.sonar-packaging-maven-plugin</groupId>
+        <artifactId>sonar-packaging-maven-plugin</artifactId>
+        <version>1.23.0.740</version>
+        <extensions>true</extensions>
+        <configuration>
+          <pluginName>Property Dump Plugin</pluginName>
+          <skipDependenciesPackaging>true</skipDependenciesPackaging>
+          <pluginClass>org.sonar.dump.PropertyDumpPlugin</pluginClass>
+          <sonarLintSupported>true</sonarLintSupported>
+          <pluginApiMinVersion>9.14.0.375</pluginApiMinVersion>
+          <jreMinVersion>17</jreMinVersion>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
