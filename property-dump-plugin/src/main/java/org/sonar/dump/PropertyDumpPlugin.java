@@ -66,7 +66,8 @@ public class PropertyDumpPlugin implements Plugin, Sensor {
   }
 
   private static String nonNull(Object value) {
-    if (value instanceof Optional<?> opt) {
+    if (value instanceof Optional<?>) {
+      Optional<?> opt = (Optional<?>) value;
       value = opt.orElse(null);
     }
     if (value != null) {
