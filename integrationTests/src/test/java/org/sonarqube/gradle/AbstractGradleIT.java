@@ -124,11 +124,12 @@ public abstract class AbstractGradleIT {
     FileUtils.copyDirectory(projectBaseDir, tempProjectDir);
     List<String> command = new ArrayList<>();
     if (System.getProperty("os.name").startsWith("Windows")) {
-      command.addAll(Arrays.asList("cmd.exe", "/C"));
+      command.addAll(Arrays.asList("cmd.exe", "/C", "gradlew.bat"));
     } else {
       command.add("/bin/bash");
+      command.add("gradlew");
     }
-    command.addAll(Arrays.asList("gradlew", "--stacktrace", "--no-daemon", "--warning-mode", "all"));
+    command.addAll(Arrays.asList("--stacktrace", "--no-daemon", "--warning-mode", "all"));
     command.addAll(Arrays.asList(args));
     File exeDir = tempProjectDir;
     if (exeRelativePath != null) {
