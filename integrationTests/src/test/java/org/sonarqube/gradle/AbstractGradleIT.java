@@ -165,10 +165,6 @@ public abstract class AbstractGradleIT {
     return command;
   }
 
-  protected void addSQToken(List<String> command, String token) {
-    command.add("-Dsonar.token=" + token);
-  }
-
   protected static int getJavaVersion() {
     String version = System.getProperty("java.version");
     if (version.startsWith("1.")) {

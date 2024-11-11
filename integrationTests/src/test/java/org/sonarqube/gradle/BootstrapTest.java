@@ -43,11 +43,6 @@ import static org.junit.Assume.assumeTrue;
 
 public class BootstrapTest extends AbstractGradleIT {
 
-  @BeforeClass
-  public static void checkOrchestrator() {
-    assumeTrue("Skipping Orchestrator tests as it was not possible to initialize it", ORCHESTRATOR != null);
-  }
-
   @ClassRule
   public static final Orchestrator ORCHESTRATOR;
 
@@ -64,6 +59,11 @@ public class BootstrapTest extends AbstractGradleIT {
     }
   }
 
+  @BeforeClass
+  public static void checkOrchestrator() {
+    assumeTrue("Skipping Orchestrator tests as it was not possible to initialize it", ORCHESTRATOR != null);
+  }
+
   @Test
   public void testJreProvisioning() throws Exception {
     HashMap<String, String> env = new HashMap<>();
@@ -73,9 +73,9 @@ public class BootstrapTest extends AbstractGradleIT {
     RunResult result = runSonarAnalysis(project, env);
 
     Properties props = readDumpedProperties(project);
-    // sonar.java.jdkHome should be the one used by "mvn sonar:sonar"
+    // sonar.java.jdkHome should be the one used by "gradlew sonar"
     assertThat(props.getProperty("sonar.java.jdkHome")).isEqualTo(guessJavaHomeSelectedByGradle());
-    assertProvisionedJreIsUsed(project, result, true);
+    assertProvisionedJreIsUsed(project, result);
   }
 
   @Test
@@ -86,7 +86,7 @@ public class BootstrapTest extends AbstractGradleIT {
     env.put("SONAR_SCANNER_SKIP_JRE_PROVISIONING", "true");
     String project = "/java-gradle-simple";
     RunResult result = runSonarAnalysis(project, env);
-    assertProvisionedJreIsUsed(project, result, false);
+    assertProvisionedJreIsNotUsed(project, result);
   }
 
   @Test
@@ -96,7 +96,7 @@ public class BootstrapTest extends AbstractGradleIT {
     env.put("DUMP_SENSOR_PROPERTIES", "sonar.java.jdkHome");
     String project = "/java-gradle-simple-skip-jre-prov";
     RunResult result = runSonarAnalysis(project, env);
-    assertProvisionedJreIsUsed(project, result, false);
+    assertProvisionedJreIsNotUsed(project, result);
   }
 
   @Test
@@ -123,11 +123,19 @@ public class BootstrapTest extends AbstractGradleIT {
     env.put("DUMP_SYSTEM_PROPERTIES", "java.home");
     env.put("DUMP_SENSOR_PROPERTIES", "sonar.java.jdkHome");
     RunResult result = runSonarAnalysis(project, env);
-    assertProvisionedJreIsUsed(project, result, false);
+    assertProvisionedJreIsNotUsed(project, result);
     assertThat(result.getLog()).contains("Using the configured java executable");
   }
 
-  private void assertProvisionedJreIsUsed(String projectName, RunResult result, boolean shouldBeUsed) throws IOException {
+  private void assertProvisionedJreIsUsed(String projectName, RunResult result) throws IOException {
+    assertProvisionedJreShouldBeUsed(projectName, result, true);
+  }
+
+  private void assertProvisionedJreIsNotUsed(String projectName, RunResult result) throws IOException {
+    assertProvisionedJreShouldBeUsed(projectName, result, false);
+  }
+
+  private void assertProvisionedJreShouldBeUsed(String projectName, RunResult result, boolean shouldBeUsed) throws IOException {
     Properties props = readDumpedProperties(projectName);
     SoftAssertions softly = new SoftAssertions();
     if (shouldBeUsed) {
@@ -159,7 +167,7 @@ public class BootstrapTest extends AbstractGradleIT {
     File outputFile = temp.newFile();
     FileUtils.copyDirectory(projectBaseDir, tempProjectDir);
     List<String> command = getGradlewCommand();
-    addSQToken(command, ORCHESTRATOR.getDefaultAdminToken());
+    command.add(getSQTokenArg());
     command.addAll(Arrays.asList("sonar", "--no-daemon", "--info"));
     command.addAll(Arrays.asList(args));
     File exeDir = tempProjectDir;
@@ -199,6 +207,10 @@ public class BootstrapTest extends AbstractGradleIT {
     Properties props = new Properties();
     props.load(Files.newInputStream(propertiesFile));
     return props;
+  }
+
+  private String getSQTokenArg() {
+    return "-Dsonar.token=" + ORCHESTRATOR.getDefaultAdminToken();
   }
 
 }
