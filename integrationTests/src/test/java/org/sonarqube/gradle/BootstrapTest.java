@@ -41,7 +41,7 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-public class OrchestratorTest extends AbstractGradleIT {
+public class BootstrapTest extends AbstractGradleIT {
 
   @BeforeClass
   public static void checkOrchestrator() {
