@@ -34,20 +34,35 @@ import java.util.Map;
 import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 public class OrchestratorTest extends AbstractGradleIT {
 
+  @BeforeClass
+  public static void checkOrchestrator() {
+    assumeTrue("Skipping Orchestrator tests as it was not possible to initialize it", ORCHESTRATOR != null);
+  }
+
   @ClassRule
-  public static final Orchestrator ORCHESTRATOR = Orchestrator.builderEnv()
-    .setSonarVersion("LATEST_RELEASE")
-    .useDefaultAdminCredentialsForBuilds(true)
-    .addPlugin(MavenLocation.of("org.sonarsource.java", "sonar-java-plugin", "LATEST_RELEASE"))
-    .addPlugin(FileLocation.of("../property-dump-plugin/target/property-dump-plugin-1-SNAPSHOT.jar"))
-    .build();
+  public static final Orchestrator ORCHESTRATOR;
+
+  static {
+    if (getJavaVersion() < 17) {
+      ORCHESTRATOR = null;
+    } else {
+      ORCHESTRATOR = Orchestrator.builderEnv()
+        .setSonarVersion("LATEST_RELEASE")
+        .useDefaultAdminCredentialsForBuilds(true)
+        .addPlugin(MavenLocation.of("org.sonarsource.java", "sonar-java-plugin", "LATEST_RELEASE"))
+        .addPlugin(FileLocation.of("../property-dump-plugin/target/property-dump-plugin-1-SNAPSHOT.jar"))
+        .build();
+    }
+  }
 
   @Test
   public void testJreProvisioning() throws Exception {
