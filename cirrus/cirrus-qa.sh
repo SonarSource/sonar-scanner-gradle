@@ -13,6 +13,9 @@ else
 fi
 sed -i.bak "s/$CURRENT_VERSION/$NEW_VERSION/g" gradle.properties
 
+# We need to build this small plugin first, that will dump the analysis properties in a local file
+mvn -f property-dump-plugin/pom.xml --batch-mode install
+
 cd integrationTests
 
 mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false -B -e
