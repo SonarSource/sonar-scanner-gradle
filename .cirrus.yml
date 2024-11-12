@@ -28,7 +28,6 @@ container_definition_11: &CONTAINER_DEFINITION_11
   builder_role: cirrus-builder
   builder_image: docker-builder-v*
   builder_instance_type: t2.small
-  builder_subnet_id: ${CIRRUS_AWS_SUBNET}
   region: eu-central-1
   namespace: default
 
@@ -40,7 +39,6 @@ container_definition_17: &CONTAINER_DEFINITION_17
   builder_role: cirrus-builder
   builder_image: docker-builder-v*
   builder_instance_type: t2.small
-  builder_subnet_id: ${CIRRUS_AWS_SUBNET}
   region: eu-central-1
   namespace: default
 
