@@ -72,10 +72,10 @@ repositories {
 dependencies {
     implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.1.1.261")
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
-    compileOnly("com.android.tools.build:gradle:8.1.1")
+    compileOnly("com.android.tools.build:gradle:8.1.4")
     compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
     testImplementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
-    testImplementation("com.android.tools.build:gradle:8.1.1")
+    testImplementation("com.android.tools.build:gradle:8.1.4")
     testImplementation(localGroovy())
     testImplementation("org.assertj:assertj-core:3.26.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
