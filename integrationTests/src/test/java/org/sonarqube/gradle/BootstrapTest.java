@@ -127,6 +127,18 @@ public class BootstrapTest extends AbstractGradleIT {
     assertThat(result.getLog()).contains("Using the configured java executable");
   }
 
+  @Test
+  public void analysis_failure_makes_the_gradle_task_fail() throws Exception {
+    HashMap<String, String> env = new HashMap<>();
+    env.put("FAIL_ANALYSIS", "true");
+    String project = "/java-gradle-simple";
+    RunResult result = runSonarAnalysis(project, env);
+    assertThat(result.getExitValue()).isOne();
+    assertThat(result.getLog())
+      .containsOnlyOnce("Analysis failed as requested!")
+      .containsOnlyOnce("The analysis has failed! See the logs for more details.");
+  }
+
   private void assertProvisionedJreIsUsed(String projectName, RunResult result) throws IOException {
     assertProvisionedJreShouldBeUsed(projectName, result, true);
   }
