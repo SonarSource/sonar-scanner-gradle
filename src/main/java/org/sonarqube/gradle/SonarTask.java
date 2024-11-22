@@ -129,9 +129,14 @@ public class SonarTask extends ConventionTask {
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
       .addBootstrapProperties(mapProperties);
     try (ScannerEngineFacade engineFacade = scanner.bootstrap()) {
-      engineFacade.analyze(new HashMap<>());
+      boolean analysisIsSuccessful = engineFacade.analyze(new HashMap<>());
+      if (!analysisIsSuccessful) {
+        throw new AnalysisException("The analysis has failed! See the logs for more details.");
+      }
+    } catch (AnalysisException e) {
+      throw e;
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new AnalysisException(e);
     }
   }
 

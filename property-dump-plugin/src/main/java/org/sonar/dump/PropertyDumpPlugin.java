@@ -60,6 +60,9 @@ public class PropertyDumpPlugin implements Plugin, Sensor {
       getPropertyKeys("DUMP_SYSTEM_PROPERTIES").forEach(key -> props.setProperty(key, nonNull(System.getProperty(key, ""))));
       props.stringPropertyNames().forEach(key -> LOG.info("{}={}", key, props.getProperty(key)));
       props.store(Files.newOutputStream(filePath), null);
+      if (!getPropertyKeys("FAIL_ANALYSIS").isEmpty()) {
+        throw new RuntimeException("Analysis failed as requested!");
+      }
     } catch (IOException e) {
       throw new IllegalStateException(e.getClass().getSimpleName() + ": " + e.getMessage(), e);
     }
