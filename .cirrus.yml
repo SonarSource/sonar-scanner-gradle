@@ -89,8 +89,12 @@ validate_external_contributor_build_task:
     folder: ~/.gradle/caches
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  script:
-    - unset ARTIFACTORY_URL && unset ARTIFACTORY_PRIVATE_USERNAME && unset ARTIFACTORY_PRIVATE_PASSWORD && unset ARTIFACTORY_ACCESS_TOKEN && ./gradlew clean build
+  script: |
+    unset ARTIFACTORY_URL && \
+    unset ARTIFACTORY_PRIVATE_USERNAME && \
+    unset ARTIFACTORY_PRIVATE_PASSWORD && \
+    unset ARTIFACTORY_ACCESS_TOKEN && \
+    ./gradlew --refresh-dependencies clean assemble testClasses
   on_failure:
     reports_artifacts:
       path: "**/build/reports/**/*"
