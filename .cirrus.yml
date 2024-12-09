@@ -78,6 +78,30 @@ build_task:
       path: "**/test-results/**/*.xml"
       format: junit
 
+validate_external_contributor_build_task:
+  depends_on:
+    - build
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  maven_cache:
+    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+  script: |
+    unset ARTIFACTORY_URL && \
+    unset ARTIFACTORY_PRIVATE_USERNAME && \
+    unset ARTIFACTORY_PRIVATE_PASSWORD && \
+    unset ARTIFACTORY_ACCESS_TOKEN && \
+    ./gradlew --refresh-dependencies clean assemble testClasses
+  on_failure:
+    reports_artifacts:
+      path: "**/build/reports/**/*"
+    junit_artifacts:
+      path: "**/test-results/**/*.xml"
+      format: junit
+
 mend_scan_task:
   <<: *SETUP_GRADLE_CACHE
   depends_on:
@@ -149,6 +173,7 @@ gradle_qa_java11_task:
 promote_task:
   depends_on:
     - build
+    - validate_external_contributor_build
     - gradle_qa
     - gradle_qa_java11
   <<: *ONLY_SONARSOURCE_QA
