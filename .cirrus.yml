@@ -10,6 +10,8 @@ env:
   ARTIFACTORY_DEPLOY_PASSWORD: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-qa-deployer access_token]
   ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader access_token]
   ARTIFACTORY_DEPLOY_REPO: sonarsource-public-qa
+  DEVELOCITY_TOKEN: VAULT[development/kv/data/develocity data.token]
+  DEVELOCITY_ACCESS_KEY: develocity.sonar.build=${DEVELOCITY_TOKEN}
 
   GITHUB_TOKEN: VAULT[development/github/token/licenses-ro token]
 
@@ -51,6 +53,9 @@ setup_gradle_cache_template: &SETUP_GRADLE_CACHE
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
+log_develocity_url_script: &log_develocity_url_script |
+  echo "Develocity URL: https://develocity.sonar.build/scans?search.publicHostnames=cirrus-ci-task-${CIRRUS_TASK_ID}"
+
 build_task:
   eks_container:
     <<: *CONTAINER_DEFINITION_17
@@ -67,6 +72,7 @@ build_task:
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
   script:
+    - *log_develocity_url_script
     - source cirrus-env BUILD
     - source cirrus/define-gradle.sh
     - mvn -f property-dump-plugin/pom.xml -B install
@@ -149,6 +155,7 @@ gradle_qa_task:
       - GRADLE_VERSION: 7.5.1
         ANDROID_GRADLE_VERSION: 7.1.0
   script:
+    - *log_develocity_url_script
     - ./cirrus/cirrus-qa.sh
 
 gradle_qa_java11_task:
@@ -168,6 +175,7 @@ gradle_qa_java11_task:
       - GRADLE_VERSION: 5.6.4
         ANDROID_GRADLE_VERSION: 3.5.4
   script:
+    - *log_develocity_url_script
     - ./cirrus/cirrus-qa.sh
 
 promote_task:
