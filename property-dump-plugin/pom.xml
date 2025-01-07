@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>80.0.0.2205</version>
+    <version>83.0.0.2369</version>
   </parent>
 
   <groupId>org.sonarsource.scanner.maven</groupId>
@@ -17,6 +17,7 @@
 
   <properties>
     <jdk.min.version>11</jdk.min.version>
+    <license.name>GNU LGPL v3</license.name>
   </properties>
 
   <dependencies>
