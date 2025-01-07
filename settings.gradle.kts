@@ -1,12 +1,24 @@
 rootProject.name = "sonarqube-gradle-plugin"
 
-var isCiServer = System.getenv().containsKey("CIRRUS_CI")
-var buildCacheHost = System.getenv().getOrDefault("CIRRUS_HTTP_CACHE_HOST", "localhost:12321")
-
-buildCache {
-    remote<HttpBuildCache> {
-        isEnabled = isCiServer
-        isPush = System.getenv()["GITHUB_BRANCH"] == "master"
-        url = uri("http://${buildCacheHost}/")
+plugins {
+    id("com.gradle.develocity") version("3.18.2")
+}
+develocity {
+    server.set("https://develocity.sonar.build")
+    buildScan {
+        capture {
+            buildLogging.set(!startParameter.taskNames.contains("properties"))
+        }
     }
 }
+val isCI: Boolean = System.getenv("CI") != null
+buildCache {
+    local {
+        isEnabled = !isCI
+    }
+    remote(develocity.buildCache) {
+        isEnabled = true
+        isPush = isCI
+    }
+}
+
