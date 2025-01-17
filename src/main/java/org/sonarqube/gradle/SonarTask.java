@@ -141,7 +141,7 @@ public class SonarTask extends ConventionTask {
   }
 
   private String getPluginVersion() {
-    InputStream inputStream = this.getClass().getResourceAsStream("/version.txt");
+    InputStream inputStream = this.getClass().getResourceAsStream("/sonarqube-gradle-plugin-version.txt");
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       return reader.readLine();
     } catch (IOException e) {
