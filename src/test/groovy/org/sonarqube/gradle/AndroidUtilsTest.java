@@ -62,7 +62,7 @@ class AndroidUtilsTest {
   private BaseVariant baseVariant;
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     project = mock(Project.class);
     ExtensionContainer extensionsContainer = mock(ExtensionContainer.class);
     appExtension = mock(AppExtension.class);
