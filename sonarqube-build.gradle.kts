@@ -8,7 +8,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:4.1.0.3113")
+        classpath("org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:6.0.1.5171")
     }
 
     val projectTitle: String by project
