@@ -36,9 +36,12 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
+import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
 import org.sonarsource.scanner.lib.internal.batch.LogOutput;
+
+import static java.lang.System.exit;
 
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
@@ -128,7 +131,12 @@ public class SonarTask extends ConventionTask {
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
       .addBootstrapProperties(mapProperties);
-    try (ScannerEngineFacade engineFacade = scanner.bootstrap()) {
+    try (ScannerEngineBootstrapResult result = scanner.bootstrap()) {
+      // implement behavior according to SCANJLIB-169
+      if(!result.isSuccessful()){
+        throw new AnalysisException("The scanner boostrapping has failed! See the logs for more details.");
+      }
+      ScannerEngineFacade engineFacade = result.getEngineFacade();
       boolean analysisIsSuccessful = engineFacade.analyze(new HashMap<>());
       if (!analysisIsSuccessful) {
         throw new AnalysisException("The analysis has failed! See the logs for more details.");
