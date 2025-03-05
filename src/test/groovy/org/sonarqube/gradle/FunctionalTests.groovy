@@ -568,11 +568,9 @@ class FunctionalTests extends Specification {
                 .withArguments('sonar', '-Dsonar.host.url=http://localhost:0')
                 .withPluginClasspath()
                 .build()
-
         then:
         def exception = thrown(RuntimeException.class)
         assert exception instanceof UnexpectedBuildFailure
-        // The cause of the issue is not reported here but we can find it in the error message
-        assert exception.message.contains("java.lang.IllegalStateException: Failed to get server version")
+        assert exception.message.contains("Failed to query server version: Invalid URL port: \"0\"")
     }
 }

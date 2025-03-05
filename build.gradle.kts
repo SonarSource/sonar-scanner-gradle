@@ -70,7 +70,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.1.1.261")
+    implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.2.2.411")
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
     compileOnly("com.android.tools.build:gradle:8.1.1")
     compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
