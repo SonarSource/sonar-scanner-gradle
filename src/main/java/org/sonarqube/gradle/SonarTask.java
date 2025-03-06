@@ -131,12 +131,12 @@ public class SonarTask extends ConventionTask {
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
       .addBootstrapProperties(mapProperties);
-    try (ScannerEngineBootstrapResult result = scanner.bootstrap()) {
+    try (ScannerEngineBootstrapResult boostrapping = scanner.bootstrap()) {
       // implement behavior according to SCANJLIB-169
-      if(!result.isSuccessful()){
+      if (!boostrapping.isSuccessful()) {
         throw new AnalysisException("The scanner boostrapping has failed! See the logs for more details.");
       }
-      ScannerEngineFacade engineFacade = result.getEngineFacade();
+      ScannerEngineFacade engineFacade = boostrapping.getEngineFacade();
       boolean analysisIsSuccessful = engineFacade.analyze(new HashMap<>());
       if (!analysisIsSuccessful) {
         throw new AnalysisException("The analysis has failed! See the logs for more details.");

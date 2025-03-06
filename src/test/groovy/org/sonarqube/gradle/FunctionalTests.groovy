@@ -552,7 +552,7 @@ class FunctionalTests extends Specification {
         testSources[1].endsWith("""${projectPath}test-license.sh""")
     }
 
-    def "task fails with an IllegalStateException when failing to reach the server"() {
+    def "sonar task fails when failing to reach the server"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"
         buildFile << """
@@ -562,15 +562,14 @@ class FunctionalTests extends Specification {
         """
 
         when:
-        GradleRunner.create()
+        def result = GradleRunner.create()
                 .withProjectDir(projectDir.toFile())
                 .forwardOutput()
                 .withArguments('sonar', '-Dsonar.host.url=http://localhost:0')
                 .withPluginClasspath()
-                .build()
+                .buildAndFail()
+
         then:
-        def exception = thrown(RuntimeException.class)
-        assert exception instanceof UnexpectedBuildFailure
-        assert exception.message.contains("Failed to query server version: Invalid URL port: \"0\"")
+        assert result.getOutput().contains("Failed to query server version: Invalid URL port: \"0\"")
     }
 }
