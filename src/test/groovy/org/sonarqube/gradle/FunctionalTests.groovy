@@ -21,6 +21,7 @@ package org.sonarqube.gradle
 
 
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Specification
 import spock.lang.TempDir
@@ -570,6 +571,7 @@ class FunctionalTests extends Specification {
                 .buildAndFail()
 
         then:
+        assert result.task(":sonar").getOutcome() == TaskOutcome.FAILED
         assert result.getOutput().contains("Failed to query server version: Invalid URL port: \"0\"")
     }
 }
