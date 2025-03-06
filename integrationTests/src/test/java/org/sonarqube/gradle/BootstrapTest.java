@@ -109,8 +109,7 @@ public class BootstrapTest extends AbstractGradleIT {
     String arch = "amd64";
     env.put("SONAR_SCANNER_ARCH", arch);
     RunResult result = runSonarAnalysis("/java-gradle-simple", env);
-    String url = ORCHESTRATOR.getServer().getUrl() + String.format("/api/v2/analysis/jres?os=%s&arch=%s", unsupportedOS, arch);
-    String expectedLog = String.format("Error status returned by url [%s]: 400", url);
+    String expectedLog = String.format("Failed to query JRE metadata");
     assertThat(result.getLog()).contains(expectedLog);
   }
 

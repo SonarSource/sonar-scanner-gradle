@@ -97,8 +97,8 @@ public class GradleTest extends AbstractGradleIT {
 
     System.out.println(result.getLog());
     assertThat(result.getExitValue()).isEqualTo(1);
-    assertThat(result.getLog()).contains("java.net.UnknownHostException");
-    assertThat(result.getLog()).contains("Call to URL [http://host-in-env/api/server/version] failed");
+    assertThat(result.getLog()).contains("org.sonarqube.gradle.AnalysisException");
+    assertThat(result.getLog()).contains("Call to URL [http://host-in-env/api/v2/analysis/version] failed");
 
   }
 
