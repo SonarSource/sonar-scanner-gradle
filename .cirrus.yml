@@ -145,10 +145,11 @@ gradle_qa_task:
     memory: 4G
   env:
     matrix:
-      - GRADLE_VERSION: 8.4
-        ANDROID_GRADLE_VERSION: 8.3.0
+      - GRADLE_VERSION: 8.13
       - GRADLE_VERSION: 8.10
       - GRADLE_VERSION: 8.4
+      - GRADLE_VERSION: 8.4
+        ANDROID_GRADLE_VERSION: 8.3.0
       - GRADLE_VERSION: 8.3
       - GRADLE_VERSION: 8.0
       - GRADLE_VERSION: 7.6.4
