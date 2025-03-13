@@ -574,4 +574,79 @@ class FunctionalTests extends Specification {
         assert result.task(":sonar").getOutcome() == TaskOutcome.FAILED
         assert result.getOutput().contains("Failed to query server version: Invalid URL port: \"0\"")
     }
+
+    def "keep default sonar.region"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withProjectDir(projectDir.toFile())
+          .forwardOutput()
+          .withEnvironment(Map.of())
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build();
+
+        then:
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.host.url" == 'https://sonarcloud.io'
+        props."sonar.scanner.apiBaseUrl" == 'https://api.sonarcloud.io'
+    }
+
+    def "set sonar.region to us"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withProjectDir(projectDir.toFile())
+          .forwardOutput()
+          .withEnvironment(Map.of())
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '-Dsonar.region=us')
+          .withPluginClasspath()
+          .build();
+
+        then:
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.region" == 'us'
+    }
+
+    def "invalid sonar.region"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withProjectDir(projectDir.toFile())
+          .forwardOutput()
+          .withEnvironment(Map.of())
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '-Dsonar.region=invalid')
+          .withPluginClasspath()
+          .buildAndFail();
+
+        then:
+        assert result.task(":sonar").getOutcome() == TaskOutcome.FAILED
+        assert result.getOutput().contains("Invalid region 'invalid'.")
+    }
 }
