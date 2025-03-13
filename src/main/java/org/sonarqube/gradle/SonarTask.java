@@ -136,10 +136,11 @@ public class SonarTask extends ConventionTask {
       if (!boostrapping.isSuccessful()) {
         throw new AnalysisException("The scanner boostrapping has failed! See the logs for more details.");
       }
-      ScannerEngineFacade engineFacade = boostrapping.getEngineFacade();
-      boolean analysisIsSuccessful = engineFacade.analyze(new HashMap<>());
-      if (!analysisIsSuccessful) {
-        throw new AnalysisException("The analysis has failed! See the logs for more details.");
+      try(ScannerEngineFacade engineFacade = boostrapping.getEngineFacade()){
+        boolean analysisIsSuccessful = engineFacade.analyze(new HashMap<>());
+        if (!analysisIsSuccessful) {
+          throw new AnalysisException("The analysis has failed! See the logs for more details.");
+        }
       }
     } catch (AnalysisException e) {
       throw e;
