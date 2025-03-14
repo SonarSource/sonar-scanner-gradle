@@ -624,6 +624,8 @@ class FunctionalTests extends Specification {
         def props = new Properties()
         props.load(outFile.newDataInputStream())
         props."sonar.region" == 'us'
+        props."sonar.host.url" == 'https://sonarqube.us'
+        props."sonar.scanner.apiBaseUrl" == 'https://api.sonarqube.us'
     }
 
     def "invalid sonar.region"() {
