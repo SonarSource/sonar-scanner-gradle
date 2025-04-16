@@ -19,7 +19,7 @@
  */
 package org.sonarqube.gradle;
 
-import com.sonar.orchestrator.Orchestrator;
+import com.sonar.orchestrator.junit4.OrchestratorRule;
 import com.sonar.orchestrator.locator.FileLocation;
 import com.sonar.orchestrator.locator.MavenLocation;
 import java.io.File;
@@ -44,13 +44,13 @@ import static org.junit.Assume.assumeTrue;
 public class BootstrapTest extends AbstractGradleIT {
 
   @ClassRule
-  public static final Orchestrator ORCHESTRATOR;
+  public static final OrchestratorRule ORCHESTRATOR;
 
   static {
     if (getJavaVersion() < 17) {
       ORCHESTRATOR = null;
     } else {
-      ORCHESTRATOR = Orchestrator.builderEnv()
+      ORCHESTRATOR = OrchestratorRule.builderEnv()
         .setSonarVersion("LATEST_RELEASE")
         .useDefaultAdminCredentialsForBuilds(true)
         .addPlugin(MavenLocation.of("org.sonarsource.java", "sonar-java-plugin", "LATEST_RELEASE"))
