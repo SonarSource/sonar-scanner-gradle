@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
 import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils;
+import org.gradle.util.GradleVersion;
 import org.junit.jupiter.api.Test;
 import org.sonarqube.gradle.SonarUtils.InputFileType;
 
@@ -35,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.sonarqube.gradle.SonarUtils.findProjectFileType;
+import static org.sonarqube.gradle.SonarUtils.isCompatibleWithJavaPluginExtension;
 
 class SonarUtilsTest {
 
@@ -217,5 +219,20 @@ class SonarUtilsTest {
     assertThat(findProjectFileType(projectDir, Paths.get(project, "script/run.sh"))).isEqualTo(InputFileType.MAIN);
     assertThat(findProjectFileType(projectDir, Paths.get(project, "script/runContest.sh"))).isEqualTo(InputFileType.MAIN);
     assertThat(findProjectFileType(projectDir, Paths.get(project, "testate/write-testament-from-testator-and-testatrix.sh"))).isEqualTo(InputFileType.MAIN);
+  }
+
+  @Test
+  void isCompatibleWithJavaPluginExtension_only_returns_true_for_gradle_seven_and_greater() {
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("7.0.0"))).isTrue();
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("7.0"))).isTrue();
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("7.0-rc-1"))).isTrue();
+
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("7.0.1"))).isTrue();
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("7.1"))).isTrue();
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("7.1-rc-1"))).isTrue();
+
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("6.9.9"))).isFalse();
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("6.14"))).isFalse();
+    assertThat(isCompatibleWithJavaPluginExtension(GradleVersion.version("6.9999-rc-1"))).isFalse();
   }
 }

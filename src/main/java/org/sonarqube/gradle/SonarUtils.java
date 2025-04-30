@@ -36,6 +36,12 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
+import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.NotNull;
 
 public class SonarUtils {
 
@@ -74,6 +80,40 @@ public class SonarUtils {
       || project.getPlugins().hasPlugin("com.android.test")
       || project.getPlugins().hasPlugin("com.android.feature")
       || project.getPlugins().hasPlugin("com.android.dynamic-feature");
+  }
+
+  /**
+   * Return sourceSets using the best supported method according to the Gradle version.
+   * Because Gradle 7 deprecated JavaPluginConvention, with removal planned for Gradle 9, projects using Gradle 7 and
+   * greater should use JavaPluginExtension instead.
+   * However, since projects using Gradle 7 or lower cannot use the replacement JavaPluginExtension API, we maintain a
+   * path that keeps compatibility and removes warning logs from build with Gradle 7 or greater.
+   *
+   * @param project The (sub-)project under analysis
+   * @return A container with the "main" and "test" source sets
+   */
+  static SourceSetContainer getSourceSets(Project project) {
+    GradleVersion gradleVersion = GradleVersion.version(project.getGradle().getGradleVersion());
+    if (isCompatibleWithJavaPluginExtension(gradleVersion)) {
+      return getSourceSetsGradle7orGreater(project);
+    }
+    return getSourceSetsGradleLegacy(project);
+  }
+
+  @NotNull
+  private static SourceSetContainer getSourceSetsGradle7orGreater(Project project) {
+    JavaPluginExtension javaPluginExtension = new DslObject(project).getExtensions().findByType(JavaPluginExtension.class);
+    return javaPluginExtension.getSourceSets();
+  }
+
+  @NotNull
+  private static SourceSetContainer getSourceSetsGradleLegacy(Project project) {
+    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+    return javaPluginConvention.getSourceSets();
+  }
+
+  static boolean isCompatibleWithJavaPluginExtension(GradleVersion version) {
+    return version.getBaseVersion().compareTo(GradleVersion.version("7.0")) >= 0;
   }
 
   static String capitalize(final String word) {
