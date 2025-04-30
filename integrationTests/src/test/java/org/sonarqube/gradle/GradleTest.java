@@ -90,16 +90,20 @@ public class GradleTest extends AbstractGradleIT {
   }
 
   @Test
-  public void testHostUrlInEnv() throws Exception {
+  public void testHostUrlInEnvErrorIncludingExecutionContextInformation() throws Exception {
     Map<String, String> env = new HashMap<>();
     env.put("SONAR_HOST_URL", "http://host-in-env");
-    RunResult result = runGradlewSonarWithEnvQuietly("/java-gradle-simple", env);
+    RunResult result = runGradlewSonarWithEnvQuietly("/java-gradle-simple", env, "--info");
 
     System.out.println(result.getLog());
     assertThat(result.getExitValue()).isEqualTo(1);
-    assertThat(result.getLog()).contains("org.sonarqube.gradle.AnalysisException");
-    assertThat(result.getLog()).contains("Call to URL [http://host-in-env/api/v2/analysis/version] failed");
-
+    assertThat(result.getLog())
+      .containsPattern("org\\.sonarqube Gradle plugin \\d+\\.\\d+")
+      .containsPattern("Java \\d+")
+      .contains(" (64-bit)")
+      .contains("GRADLE_OPTS=-Xmx1024m")
+      .contains("org.sonarqube.gradle.AnalysisException")
+      .contains("Call to URL [http://host-in-env/api/v2/analysis/version] failed");
   }
 
   @Test
