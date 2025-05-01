@@ -41,8 +41,6 @@ import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
 import org.sonarsource.scanner.lib.internal.batch.LogOutput;
 
-import static java.lang.System.exit;
-
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
  * Can be used with or without the {@code "sonar-gradle"} plugin.
@@ -150,7 +148,7 @@ public class SonarTask extends ConventionTask {
   }
 
   private String getPluginVersion() {
-    InputStream inputStream = this.getClass().getResourceAsStream("/version.txt");
+    InputStream inputStream = this.getClass().getResourceAsStream("/org/sonarqube/gradle/sonarqube-gradle-plugin-version.txt");
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       return reader.readLine();
     } catch (IOException e) {
