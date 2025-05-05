@@ -106,6 +106,8 @@ public class SonarTask extends ConventionTask {
 
   @TaskAction
   public void run() {
+    logEnvironmentInformation();
+
     if (SonarExtension.SONAR_DEPRECATED_TASK_NAME.equals(this.getName())) {
       LOGGER.warn("Task 'sonarqube' is deprecated. Use 'sonar' instead.");
     }
@@ -125,7 +127,6 @@ public class SonarTask extends ConventionTask {
     if (isSkippedWithProperty(mapProperties)) {
       return;
     }
-    logEnvironmentInformation();
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -155,7 +156,7 @@ public class SonarTask extends ConventionTask {
         System.getProperty("java.version"),
         System.getProperty("java.vm.vendor"),
         System.getProperty("sun.arch.data.model"));
-      LOGGER.info( "{} {} ({})",
+      LOGGER.info("{} {} ({})",
         System.getProperty("os.name"),
         System.getProperty("os.version"),
         System.getProperty("os.arch"));

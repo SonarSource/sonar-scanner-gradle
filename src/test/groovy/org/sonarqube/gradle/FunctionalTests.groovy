@@ -264,7 +264,7 @@ class FunctionalTests extends Specification {
         )
     }
 
-    def "does not log execution context when sonar.skip is true"() {
+    def "log execution context even when sonar.skip is true"() {
         given:
         settingsFile << "rootProject.name = 'java-task-output-logs'"
         buildFile << """
@@ -287,7 +287,7 @@ class FunctionalTests extends Specification {
         result.task(":sonarqube").outcome == SUCCESS
         nonNull(
           assertThat(result.output)
-            .doesNotContain('org.sonarqube Gradle plugin')
+            .contains('org.sonarqube Gradle plugin')
         )
     }
 
