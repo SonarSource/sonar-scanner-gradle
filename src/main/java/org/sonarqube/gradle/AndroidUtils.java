@@ -348,7 +348,9 @@ class AndroidUtils {
       libraries.addAll(javaCompile.getClasspath().filter(File::exists).getFiles());
     }
 
-    Collection<File> destinationDirs = javaCompile != null ? Collections.singleton(javaCompile.getDestinationDir()) : Collections.emptySet();
+    Collection<File> destinationDirs = (javaCompile != null)
+      ? Collections.singleton(javaCompile.getDestinationDirectory().getAsFile().get())
+      : Collections.emptySet();
     if (isTest) {
       setTestClasspathProps(properties, destinationDirs, libraries);
     } else {
