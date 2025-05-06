@@ -35,6 +35,7 @@ import java.util.Properties;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.assertj.core.api.SoftAssertions;
 import org.jspecify.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
@@ -151,6 +152,8 @@ public abstract class AbstractGradleIT {
 
     String output = FileUtils.readFileToString(outputFile, StandardCharsets.UTF_8);
 
+    assertThatPluginDoesNotCreateGradleDeprecationWarnings(output);
+
     return new RunResult(output, p.exitValue(), getDumpedProperties(command));
   }
 
@@ -219,5 +222,34 @@ public abstract class AbstractGradleIT {
     public Optional<Properties> getDumpedProperties() {
       return Optional.ofNullable(dumpedProperties);
     }
+  }
+
+  private static final List<String> GRADLE_DEPRECATION_PATTERNS = Arrays.asList(
+          "has been deprecated"
+  );
+
+  /**
+   * Ensure that the output of the gradle analysis logs do not contain any deprecation warnings caused the sonar-gradle-plugin.
+   * @param text Text of the output to check
+   */
+  static void assertThatPluginDoesNotCreateGradleDeprecationWarnings(String text) {
+    SoftAssertions softly = new SoftAssertions();
+    String[] lines = text.split(System.lineSeparator());
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      if (GRADLE_DEPRECATION_PATTERNS.stream().anyMatch(line::contains)) {
+        int j = i + 1;
+        List<String> stackTraceLines = new ArrayList<>();
+        stackTraceLines.add(line);
+        while (j < lines.length && lines[j].matches("^\\s++at\\s++.+")) {
+          stackTraceLines.add(lines[j]);
+          j++;
+        }
+        softly.assertThat(stackTraceLines)
+          .noneMatch(l -> l.contains("org.sonarqube.gradle"));
+        i = j - 1;
+      }
+    }
+    softly.assertAll();
   }
 }
