@@ -84,9 +84,22 @@ build_task:
       path: "**/test-results/**/*.xml"
       format: junit
 
-download_artifacts_task:
+promote_task:
   depends_on:
     - build
+  <<: *ONLY_SONARSOURCE_QA
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1
+    memory: 2G
+  env:
+    ARTIFACTORY_PROMOTE_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+    GITHUB_TOKEN: VAULT[development/github/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promotion token]
+  script: cirrus_promote_gradle
+
+download_artifacts_task:
+  depends_on:
+    - promote
   eks_container:
     <<: *CONTAINER_DEFINITION_17
     cpu: 1.5
