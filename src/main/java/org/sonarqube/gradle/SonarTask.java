@@ -106,6 +106,8 @@ public class SonarTask extends ConventionTask {
 
   @TaskAction
   public void run() {
+    logEnvironmentInformation();
+
     if (SonarExtension.SONAR_DEPRECATED_TASK_NAME.equals(this.getName())) {
       LOGGER.warn("Task 'sonarqube' is deprecated. Use 'sonar' instead.");
     }
@@ -147,8 +149,26 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  private String getPluginVersion() {
-    InputStream inputStream = this.getClass().getResourceAsStream("/org/sonarqube/gradle/sonarqube-gradle-plugin-version.txt");
+  private static void logEnvironmentInformation() {
+    if (LOGGER.isInfoEnabled()) {
+      LOGGER.info("org.sonarqube Gradle plugin {}", getPluginVersion());
+      LOGGER.info("Java {} {} ({}-bit)",
+        System.getProperty("java.version"),
+        System.getProperty("java.vm.vendor"),
+        System.getProperty("sun.arch.data.model"));
+      LOGGER.info("{} {} ({})",
+        System.getProperty("os.name"),
+        System.getProperty("os.version"),
+        System.getProperty("os.arch"));
+      String gradleOptions = System.getenv("GRADLE_OPTS");
+      if (gradleOptions != null) {
+        LOGGER.info("GRADLE_OPTS={}", gradleOptions);
+      }
+    }
+  }
+
+  private static String getPluginVersion() {
+    InputStream inputStream = SonarTask.class.getResourceAsStream("/org/sonarqube/gradle/sonarqube-gradle-plugin-version.txt");
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       return reader.readLine();
     } catch (IOException e) {

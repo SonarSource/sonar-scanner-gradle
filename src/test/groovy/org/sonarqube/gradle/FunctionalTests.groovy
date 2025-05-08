@@ -19,10 +19,8 @@
  */
 package org.sonarqube.gradle
 
-
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -30,6 +28,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
+import static java.util.Objects.nonNull
+import static org.assertj.core.api.Assertions.assertThat
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class FunctionalTests extends Specification {
@@ -231,6 +231,64 @@ class FunctionalTests extends Specification {
           .err.text.contains("\"1.8.")
         props."sonar.java.source" == '8'
         props."sonar.java.target" == '8'
+    }
+
+    def "log execution context"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-output-logs'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(projectDir.toFile())
+          .withEnvironment(Map.of("GRADLE_OPTS", "-Dfoo=bar"))
+          .forwardOutput()
+          .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonarqube").outcome == SUCCESS
+        nonNull(
+          assertThat(result.output)
+            .containsPattern('org.sonarqube Gradle plugin \\d+\\.\\d+')
+            .containsPattern('Java \\d+')
+            .contains('(64-bit)')
+            .contains('GRADLE_OPTS=-Dfoo=bar')
+        )
+    }
+
+    def "log execution context even when sonar.skip is true"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-output-logs'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(projectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '--info', '-Dsonar.skip=true')
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonarqube").outcome == SUCCESS
+        nonNull(
+          assertThat(result.output)
+            .contains('org.sonarqube Gradle plugin')
+        )
     }
 
     // https://docs.gradle.org/6.6/release-notes.html#javacompile-release
