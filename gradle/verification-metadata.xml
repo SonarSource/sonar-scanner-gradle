@@ -754,6 +754,11 @@
             <sha256 value="e439218dfb02a14423fd314cd17f3dbc0f5ce6c9b3a2609e8d4d63383ed18ffd" origin="Verified"/>
          </artifact>
       </component>
+      <component group="com.gradle.publish" name="plugin-publish-plugin" version="1.3.1">
+         <artifact name="plugin-publish-plugin-1.3.1.jar">
+            <sha256 value="e439218dfb02a14423fd314cd17f3dbc0f5ce6c9b3a2609e8d4d63383ed18ffd" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="com.jfrog.artifactory" name="com.jfrog.artifactory.gradle.plugin" version="4.24.23">
          <artifact name="com.jfrog.artifactory.gradle.plugin-4.24.23.pom">
             <sha256 value="227e958ccfa75a43cb2515d3cedde11a68e1f71c78c7f66219bcca759397e682" origin="Verified"/>
