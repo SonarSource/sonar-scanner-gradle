@@ -51,16 +51,17 @@ setup_gradle_cache_template: &SETUP_GRADLE_CACHE
     - mkdir -p "${CIRRUS_WORKING_DIR}/.gradle"
 
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
-  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
+  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_RELEASE == "" && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
 log_develocity_url_script: &log_develocity_url_script |
   echo "Develocity URL: https://develocity.sonar.build/scans?search.publicHostnames=cirrus-ci-task-${CIRRUS_TASK_ID}"
 
 build_task:
+  only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
   eks_container:
     <<: *CONTAINER_DEFINITION_17
     cpu: 1.5
-    memory: 4G
+    memory: 6G
   env:
     SONAR_TOKEN: VAULT[development/kv/data/next data.token]
     SONAR_HOST_URL: VAULT[development/kv/data/next data.url]
@@ -85,6 +86,7 @@ build_task:
       format: junit
 
 validate_external_contributor_build_task:
+  only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
   depends_on:
     - build
   eks_container:
@@ -195,11 +197,30 @@ promote_task:
     GITHUB_TOKEN: VAULT[development/github/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promotion token]
   script: cirrus_promote_gradle
 
-release_to_plugin_portal_task:
-  only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != ""
+release_plugin_to_repox_task:
+  only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != "" && $CIRRUS_TAG != ""
   stateful: 'true'
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  env:
+    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+  script: |
+    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
+    jfrog rt bpr \
+      --url "${ARTIFACTORY_URL}" \
+      --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
+      --status released \
+      "${CIRRUS_REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-releases
+
+release_plugin_to_gradle_plugin_portal_task:
+  only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != "" && $CIRRUS_TAG != ""
   depends_on:
-    - promote
+    - release_plugin_to_repox_task
+  stateful: 'true'
   eks_container:
     <<: *CONTAINER_DEFINITION_17
     cpu: 1.5
@@ -214,17 +235,10 @@ release_to_plugin_portal_task:
     GRADLE_PUBLISH_SECRET: VAULT[development/kv/data/gradle/publish data.secret]
     ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
   script: |
-    source cirrus-env RELEASE
+    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
     ./gradlew \
       --info \
       --stacktrace \
       --console plain \
-      "-Pgradle.publish.key=${GRADLE_PUBLISH_KEY}" \
-      "-Pgradle.publish.secret=${GRADLE_PUBLISH_SECRET}" \
-      "-DbuildNumber=${BUILD_NUMBER}" \
-      publishPlugins
-    jfrog rt bpr \
-      --url "${ARTIFACTORY_URL}" \
-      --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
-      --status released \
-      "${CIRRUS_REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-releases
+      -DbuildNumber="${BUILD_NUMBER}" \
+      downloadMavenArtifactsAndPublishToGradlePluginPortal
