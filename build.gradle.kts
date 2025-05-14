@@ -4,7 +4,7 @@ plugins {
     groovy
     jacoco
     `maven-publish`
-    id("com.gradle.plugin-publish") version "0.21.0"
+    id("com.gradle.plugin-publish") version "1.3.1"
     id("com.jfrog.artifactory") version "4.24.23"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.9"
@@ -16,6 +16,19 @@ val projectTitle: String by project
 
 val docUrl = "http://redirect.sonarsource.com/doc/gradle.html"
 val githubUrl = "https://github.com/SonarSource/sonar-scanner-gradle"
+
+// Only configure "signing" plugin if build's artifacts need to be published to artifactory or Gradle Plugin Portal
+// and the branch is "master" or "branch-*" (we don't want to sign PRs)
+val doArtifactsRequireSignature: () -> Boolean = {
+    val branch = System.getenv()["CIRRUS_BRANCH"] ?: ""
+
+    val isSafeBranch = (branch == "master")
+        || branch.matches("branch-[\\d.]+".toRegex())
+
+    val isPublishTask = (gradle.taskGraph.hasTask(":artifactoryPublish") && !tasks.artifactoryPublish.get().skip)
+
+    isSafeBranch && isPublishTask
+}
 
 java {
     withJavadocJar()
@@ -66,21 +79,17 @@ dependencies {
 gradlePlugin {
     plugins {
         create("sonarqubePlugin") {
+            id = "org.sonarqube"
+            group = project.group as String
             displayName = projectTitle
             description = project.description
-            id = "org.sonarqube"
             implementationClass = "org.sonarqube.gradle.SonarQubePlugin"
+            tags.set(listOf("sonarqube", "sonar", "quality", "qa"))
+            website.set(docUrl)
+            vcsUrl.set(githubUrl)
         }
     }
 }
-
-pluginBundle {
-    website = docUrl
-    vcsUrl = githubUrl
-    tags = listOf("sonarqube", "sonar", "quality", "qa")
-    group = project.group as String
-}
-
 
 license {
     header = rootProject.file("HEADER")
@@ -196,19 +205,14 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     setRequired {
-        val branch = System.getenv()["CIRRUS_BRANCH"] ?: ""
-        (branch == "master" || branch.matches("branch-[\\d.]+".toRegex())) &&
-            gradle.taskGraph.hasTask(":artifactoryPublish")
+      doArtifactsRequireSignature()
     }
     sign(publishing.publications)
 }
 
 tasks.withType<Sign> {
     onlyIf {
-        val branch = System.getenv()["CIRRUS_BRANCH"] ?: ""
-        val artifactorySkip: Boolean = tasks.artifactoryPublish.get().skip
-        !artifactorySkip && (branch == "master" || branch.matches("branch-[\\d.]+".toRegex())) &&
-            gradle.taskGraph.hasTask(":artifactoryPublish")
+      doArtifactsRequireSignature()
     }
 }
 
