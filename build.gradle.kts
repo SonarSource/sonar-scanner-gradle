@@ -46,29 +46,6 @@ if (project.version.toString().endsWith("-SNAPSHOT") && buildNumber != null) {
     project.version = project.version.toString().replace("-SNAPSHOT", versionSuffix)
 }
 
-repositories {
-    mavenLocal()
-    maven {
-        url = uri("https://maven.google.com")
-    }
-    // The environment variables ARTIFACTORY_PRIVATE_USERNAME and ARTIFACTORY_PRIVATE_PASSWORD are used on CI env
-    // If you have access to "repox.jfrog.io" you can add artifactoryUsername and artifactoryPassword to ~/.gradle/gradle.properties
-    val artifactoryUsername = System.getenv("ARTIFACTORY_PRIVATE_USERNAME") ?: project.findProperty("artifactoryUsername") ?: ""
-    val artifactoryPassword = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: project.findProperty("artifactoryPassword") ?: ""
-    if (artifactoryUsername is String && artifactoryUsername.isNotEmpty() && artifactoryPassword is String && artifactoryPassword.isNotEmpty()) {
-        maven {
-            val repository = if (project.hasProperty("qa")) "sonarsource-qa" else "sonarsource"
-            url = uri("https://repox.jfrog.io/repox/${repository}")
-            credentials {
-                username = artifactoryUsername
-                password = artifactoryPassword
-            }
-        }
-    } else {
-        mavenCentral()
-    }
-}
-
 dependencies {
     implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.3.1.450")
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")

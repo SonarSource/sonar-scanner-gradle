@@ -2,9 +2,7 @@ import org.sonarqube.gradle.SonarQubePlugin
 
 buildscript {
     repositories {
-        maven {
-            url = uri("https://plugins.gradle.org/m2/")
-        }
+        gradlePluginPortal()
     }
 
     dependencies {
