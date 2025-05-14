@@ -1,16 +1,25 @@
+import com.gradle.publish.DownloadMavenArtifactsAndPublishToGradlePluginPortal
+
+buildscript {
+    dependencies {
+        classpath("com.gradle.publish:plugin-publish-plugin:1.3.1")
+    }
+}
+
 plugins {
     id("java-gradle-plugin")
     java
     groovy
     jacoco
     `maven-publish`
-    id("com.gradle.plugin-publish") version "1.3.1"
     id("com.jfrog.artifactory") version "4.24.23"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.9"
     id("org.cyclonedx.bom") version "1.5.0"
     signing
 }
+
+apply(plugin = "com.gradle.plugin-publish")
 
 val projectTitle: String by project
 
@@ -22,12 +31,14 @@ val githubUrl = "https://github.com/SonarSource/sonar-scanner-gradle"
 val doArtifactsRequireSignature: () -> Boolean = {
     val branch = System.getenv()["CIRRUS_BRANCH"] ?: ""
 
-    val isSafeBranch = (branch == "master")
+    val isSafeBranchOrSimulation = (branch == "master")
         || branch.matches("branch-[\\d.]+".toRegex())
+        || (System.getProperty("validate-publish") == "true")
 
     val isPublishTask = (gradle.taskGraph.hasTask(":artifactoryPublish") && !tasks.artifactoryPublish.get().skip)
+        || gradle.startParameter.taskNames.contains("downloadMavenArtifactsAndPublishToGradlePluginPortal")
 
-    isSafeBranch && isPublishTask
+    isSafeBranchOrSimulation && isPublishTask
 }
 
 java {
@@ -156,6 +167,22 @@ publishing {
             artifact(bomArtifact)
         }
     }
+}
+
+tasks.register<DownloadMavenArtifactsAndPublishToGradlePluginPortal>("downloadMavenArtifactsAndPublishToGradlePluginPortal") {
+    group = "publishing"
+    description = "Publish the plugin (without building it) from a repox to the Gradle Plugin Portal"
+    pluginConfigurationName = "sonarqubePlugin"
+    // Do not send a publish request to the Gradle Plugin Portal but only a validate the request
+    validationOnly = "true".equals(System.getProperty("validate-publish"))
+    // If it is not a simulation or a validation, only download artifacts that have been successfully released in repox
+    mavenSourceRepositoryUrl = if (validationOnly)
+         "https://repox.jfrog.io/repox/sonarsource"
+    else "https://repox.jfrog.io/artifactory/sonarsource-public-releases"
+    mavenAuthorizationToken = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
+    groupId = project.group as String
+    artifactId = project.name as String
+    version = project.version as String
 }
 
 artifactory {
