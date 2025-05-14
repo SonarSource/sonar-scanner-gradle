@@ -231,7 +231,9 @@
       </component>
       <component group="com.android.tools.build" name="transform-api" version="2.0.0-deprecated-use-gradle-api">
          <artifact name="transform-api-2.0.0-deprecated-use-gradle-api.jar">
-            <sha256 value="4de4a3d05e1c534c2db9e4588bf34082bb2bd232d8abb9727c430290ce225740" origin="Verified"/>
+            <sha256 value="4de4a3d05e1c534c2db9e4588bf34082bb2bd232d8abb9727c430290ce225740" origin="Verified">
+               <also-trust value="e8b4151ae1679f1abe7a14ee371ac9b3c651ae7b63290d1f586bdd0f78face9a"/>
+            </sha256>
          </artifact>
          <artifact name="transform-api-2.0.0-deprecated-use-gradle-api.pom">
             <sha256 value="7c62f3856e8abca1d79257925f26c12668693f5d95904056bbac88605cfd8575" origin="Verified"/>
@@ -363,6 +365,11 @@
          </artifact>
          <artifact name="cyclonedx-gradle-plugin-1.5.0.pom">
             <sha256 value="ac5b31f4aaf2112c59d3651e2b972c27ea9feba029eb449166ba4c3b7742626a" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="com.ethlo.time" name="itu" version="1.5.1">
+         <artifact name="itu-1.5.1.jar">
+            <sha256 value="2fa82963daf8a91678f7ed3859c756e95d24a571ac4ba57a1a6b78bb68567156" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.fasterxml" name="oss-parent" version="38">
@@ -742,12 +749,9 @@
             <sha256 value="ccf995164d99510f6fd1003fcfb69935f1ea4c4d17cef036a298f33a29a1e6a5" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.gradle.publish" name="plugin-publish-plugin" version="0.21.0">
-         <artifact name="plugin-publish-plugin-0.21.0.jar">
-            <sha256 value="880a59b44463be7e6d59d9d1081088014a10c695bcda8a7ad9bb82b0479b874f" origin="Verified"/>
-         </artifact>
-         <artifact name="plugin-publish-plugin-0.21.0.pom">
-            <sha256 value="9f5f3085071ec198bfc1ff6869e093fbeff988aec95624a0ca24eb048ff9eb9b" origin="Verified"/>
+      <component group="com.gradle.publish" name="plugin-publish-plugin" version="1.3.1">
+         <artifact name="plugin-publish-plugin-1.3.1.jar">
+            <sha256 value="e439218dfb02a14423fd314cd17f3dbc0f5ce6c9b3a2609e8d4d63383ed18ffd" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.jfrog.artifactory" name="com.jfrog.artifactory.gradle.plugin" version="4.24.23">
@@ -1658,8 +1662,10 @@
          <artifact name="maven-model-3.6.3.jar">
             <sha256 value="17cef1f58e146ef0d7d9e96b3b92d98a1d6fd7d2b3288ba538e8ff1e0d9160cf" origin="Verified"/>
          </artifact>
-         <artifact name="maven-model-3.6.3.pom">
-            <sha256 value="7c720e8cb03d285c71cd6e334d9c9e596062bdd310ee0ad15f5c479a993154f0" origin="Verified"/>
+      </component>
+      <component group="org.apache.maven" name="maven-model" version="3.9.9">
+         <artifact name="maven-model-3.9.9.jar">
+            <sha256 value="8f59b0a16fe9c933be749a60ae0705a0cb337bb5abaf38801b40b740ff775727" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.apache.maven" name="maven-model-builder" version="3.5.0">
@@ -1949,22 +1955,14 @@
             <sha256 value="b5d8bac2ef7fd1136298223e53489980ad7a077d1c9e54c06b2884670771819f" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.codehaus.plexus" name="plexus-utils" version="2.0.5">
-         <artifact name="plexus-utils-2.0.5.pom">
-            <sha256 value="35bc7d1213616236571072b2c56da18f7a57658de8b4a4100645b7054a2b273b" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.codehaus.plexus" name="plexus-utils" version="3.0.24">
-         <artifact name="plexus-utils-3.0.24.pom">
-            <sha256 value="11067f6a75fded12bcdc8daf7a66ddd942ce289c3daf88a3fe0f8b12858a2ee6" origin="Verified"/>
-         </artifact>
-      </component>
       <component group="org.codehaus.plexus" name="plexus-utils" version="3.2.1">
          <artifact name="plexus-utils-3.2.1.jar">
             <sha256 value="8d07b497bb8deb167ee5329cae87ef2043833bf52e4f15a5a9379cec447a5b2b" origin="Verified"/>
          </artifact>
-         <artifact name="plexus-utils-3.2.1.pom">
-            <sha256 value="7a5001ab88105b4f37c4fab3b62d977316290a13f8b14c6684f25f2a32efdef1" origin="Verified"/>
+      </component>
+      <component group="org.codehaus.plexus" name="plexus-utils" version="3.6.0">
+         <artifact name="plexus-utils-3.6.0.jar">
+            <sha256 value="27ef130e32c236090e408fb5498d94cb9ea26d14070fb1c8985d607b62d098d1" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.codehaus.woodstox" name="stax2-api" version="4.2.1">
@@ -2487,7 +2485,9 @@
       </component>
       <component group="org.jfrog.buildinfo" name="build-info-extractor-gradle" version="4.24.23">
          <artifact name="build-info-extractor-gradle-4.24.23.jar">
-            <sha256 value="cd87b21945a74da468db9b9fc40177ebd3c31261e254e1278d8259bee023e82a" origin="Verified"/>
+            <sha256 value="cd87b21945a74da468db9b9fc40177ebd3c31261e254e1278d8259bee023e82a" origin="Verified">
+               <also-trust value="e7aed8d4a47b366c38d8a6793011593ceb760bbb9bf490b81b69cb914a2d948d"/>
+            </sha256>
          </artifact>
          <artifact name="build-info-extractor-gradle-4.24.23.pom">
             <sha256 value="247b3c4157afacdaaf2865f3d2c710229eec69a360dfb02c959ac23410fa136c" origin="Verified"/>
@@ -2751,6 +2751,9 @@
          <artifact name="sonar-scanner-java-library-3.3.1.450.jar">
             <sha256 value="cd2941a71a705a96c181e10903f2e4f787087eb7e49d99b6dada408dc5dd9176" origin="Verified"/>
          </artifact>
+         <artifact name="sonar-scanner-java-library-3.3.1.450.pom">
+            <sha256 value="023d77e24e5bfe3c150e002579e5684c101d5c1dc7a860173ed2fedcbd615227" origin="Verified"/>
+         </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="3.1.1.261">
          <artifact name="sonar-scanner-java-library-batch-interface-3.1.1.261.jar">
@@ -2771,6 +2774,9 @@
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="3.3.1.450">
          <artifact name="sonar-scanner-java-library-batch-interface-3.3.1.450.jar">
             <sha256 value="adbfef2053957a4e9639db69730ba83a090a5f8fa1cc3424a122c2c6663297d9" origin="Verified"/>
+         </artifact>
+         <artifact name="sonar-scanner-java-library-batch-interface-3.3.1.450.pom">
+            <sha256 value="b3d7ba47dfc2de1cc9e4cf062dfc5017a3b2e3466d36098e61ce9f54147b85f4" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-parent" version="3.1.1.261">
