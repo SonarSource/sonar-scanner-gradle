@@ -60,6 +60,9 @@ public abstract class DownloadMavenArtifactsAndPublishToGradlePluginPortal exten
   @Input
   private boolean validationOnly;
 
+  @Input
+  private boolean simulatePublication;
+
   /**
    * Main method to execute the task.
    * @throws Exception if any error occurs during task execution
@@ -68,10 +71,16 @@ public abstract class DownloadMavenArtifactsAndPublishToGradlePluginPortal exten
   public void executeTask() throws InterruptedException {
     downloadRequiredArtifactsInBuildFolder();
     validatePublishContent();
-    executePublishTask();
+    if (simulatePublication) {
+      try (var localGradlePortal = new SimpleGradlePluginPortalServer()) {
+        overrideSystemProperty("gradle.portal.url", localGradlePortal.getServerUrl(), this::executePublishTask);
+      }
+    } else {
+      executePublishTask();
+    }
   }
 
-  public static void overrideSystemProperty(String propertyName, String newValue, Runnable runnable) {
+  private static void overrideSystemProperty(String propertyName, String newValue, Runnable runnable) {
     String oldValue = System.getProperty("gradle.portal.url");
     try {
       System.setProperty(propertyName, newValue);
@@ -281,6 +290,20 @@ public abstract class DownloadMavenArtifactsAndPublishToGradlePluginPortal exten
    */
   public void setValidationOnly(boolean validationOnly) {
     this.validationOnly = validationOnly;
+  }
+
+  /**
+   * @return The simulation mode, simulation means using a fake localhost Gradle plugin portal and simulate the publication
+   */
+  public boolean getSimulatePublication() {
+    return simulatePublication;
+  }
+
+  /**
+   * @param simulatePublication set the simulation mode, simulation means using a fake localhost Gradle plugin portal and simulate the publication
+   */
+  public void setSimulatePublication(boolean simulatePublication) {
+    this.simulatePublication = simulatePublication;
   }
 
 }
