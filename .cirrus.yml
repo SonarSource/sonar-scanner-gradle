@@ -197,6 +197,50 @@ promote_task:
     GITHUB_TOKEN: VAULT[development/github/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promotion token]
   script: cirrus_promote_gradle
 
+# This task is only executed manually in Cirrus-CI UI to validate the release process.
+# It does not publish the artifacts matching the current build but the latest build of the master branch.
+# The task only tests the configuration and logic of the release process using the latest promoted (and signed) build from the master branch.
+# Once executed, the logs contain the json request sent during the publication, so we can manually check the content
+# that will be sent to Gradle Plugin Portal. And we really send the request to the Gradle Plugin Portal in validation mode,
+# not to publish the artifacts but to check the authentication mechanism and the validity of the metadata.
+simulate_and_validate_release_to_plugin_portal_task:
+  trigger_type: manual
+  skip: true
+  depends_on:
+    - promote
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  env:
+    ORG_GRADLE_PROJECT_signingKey: VAULT[development/kv/data/sign data.key]
+    ORG_GRADLE_PROJECT_signingPassword: VAULT[development/kv/data/sign data.passphrase]
+    ORG_GRADLE_PROJECT_signingKeyId: VAULT[development/kv/data/sign data.key_id]
+    GRADLE_PUBLISH_KEY: VAULT[development/kv/data/gradle/publish data.key]
+    GRADLE_PUBLISH_SECRET: VAULT[development/kv/data/gradle/publish data.secret]
+    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+  # We force CIRRUS_TAG to be the latest build version of the master branch (repox: sonarsource-public-builds) to ensure the artifacts are signed
+  # The publish simulation and validation will use those artifacts to check if the release logic is valid
+  script: |
+    export CIRRUS_TAG="$(cirrus/latest-repox-master-builds-plugin-version.sh)"
+    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
+    ./gradlew \
+      --info \
+      --stacktrace \
+      --console plain \
+      -DbuildNumber="${BUILD_NUMBER}" \
+      -Dsimulate-publish=true \
+      downloadMavenArtifactsAndPublishToGradlePluginPortal
+    ./gradlew \
+      --info \
+      --stacktrace \
+      --console plain \
+      -DbuildNumber="${BUILD_NUMBER}" \
+      -Dvalidate-publish=true \
+      downloadMavenArtifactsAndPublishToGradlePluginPortal
+
 release_plugin_to_repox_task:
   only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != "" && $CIRRUS_TAG != ""
   stateful: 'true'

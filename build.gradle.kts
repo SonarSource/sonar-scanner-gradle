@@ -33,6 +33,7 @@ val doArtifactsRequireSignature: () -> Boolean = {
 
     val isSafeBranchOrSimulation = (branch == "master")
         || branch.matches("branch-[\\d.]+".toRegex())
+        || (System.getProperty("simulate-publish") == "true")
         || (System.getProperty("validate-publish") == "true")
 
     val isPublishTask = (gradle.taskGraph.hasTask(":artifactoryPublish") && !tasks.artifactoryPublish.get().skip)
@@ -173,10 +174,12 @@ tasks.register<DownloadMavenArtifactsAndPublishToGradlePluginPortal>("downloadMa
     group = "publishing"
     description = "Publish the plugin (without building it) from a repox to the Gradle Plugin Portal"
     pluginConfigurationName = "sonarqubePlugin"
+    // Do not publish to the Gradle Plugin Portal but to a ephemeral localhost server
+    simulatePublication = "true".equals(System.getProperty("simulate-publish"))
     // Do not send a publish request to the Gradle Plugin Portal but only a validate the request
     validationOnly = "true".equals(System.getProperty("validate-publish"))
     // If it is not a simulation or a validation, only download artifacts that have been successfully released in repox
-    mavenSourceRepositoryUrl = if (validationOnly)
+    mavenSourceRepositoryUrl = if (simulatePublication || validationOnly)
          "https://repox.jfrog.io/repox/sonarsource"
     else "https://repox.jfrog.io/artifactory/sonarsource-public-releases"
     mavenAuthorizationToken = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
