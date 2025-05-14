@@ -263,7 +263,7 @@ release_plugin_to_repox_task:
 release_plugin_to_gradle_plugin_portal_task:
   only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != "" && $CIRRUS_TAG != ""
   depends_on:
-    - release_plugin_to_repox_task
+    - release_plugin_to_repox
   stateful: 'true'
   eks_container:
     <<: *CONTAINER_DEFINITION_17
