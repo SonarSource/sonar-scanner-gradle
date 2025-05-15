@@ -53,6 +53,10 @@ And delete in the `verification-metadata.xml` the versions that we don't use any
 But do not delete all unused versions for dependencies with a dynamic version set to `latest.release` (like `org.sonarsource.scanner.gradle:sonarqube-gradle-plugin`), 
 because Gradle cache the version resolution for 24 hours, so for those dependencies, we also need to keep the before last version.
 
+When you update a dependency’s checksum in the gradle/verification-metadata.xml file, you validate the change by comparing the sha256 value from Artifactory with the one listed on another package repositories like maven central. 
+First, identify the dependency updated in the file and copy its sha256 checksum. 
+Next, search for the dependency on another package repositories. For instance on [Maven Central](https://central.sonatype.com), you can use the query `checksum:new-dependency-sha256` to find a specific dependency.
+
 ### How the plugin works
 When the plugin is applied to a project, it will add to that project the Sonar task. It will also add to the project and all its subprojects the Sonar extension.
 For multi-module projects, the plugin will only apply to the first project where it gets called. The goal is to allow the usage of `allprojects {}`, for example.
