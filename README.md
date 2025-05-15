@@ -57,7 +57,6 @@ When you update a dependency’s checksum in the gradle/verification-metadata.xm
 First, identify the dependency updated in the file and copy its sha256 checksum. 
 Next, search for the dependency on another package repositories. For instance on [Maven Central](https://central.sonatype.com), you can use the query `checksum:new-dependency-sha256` to find a specific dependency.
 
-
 ### How the plugin works
 When the plugin is applied to a project, it will add to that project the Sonar task. It will also add to the project and all its subprojects the Sonar extension.
 For multi-module projects, the plugin will only apply to the first project where it gets called. The goal is to allow the usage of `allprojects {}`, for example.
