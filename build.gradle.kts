@@ -1,10 +1,17 @@
+import com.gradle.publish.DownloadMavenArtifactsAndPublishToGradlePluginPortal
+
+buildscript {
+    dependencies {
+        classpath("com.gradle.publish:plugin-publish-plugin:1.3.1")
+    }
+}
+
 plugins {
     id("java-gradle-plugin")
     java
     groovy
     jacoco
     `maven-publish`
-    id("com.gradle.plugin-publish") version "0.21.0"
     id("com.jfrog.artifactory") version "4.24.23"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.9"
@@ -12,10 +19,28 @@ plugins {
     signing
 }
 
+apply(plugin = "com.gradle.plugin-publish")
+
 val projectTitle: String by project
 
 val docUrl = "http://redirect.sonarsource.com/doc/gradle.html"
 val githubUrl = "https://github.com/SonarSource/sonar-scanner-gradle"
+
+// Only configure "signing" plugin if build's artifacts need to be published to artifactory or Gradle Plugin Portal
+// and the branch is "master" or "branch-*" (we don't want to sign PRs)
+val doArtifactsRequireSignature: () -> Boolean = {
+    val branch = System.getenv()["CIRRUS_BRANCH"] ?: ""
+
+    val isSafeBranchOrSimulation = (branch == "master")
+        || branch.matches("branch-[\\d.]+".toRegex())
+        || (System.getProperty("simulate-publish") == "true")
+        || (System.getProperty("validate-publish") == "true")
+
+    val isPublishTask = (gradle.taskGraph.hasTask(":artifactoryPublish") && !tasks.artifactoryPublish.get().skip)
+        || gradle.startParameter.taskNames.contains("downloadMavenArtifactsAndPublishToGradlePluginPortal")
+
+    isSafeBranchOrSimulation && isPublishTask
+}
 
 java {
     withJavadocJar()
@@ -46,29 +71,6 @@ if (project.version.toString().endsWith("-SNAPSHOT") && buildNumber != null) {
     project.version = project.version.toString().replace("-SNAPSHOT", versionSuffix)
 }
 
-repositories {
-    mavenLocal()
-    maven {
-        url = uri("https://maven.google.com")
-    }
-    // The environment variables ARTIFACTORY_PRIVATE_USERNAME and ARTIFACTORY_PRIVATE_PASSWORD are used on CI env
-    // If you have access to "repox.jfrog.io" you can add artifactoryUsername and artifactoryPassword to ~/.gradle/gradle.properties
-    val artifactoryUsername = System.getenv("ARTIFACTORY_PRIVATE_USERNAME") ?: project.findProperty("artifactoryUsername") ?: ""
-    val artifactoryPassword = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: project.findProperty("artifactoryPassword") ?: ""
-    if (artifactoryUsername is String && artifactoryUsername.isNotEmpty() && artifactoryPassword is String && artifactoryPassword.isNotEmpty()) {
-        maven {
-            val repository = if (project.hasProperty("qa")) "sonarsource-qa" else "sonarsource"
-            url = uri("https://repox.jfrog.io/repox/${repository}")
-            credentials {
-                username = artifactoryUsername
-                password = artifactoryPassword
-            }
-        }
-    } else {
-        mavenCentral()
-    }
-}
-
 dependencies {
     implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.3.1.450")
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
@@ -89,21 +91,17 @@ dependencies {
 gradlePlugin {
     plugins {
         create("sonarqubePlugin") {
+            id = "org.sonarqube"
+            group = project.group as String
             displayName = projectTitle
             description = project.description
-            id = "org.sonarqube"
             implementationClass = "org.sonarqube.gradle.SonarQubePlugin"
+            tags.set(listOf("sonarqube", "sonar", "quality", "qa"))
+            website.set(docUrl)
+            vcsUrl.set(githubUrl)
         }
     }
 }
-
-pluginBundle {
-    website = docUrl
-    vcsUrl = githubUrl
-    tags = listOf("sonarqube", "sonar", "quality", "qa")
-    group = project.group as String
-}
-
 
 license {
     header = rootProject.file("HEADER")
@@ -172,6 +170,24 @@ publishing {
     }
 }
 
+tasks.register<DownloadMavenArtifactsAndPublishToGradlePluginPortal>("downloadMavenArtifactsAndPublishToGradlePluginPortal") {
+    group = "publishing"
+    description = "Publish the plugin (without building it) from a repox to the Gradle Plugin Portal"
+    pluginConfigurationName = "sonarqubePlugin"
+    // Do not publish to the Gradle Plugin Portal but to a ephemeral localhost server
+    simulatePublication = "true".equals(System.getProperty("simulate-publish"))
+    // Do not send a publish request to the Gradle Plugin Portal but only a validate the request
+    validationOnly = "true".equals(System.getProperty("validate-publish"))
+    // If it is not a simulation or a validation, only download artifacts that have been successfully released in repox
+    mavenSourceRepositoryUrl = if (simulatePublication || validationOnly)
+         "https://repox.jfrog.io/repox/sonarsource"
+    else "https://repox.jfrog.io/artifactory/sonarsource-public-releases"
+    mavenAuthorizationToken = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
+    groupId = project.group as String
+    artifactId = project.name as String
+    version = project.version as String
+}
+
 artifactory {
     clientConfig.isIncludeEnvVars = true
     clientConfig.envVarsExcludePatterns =
@@ -219,19 +235,14 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     setRequired {
-        val branch = System.getenv()["CIRRUS_BRANCH"] ?: ""
-        (branch == "master" || branch.matches("branch-[\\d.]+".toRegex())) &&
-            gradle.taskGraph.hasTask(":artifactoryPublish")
+      doArtifactsRequireSignature()
     }
     sign(publishing.publications)
 }
 
 tasks.withType<Sign> {
     onlyIf {
-        val branch = System.getenv()["CIRRUS_BRANCH"] ?: ""
-        val artifactorySkip: Boolean = tasks.artifactoryPublish.get().skip
-        !artifactorySkip && (branch == "master" || branch.matches("branch-[\\d.]+".toRegex())) &&
-            gradle.taskGraph.hasTask(":artifactoryPublish")
+      doArtifactsRequireSignature()
     }
 }
 
