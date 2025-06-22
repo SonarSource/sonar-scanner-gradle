@@ -18,8 +18,8 @@ allprojects {
     }
 
     java {
-        sourceCompatibility = 1.8
-        targetCompatibility = 1.8
+        sourceCompatibility = JavaVersion.JavaVersion.1_8
+        targetCompatibility = JavaVersion.JavaVersion.1_8
     }
 
 

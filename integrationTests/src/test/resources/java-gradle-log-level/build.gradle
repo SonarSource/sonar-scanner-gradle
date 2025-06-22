@@ -10,8 +10,8 @@ apply plugin: 'java'
 apply plugin: 'org.sonarqube'
 
 java {
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = JavaVersion.1_8
+    targetCompatibility = JavaVersion.1_8
 }
 
 allprojects {  
