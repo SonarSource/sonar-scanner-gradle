@@ -16,10 +16,10 @@ allprojects {
 	    mavenLocal()
 	    mavenCentral()
 	}
-
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
-
+    java {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
   
   ext.baseVersion = "0.1"
   ext.snapshotVersion = true
