@@ -9,8 +9,10 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'org.sonarqube'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+java {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+}
 
 allprojects {  
   ext.baseVersion = "0.1"
