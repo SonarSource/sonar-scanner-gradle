@@ -72,7 +72,7 @@ if (project.version.toString().endsWith("-SNAPSHOT") && buildNumber != null) {
 }
 
 dependencies {
-    implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.3.1.450")
+    implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.4.0.514")
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
     compileOnly("com.android.tools.build:gradle:8.1.1")
     compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
