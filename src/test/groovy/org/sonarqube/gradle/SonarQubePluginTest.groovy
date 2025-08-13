@@ -319,7 +319,8 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    properties["sonar.sources"] == new File(project.projectDir, "src") as String
+    properties["sonar.sources"].contains(new File(project.projectDir, "src") as String)
+    properties["sonar.sources"].contains(new File(project.projectDir, ".github") as String)
     properties["sonar.tests"] == new File(project.projectDir, "test") as String
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.java.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
@@ -376,7 +377,8 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    properties["sonar.sources"] == new File(project.projectDir, "src") as String
+    properties["sonar.sources"].contains(new File(project.projectDir, "src") as String)
+    properties["sonar.sources"].contains(new File(project.projectDir, ".github") as String)
     properties["sonar.tests"] == new File(project.projectDir, "test") as String
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.groovy.binaries"].contains(new File(project.buildDir, "out") as String)

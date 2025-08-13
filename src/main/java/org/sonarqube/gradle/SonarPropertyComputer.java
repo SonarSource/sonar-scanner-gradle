@@ -147,6 +147,7 @@ public class SonarPropertyComputer {
       rawProperties.putIfAbsent("sonar.moduleKey", projectKey + project.getPath());
     }
 
+    addGithubFolder(project, rawProperties);
     convertProperties(rawProperties, prefix, properties);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
@@ -604,6 +605,13 @@ public class SonarPropertyComputer {
     }
     if (!buildScripts.isEmpty()) {
       SonarUtils.appendSourcesProp(properties, buildScripts, false);
+    }
+  }
+
+  private static void addGithubFolder(Project project, Map<String, Object> properties) {
+    File githubFolder = project.getProjectDir().toPath().resolve(".github").toFile();
+    if (githubFolder.exists() && githubFolder.isDirectory()) {
+      SonarUtils.appendSourcesProp(properties, List.of(githubFolder), false);
     }
   }
 

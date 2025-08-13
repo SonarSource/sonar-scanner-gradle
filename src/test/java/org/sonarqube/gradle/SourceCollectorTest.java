@@ -73,10 +73,12 @@ class SourceCollectorTest {
       .build();
 
     Path gitFolder = createDirectory(simpleProjectBasedDir, ".git");
+    Path githubFolder = createDirectory(simpleProjectBasedDir, ".github");
     Path gitHooksFolder = createDirectory(gitFolder, "hooks");
     Path sources = createDirectory(simpleProjectBasedDir, "scripts");
 
     assertThat(visitor.preVisitDirectory(gitFolder, null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
+    assertThat(visitor.preVisitDirectory(githubFolder, null)).isEqualTo(FileVisitResult.CONTINUE);
     assertThat(visitor.preVisitDirectory(gitHooksFolder, null)).isEqualTo(FileVisitResult.CONTINUE);
 
     assertThat(visitor.preVisitDirectory(srcMainJava, null)).isEqualTo(FileVisitResult.SKIP_SUBTREE);
