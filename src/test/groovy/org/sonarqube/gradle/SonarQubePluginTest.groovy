@@ -319,8 +319,7 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    properties["sonar.sources"].contains(new File(project.projectDir, "src") as String)
-    properties["sonar.sources"].contains(new File(project.projectDir, ".github") as String)
+    properties["sonar.sources"] == new File(project.projectDir, "src") as String
     properties["sonar.tests"] == new File(project.projectDir, "test") as String
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.java.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
@@ -377,8 +376,7 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    properties["sonar.sources"].contains(new File(project.projectDir, "src") as String)
-    properties["sonar.sources"].contains(new File(project.projectDir, ".github") as String)
+    properties["sonar.sources"] == new File(project.projectDir, "src") as String
     properties["sonar.tests"] == new File(project.projectDir, "test") as String
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.groovy.binaries"].contains(new File(project.buildDir, "out") as String)
@@ -1102,6 +1100,53 @@ class SonarQubePluginTest extends Specification {
     module1Sources == "module1/src/main/java"
     module2Sources == "module2/src/main/java"
     submoduleSources == "module2/submodule/src/main/java"
+  }
+
+  def ".github folder is present"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/github-is-a-folder")).build()
+
+    project.pluginManager.apply(SonarQubePlugin)
+
+    project.pluginManager.apply(GroovyPlugin)
+
+    project.sourceSets.main.groovy.srcDirs = ["src"]
+    project.compileJava.options.encoding = 'ISO-8859-1'
+
+    def testResultsDir = new File(project.buildDir, "test-results/test")
+    testResultsDir.mkdirs()
+    new File(testResultsDir, 'TEST-.xml').createNewFile()
+
+    when:
+    def properties = project.tasks.sonar.properties.get()
+
+    then:
+    properties["sonar.sources"].contains(new File(project.projectDir, "src") as String)
+    properties["sonar.sources"].contains(new File(project.projectDir, ".github") as String)
+    properties["sonar.sourceEncoding"] == "ISO-8859-1"
+  }
+
+  def ".github is present but is a file so not added to sources"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/github-is-a-file")).build()
+
+    project.pluginManager.apply(SonarQubePlugin)
+
+    project.pluginManager.apply(GroovyPlugin)
+
+    project.sourceSets.main.groovy.srcDirs = ["src"]
+    project.compileJava.options.encoding = 'ISO-8859-1'
+
+    def testResultsDir = new File(project.buildDir, "test-results/test")
+    testResultsDir.mkdirs()
+    new File(testResultsDir, 'TEST-.xml').createNewFile()
+
+    when:
+    def properties = project.tasks.sonar.properties.get()
+
+    then:
+    properties["sonar.sources"] == new File(project.projectDir, "src") as String
+    properties["sonar.sourceEncoding"] == "ISO-8859-1"
   }
 
   private static void setSourceSets(Project project, List<String> mainDirs) {
