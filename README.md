@@ -6,7 +6,7 @@ SonarScanner for Gradle
 About Sonar
 -----------
 
-Sonar's [Clean Code solutions](https://www.sonarsource.com/solutions/clean-code/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-scanner-cli-docker) help developers deliver high-quality, efficient code standards that benefit the entire team or organization.
+Sonar's integrated code quality and code security solutions help developers deliver high-quality, efficient code standards that benefit the entire team or organization.
 
 User documentation
 ------------------
