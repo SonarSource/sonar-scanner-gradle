@@ -25,18 +25,24 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.SoftAssertions;
 import org.jspecify.annotations.Nullable;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
@@ -65,6 +71,95 @@ public abstract class AbstractGradleIT {
 
   protected static Semver getGradleVersion() {
     return gradleVersion;
+  }
+
+  protected static void ignoreThisTestIfGradleVersionIsLessThan(String version) {
+    Semver gradleVersion = getGradleVersion();
+    Assume.assumeTrue("Test is ignored for Gradle version " + gradleVersion + " which is greater than or equal to ", gradleVersion.isGreaterThanOrEqualTo(version));
+  }
+
+  protected static void ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo(String version) {
+    Semver gradleVersion = getGradleVersion();
+    Assume.assumeTrue("Test is ignored for Gradle version " + gradleVersion + " which is greater than or equal to ", gradleVersion.isLowerThan(version));
+  }
+
+  protected static void ignoreThisTestIfGradleVersionIsNotBetween(String minVersionIncluded, String maxVersionExcluded) {
+    ignoreThisTestIfGradleVersionIsLessThan(minVersionIncluded);
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo(maxVersionExcluded);
+  }
+
+  protected static Map<String, String> extractComparableProperties(Properties props) {
+    String absoluteProjectBaseDir = props.getProperty("sonar.projectBaseDir");
+    if (absoluteProjectBaseDir == null) {
+      throw new IllegalStateException("sonar.projectBaseDir is null");
+    }
+    Set<String> hiddenProperties = new HashSet<>(Arrays.asList(
+      // different on each machine, nothing to compare
+      "sonar.java.jdkHome", "sonar.scanner.arch", "sonar.scanner.os", "sonar.scanner.opts",
+      // path to a different temporary file for each run, e.g. junit17577551948278219342.tmp
+      "sonar.scanner.internal.dumpToFile",
+      // depends on the plugin and gradle version that run the test, e.g. 6.3-SNAPSHOT/Gradle 9.0.0
+      "sonar.scanner.appVersion"));
+    // All environment variables started with SONAR_SCANNER_* will pollute the test by adding sonar.scanner.* properties
+    // We are forced to filter them out
+    Set<String> sonarScannerPropertiesToTest = new HashSet<>(Arrays.asList(
+      "sonar.scanner.apiBaseUrl",
+      "sonar.scanner.app",
+      "sonar.scanner.appVersion",
+      "sonar.scanner.arch",
+      "sonar.scanner.internal.dumpToFile",
+      "sonar.scanner.os",
+      "sonar.scanner.wasEngineCacheHit"));
+    Map<String, String> replacementMap = new LinkedHashMap<>();
+    replacementMap.put("${parentBaseDir}", Paths.get(absoluteProjectBaseDir).getParent().toString());
+    replacementMap.put("${currentWorkingDir}", System.getProperty("user.dir"));
+    replacementMap.put("${HOME}", System.getProperty("user.home"));
+    String cirrusWorkingDir = System.getenv("CIRRUS_WORKING_DIR");
+    if (cirrusWorkingDir != null) {
+      replacementMap.put("${HOME}", cirrusWorkingDir);
+    }
+    Pattern dependenciesInGradleCache = Pattern.compile("(?<=,|^)/[^,]+/.gradle/caches/modules-\\d+/files-[0-9.]+/" +
+      "(?<groupId>[^/,]++)/(?<artifactId>[^/,]++)/(?<version>[^/,]++)/[0-9a-f]{40}/\\k<artifactId>-\\k<version>\\.jar(?=,|$)");
+    Map<String, String> result = new LinkedHashMap<>();
+    props.stringPropertyNames().stream()
+      .sorted()
+      .filter(key -> !key.startsWith("sonar.scanner.") || sonarScannerPropertiesToTest.contains(key))
+      .forEach(key -> {
+        String value = props.getProperty(key);
+        if (hiddenProperties.contains(key)) {
+          value = "<hidden>";
+        }
+        for (Map.Entry<String, String> entry : replacementMap.entrySet()) {
+          value = replaceAllPrefixInCommaSeparatedString(value, entry.getValue(), entry.getKey());
+        }
+        value = value.replace('\\', '/');
+        for (String replacementKey : replacementMap.keySet()) {
+          value = replaceAllPrefixInCommaSeparatedString(value, replacementKey + "/.m2", "${M2}");
+        }
+        value = dependenciesInGradleCache.matcher(value).replaceAll(res ->
+        // Java 11 does not support res.group("groupId") this is why there is res.group(1)
+        "\\${M2}/repository/" + res.group(1).replace(".", "/") + "/${artifactId}/${version}/${artifactId}-${version}.jar");
+        // In the Gradle configuration there are some FileCollection that have a random order, like the transitive dependencies in "sonar.java.test.libraries"
+        // so we are forced to sort the entries to have a reproducible result
+        String[] parts = value.split(",", -1);
+        Arrays.sort(parts);
+        value = String.join(",", parts);
+        result.put(key, value);
+      });
+    return result;
+  }
+
+  private static String replaceAllPrefixInCommaSeparatedString(String value, String oldPrefix, String newPrefix) {
+    String prefixAfterComma = ',' + oldPrefix;
+    int index = value.lastIndexOf(prefixAfterComma);
+    while (index != -1) {
+      value = value.substring(0, index + 1) + newPrefix + value.substring(index + prefixAfterComma.length());
+      index = value.lastIndexOf(prefixAfterComma);
+    }
+    if (value.startsWith(oldPrefix)) {
+      value = newPrefix + value.substring(oldPrefix.length());
+    }
+    return value;
   }
 
   protected static Semver getAndroidGradleVersion() {
