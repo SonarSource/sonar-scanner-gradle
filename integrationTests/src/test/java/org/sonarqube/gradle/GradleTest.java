@@ -397,7 +397,7 @@ public class GradleTest extends AbstractGradleIT {
 
     List<Path> srcsPaths = stream(props.getProperty("sonar.sources").split(","))
       .map(Paths::get)
-        .collect(Collectors.toList());
+      .collect(Collectors.toList());
     assertThat(srcsPaths).containsExactlyInAnyOrder(
       baseDir.resolve("src/main/java"),
       baseDir.resolve(".github"));
