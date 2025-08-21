@@ -24,8 +24,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -383,5 +385,21 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(props.getProperty(":skippedModule.sonar.sources")).isNull();
     assertThat(props.getProperty(":skippedModule.:skippedModule:skippedSubmodule.sonar.sources")).isNull();
+  }
+
+  @Test
+  public void testSimpleJavaProjectWithGithubFolder() throws Exception {
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-simple-with-github", Collections.emptyMap(), "compileJava", "compileTestJava");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(props).contains(entry("sonar.projectKey", "org.codehaus.sonar:example-java-gradle"));
+
+    List<Path> srcsPaths = stream(props.getProperty("sonar.sources").split(","))
+      .map(Paths::get)
+      .collect(Collectors.toList());
+    assertThat(srcsPaths).containsExactlyInAnyOrder(
+      baseDir.resolve("src/main/java"),
+      baseDir.resolve(".github"));
   }
 }
