@@ -67,6 +67,7 @@ import org.gradle.util.GradleVersion;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
+import static org.sonarqube.gradle.SonarUtils.exists;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
 import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
 import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
@@ -345,7 +346,7 @@ class AndroidUtils {
       libraries.addAll(getLibraries((ApkVariant) variant));
     }
     if (javaCompile != null) {
-      libraries.addAll(javaCompile.getClasspath().filter(File::exists).getFiles());
+      libraries.addAll(exists(javaCompile.getClasspath()));
     }
 
     Collection<File> destinationDirs = (javaCompile != null)
@@ -364,7 +365,7 @@ class AndroidUtils {
       Method methodOnAndroidBefore30 = variant.getClass().getMethod("getCompileLibraries");
       return (Set<File>) methodOnAndroidBefore30.invoke(variant, (Object[]) null);
     } catch (NoSuchMethodException e) {
-      return variant.getCompileClasspath(null).getFiles();
+      return exists(variant.getCompileClasspath(null));
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new IllegalArgumentException("Unable to call getCompileLibraries", e);
     }

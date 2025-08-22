@@ -179,8 +179,14 @@ public class SonarUtils {
     properties.put(SONAR_JAVA_ENABLE_PREVIEW_PROP, config.getEnablePreview());
   }
 
-  static List<File> exists(Collection<File> files) {
-    return files.stream().filter(File::exists).collect(Collectors.toList());
+  static List<File> exists(Iterable<File> files) {
+    List<File> list = new ArrayList<>();
+    for (File file : files) {
+      if (!list.contains(file) && file.exists()) {
+        list.add(file);
+      }
+    }
+    return list;
   }
 
   static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {

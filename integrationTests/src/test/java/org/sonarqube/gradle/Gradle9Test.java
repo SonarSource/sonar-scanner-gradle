@@ -49,14 +49,14 @@ public class Gradle9Test extends AbstractGradleIT {
       entry("sonar.java.source", "17"),
       entry("sonar.java.target", "17"),
       entry("sonar.java.test.binaries", "${parentBaseDir}/gradle-9-example/build/classes/java/test"),
-      entry("sonar.java.test.libraries", "${M2}/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar," +
+      entry("sonar.java.test.libraries", "${parentBaseDir}/gradle-9-example/build/classes/java/main," +
         "${M2}/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar," +
-        "${M2}/repository/org/junit/jupiter/junit-jupiter-api/5.10.0/junit-jupiter-api-5.10.0.jar," +
-        "${M2}/repository/org/junit/jupiter/junit-jupiter-params/5.10.0/junit-jupiter-params-5.10.0.jar," +
         "${M2}/repository/org/junit/jupiter/junit-jupiter/5.10.0/junit-jupiter-5.10.0.jar," +
+        "${M2}/repository/org/junit/jupiter/junit-jupiter-params/5.10.0/junit-jupiter-params-5.10.0.jar," +
+        "${M2}/repository/org/junit/jupiter/junit-jupiter-api/5.10.0/junit-jupiter-api-5.10.0.jar," +
         "${M2}/repository/org/junit/platform/junit-platform-commons/1.10.0/junit-platform-commons-1.10.0.jar," +
         "${M2}/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar," +
-        "${parentBaseDir}/gradle-9-example/build/classes/java/main"),
+        "${M2}/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar"),
       entry("sonar.junit.reportPaths", "${parentBaseDir}/gradle-9-example/build/test-results/test"),
       entry("sonar.junit.reportsPath", "${parentBaseDir}/gradle-9-example/build/test-results/test"),
       entry("sonar.kotlin.gradleProjectRoot", "${parentBaseDir}/gradle-9-example"),
@@ -72,9 +72,9 @@ public class Gradle9Test extends AbstractGradleIT {
       entry("sonar.scanner.internal.dumpToFile", "<hidden>"),
       entry("sonar.scanner.os", "<hidden>"),
       entry("sonar.scanner.wasEngineCacheHit", "false"),
-      entry("sonar.sources", "${parentBaseDir}/gradle-9-example/build.gradle.kts," +
-        "${parentBaseDir}/gradle-9-example/settings.gradle.kts," +
-        "${parentBaseDir}/gradle-9-example/src/main/java"),
+      entry("sonar.sources", "${parentBaseDir}/gradle-9-example/src/main/java," +
+        "${parentBaseDir}/gradle-9-example/build.gradle.kts," +
+        "${parentBaseDir}/gradle-9-example/settings.gradle.kts"),
       entry("sonar.surefire.reportsPath", "${parentBaseDir}/gradle-9-example/build/test-results/test"),
       entry("sonar.tests", "${parentBaseDir}/gradle-9-example/src/test/java"),
       entry("sonar.working.directory", "${parentBaseDir}/gradle-9-example/build/sonar"));
