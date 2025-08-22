@@ -117,14 +117,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarTask.mustRunAfter(getAndroidCompileTasks(project));
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
-    setNotCompatibleWithConfigurationCache(sonarTask);
-
-  }
-
-  private static void setNotCompatibleWithConfigurationCache(SonarTask sonarQubeTask) {
-    if (isGradleVersionGreaterOrEqualTo("7.4.0")) {
-      sonarQubeTask.notCompatibleWithConfigurationCache("Plugin is not compatible with configuration cache");
-    }
   }
 
   private static boolean isGradleVersionGreaterOrEqualTo(String version) {
