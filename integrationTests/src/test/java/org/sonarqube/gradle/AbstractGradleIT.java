@@ -139,11 +139,6 @@ public abstract class AbstractGradleIT {
         value = dependenciesInGradleCache.matcher(value).replaceAll(res ->
         // Java 11 does not support res.group("groupId") this is why there is res.group(1)
         "\\${M2}/repository/" + res.group(1).replace(".", "/") + "/${artifactId}/${version}/${artifactId}-${version}.jar");
-        // In the Gradle configuration there are some FileCollection that have a random order, like the transitive dependencies in "sonar.java.test.libraries"
-        // so we are forced to sort the entries to have a reproducible result
-        String[] parts = value.split(",", -1);
-        Arrays.sort(parts);
-        value = String.join(",", parts);
         result.put(key, value);
       });
     return result;
