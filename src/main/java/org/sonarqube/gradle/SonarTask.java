@@ -20,19 +20,22 @@
 package org.sonarqube.gradle;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
@@ -189,13 +192,70 @@ public class SonarTask extends ConventionTask {
    * @return The String key/value pairs to be passed to the SonarQube Scanner.
    * {@code null} values are not permitted.
    */
-  @Input
+  @Internal
   public Provider<Map<String, String>> getProperties() {
     return properties;
   }
 
   void setProperties(Provider<Map<String, String>> properties) {
     this.properties = properties;
+
+    getOutputs().cacheIf(t -> properties.map(this::isCacheEnabled).get());
+    getOutputs().file("build/sonar/report-task.txt");
+
+    // Remove properties that should be excluded from the Gradle build cache
+    getInputs().property("properties", properties.map(props -> {
+      Map<String, String> filtered = new HashMap<>();
+      for (Map.Entry<String, String> entry : props.entrySet()) {
+        if (!ScanProperties.excludePropertyFromCache(entry.getKey())) {
+          filtered.put(entry.getKey(), entry.getValue());
+        }
+      }
+      return filtered;
+    }));
+  }
+
+
+  @InputFiles
+  public Provider<List<File>> getInputFiles () {
+    return properties.map(props -> {
+      ArrayList<File> files = new ArrayList<>();
+      files.addAll(parseInputs(props, ScanProperties.PROJECT_SOURCE_DIRS));
+      files.addAll(parseInputs(props, ScanProperties.LIBRARIES));
+      for (String key : props.keySet()) {
+        if (key.endsWith(".reportPaths")) {
+          files.addAll(parseInputs(props, key));
+        }
+      }
+      return files;
+    });
+  }
+
+  private List<File> parseInputs(Map<String, String> props, String key) {
+    String sources = props.get(key);
+    if (sources == null) {
+      return List.of();
+    }
+    ArrayList<File> files = new ArrayList<>();
+    for (String source : sources.split(",")) {
+      if (source.isEmpty()) {
+        continue;
+      }
+
+      File file = getProject().file(source);
+      if(file.isDirectory()) {
+        files.addAll(getProject().fileTree(file).getFiles());
+      } else {
+        files.add(file);
+      }
+    }
+    return files;
+  }
+
+  private boolean isCacheEnabled(Map<String, String> properties) {
+    return properties
+               .getOrDefault(ScanProperties.GRADLE_CACHE, "true")
+               .equals("true");
   }
 
   /**

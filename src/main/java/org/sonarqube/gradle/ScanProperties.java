@@ -17,12 +17,44 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
+
 package org.sonarqube.gradle;
 
 public final class ScanProperties {
   public static final String SKIP = "sonar.skip";
   public static final String PROJECT_SOURCE_DIRS = "sonar.sources";
   public static final String PROJECT_TEST_DIRS = "sonar.tests";
+  public static final String LIBRARIES = "sonar.libraries";
+
+  public static final String GRADLE_CACHE = "sonar.gradle.cache";
+
+
+  /**
+   * Should the given property be excluded from the gradle cache input?
+   */
+  public static  boolean excludePropertyFromCache(String key) {
+
+    // Will be covered by input files
+    if (key.endsWith(".libraries") || key.endsWith(".binaries")) {
+      return true;
+    }
+
+    switch (key) {
+      case "sonar.kotlin.gradleProjectRoot":
+      case "sonar.projectBaseDir":
+      case "sonar.working.directory":
+      case "sonar.java.jdkHome":
+
+      // Shall be included in the input files
+      case ScanProperties.PROJECT_SOURCE_DIRS:
+      case ScanProperties.PROJECT_TEST_DIRS:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+
   private ScanProperties() {
     /* This is a utility class with constants */
   }
