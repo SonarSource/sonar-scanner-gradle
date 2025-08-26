@@ -1,0 +1,40 @@
+name: Prepare Next Development Iteration
+
+on:
+  workflow_dispatch:
+    inputs:
+      nextVersion:
+        description: Version number of the next iteration
+        required: true
+
+jobs:
+  Next-Iteration-Job:
+    name: Next Iteration Job
+    runs-on: ubuntu-latest-large
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+
+      - name: Checkout Sources
+        uses: actions/checkout@v4
+
+      - name: Update Version Number
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git checkout -b gh-action/next-iteration
+          pushd .
+          cd integrationTests
+          mvn versions:set -DgenerateBackupPoms=false -DnewVersion="${{ inputs.nextVersion }}"
+          popd
+          sed --in-place "s/version=.*$/version=${{ inputs.nextVersion }}/" gradle.properties
+          git commit -m "Prepare next development iteration ${{ inputs.nextVersion }}" -a
+          git push --set-upstream origin gh-action/next-iteration
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create -B master --title "Prepare next development iteration ${{ inputs.nextVersion }}" --body ""
