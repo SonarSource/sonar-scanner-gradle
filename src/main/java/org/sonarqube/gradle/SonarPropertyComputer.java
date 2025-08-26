@@ -130,6 +130,7 @@ public class SonarPropertyComputer {
     }
 
     if (isRootProject(project)) {
+      addGithubFolder(project, rawProperties);
       addKotlinBuildScriptsToSources(project, rawProperties);
     }
 
@@ -147,7 +148,6 @@ public class SonarPropertyComputer {
       rawProperties.putIfAbsent("sonar.moduleKey", projectKey + project.getPath());
     }
 
-    addGithubFolder(project, rawProperties);
     convertProperties(rawProperties, prefix, properties);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
