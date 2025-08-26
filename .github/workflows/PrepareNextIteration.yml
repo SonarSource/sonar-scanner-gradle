@@ -11,7 +11,7 @@ on:
       nextVersion:
         description: Version number of the next iteration
         required: true
-        default: 8.0-SNAPSHOT
+        default: '8.0-SNAPSHOT'
     branches:
       - tt/prepare-next-iteration
 
