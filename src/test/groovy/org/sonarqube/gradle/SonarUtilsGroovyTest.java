@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.sonarqube.gradle.SonarUtils.findProjectFileType;
 import static org.sonarqube.gradle.SonarUtils.isCompatibleWithJavaPluginExtension;
 
-class SonarUtilsTest {
+class SonarUtilsGroovyTest {
 
   @Test
   void get_project_base_dir() {
