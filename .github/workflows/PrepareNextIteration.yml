@@ -25,8 +25,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Update Version Number
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -40,5 +38,7 @@ jobs:
           git push --set-upstream origin gh-action/next-iteration
 
       - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr create -B master --title "Prepare next development iteration ${{ inputs.nextVersion }}" --body ""
