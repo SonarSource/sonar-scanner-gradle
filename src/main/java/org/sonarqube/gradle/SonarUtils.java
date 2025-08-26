@@ -190,9 +190,17 @@ public class SonarUtils {
   }
 
   static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {
-    properties.putIfAbsent(key, new LinkedHashSet<String>());
-    StreamSupport.stream(valuesToAppend.spliterator(), false)
-      .forEach(((Collection<Object>) properties.get(key))::add);
+    Set<Object> newList = new LinkedHashSet<>();
+    Object previousValue = properties.get(key);
+    if (previousValue instanceof Collection) {
+      newList.addAll((Collection<Object>) previousValue);
+    } else if (previousValue != null) {
+      newList.add(previousValue);
+    }
+    for (Object value : valuesToAppend) {
+      newList.add(value);
+    }
+    properties.put(key, newList);
   }
 
   static void appendSourcesProp(Map<String, Object> properties, Iterable<File> filesToAppend, boolean testSources) {
