@@ -6,6 +6,10 @@ on:
       nextVersion:
         description: Version number of the next iteration
         required: true
+        default: 8.0-SNAPSHOT
+  push:
+    branches:
+      - tt/prepare-next-iteration
 
 jobs:
   Next-Iteration-Job:
