@@ -130,6 +130,7 @@ public class SonarPropertyComputer {
     }
 
     if (isRootProject(project)) {
+      addGithubFolder(project, rawProperties);
       addKotlinBuildScriptsToSources(project, rawProperties);
     }
 
@@ -147,7 +148,6 @@ public class SonarPropertyComputer {
       rawProperties.putIfAbsent("sonar.moduleKey", projectKey + project.getPath());
     }
 
-    addGithubFolder(project, rawProperties);
     convertProperties(rawProperties, prefix, properties);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
@@ -476,7 +476,7 @@ public class SonarPropertyComputer {
   }
 
   private static Collection<File> getJavaOutputDirs(SourceSet sourceSet) {
-    return exists(sourceSet.getOutput().getClassesDirs().getFiles());
+    return exists(sourceSet.getOutput().getClassesDirs());
   }
 
   private static @Nullable Collection<File> getKotlinSourceFiles(Object extension, String sourceSetNameSuffix) {
@@ -524,7 +524,7 @@ public class SonarPropertyComputer {
   }
 
   private static Collection<File> getJavaLibraries(SourceSet main) {
-    List<File> libraries = exists(main.getCompileClasspath().getFiles());
+    List<File> libraries = exists(main.getCompileClasspath());
 
     File runtimeJar = getRuntimeJar();
     if (runtimeJar != null) {

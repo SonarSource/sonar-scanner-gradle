@@ -179,14 +179,28 @@ public class SonarUtils {
     properties.put(SONAR_JAVA_ENABLE_PREVIEW_PROP, config.getEnablePreview());
   }
 
-  static List<File> exists(Collection<File> files) {
-    return files.stream().filter(File::exists).collect(Collectors.toList());
+  static List<File> exists(Iterable<File> files) {
+    List<File> list = new ArrayList<>();
+    for (File file : files) {
+      if (!list.contains(file) && file.exists()) {
+        list.add(file);
+      }
+    }
+    return list;
   }
 
   static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {
-    properties.putIfAbsent(key, new LinkedHashSet<String>());
-    StreamSupport.stream(valuesToAppend.spliterator(), false)
-      .forEach(((Collection<Object>) properties.get(key))::add);
+    Set<Object> newList = new LinkedHashSet<>();
+    Object previousValue = properties.get(key);
+    if (previousValue instanceof Collection) {
+      newList.addAll((Collection<Object>) previousValue);
+    } else if (previousValue != null) {
+      newList.add(previousValue);
+    }
+    for (Object value : valuesToAppend) {
+      newList.add(value);
+    }
+    properties.put(key, newList);
   }
 
   static void appendSourcesProp(Map<String, Object> properties, Iterable<File> filesToAppend, boolean testSources) {

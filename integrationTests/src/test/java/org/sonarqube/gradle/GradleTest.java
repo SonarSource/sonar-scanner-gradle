@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
-import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -42,6 +41,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testSimpleJavaProject() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-simple", Collections.emptyMap(), "compileJava", "compileTestJava");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -64,11 +64,13 @@ public class GradleTest extends AbstractGradleIT {
    */
   @Test
   public void testDebugModeEnabled(){
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     assertThatCode(() -> runGradlewSonarSimulationModeWithEnv("/java-gradle-simple", emptyMap(), "-d")).doesNotThrowAnyException();
   }
 
   @Test
   public void testSetLogLevel() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     File output = temp.newFile("will-not-be-used-for-this-test.txt");
     String args = String.format(
       "-Dsonar.scanner.internal.dumpToFile=%s",
@@ -93,6 +95,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testHostUrlInEnvErrorIncludingExecutionContextInformation() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Map<String, String> env = new HashMap<>();
     env.put("SONAR_HOST_URL", "http://host-in-env");
     RunResult result = runGradlewSonarWithEnvQuietly("/java-gradle-simple", env, "--info");
@@ -110,6 +113,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testCompileOnly() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationMode("/java-compile-only");
 
     assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar", "commons-lang-2.6.jar");
@@ -122,6 +126,7 @@ public class GradleTest extends AbstractGradleIT {
   // SONARGRADL-23
   @Test
   public void testCustomConfiguration() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
 
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-custom-config", emptyMap(), "compileJava", "compileTestJava");
 
@@ -139,6 +144,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void mixJavaGroovyProject() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), "build");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -155,6 +161,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void loadSonarScannerPropertiesEnv() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Map<String, String> env = new HashMap<>();
     env.put("SONARQUBE_SCANNER_PARAMS", "{\"sonar.host.url\" : \"myhost\" }");
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-simple", env);
@@ -169,19 +176,19 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(props).contains(entry("sonar.projectKey", "com.mygroup:root_project"));
     assertThat(props.get("sonar.modules").toString().split(",")).containsOnly(":toplevel1", ":toplevel2");
 
-    assertThat(props).contains(entry(":toplevel1.sonar.moduleKey", "com.mygroup:root_project:toplevel1"));
-    assertThat(props).contains(entry(":toplevel2.sonar.moduleKey", "com.mygroup:root_project:toplevel2"));
-
-    assertThat(props).contains(entry(":toplevel1.sonar.modules", ":toplevel1:plugins"));
-    assertThat(props).contains(entry(":toplevel2.sonar.modules", ":toplevel2:plugins"));
-
-    assertThat(props).contains(entry(":toplevel1.:toplevel1:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel1:plugins"));
-    assertThat(props).contains(entry(":toplevel2.:toplevel2:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel2:plugins"));
+    assertThat(props)
+      .contains(entry(":toplevel1.sonar.moduleKey", "com.mygroup:root_project:toplevel1"))
+      .contains(entry(":toplevel2.sonar.moduleKey", "com.mygroup:root_project:toplevel2"))
+      .contains(entry(":toplevel1.sonar.modules", ":toplevel1:plugins"))
+      .contains(entry(":toplevel2.sonar.modules", ":toplevel2:plugins"))
+      .contains(entry(":toplevel1.:toplevel1:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel1:plugins"))
+      .contains(entry(":toplevel2.:toplevel2:plugins.sonar.moduleKey", "com.mygroup:root_project:toplevel2:plugins"));
   }
 
   // SONARGRADL-5
   @Test
   public void testMultimoduleProjectWithSourceInRoot() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-source-in-root", emptyMap(), "compileJava", "compileTestJava");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -212,12 +219,14 @@ public class GradleTest extends AbstractGradleIT {
    */
   @Test
   public void testFlatProjectStructure() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-flat", "build", emptyMap());
     assertThat(Paths.get(props.getProperty("sonar.projectBaseDir")).getFileName()).hasToString("multi-module-flat");
   }
 
   @Test
   public void testJavaProjectWithoutTestsDoesNotSetCustomReportsPath() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationMode("/java-gradle-no-tests");
     Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
 
@@ -228,6 +237,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testJavaProjectWithoutRealTestsDoesNotSetCustomReportsPath() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-no-real-tests", emptyMap(), "test");
     Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
 
@@ -238,12 +248,14 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testLazyConfiguration() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-lazy-configuration", emptyMap(), "test");
     assertThat(props.getProperty("sonar.projectKey")).isEqualTo("org.codehaus.sonar:example-java-gradle");
   }
 
   @Test
   public void testJaCoCoProperties() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     String project;
     if (getGradleVersion().isLowerThan("7")) {
       // Use report.enabled
@@ -260,7 +272,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testProjectWithConfigurationCacheDoubleExecutionsShouldWork() throws Exception {
-    Assume.assumeTrue("Tests only applies to version 6.5.0 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.5.0"));
+    ignoreThisTestIfGradleVersionIsNotBetween("6.5.0", "9.0.0");
 
     String dumpProperty = String.format("-Dsonar.scanner.internal.dumpToFile=%s", temp.newFile().getAbsolutePath());
 
@@ -273,7 +285,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testKotlinMultiplatformProject() throws Exception {
-    Assume.assumeTrue("Tests only applies to version 6.8.3 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.8.3"));
+    ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform", emptyMap(), "compileCommonMainKotlinMetadata", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -295,7 +307,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testKotlinMultiplatformWithSubmoduleProject() throws Exception {
-    Assume.assumeTrue("Tests only applies to version 6.8.3 or greater", getGradleVersion().isGreaterThanOrEqualTo("6.8.3"));
+    ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform-with-submodule", emptyMap(), "compileCommonMainKotlinMetadata", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -389,6 +401,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testSimpleJavaProjectWithGithubFolder() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-simple-with-github", Collections.emptyMap(), "compileJava", "compileTestJava");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
