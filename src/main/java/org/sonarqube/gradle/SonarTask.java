@@ -37,6 +37,8 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
@@ -217,6 +219,7 @@ public class SonarTask extends ConventionTask {
 
 
   @InputFiles
+  @PathSensitive(PathSensitivity.RELATIVE)
   public Provider<List<File>> getInputFiles () {
     return properties.map(props -> {
       ArrayList<File> files = new ArrayList<>();
