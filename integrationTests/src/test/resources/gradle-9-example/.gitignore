@@ -1,0 +1,7 @@
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.idea/
+*.iml
+### Mac OS ###
+.DS_Store

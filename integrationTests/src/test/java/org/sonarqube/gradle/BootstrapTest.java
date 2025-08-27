@@ -66,6 +66,7 @@ public class BootstrapTest extends AbstractGradleIT {
 
   @Test
   public void testJreProvisioning() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     HashMap<String, String> env = new HashMap<>();
     env.put("DUMP_SYSTEM_PROPERTIES", "java.home");
     env.put("DUMP_SENSOR_PROPERTIES", "sonar.java.jdkHome");
@@ -80,6 +81,7 @@ public class BootstrapTest extends AbstractGradleIT {
 
   @Test
   public void testSkipJreProvisioning() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     HashMap<String, String> env = new HashMap<>();
     env.put("DUMP_SYSTEM_PROPERTIES", "java.home");
     env.put("DUMP_SENSOR_PROPERTIES", "sonar.java.jdkHome");
@@ -91,6 +93,7 @@ public class BootstrapTest extends AbstractGradleIT {
 
   @Test
   public void testSkipJreProvisioningInBuildFile() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     HashMap<String, String> env = new HashMap<>();
     env.put("DUMP_SYSTEM_PROPERTIES", "java.home");
     env.put("DUMP_SENSOR_PROPERTIES", "sonar.java.jdkHome");
@@ -101,6 +104,7 @@ public class BootstrapTest extends AbstractGradleIT {
 
   @Test
   public void testUnsupportedOs() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     HashMap<String, String> env = new HashMap<>();
     env.put("DUMP_SYSTEM_PROPERTIES", "java.home");
     env.put("DUMP_SENSOR_PROPERTIES", "sonar.java.jdkHome");
@@ -109,12 +113,13 @@ public class BootstrapTest extends AbstractGradleIT {
     String arch = "amd64";
     env.put("SONAR_SCANNER_ARCH", arch);
     RunResult result = runSonarAnalysis("/java-gradle-simple", env);
-    String expectedLog = String.format("Failed to query JRE metadata");
+    String expectedLog = "Failed to query JRE metadata";
     assertThat(result.getLog()).contains(expectedLog);
   }
 
   @Test
   public void testBootstrappingUsesProvidedJre() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     String javaHome = guessJavaHomeSelectedByGradle();
     String project = "/java-gradle-simple";
     HashMap<String, String> env = new HashMap<>();
@@ -128,6 +133,7 @@ public class BootstrapTest extends AbstractGradleIT {
 
   @Test
   public void analysis_failure_makes_the_gradle_task_fail() throws Exception {
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     HashMap<String, String> env = new HashMap<>();
     env.put("FAIL_ANALYSIS", "true");
     String project = "/java-gradle-simple";

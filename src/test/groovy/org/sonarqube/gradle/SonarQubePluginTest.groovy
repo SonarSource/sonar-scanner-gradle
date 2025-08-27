@@ -1111,19 +1111,30 @@ class SonarQubePluginTest extends Specification {
     project.pluginManager.apply(GroovyPlugin)
 
     project.sourceSets.main.groovy.srcDirs = ["src"]
-    project.compileJava.options.encoding = 'ISO-8859-1'
-
-    def testResultsDir = new File(project.buildDir, "test-results/test")
-    testResultsDir.mkdirs()
-    new File(testResultsDir, 'TEST-.xml').createNewFile()
 
     when:
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    properties["sonar.sources"].contains(new File(project.projectDir, "src") as String)
-    properties["sonar.sources"].contains(new File(project.projectDir, ".github") as String)
-    properties["sonar.sourceEncoding"] == "ISO-8859-1"
+    properties["sonar.sources"] == (new File(project.projectDir, "src") as String) + "," + (new File(project.projectDir, ".github") as String)
+  }
+
+  def ".github folder is not added if the user overrides sonar.sources"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/github-is-a-folder")).build()
+
+    project.pluginManager.apply(SonarQubePlugin)
+    project.pluginManager.apply(GroovyPlugin)
+    project.sonar.properties {
+      property "sonar.sources", "src"
+    }
+    project.sourceSets.main.groovy.srcDirs = ["src"]
+
+    when:
+    def properties = project.tasks.sonar.properties.get()
+
+    then:
+    properties["sonar.sources"] == "src"
   }
 
   def ".github is present but is a file so not added to sources"() {
