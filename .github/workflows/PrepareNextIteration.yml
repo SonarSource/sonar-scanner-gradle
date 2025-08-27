@@ -25,8 +25,7 @@ jobs:
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git checkout -b gh-action/next-iteration
-          pushd .
-          cd integrationTests
+          pushd integrationTests
           mvn versions:set -DgenerateBackupPoms=false -DnewVersion="${{ inputs.nextVersion }}"
           popd
           sed --in-place "s/version=.*$/version=${{ inputs.nextVersion }}/" gradle.properties
