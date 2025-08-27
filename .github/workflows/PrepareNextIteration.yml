@@ -32,7 +32,6 @@ jobs:
           sed --in-place "s/version=.*$/version=${{ inputs.nextVersion }}/" gradle.properties
           git commit -m "Prepare next development iteration ${{ inputs.nextVersion }}" -a
           git push --set-upstream origin "$BRANCH"
-          gh pr create --base master --title "Prepare next development iteration ${{ inputs.nextVersion }}" --body ""
 
       - name: Create Pull Request
         env:
