@@ -24,14 +24,14 @@ jobs:
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          # Consider creating a unique branch name to avoid collisions when the action is run multiple times.
-          git checkout -b gh-action/next-iteration
+          BRANCH="gh-action/next-iteration.${{ github.run_id }}"
+          git checkout -b "$BRANCH"
           pushd integrationTests
           mvn versions:set -DgenerateBackupPoms=false -DnewVersion="${{ inputs.nextVersion }}"
           popd
           sed --in-place "s/version=.*$/version=${{ inputs.nextVersion }}/" gradle.properties
           git commit -m "Prepare next development iteration ${{ inputs.nextVersion }}" -a
-          git push --set-upstream origin gh-action/next-iteration
+          git push --set-upstream origin "$BRANCH"
 
       - name: Create Pull Request
         env:
