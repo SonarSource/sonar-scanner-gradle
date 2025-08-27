@@ -24,6 +24,7 @@ jobs:
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          # Consider creating a unique branch name to avoid collisions when the action is run multiple times.
           git checkout -b gh-action/next-iteration
           pushd integrationTests
           mvn versions:set -DgenerateBackupPoms=false -DnewVersion="${{ inputs.nextVersion }}"
