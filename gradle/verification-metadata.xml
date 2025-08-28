@@ -2390,11 +2390,6 @@
             <sha256 value="e98ea8c44fb36820d01bb8b003168e23a221b401cb43256d723a3f0b77d616c2" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk7" version="1.7.10">
-         <artifact name="kotlin-stdlib-jdk7-1.7.10.jar">
-            <sha256 value="54f61351b1936ad88f4e53059fe781e723eae51d78ed9e7422d8b403574ec682" origin="Verified"/>
-         </artifact>
-      </component>
       <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk7" version="1.8.21">
          <artifact name="kotlin-stdlib-jdk7-1.8.21.jar">
             <sha256 value="33d148db0e11debd0d90677d28242bced907f9c77730000fd597867089039d86" origin="Verified"/>
@@ -2409,16 +2404,6 @@
          </artifact>
          <artifact name="kotlin-stdlib-jdk7-1.9.10.pom">
             <sha256 value="c7fa67c7961320b89d85a3ca59a2e18c2c65850845595dcae4b46af6945edcd5" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.7.10">
-         <artifact name="kotlin-stdlib-jdk8-1.7.10.jar">
-            <sha256 value="8aafdd60c94f454c92e5066d266a5ed53ecc63c78f623b3fd9db56fea4032873" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.8.20-RC2">
-         <artifact name="kotlin-stdlib-jdk8-1.8.20-RC2.pom">
-            <sha256 value="de58e606b7cabf5bc5625a13f960a05a41d4d586b6be6ff8bdbf2d8861b2e71e" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.8.21">
@@ -2891,11 +2876,6 @@
       <component group="pl.droidsonroids.gradle.jacoco" name="pl.droidsonroids.gradle.jacoco" version="1.0.12">
          <artifact name="pl.droidsonroids.gradle.jacoco-1.0.12.jar">
             <sha256 value="66f2270c30fb42ae52a11e6df3b5b3a57be41c484c7c0f5da95a1af04ac1c258" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="pl.droidsonroids.jacoco.testkit" name="pl.droidsonroids.jacoco.testkit.gradle.plugin" version="1.0.9">
-         <artifact name="pl.droidsonroids.jacoco.testkit.gradle.plugin-1.0.9.pom">
-            <sha256 value="74217cca66ec9bb08eb9e73a72170df3251cfd04e6662dfcf996929820b1e595" origin="Verified"/>
          </artifact>
       </component>
       <component group="xerces" name="xercesImpl" version="2.12.0">
