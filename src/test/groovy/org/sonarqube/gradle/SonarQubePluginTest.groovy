@@ -62,7 +62,7 @@ class SonarQubePluginTest extends Specification {
     parentProject.repositories {
       mavenCentral()
     }
-    (parentProject as ProjectInternal).services.get(GradlePropertiesController.class).loadGradlePropertiesFrom(parentProject.rootDir)
+    (parentProject as ProjectInternal).services.get(GradlePropertiesController.class).loadGradlePropertiesFrom(parentProject.rootDir, false)
 
     rootProject.allprojects {
       group = "group"
