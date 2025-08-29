@@ -660,7 +660,7 @@ public class SonarPropertyComputer {
     // `getOutputLocation` changed return type between Gradle 7 and Gradle 8,
     // so we need to use reflection to call it.
     Method getOutputLocation = report.getClass().getMethod("getOutputLocation");
-    provider = (Provider<? extends FileSystemLocation>) getOutputLocation.invoke(report, new Object[0]);
+    provider = (Provider<? extends FileSystemLocation>) getOutputLocation.invoke(report);
     FileSystemLocation location = provider.getOrNull();
     if (location != null) {
       return location.getAsFile();
