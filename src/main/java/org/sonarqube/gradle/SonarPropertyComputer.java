@@ -657,12 +657,10 @@ public class SonarPropertyComputer {
    */
   private static File getDestinationNewApi(Report report) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Provider<? extends FileSystemLocation> provider;
-    if (GradleVersion.version("8.0").compareTo(GradleVersion.current()) <= 0) {
-      Method getOutputLocationGradle8 = report.getClass().getMethod("getOutputLocation");
-      provider = (Property<? extends FileSystemLocation>) getOutputLocationGradle8.invoke(report, new Object[0]);
-    } else {
-      provider = report.getOutputLocation();
-    }
+    // `getOutputLocation` changed return type between Gradle 7 and Gradle 8,
+    // so we need to use reflection to call it.
+    Method getOutputLocation = report.getClass().getMethod("getOutputLocation");
+    provider = (Provider<? extends FileSystemLocation>) getOutputLocation.invoke(report);
     FileSystemLocation location = provider.getOrNull();
     if (location != null) {
       return location.getAsFile();

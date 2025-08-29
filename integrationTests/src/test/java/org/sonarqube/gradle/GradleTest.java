@@ -329,6 +329,8 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testKotlinJvmProject() throws Exception {
+    ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
+
     Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-jvm", emptyMap(), "compileKotlin", "compileTestKotlin");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -344,6 +346,8 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testKotlinJvmWithSubmoduleProject() throws Exception {
+    ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
+
     Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-jvm-submodule", emptyMap(), "compileKotlin", "compileTestKotlin");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
