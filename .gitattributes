@@ -1,3 +1,39 @@
-* text eol=lf
-*.bat  text eol=crlf
-*.jar  binary
+# By default line ending should be 'lf', but if we don't know, it is better to not change it
+# '-text' attribute is to prevent Git from performing end-of-line normalization
+* -text
+
+# Enforce 'lf' on configuration
+*.config       text eol=lf
+*.star         text eol=lf
+*.xml          text eol=lf
+*.yaml         text eol=lf
+*.yml          text eol=lf
+*.properties   text eol=lf
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+
+# Enforce 'lf' on source code
+*.groovy       text eol=lf
+*.java         text eol=lf
+*.kts          text eol=lf
+*.md           text eol=lf
+*.sh           text eol=lf
+*.txt          text eol=lf
+HEADER         text eol=lf
+
+# Exception for Windows batch file that require 'crlf'
+*.bat          text eol=crlf
+
+# Binary files should be left untouched
+# 'binary' includes '-text', '-diff' no diff, '-merge' no three-way merge
+*.jar          binary
+*.png          binary
+
+# For test purpose we should allow any line ending in the test resources
+# Windows developer should be vigilant to not push 'crlf' if it is not needed by the test.
+/integrationTests/src/test/resources/**/*  -text
+/src/test/projects/**/*                    -text
+/src/test/resources/**/*                   -text
+
+# To validate this file configuration, we start with a clean "git status" and validate it is still clean after executing:
+# git add --renormalize .
