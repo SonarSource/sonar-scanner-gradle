@@ -10,7 +10,7 @@ buildscript {
     }
 
     val projectTitle: String by project
-    extra.apply{
+    extra.apply {
         set("sonar.projectName", projectTitle)
     }
 }
