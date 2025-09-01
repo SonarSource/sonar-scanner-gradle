@@ -852,7 +852,9 @@
       </component>
       <component group="com.squareup.okhttp3" name="logging-interceptor" version="5.1.0">
          <artifact name="logging-interceptor-5.1.0.jar">
-            <sha256 value="276ac5f68ea4a0a7aac7fa7effde756336dc994b76ce5ca8a428598d6c94017bb" origin="Verified"/>
+            <sha256 value="276ac5f68ea4a0a7aac7fa7effde756336dc994b76ce5ca8a428598d6c94017bb" origin="Verified">
+               <also-trust value="276ac5f68ea4a07aac7fa7effde756336dc994b76ce5ca8a428598d6c94017bb"/>
+            </sha256>
          </artifact>
       </component>
       <component group="com.squareup.okhttp3" name="okhttp" version="4.12.0">
@@ -2473,7 +2475,9 @@
       </component>
       <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.8.20-RC2">
          <artifact name="kotlin-stdlib-jdk8-1.8.20-RC2.jar">
-            <sha256 value="83db746a1451310f00a37b915d7106451fd09a27a7621d99411b7bfd055d2bd" origin="Verified"/>
+            <sha256 value="83db746a1451310f00a37b915d7106451fd09a27a7621d99411b7bfd055d2bd" origin="Verified">
+               <also-trust value="83db746a1451310f00a37b915d7106451fd09a27a7621d99411b7bfdd055d2bd"/>
+            </sha256>
          </artifact>
       </component>
       <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.8.21">
