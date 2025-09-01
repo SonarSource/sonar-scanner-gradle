@@ -186,6 +186,11 @@ public class SonarUtils {
     List<File> list = new ArrayList<>();
       System.out.println("#################################");
       System.out.println("Implementation type is: " + files.getClass().getCanonicalName());
+
+      if (files instanceof DefaultConfiguration) {
+          var defaultConfiguration = (DefaultConfiguration) files;
+          System.out.println(String.format("Can be mutated: %s", defaultConfiguration.isCanBeMutated()));
+      }
       System.out.println("#################################");
 
     for (File file : files) {
