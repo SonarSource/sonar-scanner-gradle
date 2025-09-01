@@ -19,6 +19,8 @@
  */
 package org.sonarqube.gradle;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,6 +35,8 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -77,19 +81,59 @@ public class SonarQubePlugin implements Plugin<Project> {
       addExtensions(project, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME, actionBroadcastMap);
       LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
 
+      // Configure resolver tasks
+      DirectoryProperty buildDirectory = project.getLayout().getBuildDirectory();
+      File sonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
+      sonarResolver.mkdirs();
+      List<File> resolverFiles = registerAndConfigureResolverTasks(project, sonarResolver);
+
       TaskContainer tasks = project.getTasks();
       tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        task.setResolverFiles(resolverFiles);
         configureTask(task, project, actionBroadcastMap);
       });
 
       tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        task.setResolverFiles(resolverFiles);
         configureTask(task, project, actionBroadcastMap);
       });
     }
+  }
+
+  /**
+   * Register and configure a resolver task per (sub-)project.
+   * As the tasks are configured, we capture list of output files where the resolved properties will be written.
+   */
+  private static List<File> registerAndConfigureResolverTasks(Project topLevelProject, File sonarResolver) {
+    List<File> resolverFiles = new ArrayList<>();
+    topLevelProject.getAllprojects().forEach(target ->
+      target.getTasks().register("sonarResolver", SonarResolverTask.class, task -> {
+        if (target == topLevelProject) {
+          task.setProjectName("");
+        } else {
+          task.setProjectName(target.getName());
+        }
+        Configuration compileClasspath = target.getConfigurations().findByName(Constants.COMPILE_CLASSPATH);
+        if (compileClasspath != null) {
+          task.setCompileClasspath(compileClasspath);
+        }
+        Configuration testCompileClasspath = target.getConfigurations().findByName(Constants.TEST_COMPILE_CLASSPATH);
+        if (testCompileClasspath != null) {
+          task.setTestCompileClasspath(testCompileClasspath);
+        }
+        task.setOutputDirectory(sonarResolver);
+        try {
+          resolverFiles.add(task.getOutputFile());
+        } catch (IOException e) {
+          LOGGER.warn("Could not get output file from task {} on project {}", task.getName(), target.getName());
+        }
+      })
+    );
+    return resolverFiles;
   }
 
   private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
@@ -117,6 +161,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarTask.mustRunAfter(getAndroidCompileTasks(project));
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
+    sonarTask.dependsOn(getClassPathResolverTask(project));
     setNotCompatibleWithConfigurationCache(sonarTask);
 
   }
@@ -151,6 +196,12 @@ public class SonarQubePlugin implements Plugin<Project> {
       .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && notSkipped(p))
       .flatMap(p -> Stream.of(p.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME), p.getTasks().getByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME)))
       .collect(Collectors.toList());
+  }
+
+  private static Callable<Iterable<? extends Task>> getClassPathResolverTask(Project project) {
+    return () -> project.getAllprojects().stream()
+            .map(p -> p.getTasks().getByName("sonarResolver"))
+            .collect(Collectors.toList());
   }
 
   static boolean notSkipped(Project p) {
