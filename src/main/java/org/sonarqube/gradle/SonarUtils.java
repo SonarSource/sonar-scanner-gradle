@@ -35,7 +35,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal;
+import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
@@ -179,8 +182,12 @@ public class SonarUtils {
     properties.put(SONAR_JAVA_ENABLE_PREVIEW_PROP, config.getEnablePreview());
   }
 
-  static List<File> exists(Iterable<File> files) {
+  static synchronized List<File> exists(Iterable<File> files) {
     List<File> list = new ArrayList<>();
+      System.out.println("#################################");
+      System.out.println("Implementation type is: " + files.getClass().getCanonicalName());
+      System.out.println("#################################");
+
     for (File file : files) {
       if (!list.contains(file) && file.exists()) {
         list.add(file);
