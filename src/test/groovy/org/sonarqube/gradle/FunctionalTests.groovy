@@ -450,7 +450,7 @@ class FunctionalTests extends Specification {
 
         var mainSources = ((String) props."sonar.sources").split(",")
         mainSources.size() == 3
-        var projectPath = projectDir.toString() + File.separator
+        var projectPath = projectDir.toFile().getCanonicalPath() + File.separator
         mainSources[0].endsWith("""${projectPath}build.gradle""")
         mainSources[1].endsWith("""${projectPath}gradle.properties""")
         mainSources[2].endsWith("""${projectPath}settings.gradle""")
@@ -599,7 +599,7 @@ class FunctionalTests extends Specification {
         // Test that the empty script is is collected but the reports are not collected
         var mainSources = ((String) props."sonar.sources").split(",")
         mainSources.size() == 4
-        var projectPath = projectDir.toString() + File.separator
+        var projectPath = projectDir.toFile().getCanonicalPath() + File.separator
         mainSources[0].endsWith("""${projectPath}build.gradle""")
         mainSources[1].endsWith("""${projectPath}empty-script.groovy""")
         mainSources[2].endsWith("""${projectPath}gradle.properties""")
