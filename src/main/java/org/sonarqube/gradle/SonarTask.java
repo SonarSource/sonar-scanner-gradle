@@ -33,6 +33,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
@@ -50,7 +51,7 @@ import org.sonarsource.scanner.lib.internal.batch.LogOutput;
  * For more information on how to configure the SonarQube Scanner, and on which properties are available, see the
  * <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner documentation</a>.
  */
-public class SonarTask extends ConventionTask {
+public abstract class SonarTask extends ConventionTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
 
