@@ -71,7 +71,6 @@ public class Gradle9Test extends AbstractGradleIT {
       entry("sonar.scanner.arch", "<hidden>"),
       entry("sonar.scanner.internal.dumpToFile", "<hidden>"),
       entry("sonar.scanner.os", "<hidden>"),
-      entry("sonar.scanner.wasEngineCacheHit", "false"),
       entry("sonar.sources", "${parentBaseDir}/gradle-9-example/src/main/java," +
         "${parentBaseDir}/gradle-9-example/build.gradle.kts," +
         "${parentBaseDir}/gradle-9-example/settings.gradle.kts"),
