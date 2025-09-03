@@ -33,11 +33,13 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
@@ -81,12 +83,20 @@ public class SonarQubePlugin implements Plugin<Project> {
       tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
+        if (compileClasspath != null) {
+          task.getMainClassPath().from(compileClasspath);
+        }
         configureTask(task, project, actionBroadcastMap);
       });
 
       tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
+        if (compileClasspath != null) {
+          task.getMainClassPath().from(compileClasspath);
+        }
         configureTask(task, project, actionBroadcastMap);
       });
     }

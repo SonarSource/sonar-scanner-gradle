@@ -179,7 +179,10 @@ public class SonarUtils {
     properties.put(SONAR_JAVA_ENABLE_PREVIEW_PROP, config.getEnablePreview());
   }
 
-  static List<File> exists(Iterable<File> files) {
+  /**
+   * Filters a list to return the list of existing files.
+   */
+  static synchronized List<File> exists(Iterable<File> files) {
     List<File> list = new ArrayList<>();
     for (File file : files) {
       if (!list.contains(file) && file.exists()) {
