@@ -182,17 +182,11 @@ public class SonarUtils {
     properties.put(SONAR_JAVA_ENABLE_PREVIEW_PROP, config.getEnablePreview());
   }
 
+  /**
+   * Filters a list to return the list of existing files.
+   */
   static synchronized List<File> exists(Iterable<File> files) {
     List<File> list = new ArrayList<>();
-      System.out.println("#################################");
-      System.out.println("Implementation type is: " + files.getClass().getCanonicalName());
-
-      if (files instanceof DefaultConfiguration) {
-          var defaultConfiguration = (DefaultConfiguration) files;
-          System.out.println(String.format("Can be mutated: %s", defaultConfiguration.isCanBeMutated()));
-      }
-      System.out.println("#################################");
-
     for (File file : files) {
       if (!list.contains(file) && file.exists()) {
         list.add(file);
