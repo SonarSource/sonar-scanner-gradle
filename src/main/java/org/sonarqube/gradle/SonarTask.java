@@ -27,10 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
@@ -58,6 +61,9 @@ public abstract class SonarTask extends ConventionTask {
   private LogOutput logOutput = new DefaultLogOutput();
 
   private Provider<Map<String, String>> properties;
+
+  @InputFiles
+  public abstract ConfigurableFileCollection getMainClassPath();
 
   private static class DefaultLogOutput implements LogOutput {
     @Override
