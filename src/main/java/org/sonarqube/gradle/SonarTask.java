@@ -20,18 +20,25 @@
 package org.sonarqube.gradle;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
@@ -133,6 +140,9 @@ public abstract class SonarTask extends ConventionTask {
       return;
     }
 
+
+    completeConfiguration(mapProperties);
+
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
       .addBootstrapProperties(mapProperties);
@@ -198,6 +208,34 @@ public abstract class SonarTask extends ConventionTask {
   public Provider<Map<String, String>> getProperties() {
     return properties;
   }
+
+  /**
+   * Finish the configuration by resolving some of the input dependencies that could be resolved
+   * at configuration time
+   */
+  private Map<String, String> completeConfiguration(Map<String, String> properties) {
+    ConfigurableFileCollection mainClassPath = getMainClassPath();
+    if (mainClassPath == null) {
+      return properties;
+    }
+
+    List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
+    String resolvedAsAString = resolvedLibraries.stream()
+            .map(File::getAbsolutePath)
+            .collect(Collectors.joining(","));
+
+    String libraries = properties.getOrDefault("sonar.java.libraries", "");
+    if (libraries.isEmpty()) {
+      libraries = resolvedAsAString;
+    } else {
+      libraries += "," + resolvedAsAString;
+    }
+    Map<String, String> result = new HashMap<>(properties);
+    result.put("sonar.libraries", libraries);
+    return result;
+  }
+
+
 
   void setProperties(Provider<Map<String, String>> properties) {
     this.properties = properties;
