@@ -34,12 +34,12 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.MapProperty;
-import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
@@ -83,20 +83,18 @@ public class SonarQubePlugin implements Plugin<Project> {
       tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
-        if (compileClasspath != null) {
-          task.getMainClassPath().from(compileClasspath);
-        }
+        project.getAllprojects().forEach(target -> {
+          collectMainClassPaths(target, task);
+        });
         configureTask(task, project, actionBroadcastMap);
       });
 
       tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
-        if (compileClasspath != null) {
-          task.getMainClassPath().from(compileClasspath);
-        }
+        project.getAllprojects().forEach(target -> {
+          collectMainClassPaths(target, task);
+        });
         configureTask(task, project, actionBroadcastMap);
       });
     }
@@ -110,9 +108,20 @@ public class SonarQubePlugin implements Plugin<Project> {
     });
   }
 
+  private static void collectMainClassPaths(Project project, SonarTask task) {
+    Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
+    if (compileClasspath != null) {
+      Map<String, FileCollection> mainClassPaths = task.getMainClassPaths();
+      mainClassPaths.put(project.getName(), compileClasspath);
+    }
+  }
+
   private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
-    Provider<Map<String, String>> conventionProvider = project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties())
-      .map(m -> m.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue())));
+    Provider<Map<String, String>> conventionProvider = project.provider(() -> {
+      Map<String, Object> stringObjectMap = new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties();
+      System.out.println("Property keys: " + stringObjectMap.keySet());
+      return stringObjectMap;
+      }).map(m -> m.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue())));
 
     if (isGradleVersionGreaterOrEqualTo("6.1")) {
       MapProperty<String, String> mapProperty = project.getObjects().mapProperty(String.class, String.class);
