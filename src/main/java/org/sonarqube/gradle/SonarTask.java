@@ -25,23 +25,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
@@ -67,8 +63,28 @@ public abstract class SonarTask extends ConventionTask {
 
   private Provider<Map<String, String>> properties;
 
-  @InputFiles
-  public abstract ConfigurableFileCollection getMainClassPath();
+  private Map<String, FileCollection> mainClassPaths = new HashMap<>();
+
+  @Input
+  public Map<String, FileCollection> getMainClassPaths() {
+    /*
+    System.out.println(">>>>  YOU INVOKED getMainClassPaths");
+    Map<String, FileCollection> values = getProject()
+            .getAllprojects()
+            .stream()
+            .map(project -> {
+              FileCollection mainClassPath = project.getConfigurations().findByName("mainClassPath");
+              if (mainClassPath == null) {
+                return null;
+              }
+              return new AbstractMap.SimpleEntry<>(project.getName(), mainClassPath);
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    System.out.println(">>>>  YOU FINISHED INVOKED getMainClassPaths");
+     */
+    return mainClassPaths;
+  }
 
   private static class DefaultLogOutput implements LogOutput {
     @Override
@@ -141,7 +157,7 @@ public abstract class SonarTask extends ConventionTask {
     }
 
 
-    completeConfiguration(mapProperties);
+    mapProperties = completeConfiguration(mapProperties);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -214,27 +230,44 @@ public abstract class SonarTask extends ConventionTask {
    * at configuration time
    */
   private Map<String, String> completeConfiguration(Map<String, String> properties) {
-    ConfigurableFileCollection mainClassPath = getMainClassPath();
-    if (mainClassPath == null) {
-      return properties;
-    }
+    final Map<String, String> result = new HashMap<>(properties);
+    System.out.println("###### Completing the configuration at runtime");
+    Map<String, FileCollection> collectedAtConfiguration = getMainClassPaths();
+    System.out.println(String.format("###### Found %d configurations",  collectedAtConfiguration.size()) );
+    collectedAtConfiguration.forEach((projectName, mainClassPath) -> {
+      System.out.println("### Looking at project " + projectName);
+      if (mainClassPath == null) {
+        System.out.println("### Main class path is null, we will skip expanding sonar.java.libraries");
+        return;
+      }
 
-    List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
-    String resolvedAsAString = resolvedLibraries.stream()
-            .map(File::getAbsolutePath)
-            .collect(Collectors.joining(","));
+      List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
+      String resolvedAsAString = resolvedLibraries.stream()
+              .filter(File::exists)
+              .map(File::getAbsolutePath)
+              .collect(Collectors.joining(","));
 
-    String libraries = properties.getOrDefault("sonar.java.libraries", "");
-    if (libraries.isEmpty()) {
-      libraries = resolvedAsAString;
-    } else {
-      libraries += "," + resolvedAsAString;
-    }
-    Map<String, String> result = new HashMap<>(properties);
-    result.put("sonar.libraries", libraries);
+      System.out.println("### Resolved main class path as: " + resolvedAsAString);
+
+      String propertyKey = projectName.equals(getProject().getName()) ?
+              "sonar.java.libraries":
+              ":" + projectName + ".sonar.java.libraries";
+      String legacyPropertyKey = projectName.equals(getProject().getName()) ?
+              "sonar.java.libraries":
+              ":" + projectName + ".sonar.java.libraries";
+
+      String libraries = properties.getOrDefault(propertyKey, "");
+      if (libraries.isEmpty()) {
+        libraries = resolvedAsAString;
+      } else {
+        libraries += "," + resolvedAsAString;
+      }
+
+      result.put(propertyKey, libraries);
+      result.put(legacyPropertyKey, libraries);
+    });
     return result;
   }
-
 
 
   void setProperties(Provider<Map<String, String>> properties) {

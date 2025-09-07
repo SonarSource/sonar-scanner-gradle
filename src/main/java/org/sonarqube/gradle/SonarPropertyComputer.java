@@ -455,9 +455,19 @@ public class SonarPropertyComputer {
   private static void configureJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
     SourceSetContainer sourceSets = getSourceSets(project);
     SourceSet main = sourceSets.getAt("main");
+    System.out.println("Main source set: " + main.getName());
+    System.out.println("Main source set: " + main.getCompileClasspathConfigurationName());
     Collection<File> mainClassDirs = getJavaOutputDirs(main);
     Collection<File> mainLibraries = getJavaLibraries(main);
+    System.out.println("Main libraries: " + mainLibraries.stream()
+            .map(File::getAbsolutePath)
+            .collect(Collectors.joining(","))
+    );
+    System.out.println("properties.getKeys():" + properties.keySet());
+    System.out.println("properties.get(\"sonar.java.libraries.\"):" + properties.get("sonar.java.libraries"));
     setMainClasspathProps(properties, mainClassDirs, mainLibraries, addForGroovy);
+    System.out.println("properties.getKeys():" + properties.keySet());
+    System.out.println("properties.get(\"sonar.java.libraries.\"):" + properties.get("sonar.java.libraries"));
 
     SourceSet test = sourceSets.getAt("test");
     Collection<File> testClassDirs = getJavaOutputDirs(test);
@@ -523,7 +533,7 @@ public class SonarPropertyComputer {
   }
 
   private static Collection<File> getJavaLibraries(SourceSet main) {
-    List<File> libraries = exists(main.getCompileClasspath());
+    List<File> libraries = new ArrayList<>();
 
     File runtimeJar = getRuntimeJar();
     if (runtimeJar != null) {
@@ -534,6 +544,8 @@ public class SonarPropertyComputer {
     if (fxRuntimeJar != null) {
       libraries.add(fxRuntimeJar);
     }
+
+    System.out.println("Libraries: " + libraries.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")));
 
     return libraries;
   }
