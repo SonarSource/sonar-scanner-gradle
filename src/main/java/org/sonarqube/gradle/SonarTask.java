@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.ConventionTask;
@@ -65,25 +64,16 @@ public abstract class SonarTask extends ConventionTask {
 
   private Map<String, FileCollection> mainClassPaths = new HashMap<>();
 
+  private Map<String, FileCollection> testClassPaths = new HashMap<>();
+
   @Input
   public Map<String, FileCollection> getMainClassPaths() {
-    /*
-    System.out.println(">>>>  YOU INVOKED getMainClassPaths");
-    Map<String, FileCollection> values = getProject()
-            .getAllprojects()
-            .stream()
-            .map(project -> {
-              FileCollection mainClassPath = project.getConfigurations().findByName("mainClassPath");
-              if (mainClassPath == null) {
-                return null;
-              }
-              return new AbstractMap.SimpleEntry<>(project.getName(), mainClassPath);
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    System.out.println(">>>>  YOU FINISHED INVOKED getMainClassPaths");
-     */
     return mainClassPaths;
+  }
+
+  @Input
+  public Map<String, FileCollection> getTestClassPaths() {
+    return testClassPaths;
   }
 
   private static class DefaultLogOutput implements LogOutput {
@@ -231,13 +221,13 @@ public abstract class SonarTask extends ConventionTask {
    */
   private Map<String, String> completeConfiguration(Map<String, String> properties) {
     final Map<String, String> result = new HashMap<>(properties);
-    System.out.println("###### Completing the configuration at runtime");
-    Map<String, FileCollection> collectedAtConfiguration = getMainClassPaths();
-    System.out.println(String.format("###### Found %d configurations",  collectedAtConfiguration.size()) );
-    collectedAtConfiguration.forEach((projectName, mainClassPath) -> {
-      System.out.println("### Looking at project " + projectName);
+    LOGGER.debug("###### Completing the configuration at runtime");
+    Map<String, FileCollection> collectedMainClassPaths = getMainClassPaths();
+    LOGGER.debug(String.format("###### Found %d main class paths", collectedMainClassPaths.size()));
+    collectedMainClassPaths.forEach((projectName, mainClassPath) -> {
+      LOGGER.debug("### Looking at project " + projectName);
       if (mainClassPath == null) {
-        System.out.println("### Main class path is null, we will skip expanding sonar.java.libraries");
+        LOGGER.debug("### Main class path is null, we will skip expanding sonar.java.libraries");
         return;
       }
 
@@ -247,14 +237,14 @@ public abstract class SonarTask extends ConventionTask {
               .map(File::getAbsolutePath)
               .collect(Collectors.joining(","));
 
-      System.out.println("### Resolved main class path as: " + resolvedAsAString);
+      LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
 
       String propertyKey = projectName.equals(getProject().getName()) ?
               "sonar.java.libraries":
               ":" + projectName + ".sonar.java.libraries";
       String legacyPropertyKey = projectName.equals(getProject().getName()) ?
-              "sonar.java.libraries":
-              ":" + projectName + ".sonar.java.libraries";
+              "sonar.libraries":
+              ":" + projectName + ".sonar.libraries";
 
       String libraries = properties.getOrDefault(propertyKey, "");
       if (libraries.isEmpty()) {
@@ -265,6 +255,38 @@ public abstract class SonarTask extends ConventionTask {
 
       result.put(propertyKey, libraries);
       result.put(legacyPropertyKey, libraries);
+    });
+
+    Map<String, FileCollection> collectedTestClassPaths = getTestClassPaths();
+    LOGGER.debug(String.format("###### Found %d main class paths", collectedTestClassPaths.size()));
+
+    collectedTestClassPaths.forEach((projectName, mainClassPath) -> {
+      LOGGER.debug("### Looking at project " + projectName);
+      if (mainClassPath == null) {
+        LOGGER.debug("### Main class path is null, we will skip expanding sonar.java.libraries");
+        return;
+      }
+
+      List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
+      String resolvedAsAString = resolvedLibraries.stream()
+              .filter(File::exists)
+              .map(File::getAbsolutePath)
+              .collect(Collectors.joining(","));
+
+      LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
+
+      String propertyKey = projectName.equals(getProject().getName()) ?
+              "sonar.java.test.libraries" :
+              ":" + projectName + ".sonar.java.test.libraries";
+
+      String libraries = properties.getOrDefault(propertyKey, "");
+      if (libraries.isEmpty()) {
+        libraries = resolvedAsAString;
+      } else {
+        libraries += "," + resolvedAsAString;
+      }
+
+      result.put(propertyKey, libraries);
     });
     return result;
   }
