@@ -279,7 +279,11 @@ public abstract class SonarTask extends ConventionTask {
               "sonar.java.test.libraries" :
               ":" + projectName + ".sonar.java.test.libraries";
 
-      String libraries = properties.getOrDefault(propertyKey, "");
+      String binariesPropertyKey = projectName.equals(getProject().getName()) ?
+              "sonar.java.binaries" :
+              ":" + projectName + ".sonar.java.binaries";
+
+      String libraries = properties.get(binariesPropertyKey) + "," + properties.getOrDefault(propertyKey, "");
       if (libraries.isEmpty()) {
         libraries = resolvedAsAString;
       } else {
