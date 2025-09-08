@@ -85,6 +85,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         project.getAllprojects().forEach(target -> {
           collectMainClassPaths(target, task);
+          collectTestClassPaths(target, task);
         });
         configureTask(task, project, actionBroadcastMap);
       });
@@ -94,6 +95,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         project.getAllprojects().forEach(target -> {
           collectMainClassPaths(target, task);
+          collectTestClassPaths(target, task);
         });
         configureTask(task, project, actionBroadcastMap);
       });
@@ -113,6 +115,14 @@ public class SonarQubePlugin implements Plugin<Project> {
     if (compileClasspath != null) {
       Map<String, FileCollection> mainClassPaths = task.getMainClassPaths();
       mainClassPaths.put(project.getName(), compileClasspath);
+    }
+  }
+
+  private static void collectTestClassPaths(Project project, SonarTask task) {
+    Configuration testCompileClasspath = project.getConfigurations().findByName("testCompileClasspath");
+    if (testCompileClasspath != null) {
+      Map<String, FileCollection> testClassPaths = task.getTestClassPaths();
+      testClassPaths.put(project.getName(), testCompileClasspath);
     }
   }
 
