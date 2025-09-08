@@ -458,7 +458,7 @@ public class SonarPropertyComputer {
     System.out.println("Main source set: " + main.getName());
     System.out.println("Main source set: " + main.getCompileClasspathConfigurationName());
     Collection<File> mainClassDirs = getJavaOutputDirs(main);
-    Collection<File> mainLibraries = getJavaLibraries(main);
+    Collection<File> mainLibraries = getRuntimeJars();
     System.out.println("Main libraries: " + mainLibraries.stream()
             .map(File::getAbsolutePath)
             .collect(Collectors.joining(","))
@@ -471,7 +471,7 @@ public class SonarPropertyComputer {
 
     SourceSet test = sourceSets.getAt("test");
     Collection<File> testClassDirs = getJavaOutputDirs(test);
-    Collection<File> testLibraries = getJavaLibraries(test);
+    Collection<File> testLibraries = getRuntimeJars();
     setTestClasspathProps(properties, testClassDirs, testLibraries);
   }
 
@@ -532,8 +532,11 @@ public class SonarPropertyComputer {
     }
   }
 
-  private static Collection<File> getJavaLibraries(SourceSet main) {
-    List<File> libraries = new ArrayList<>();
+  /**
+   * Returns the collection of Java and Java FX runtime jars, if available.
+   */
+  private static Collection<File> getRuntimeJars() {
+    List<File> libraries = new ArrayList<>(2);
 
     File runtimeJar = getRuntimeJar();
     if (runtimeJar != null) {
@@ -545,7 +548,7 @@ public class SonarPropertyComputer {
       libraries.add(fxRuntimeJar);
     }
 
-    System.out.println("Libraries: " + libraries.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")));
+    LOGGER.debug("Runtime Jars: " + libraries.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")));
 
     return libraries;
   }
