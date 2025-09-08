@@ -107,6 +107,8 @@ build_win_task:
     - ./gradlew --no-daemon --info --stacktrace --console plain build artifactoryPublish -DbuildNumber="$BUILD_NUMBER"
 
 qa_win_task:
+  env:
+    GRADLE_VERSION: 9.0.0
   depends_on:
     - build_win
   ec2_instance:
@@ -121,7 +123,7 @@ qa_win_task:
   build_script:
     - *log_develocity_url_script
     - source cirrus-env QA
-    - ps: ./cirrus/run-win-its.ps1
+    - ./cirrus/cirrus-qa.sh
 
 validate_external_contributor_build_task:
   only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
