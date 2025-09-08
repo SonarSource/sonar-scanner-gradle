@@ -62,34 +62,34 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 log_develocity_url_script: &log_develocity_url_script |
   echo "Develocity URL: https://develocity.sonar.build/scans?search.publicHostnames=cirrus-ci-task-${CIRRUS_TASK_ID}"
 
-#build_task:
-#  only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
-#  eks_container:
-#    <<: *CONTAINER_DEFINITION_17
-#    cpu: 1.5
-#    memory: 6G
-#  env:
-#    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
-#    SONAR_HOST_URL: VAULT[development/kv/data/next data.url]
-#    ORG_GRADLE_PROJECT_signingKey: VAULT[development/kv/data/sign data.key]
-#    ORG_GRADLE_PROJECT_signingPassword: VAULT[development/kv/data/sign data.passphrase]
-#    ORG_GRADLE_PROJECT_signingKeyId: VAULT[development/kv/data/sign data.key_id]
-#  gradle_cache:
-#    folder: ~/.gradle/caches
-#  maven_cache:
-#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-#  script:
-#    - *log_develocity_url_script
-#    - source cirrus-env BUILD
-#    - source cirrus/define-gradle.sh
-#    - mvn -f property-dump-plugin/pom.xml -B install
-#    - regular_gradle_build_deploy_analyze -Dsonar.gradle.skipCompile=true
-#  on_failure:
-#    reports_artifacts:
-#      path: "**/build/reports/**/*"
-#    junit_artifacts:
-#      path: "**/test-results/**/*.xml"
-#      format: junit
+build_task:
+  only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 6G
+  env:
+    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
+    SONAR_HOST_URL: VAULT[development/kv/data/next data.url]
+    ORG_GRADLE_PROJECT_signingKey: VAULT[development/kv/data/sign data.key]
+    ORG_GRADLE_PROJECT_signingPassword: VAULT[development/kv/data/sign data.passphrase]
+    ORG_GRADLE_PROJECT_signingKeyId: VAULT[development/kv/data/sign data.key_id]
+  gradle_cache:
+    folder: ~/.gradle/caches
+  maven_cache:
+    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+  script:
+    - *log_develocity_url_script
+    - source cirrus-env BUILD
+    - source cirrus/define-gradle.sh
+    - mvn -f property-dump-plugin/pom.xml -B install
+    - regular_gradle_build_deploy_analyze -Dsonar.gradle.skipCompile=true
+  on_failure:
+    reports_artifacts:
+      path: "**/build/reports/**/*"
+    junit_artifacts:
+      path: "**/test-results/**/*.xml"
+      format: junit
 
 build_win_task:
   ec2_instance:
@@ -123,119 +123,119 @@ qa_win_task:
     - source cirrus-env QA
     - ps: ./cirrus/run-win-its.ps1
 
-#validate_external_contributor_build_task:
-#  only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
-#  depends_on:
-#    - build
-#  eks_container:
-#    <<: *CONTAINER_DEFINITION_17
-#    cpu: 1.5
-#    memory: 4G
-#  gradle_cache:
-#    folder: ~/.gradle/caches
-#  maven_cache:
-#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-#  script: |
-#    unset ARTIFACTORY_URL && \
-#    unset ARTIFACTORY_PRIVATE_USERNAME && \
-#    unset ARTIFACTORY_PRIVATE_PASSWORD && \
-#    unset ARTIFACTORY_ACCESS_TOKEN && \
-#    ./gradlew --refresh-dependencies clean assemble testClasses
-#  on_failure:
-#    reports_artifacts:
-#      path: "**/build/reports/**/*"
-#    junit_artifacts:
-#      path: "**/test-results/**/*.xml"
-#      format: junit
+validate_external_contributor_build_task:
+  only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
+  depends_on:
+    - build
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  maven_cache:
+    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+  script: |
+    unset ARTIFACTORY_URL && \
+    unset ARTIFACTORY_PRIVATE_USERNAME && \
+    unset ARTIFACTORY_PRIVATE_PASSWORD && \
+    unset ARTIFACTORY_ACCESS_TOKEN && \
+    ./gradlew --refresh-dependencies clean assemble testClasses
+  on_failure:
+    reports_artifacts:
+      path: "**/build/reports/**/*"
+    junit_artifacts:
+      path: "**/test-results/**/*.xml"
+      format: junit
 
-#mend_scan_task:
-#  <<: *SETUP_GRADLE_CACHE
-#  depends_on:
-#    - build
-#  # run only on master and long-living branches
-#  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "mend-.*")
-#  eks_container:
-#    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j21-latest
-#    region: eu-central-1
-#    cluster_name: ${CIRRUS_CLUSTER_NAME}
-#    namespace: default
-#    cpu: 4
-#    memory: 2G
-#  env:
-#    WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
-#  maven_cache:
-#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-#  mend_script:
-#    - source cirrus-env QA
-#    - ./gradlew clean build -x test
-#    - source ./export_ws_variables.sh
-#    - source ws_scan.sh
-#  allow_failures: "true"
-#  always:
-#    ws_scan_artifacts:
-#      path: "whitesource/**/*"
+mend_scan_task:
+  <<: *SETUP_GRADLE_CACHE
+  depends_on:
+    - build
+  # run only on master and long-living branches
+  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "mend-.*")
+  eks_container:
+    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j21-latest
+    region: eu-central-1
+    cluster_name: ${CIRRUS_CLUSTER_NAME}
+    namespace: default
+    cpu: 4
+    memory: 2G
+  env:
+    WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
+  maven_cache:
+    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+  mend_script:
+    - source cirrus-env QA
+    - ./gradlew clean build -x test
+    - source ./export_ws_variables.sh
+    - source ws_scan.sh
+  allow_failures: "true"
+  always:
+    ws_scan_artifacts:
+      path: "whitesource/**/*"
 
-#gradle_qa_task:
-#  depends_on:
-#    - build
-#  <<: *ONLY_SONARSOURCE_QA
-#  eks_container:
-#    <<: *CONTAINER_DEFINITION_17
-#    cpu: 2
-#    memory: 4G
-#  env:
-#    matrix:
-#      - GRADLE_VERSION: 9.0.0
-#      - GRADLE_VERSION: 8.13
-#      - GRADLE_VERSION: 8.4
-#      - GRADLE_VERSION: 8.4
-#        ANDROID_GRADLE_VERSION: 8.3.0
-#      - GRADLE_VERSION: 8.3
-#      - GRADLE_VERSION: 8.0
-#      - GRADLE_VERSION: 7.6.4
-#      - GRADLE_VERSION: 7.5.1
-#        ANDROID_GRADLE_VERSION: 7.1.0
-#  script:
-#    - *log_develocity_url_script
-#    - ./cirrus/cirrus-qa.sh
+gradle_qa_task:
+  depends_on:
+    - build
+  <<: *ONLY_SONARSOURCE_QA
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 2
+    memory: 4G
+  env:
+    matrix:
+      - GRADLE_VERSION: 9.0.0
+      - GRADLE_VERSION: 8.13
+      - GRADLE_VERSION: 8.4
+      - GRADLE_VERSION: 8.4
+        ANDROID_GRADLE_VERSION: 8.3.0
+      - GRADLE_VERSION: 8.3
+      - GRADLE_VERSION: 8.0
+      - GRADLE_VERSION: 7.6.4
+      - GRADLE_VERSION: 7.5.1
+        ANDROID_GRADLE_VERSION: 7.1.0
+  script:
+    - *log_develocity_url_script
+    - ./cirrus/cirrus-qa.sh
 
-#gradle_qa_java11_task:
-#  depends_on:
-#    - build
-#  <<: *ONLY_SONARSOURCE_QA
-#  eks_container:
-#    <<: *CONTAINER_DEFINITION_11
-#    cpu: 2
-#    memory: 2G
-#  env:
-#    matrix:
-#      - GRADLE_VERSION: 7.5.1
-#        ANDROID_GRADLE_VERSION: 7.1.0
-#      - GRADLE_VERSION: 6.8.3
-#        ANDROID_GRADLE_VERSION: 4.2.0
-#      - GRADLE_VERSION: 5.6.4
-#        ANDROID_GRADLE_VERSION: 3.5.4
-#  script:
-#    - *log_develocity_url_script
-#    - ./cirrus/cirrus-qa.sh
+gradle_qa_java11_task:
+  depends_on:
+    - build
+  <<: *ONLY_SONARSOURCE_QA
+  eks_container:
+    <<: *CONTAINER_DEFINITION_11
+    cpu: 2
+    memory: 2G
+  env:
+    matrix:
+      - GRADLE_VERSION: 7.5.1
+        ANDROID_GRADLE_VERSION: 7.1.0
+      - GRADLE_VERSION: 6.8.3
+        ANDROID_GRADLE_VERSION: 4.2.0
+      - GRADLE_VERSION: 5.6.4
+        ANDROID_GRADLE_VERSION: 3.5.4
+  script:
+    - *log_develocity_url_script
+    - ./cirrus/cirrus-qa.sh
 
-#promote_task:
-#  depends_on:
-#    - build
-#    - build_win
-#    - qa_win
-#    - validate_external_contributor_build
-#    - gradle_qa
-#    - gradle_qa_java11
-#  <<: *ONLY_SONARSOURCE_QA
-#  eks_container:
-#    <<: *CONTAINER_DEFINITION_17
-#    cpu: 1
-#    memory: 2G
-#  env:
-#    ARTIFACTORY_PROMOTE_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
-#    GITHUB_TOKEN: VAULT[development/github/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promotion token]
-#  script: cirrus_promote_gradle
+promote_task:
+  depends_on:
+    - build
+    - build_win
+    - qa_win
+    - validate_external_contributor_build
+    - gradle_qa
+    - gradle_qa_java11
+  <<: *ONLY_SONARSOURCE_QA
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1
+    memory: 2G
+  env:
+    ARTIFACTORY_PROMOTE_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+    GITHUB_TOKEN: VAULT[development/github/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promotion token]
+  script: cirrus_promote_gradle
 
 # This task is only executed manually in Cirrus-CI UI to validate the release process.
 # It does not publish the artifacts matching the current build but the latest build of the master branch.
@@ -243,86 +243,86 @@ qa_win_task:
 # Once executed, the logs contain the json request sent during the publication, so we can manually check the content
 # that will be sent to Gradle Plugin Portal. And we really send the request to the Gradle Plugin Portal in validation mode,
 # not to publish the artifacts but to check the authentication mechanism and the validity of the metadata.
-#simulate_and_validate_release_to_plugin_portal_task:
-#  trigger_type: manual
-#  skip: true
-#  depends_on:
-#    - promote
-#  eks_container:
-#    <<: *CONTAINER_DEFINITION_17
-#    cpu: 1.5
-#    memory: 4G
-#  gradle_cache:
-#    folder: ~/.gradle/caches
-#  env:
-#    ORG_GRADLE_PROJECT_signingKey: VAULT[development/kv/data/sign data.key]
-#    ORG_GRADLE_PROJECT_signingPassword: VAULT[development/kv/data/sign data.passphrase]
-#    ORG_GRADLE_PROJECT_signingKeyId: VAULT[development/kv/data/sign data.key_id]
-#    GRADLE_PUBLISH_KEY: VAULT[development/kv/data/gradle/publish data.key]
-#    GRADLE_PUBLISH_SECRET: VAULT[development/kv/data/gradle/publish data.secret]
-#    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
-#  # We force CIRRUS_TAG to be the latest build version of the master branch (repox: sonarsource-public-builds) to ensure the artifacts are signed
-#  # The publish simulation and validation will use those artifacts to check if the release logic is valid
-#  script: |
-#    export CIRRUS_TAG="$(cirrus/latest-repox-master-builds-plugin-version.sh)"
-#    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
-#    ./gradlew \
-#      --info \
-#      --stacktrace \
-#      --console plain \
-#      -DbuildNumber="${BUILD_NUMBER}" \
-#      -Dsimulate-publish=true \
-#      downloadMavenArtifactsAndPublishToGradlePluginPortal
-#    ./gradlew \
-#      --info \
-#      --stacktrace \
-#      --console plain \
-#      -DbuildNumber="${BUILD_NUMBER}" \
-#      -Dvalidate-publish=true \
-#      downloadMavenArtifactsAndPublishToGradlePluginPortal
-#
-#release_plugin_to_repox_task:
-#  only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != "" && $CIRRUS_TAG != ""
-#  stateful: 'true'
-#  eks_container:
-#    <<: *CONTAINER_DEFINITION_17
-#    cpu: 1.5
-#    memory: 4G
-#  gradle_cache:
-#    folder: ~/.gradle/caches
-#  env:
-#    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
-#  script: |
-#    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
-#    jfrog rt bpr \
-#      --url "${ARTIFACTORY_URL}" \
-#      --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
-#      --status released \
-#      "${CIRRUS_REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-releases
-#
-#release_plugin_to_gradle_plugin_portal_task:
-#  only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != "" && $CIRRUS_TAG != ""
-#  depends_on:
-#    - release_plugin_to_repox
-#  stateful: 'true'
-#  eks_container:
-#    <<: *CONTAINER_DEFINITION_17
-#    cpu: 1.5
-#    memory: 4G
-#  gradle_cache:
-#    folder: ~/.gradle/caches
-#  env:
-#    ORG_GRADLE_PROJECT_signingKey: VAULT[development/kv/data/sign data.key]
-#    ORG_GRADLE_PROJECT_signingPassword: VAULT[development/kv/data/sign data.passphrase]
-#    ORG_GRADLE_PROJECT_signingKeyId: VAULT[development/kv/data/sign data.key_id]
-#    GRADLE_PUBLISH_KEY: VAULT[development/kv/data/gradle/publish data.key]
-#    GRADLE_PUBLISH_SECRET: VAULT[development/kv/data/gradle/publish data.secret]
-#    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
-#  script: |
-#    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
-#    ./gradlew \
-#      --info \
-#      --stacktrace \
-#      --console plain \
-#      -DbuildNumber="${BUILD_NUMBER}" \
-#      downloadMavenArtifactsAndPublishToGradlePluginPortal
+simulate_and_validate_release_to_plugin_portal_task:
+  trigger_type: manual
+  skip: true
+  depends_on:
+    - promote
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  env:
+    ORG_GRADLE_PROJECT_signingKey: VAULT[development/kv/data/sign data.key]
+    ORG_GRADLE_PROJECT_signingPassword: VAULT[development/kv/data/sign data.passphrase]
+    ORG_GRADLE_PROJECT_signingKeyId: VAULT[development/kv/data/sign data.key_id]
+    GRADLE_PUBLISH_KEY: VAULT[development/kv/data/gradle/publish data.key]
+    GRADLE_PUBLISH_SECRET: VAULT[development/kv/data/gradle/publish data.secret]
+    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+  # We force CIRRUS_TAG to be the latest build version of the master branch (repox: sonarsource-public-builds) to ensure the artifacts are signed
+  # The publish simulation and validation will use those artifacts to check if the release logic is valid
+  script: |
+    export CIRRUS_TAG="$(cirrus/latest-repox-master-builds-plugin-version.sh)"
+    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
+    ./gradlew \
+      --info \
+      --stacktrace \
+      --console plain \
+      -DbuildNumber="${BUILD_NUMBER}" \
+      -Dsimulate-publish=true \
+      downloadMavenArtifactsAndPublishToGradlePluginPortal
+    ./gradlew \
+      --info \
+      --stacktrace \
+      --console plain \
+      -DbuildNumber="${BUILD_NUMBER}" \
+      -Dvalidate-publish=true \
+      downloadMavenArtifactsAndPublishToGradlePluginPortal
+
+release_plugin_to_repox_task:
+  only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != "" && $CIRRUS_TAG != ""
+  stateful: 'true'
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  env:
+    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+  script: |
+    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
+    jfrog rt bpr \
+      --url "${ARTIFACTORY_URL}" \
+      --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
+      --status released \
+      "${CIRRUS_REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-releases
+
+release_plugin_to_gradle_plugin_portal_task:
+  only_if: $CIRRUS_PRERELEASE != "true" && $CIRRUS_RELEASE != "" && $CIRRUS_TAG != ""
+  depends_on:
+    - release_plugin_to_repox
+  stateful: 'true'
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 4G
+  gradle_cache:
+    folder: ~/.gradle/caches
+  env:
+    ORG_GRADLE_PROJECT_signingKey: VAULT[development/kv/data/sign data.key]
+    ORG_GRADLE_PROJECT_signingPassword: VAULT[development/kv/data/sign data.passphrase]
+    ORG_GRADLE_PROJECT_signingKeyId: VAULT[development/kv/data/sign data.key_id]
+    GRADLE_PUBLISH_KEY: VAULT[development/kv/data/gradle/publish data.key]
+    GRADLE_PUBLISH_SECRET: VAULT[development/kv/data/gradle/publish data.secret]
+    ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
+  script: |
+    source cirrus/prepare-release-configuration-from-cirrus-tag.sh
+    ./gradlew \
+      --info \
+      --stacktrace \
+      --console plain \
+      -DbuildNumber="${BUILD_NUMBER}" \
+      downloadMavenArtifactsAndPublishToGradlePluginPortal

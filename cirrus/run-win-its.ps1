@@ -1,6 +1,5 @@
 # To avoid noise in the output
 $ProgressPreference = 'SilentlyContinue'
-$ErrorActionPreference = "Stop"
 
 # Install Maven
 $mvnVersion = "3.8.9"
