@@ -39,7 +39,7 @@ val doArtifactsRequireSignature: () -> Boolean = {
     val isPublishTask = (gradle.taskGraph.hasTask(":artifactoryPublish") && !tasks.artifactoryPublish.get().skip)
         || gradle.startParameter.taskNames.contains("downloadMavenArtifactsAndPublishToGradlePluginPortal")
 
-    isSafeBranchOrSimulation && isPublishTask
+    project.hasProperty("signingKey") && isSafeBranchOrSimulation && isPublishTask
 }
 
 java {
