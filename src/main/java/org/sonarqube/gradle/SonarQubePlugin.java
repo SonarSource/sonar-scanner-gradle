@@ -127,11 +127,8 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
-    Provider<Map<String, String>> conventionProvider = project.provider(() -> {
-      Map<String, Object> stringObjectMap = new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties();
-      System.out.println("Property keys: " + stringObjectMap.keySet());
-      return stringObjectMap;
-      }).map(m -> m.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue())));
+    Provider<Map<String, String>> conventionProvider = project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties())
+      .map(m -> m.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue())));
 
     if (isGradleVersionGreaterOrEqualTo("6.1")) {
       MapProperty<String, String> mapProperty = project.getObjects().mapProperty(String.class, String.class);
