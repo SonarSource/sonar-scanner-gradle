@@ -239,9 +239,11 @@ public abstract class SonarTask extends ConventionTask {
 
       LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
 
+      // FIXME replace `getProject` because it will be removed in Gradle 10
       String propertyKey = projectName.equals(getProject().getName()) ?
               "sonar.java.libraries":
               ":" + projectName + ".sonar.java.libraries";
+      // FIXME replace `getProject` because it will be removed in Gradle 10
       String legacyPropertyKey = projectName.equals(getProject().getName()) ?
               "sonar.libraries":
               ":" + projectName + ".sonar.libraries";
@@ -275,10 +277,12 @@ public abstract class SonarTask extends ConventionTask {
 
       LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
 
+      // FIXME replace `getProject` because it will be removed in Gradle 10
       String propertyKey = projectName.equals(getProject().getName()) ?
               "sonar.java.test.libraries" :
               ":" + projectName + ".sonar.java.test.libraries";
 
+      // FIXME replace `getProject` because it will be removed in Gradle 10
       String binariesPropertyKey = projectName.equals(getProject().getName()) ?
               "sonar.java.binaries" :
               ":" + projectName + ".sonar.java.binaries";
