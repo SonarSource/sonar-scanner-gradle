@@ -116,11 +116,12 @@ public class GradleTest extends AbstractGradleIT {
     ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationMode("/java-compile-only");
 
-    assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar", "commons-lang-2.6.jar");
-    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
-    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar", "commons-io-2.5.jar");
-    // compileOnly are not included into test classpath
-    assertThat(props.getProperty("sonar.java.test.libraries")).doesNotContain("commons-lang-2.6.jar");
+    // Unless executed, the plugin should not have resolved libraries for main nor test code
+    assertThat(props).doesNotContainKeys(
+            "sonar.java.libraries",
+            "sonar.java.test.libraries",
+            "sonar.libraries"
+    );
   }
 
   // SONARGRADL-23
