@@ -37,7 +37,9 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
@@ -62,8 +64,29 @@ public abstract class SonarTask extends ConventionTask {
 
   private Provider<Map<String, String>> properties;
 
+  /**
+   * Compile class path for the top level project
+   */
+  @InputFiles
+  @Optional
+  private FileCollection mainClassPath = null;
+
+
+  /**
+   * Test compile class path for the top level project
+   */
+  @InputFiles
+  @Optional
+  private FileCollection testClassPath = null;
+
+  /**
+   * Compile class paths for child projects
+   */
   private Map<String, FileCollection> mainClassPaths = new HashMap<>();
 
+  /**
+   * Test compile class paths for child projects
+   */
   private Map<String, FileCollection> testClassPaths = new HashMap<>();
 
   @Input
@@ -74,6 +97,22 @@ public abstract class SonarTask extends ConventionTask {
   @Input
   public Map<String, FileCollection> getTestClassPaths() {
     return testClassPaths;
+  }
+
+  public FileCollection getMainClassPath() {
+    return mainClassPath;
+  }
+
+  public void setMainClassPath(FileCollection compileClasspath) {
+    this.mainClassPath = compileClasspath;
+  }
+
+  public FileCollection getTestClassPath() {
+    return testClassPath;
+  }
+
+  public void setTestClassPath(FileCollection testCompileClasspath) {
+    this.testClassPath = testCompileClasspath;
   }
 
   private static class DefaultLogOutput implements LogOutput {
@@ -223,80 +262,81 @@ public abstract class SonarTask extends ConventionTask {
     final Map<String, String> result = new HashMap<>(properties);
     LOGGER.debug("###### Completing the configuration at runtime");
     Map<String, FileCollection> collectedMainClassPaths = getMainClassPaths();
-    LOGGER.debug(String.format("###### Found %d main class paths", collectedMainClassPaths.size()));
-    collectedMainClassPaths.forEach((projectName, mainClassPath) -> {
-      LOGGER.debug("### Looking at project " + projectName);
-      if (mainClassPath == null) {
-        LOGGER.debug("### Main class path is null, we will skip expanding sonar.java.libraries");
-        return;
-      }
-
-      List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
-      String resolvedAsAString = resolvedLibraries.stream()
-              .filter(File::exists)
-              .map(File::getAbsolutePath)
-              .collect(Collectors.joining(","));
-
-      LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
-
-      // FIXME replace `getProject` because it will be removed in Gradle 10
-      String propertyKey = projectName.equals(getProject().getName()) ?
-              "sonar.java.libraries":
-              ":" + projectName + ".sonar.java.libraries";
-      // FIXME replace `getProject` because it will be removed in Gradle 10
-      String legacyPropertyKey = projectName.equals(getProject().getName()) ?
-              "sonar.libraries":
-              ":" + projectName + ".sonar.libraries";
-
-      String libraries = properties.getOrDefault(propertyKey, "");
-      if (libraries.isEmpty()) {
-        libraries = resolvedAsAString;
-      } else {
-        libraries += "," + resolvedAsAString;
-      }
-
-      result.put(propertyKey, libraries);
-      result.put(legacyPropertyKey, libraries);
-    });
+    LOGGER.debug(String.format("###### Found %d main class paths", collectedMainClassPaths.size() + (mainClassPath != null ? 1 : 0)));
+    configureMainClassPath("", mainClassPath, result);
+    collectedMainClassPaths.forEach((projectName, mainClassPath) -> configureMainClassPath(projectName, mainClassPath, result));
 
     Map<String, FileCollection> collectedTestClassPaths = getTestClassPaths();
-    LOGGER.debug(String.format("###### Found %d main class paths", collectedTestClassPaths.size()));
-
-    collectedTestClassPaths.forEach((projectName, mainClassPath) -> {
-      LOGGER.debug("### Looking at project " + projectName);
-      if (mainClassPath == null) {
-        LOGGER.debug("### Main class path is null, we will skip expanding sonar.java.libraries");
-        return;
-      }
-
-      List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
-      String resolvedAsAString = resolvedLibraries.stream()
-              .filter(File::exists)
-              .map(File::getAbsolutePath)
-              .collect(Collectors.joining(","));
-
-      LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
-
-      // FIXME replace `getProject` because it will be removed in Gradle 10
-      String propertyKey = projectName.equals(getProject().getName()) ?
-              "sonar.java.test.libraries" :
-              ":" + projectName + ".sonar.java.test.libraries";
-
-      // FIXME replace `getProject` because it will be removed in Gradle 10
-      String binariesPropertyKey = projectName.equals(getProject().getName()) ?
-              "sonar.java.binaries" :
-              ":" + projectName + ".sonar.java.binaries";
-
-      String libraries = properties.get(binariesPropertyKey) + "," + properties.getOrDefault(propertyKey, "");
-      if (libraries.isEmpty()) {
-        libraries = resolvedAsAString;
-      } else {
-        libraries += "," + resolvedAsAString;
-      }
-
-      result.put(propertyKey, libraries);
-    });
+    LOGGER.debug(String.format("###### Found %d test class paths", collectedTestClassPaths.size() + (testClassPath != null ? 1 : 0)));
+    configureMainClassPath("", mainClassPath, result);
+    collectedTestClassPaths.forEach((projectName, testClassPath) -> configureTestClassPath(projectName, testClassPath, result));
     return result;
+  }
+
+  void configureMainClassPath(String projectName, FileCollection mainClassPath, Map<String, String> properties) {
+    LOGGER.debug("### Looking at project " + projectName);
+    if (mainClassPath == null) {
+      LOGGER.debug("### Main class path is null, we will skip expanding sonar.java.libraries");
+      return;
+    }
+
+    List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
+    String resolvedAsAString = resolvedLibraries.stream()
+            .filter(File::exists)
+            .map(File::getAbsolutePath)
+            .collect(Collectors.joining(","));
+
+    LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
+
+    String propertyKey = projectName.isBlank() ?
+            "sonar.java.libraries":
+            ":" + projectName + ".sonar.java.libraries";
+    String legacyPropertyKey = projectName.isBlank() ?
+            "sonar.libraries":
+            ":" + projectName + ".sonar.libraries";
+
+    String libraries = properties.getOrDefault(propertyKey, "");
+    if (libraries.isEmpty()) {
+      libraries = resolvedAsAString;
+    } else {
+      libraries += "," + resolvedAsAString;
+    }
+
+    properties.put(propertyKey, libraries);
+    properties.put(legacyPropertyKey, libraries);
+  }
+
+  void configureTestClassPath(String projectName, FileCollection mainClassPath, Map<String, String> properties) {
+    LOGGER.debug("### Looking at project " + projectName);
+    if (mainClassPath == null) {
+      LOGGER.debug("### Test class path is null, we will skip expanding sonar.java.libraries");
+      return;
+    }
+
+    List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
+    String resolvedAsAString = resolvedLibraries.stream()
+            .filter(File::exists)
+            .map(File::getAbsolutePath)
+            .collect(Collectors.joining(","));
+
+    LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
+
+    String propertyKey = projectName.isBlank() ?
+            "sonar.java.test.libraries" :
+            ":" + projectName + ".sonar.java.test.libraries";
+
+    String binariesPropertyKey = projectName.isBlank() ?
+            "sonar.java.binaries" :
+            ":" + projectName + ".sonar.java.binaries";
+
+    String libraries = properties.get(binariesPropertyKey) + "," + properties.getOrDefault(propertyKey, "");
+    if (libraries.isEmpty()) {
+      libraries = resolvedAsAString;
+    } else {
+      libraries += "," + resolvedAsAString;
+    }
+
+    properties.put(propertyKey, libraries);
   }
 
 

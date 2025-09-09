@@ -84,8 +84,9 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         project.getAllprojects().forEach(target -> {
-          collectMainClassPaths(target, task);
-          collectTestClassPaths(target, task);
+          boolean isTopLevelProject = target == project;
+          collectMainClassPaths(target, task, isTopLevelProject);
+          collectTestClassPaths(target, task, isTopLevelProject);
         });
         configureTask(task, project, actionBroadcastMap);
       });
@@ -94,8 +95,9 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         project.getAllprojects().forEach(target -> {
-          collectMainClassPaths(target, task);
-          collectTestClassPaths(target, task);
+          boolean isTopLevelProject = target == project;
+          collectMainClassPaths(target, task, isTopLevelProject);
+          collectTestClassPaths(target, task, isTopLevelProject);
         });
         configureTask(task, project, actionBroadcastMap);
       });
@@ -110,19 +112,27 @@ public class SonarQubePlugin implements Plugin<Project> {
     });
   }
 
-  private static void collectMainClassPaths(Project project, SonarTask task) {
+  private static void collectMainClassPaths(Project project, SonarTask task, boolean isTopLevelProject) {
     Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
     if (compileClasspath != null) {
-      Map<String, FileCollection> mainClassPaths = task.getMainClassPaths();
-      mainClassPaths.put(project.getName(), compileClasspath);
+      if (isTopLevelProject) {
+        task.setMainClassPath(compileClasspath);
+      } else {
+        Map<String, FileCollection> mainClassPaths = task.getMainClassPaths();
+        mainClassPaths.put(project.getName(), compileClasspath);
+      }
     }
   }
 
-  private static void collectTestClassPaths(Project project, SonarTask task) {
+  private static void collectTestClassPaths(Project project, SonarTask task, boolean isTopLevelProject) {
     Configuration testCompileClasspath = project.getConfigurations().findByName("testCompileClasspath");
     if (testCompileClasspath != null) {
-      Map<String, FileCollection> testClassPaths = task.getTestClassPaths();
-      testClassPaths.put(project.getName(), testCompileClasspath);
+      if (isTopLevelProject) {
+        task.setTestClassPath(testCompileClasspath);
+      } else {
+        Map<String, FileCollection> testClassPaths = task.getTestClassPaths();
+        testClassPaths.put(project.getName(), testCompileClasspath);
+      }
     }
   }
 
