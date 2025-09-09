@@ -116,7 +116,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
     if (compileClasspath != null) {
       if (isTopLevelProject) {
-        task.setMainClassPath(compileClasspath);
+        task.setTopLevelMainClassPath(compileClasspath);
       } else {
         Map<String, FileCollection> mainClassPaths = task.getMainClassPaths();
         mainClassPaths.put(project.getName(), compileClasspath);
@@ -128,7 +128,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     Configuration testCompileClasspath = project.getConfigurations().findByName("testCompileClasspath");
     if (testCompileClasspath != null) {
       if (isTopLevelProject) {
-        task.setTestClassPath(testCompileClasspath);
+        task.setTopLevelTestClassPath(testCompileClasspath);
       } else {
         Map<String, FileCollection> testClassPaths = task.getTestClassPaths();
         testClassPaths.put(project.getName(), testCompileClasspath);
