@@ -289,7 +289,7 @@ public class SonarTask extends ConventionTask {
    * </ol>
    * The end result is stored in the map passed as input.
    */
-  static void resolveSonarJavaLibraries(String projectName, @Nullable FileCollection mainClassPath, Map<String, String> properties) {
+  static void resolveSonarJavaLibraries(String projectName, @Nullable Iterable<File> mainClassPath, Map<String, String> properties) {
     boolean isTopLevelProject = projectName.isBlank();
     if (LOGGER.isDebugEnabled()) {
       if (isTopLevelProject) {
@@ -344,7 +344,7 @@ public class SonarTask extends ConventionTask {
    * </ol>
    * The end result is stored in the map passed as input.
    */
-  static void resolveSonarJavaTestLibraries(String projectName, @Nullable FileCollection testClassPath, Map<String, String> properties) {
+  static void resolveSonarJavaTestLibraries(String projectName, @Nullable Iterable<File> testClassPath, Map<String, String> properties) {
     boolean isTopLevelProject = projectName.isBlank();
     if (LOGGER.isDebugEnabled()) {
       if (isTopLevelProject) {
