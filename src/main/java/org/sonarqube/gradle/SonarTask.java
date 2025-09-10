@@ -323,18 +323,26 @@ public abstract class SonarTask extends ConventionTask {
 
     LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
 
+    // Prepend sonar.java.binaries if it exists
+    String binariesPropertyKey = projectName.isBlank() ?
+            "sonar.java.binaries" :
+            (":" + projectName + ".sonar.java.binaries");
+    String libraries = properties.getOrDefault(binariesPropertyKey, "");
+
+    // Prepend existing test libraries if they exist
     String propertyKey = projectName.isBlank() ?
             "sonar.java.test.libraries" :
             (":" + projectName + ".sonar.java.test.libraries");
 
-    String binariesPropertyKey = projectName.isBlank() ?
-            "sonar.java.binaries" :
-            (":" + projectName + ".sonar.java.binaries");
-
-    String libraries = properties.get(binariesPropertyKey);
     if (properties.containsKey(propertyKey)) {
-      libraries += "," + properties.getOrDefault(propertyKey, "");
+      if (libraries.isEmpty()) {
+        libraries = properties.get(propertyKey);
+      } else {
+        libraries += "," + properties.getOrDefault(propertyKey, "");
+      }
     }
+
+    // Append libraries resolved at configuration time
     if (libraries.isEmpty()) {
       libraries = resolvedAsAString;
     } else {
