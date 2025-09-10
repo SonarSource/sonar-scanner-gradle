@@ -112,6 +112,13 @@ public class SonarQubePlugin implements Plugin<Project> {
     });
   }
 
+  /**
+   * Looks for the compile class configuration of the project and attaches it to the task for resolution at execution time (see {@link resolveClassPaths})
+   *
+   * @param project           The target (sub-)project
+   * @param task              The SonarTask to configure
+   * @param isTopLevelProject Whether the project is at the top-level of the hierarchy.
+   */
   private static void collectMainClassPaths(Project project, SonarTask task, boolean isTopLevelProject) {
     Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
     if (compileClasspath != null) {
@@ -124,6 +131,13 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
   }
 
+  /**
+   * Looks for the test compile class path configuration of the project and attaches it to the task for resolution at execution time.
+   * See {@link SonarTask#resolveJavaLibraries(Map)}} for actual resolution.
+   * @param project
+   * @param task
+   * @param isTopLevelProject
+   */
   private static void collectTestClassPaths(Project project, SonarTask task, boolean isTopLevelProject) {
     Configuration testCompileClasspath = project.getConfigurations().findByName("testCompileClasspath");
     if (testCompileClasspath != null) {
