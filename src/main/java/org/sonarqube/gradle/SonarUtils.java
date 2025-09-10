@@ -180,9 +180,9 @@ public class SonarUtils {
   }
 
   /**
-   * Filters a list to return the list of existing files.
+   * Filters a collection files returning only the existing ones.
    */
-  static synchronized List<File> exists(Iterable<File> files) {
+  static List<File> exists(Iterable<File> files) {
     List<File> list = new ArrayList<>();
     for (File file : files) {
       if (!list.contains(file) && file.exists()) {
