@@ -57,7 +57,7 @@ import org.sonarsource.scanner.lib.internal.batch.LogOutput;
  * For more information on how to configure the SonarQube Scanner, and on which properties are available, see the
  * <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner documentation</a>.
  */
-public abstract class SonarTask extends ConventionTask {
+public class SonarTask extends ConventionTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
 
