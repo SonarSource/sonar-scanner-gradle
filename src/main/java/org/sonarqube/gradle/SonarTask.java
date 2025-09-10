@@ -83,25 +83,15 @@ public abstract class SonarTask extends ConventionTask {
   /**
    * Compile class paths for child projects
    */
-  private Map<String, FileCollection> mainClassPaths = new HashMap<>();
+  private final Map<String, FileCollection> mainClassPaths = new HashMap<>();
 
   /**
    * Test compile class paths for child projects
    */
-  private Map<String, FileCollection> testClassPaths = new HashMap<>();
-
-  @Input
-  public Map<String, FileCollection> getMainClassPaths() {
-    return mainClassPaths;
-  }
-
-  @Input
-  public Map<String, FileCollection> getTestClassPaths() {
-    return testClassPaths;
-  }
+  private final Map<String, FileCollection> testClassPaths = new HashMap<>();
 
   public FileCollection getTopLevelMainClassPath() {
-    return topLevelMainClassPath;
+    return this.topLevelMainClassPath;
   }
 
   public void setTopLevelMainClassPath(FileCollection compileClasspath) {
@@ -114,6 +104,16 @@ public abstract class SonarTask extends ConventionTask {
 
   public void setTopLevelTestClassPath(FileCollection testCompileClasspath) {
     this.topLevelTestClassPath = testCompileClasspath;
+  }
+
+  @Input
+  public Map<String, FileCollection> getMainClassPaths() {
+    return mainClassPaths;
+  }
+
+  @Input
+  public Map<String, FileCollection> getTestClassPaths() {
+    return testClassPaths;
   }
 
   private static class DefaultLogOutput implements LogOutput {
@@ -187,7 +187,7 @@ public abstract class SonarTask extends ConventionTask {
     }
 
 
-    mapProperties = completeConfiguration(mapProperties);
+    mapProperties = resolveJavaLibraries(mapProperties);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -256,29 +256,50 @@ public abstract class SonarTask extends ConventionTask {
   }
 
   /**
-   * Finish the configuration by resolving some of the input dependencies that could be resolved
-   * at configuration time
+   * Finish the configuration of `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the class paths that
+   * were attached to the task at configuration time.
+   * The analysis parameters are added to a copy of the properties given as input.
    */
-  private Map<String, String> completeConfiguration(Map<String, String> properties) {
-    final Map<String, String> result = new HashMap<>(properties);
-    LOGGER.debug("###### Completing the configuration at runtime");
+  Map<String, String> resolveJavaLibraries(Map<String, String> properties) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolving classpath entries");
+    }
 
+    final Map<String, String> result = new HashMap<>(properties);
+    resolveSonarJavaLibraries("", getTopLevelMainClassPath(), result);
     Map<String, FileCollection> collectedMainClassPaths = getMainClassPaths();
-    LOGGER.debug(String.format("###### Found %d main class paths", collectedMainClassPaths.size() + (topLevelMainClassPath != null ? 1 : 0)));
-    configureMainClassPath("", topLevelMainClassPath, result);
-    collectedMainClassPaths.forEach((projectName, mainClassPath) -> configureMainClassPath(projectName, mainClassPath, result));
+    collectedMainClassPaths.forEach((projectName, mainClassPath) -> resolveSonarJavaLibraries(projectName, mainClassPath, result));
 
     Map<String, FileCollection> collectedTestClassPaths = getTestClassPaths();
-    LOGGER.debug(String.format("###### Found %d test class paths", collectedTestClassPaths.size() + (topLevelTestClassPath != null ? 1 : 0)));
-    configureTestClassPath("", topLevelTestClassPath, result);
-    collectedTestClassPaths.forEach((projectName, testClassPath) -> configureTestClassPath(projectName, testClassPath, result));
+    resolveSonarJavaTestLibraries("", getTopLevelTestClassPath(), result);
+    collectedTestClassPaths.forEach((projectName, testClassPath) -> resolveSonarJavaTestLibraries(projectName, testClassPath, result));
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Finished resolving classpath entries");
+    }
+
     return result;
   }
 
-  void configureMainClassPath(String projectName, @Nullable FileCollection mainClassPath, Map<String, String> properties) {
-    LOGGER.debug("### Looking at project %s", projectName);
+  /**
+   * Complete the resolution of <pre>sonar.java.libraries</pre> (and legacy <pre>sonar.binaries</pre>) by combining:
+   * <ol>
+   *   <li>the existing property</li>
+   *   <li>the resolution of the file collection provided at configuration time</li>
+   * </ol>
+   * The end result is stored in the map passed as input.
+   */
+  static void resolveSonarJavaLibraries(String projectName, @Nullable FileCollection mainClassPath, Map<String, String> properties) {
+    boolean isTopLevelProject = projectName.isBlank();
+    if (LOGGER.isDebugEnabled()) {
+      if (isTopLevelProject) {
+        LOGGER.debug("Resolving main class path for top-level project.");
+      } else {
+        LOGGER.debug("Resolving main class path for {}.", projectName);
+      }
+    }
     if (mainClassPath == null) {
-      LOGGER.debug("### Main class path is null, we will skip expanding sonar.java.libraries");
+      LOGGER.debug("No main class path configured. Skipping resolution.");
       return;
     }
 
@@ -288,12 +309,14 @@ public abstract class SonarTask extends ConventionTask {
             .map(File::getAbsolutePath)
             .collect(Collectors.joining(","));
 
-    LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolved configured main class path as: {}", resolvedAsAString);
+    }
 
-    String propertyKey = projectName.isBlank() ?
+    String propertyKey = isTopLevelProject ?
             "sonar.java.libraries":
             (":" + projectName + ".sonar.java.libraries");
-    String legacyPropertyKey = projectName.isBlank() ?
+    String legacyPropertyKey = isTopLevelProject ?
             "sonar.libraries":
             (":" + projectName + ".sonar.libraries");
 
@@ -304,14 +327,35 @@ public abstract class SonarTask extends ConventionTask {
       libraries += "," + resolvedAsAString;
     }
 
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolved {} as: {}", propertyKey, libraries);
+    }
+
     properties.put(propertyKey, libraries);
     properties.put(legacyPropertyKey, libraries);
   }
 
-  void configureTestClassPath(String projectName, @Nullable FileCollection testClassPath, Map<String, String> properties) {
-    LOGGER.debug("### Looking at project %s", projectName);
+  /**
+   * Complete the resolution of <pre>sonar.java.test.libraries</pre> by combining:
+   * <ol>
+   *   <li><pre>sonar.java.binaries</pre></li>
+   *   <li>the existing property</li>
+   *   <li>the resolution of the file collection provided at configuration time</li>
+   * </ol>
+   * The end result is stored in the map passed as input.
+   */
+  static void resolveSonarJavaTestLibraries(String projectName, @Nullable FileCollection testClassPath, Map<String, String> properties) {
+    boolean isTopLevelProject = projectName.isBlank();
+    if (LOGGER.isDebugEnabled()) {
+      if (isTopLevelProject) {
+        LOGGER.debug("Resolving test class path for top-level project.");
+      } else {
+        LOGGER.debug("Resolving test class path for {}.", projectName);
+      }
+    }
+
     if (testClassPath == null) {
-      LOGGER.debug("### Test class path is null, we will skip expanding sonar.java.libraries");
+      LOGGER.debug("No test class path configured. Skipping resolution.");
       return;
     }
 
@@ -321,24 +365,27 @@ public abstract class SonarTask extends ConventionTask {
             .map(File::getAbsolutePath)
             .collect(Collectors.joining(","));
 
-    LOGGER.debug(String.format("### Resolved main class path as: %s", resolvedAsAString));
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolved configured test class path as: {}", resolvedAsAString);
+    }
 
     // Prepend sonar.java.binaries if it exists
-    String binariesPropertyKey = projectName.isBlank() ?
+    String binariesPropertyKey = isTopLevelProject ?
             "sonar.java.binaries" :
             (":" + projectName + ".sonar.java.binaries");
     String libraries = properties.getOrDefault(binariesPropertyKey, "");
 
-    // Prepend existing test libraries if they exist
-    String propertyKey = projectName.isBlank() ?
+    // Add existing test libraries if they exist
+    String propertyKey = isTopLevelProject ?
             "sonar.java.test.libraries" :
             (":" + projectName + ".sonar.java.test.libraries");
 
+    // Append resolved libraries
     if (properties.containsKey(propertyKey)) {
       if (libraries.isEmpty()) {
         libraries = properties.get(propertyKey);
       } else {
-        libraries += "," + properties.getOrDefault(propertyKey, "");
+        libraries += "," + properties.get(propertyKey);
       }
     }
 
@@ -347,6 +394,10 @@ public abstract class SonarTask extends ConventionTask {
       libraries = resolvedAsAString;
     } else {
       libraries += "," + resolvedAsAString;
+    }
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolved {} as: {}", propertyKey, libraries);
     }
 
     properties.put(propertyKey, libraries);
