@@ -538,10 +538,6 @@ public class SonarPropertyComputer {
       libraries.add(fxRuntimeJar);
     }
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Runtime Jars: " + libraries.stream().map(File::getAbsolutePath).collect(Collectors.joining(",")));
-    }
-
     return libraries;
   }
 
