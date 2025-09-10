@@ -262,6 +262,7 @@ public abstract class SonarTask extends ConventionTask {
   private Map<String, String> completeConfiguration(Map<String, String> properties) {
     final Map<String, String> result = new HashMap<>(properties);
     LOGGER.debug("###### Completing the configuration at runtime");
+
     Map<String, FileCollection> collectedMainClassPaths = getMainClassPaths();
     LOGGER.debug(String.format("###### Found %d main class paths", collectedMainClassPaths.size() + (topLevelMainClassPath != null ? 1 : 0)));
     configureMainClassPath("", topLevelMainClassPath, result);
@@ -269,7 +270,7 @@ public abstract class SonarTask extends ConventionTask {
 
     Map<String, FileCollection> collectedTestClassPaths = getTestClassPaths();
     LOGGER.debug(String.format("###### Found %d test class paths", collectedTestClassPaths.size() + (topLevelTestClassPath != null ? 1 : 0)));
-    configureMainClassPath("", topLevelMainClassPath, result);
+    configureTestClassPath("", topLevelTestClassPath, result);
     collectedTestClassPaths.forEach((projectName, testClassPath) -> configureTestClassPath(projectName, testClassPath, result));
     return result;
   }
@@ -307,14 +308,14 @@ public abstract class SonarTask extends ConventionTask {
     properties.put(legacyPropertyKey, libraries);
   }
 
-  void configureTestClassPath(String projectName, @Nullable FileCollection mainClassPath, Map<String, String> properties) {
+  void configureTestClassPath(String projectName, @Nullable FileCollection testClassPath, Map<String, String> properties) {
     LOGGER.debug("### Looking at project %s", projectName);
-    if (mainClassPath == null) {
+    if (testClassPath == null) {
       LOGGER.debug("### Test class path is null, we will skip expanding sonar.java.libraries");
       return;
     }
 
-    List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
+    List<File> resolvedLibraries = SonarUtils.exists(testClassPath);
     String resolvedAsAString = resolvedLibraries.stream()
             .filter(File::exists)
             .map(File::getAbsolutePath)
@@ -330,7 +331,10 @@ public abstract class SonarTask extends ConventionTask {
             "sonar.java.binaries" :
             (":" + projectName + ".sonar.java.binaries");
 
-    String libraries = properties.get(binariesPropertyKey) + "," + properties.getOrDefault(propertyKey, "");
+    String libraries = properties.get(binariesPropertyKey);
+    if (properties.containsKey(propertyKey)) {
+      libraries += "," + properties.getOrDefault(propertyKey, "");
+    }
     if (libraries.isEmpty()) {
       libraries = resolvedAsAString;
     } else {
