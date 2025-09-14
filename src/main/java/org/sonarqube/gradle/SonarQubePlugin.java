@@ -47,6 +47,7 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.NotNull;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
@@ -87,22 +88,18 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
 
         collectMainClassPaths(project, task);
+        collectTestClassPaths(project, task);
 
-        project.getAllprojects().forEach(target -> {
-          boolean isTopLevelProject = target == project;
-          collectTestClassPaths(target, task, isTopLevelProject);
-        });
         configureTask(task, project, actionBroadcastMap);
       });
 
       tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+
         collectMainClassPaths(project, task);
-        project.getAllprojects().forEach(target -> {
-          boolean isTopLevelProject = target == project;
-          collectTestClassPaths(target, task, isTopLevelProject);
-        });
+        collectTestClassPaths(project, task);
+
         configureTask(task, project, actionBroadcastMap);
       });
     }
@@ -125,70 +122,56 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static void collectMainClassPaths(Project topLevelProject, SonarTask task) {
     // Set the class path for the top level project
     Configuration compileClasspath = topLevelProject.getConfigurations().findByName("compileClasspath");
-    task.setTopLevelMainClassPath(compileClasspath);
+    if (compileClasspath != null) {
+      task.setTopLevelMainClassPath(compileClasspath);
+    }
     // Set the compile class path of the subprojects
-    Map<String, FileCollection> collected = topLevelProject.getAllprojects()
-            .stream()
-            .filter(project -> project != topLevelProject)
-            .map(SonarQubePlugin::collectCompileClassPath)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    Map<String, FileCollection> collected = collectClassPaths(topLevelProject, "compileClasspath");
     MapProperty<String, FileCollection> provider = topLevelProject.getObjects().mapProperty(String.class, FileCollection.class);
     provider.convention(collected);
     task.setMainClassPaths(provider);
   }
 
 
+  /**
+   * Looks for the test compile class path configuration of the project (and subprojects), and attaches it to the task for resolution at execution time.
+   * See {@link SonarTask#resolveJavaLibraries(Map)}} for actual resolution.
+   *
+   * @param topLevelProject The top-level project
+   * @param task            The SonarTask to configure
+   */
+  private static void collectTestClassPaths(Project topLevelProject, SonarTask task) {
+    // Set the compile class path for the top level project
+    Configuration testCompileClasspath = topLevelProject.getConfigurations().findByName("testCompileClasspath");
+    if (testCompileClasspath != null) {
+      task.setTopLevelTestClassPath(testCompileClasspath);
+    }
+    // Set the test compile class path for the subprojects
+    Map<String, FileCollection> collected = collectClassPaths(topLevelProject, "testCompileClassPath");
+    MapProperty<String, FileCollection> provider = topLevelProject.getObjects().mapProperty(String.class, FileCollection.class);
+    provider.convention(collected);
+    task.setTestClassPaths(provider);
+  }
+
+  @NotNull
+  private static Map<String, FileCollection> collectClassPaths(Project topLevelProject, String classPathName) {
+    return topLevelProject.getAllprojects()
+            .stream()
+            .filter(subProject -> subProject != topLevelProject)
+            .map(subProject -> collectClassPathByName(subProject, classPathName))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
+
   @Nullable
-  private static Map.Entry<String, FileCollection> collectCompileClassPath(Project project) {
-    Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
+  private static Map.Entry<String, FileCollection> collectClassPathByName(Project project, String classPathName) {
+    Configuration compileClasspath = project.getConfigurations().findByName(classPathName);
     if (compileClasspath != null) {
       ConfigurableFileCollection files = project.getObjects().fileCollection();
       files.from(compileClasspath);
       return new AbstractMap.SimpleEntry<>(project.getName(), files);
     }
     return null;
-  }
-
-  private static void collectMainClassPaths(Project project, SonarTask task, boolean isTopLevelProject) {
-    Configuration compileClasspath = project.getConfigurations().findByName("compileClasspath");
-    if (compileClasspath != null) {
-      if (isTopLevelProject) {
-        task.setTopLevelMainClassPath(compileClasspath);
-      } else {
-        if (task.getMainClassPaths() == null) {
-          MapProperty<String, FileCollection> newValue = project.getObjects().mapProperty(String.class, FileCollection.class);
-          HashMap<String, FileCollection> map = new HashMap<>();
-          map.put(project.getName(), compileClasspath);
-          newValue.convention(map);
-          newValue.finalizeValueOnRead();
-          task.setMainClassPaths(newValue);
-        } else {
-          Map<String, FileCollection> stringFileCollectionMap = task.getMainClassPaths().get();
-          LOGGER.info("WE CURRENTLY HAVE KEYS: {}", stringFileCollectionMap.keySet());
-          stringFileCollectionMap.put(project.getName(), compileClasspath);
-        }
-      }
-    }
-  }
-
-  /**
-   * Looks for the test compile class path configuration of the project and attaches it to the task for resolution at execution time.
-   * See {@link SonarTask#resolveJavaLibraries(Map)}} for actual resolution.
-   * @param project
-   * @param task
-   * @param isTopLevelProject
-   */
-  private static void collectTestClassPaths(Project project, SonarTask task, boolean isTopLevelProject) {
-    Configuration testCompileClasspath = project.getConfigurations().findByName("testCompileClasspath");
-    if (testCompileClasspath != null) {
-      if (isTopLevelProject) {
-        task.setTopLevelTestClassPath(testCompileClasspath);
-      } else {
-        Map<String, FileCollection> testClassPaths = task.getTestClassPaths();
-        testClassPaths.put(project.getName(), testCompileClasspath);
-      }
-    }
   }
 
   private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
