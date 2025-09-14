@@ -83,7 +83,7 @@ public class SonarTask extends ConventionTask {
   /**
    * Compile class paths for child projects
    */
-  private final Map<String, FileCollection> mainClassPaths = new HashMap<>();
+  private Provider<Map<String, FileCollection>> mainClassPaths;
 
   /**
    * Test compile class paths for child projects
@@ -107,8 +107,12 @@ public class SonarTask extends ConventionTask {
   }
 
   @Input
-  public Map<String, FileCollection> getMainClassPaths() {
+  public Provider<Map<String, FileCollection>> getMainClassPaths() {
     return mainClassPaths;
+  }
+
+  public void setMainClassPaths(Provider<Map<String, FileCollection>> newValue) {
+    mainClassPaths = newValue;
   }
 
   @Input
@@ -267,7 +271,7 @@ public class SonarTask extends ConventionTask {
 
     final Map<String, String> result = new HashMap<>(properties);
     resolveSonarJavaLibraries("", getTopLevelMainClassPath(), result);
-    Map<String, FileCollection> collectedMainClassPaths = getMainClassPaths();
+    Map<String, FileCollection> collectedMainClassPaths = getMainClassPaths().get();
     collectedMainClassPaths.forEach((projectName, mainClassPath) -> resolveSonarJavaLibraries(projectName, mainClassPath, result));
 
     Map<String, FileCollection> collectedTestClassPaths = getTestClassPaths();
@@ -303,6 +307,7 @@ public class SonarTask extends ConventionTask {
       return;
     }
 
+    System.out.println("Project: " + projectName);
     List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
     String resolvedAsAString = resolvedLibraries.stream()
             .filter(File::exists)
