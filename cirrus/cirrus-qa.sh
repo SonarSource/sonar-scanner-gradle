@@ -13,13 +13,13 @@ mvn -f property-dump-plugin/pom.xml --batch-mode install
 
 cd integrationTests
 
-mvn org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false -B -e
+mvn --errors --batch-mode --no-transfer-progress org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
 
 # Execute ITs
 if [ -v ANDROID_GRADLE_VERSION ]; then
-  mvn --errors --batch-mode clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=$ANDROID_GRADLE_VERSION
+  mvn --errors --batch-mode --no-transfer-progress clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=$ANDROID_GRADLE_VERSION
 else
-  mvn --errors --batch-mode clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=NOT_AVAILABLE
+  mvn --errors --batch-mode --no-transfer-progress clean verify -Dgradle.version=$GRADLE_VERSION -DandroidGradle.version=NOT_AVAILABLE
 fi
 
 
