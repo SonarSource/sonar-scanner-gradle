@@ -83,7 +83,7 @@ build_task:
     - source cirrus-env BUILD
     - source cirrus/define-gradle.sh
     - mvn -f property-dump-plugin/pom.xml -B install
-    - regular_gradle_build_deploy_analyze -Dsonar.gradle.skipCompile=true
+    - regular_gradle_build_deploy_analyze -Dsonar.sca.exclusions="integrationTests/src/test/resources/**,src/test/projects/**"
   on_failure:
     reports_artifacts:
       path: "**/build/reports/**/*"
