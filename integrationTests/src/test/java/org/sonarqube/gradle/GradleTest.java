@@ -112,15 +112,18 @@ public class GradleTest extends AbstractGradleIT {
   }
 
   @Test
-  public void testCompileOnly() throws Exception {
+  public void testCompileOnlyDependenciesAreNotIncludeInTestClassPath() throws Exception {
     ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationMode("/java-compile-only");
 
-    assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar", "commons-lang-2.6.jar");
-    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
-    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar", "commons-io-2.5.jar");
-    // compileOnly are not included into test classpath
-    assertThat(props.getProperty("sonar.java.test.libraries")).doesNotContain("commons-lang-2.6.jar");
+    assertThat(props.getProperty("sonar.java.libraries"))
+            .contains("commons-io-2.5.jar", "commons-lang-2.6.jar")
+            .doesNotContain("junit-4.10.jar");
+
+    // compileOnly dependencies are not included into test classpath
+    assertThat(props.getProperty("sonar.java.test.libraries"))
+            .contains("junit-4.10.jar", "commons-io-2.5.jar")
+            .doesNotContain("commons-lang-2.6.jar");
   }
 
   // SONARGRADL-23
@@ -190,6 +193,33 @@ public class GradleTest extends AbstractGradleIT {
   public void testMultimoduleProjectWithSourceInRoot() throws Exception {
     ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-source-in-root", emptyMap(), "compileJava", "compileTestJava");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(Paths.get(props.getProperty("sonar.sources"))).isEqualTo(baseDir.resolve("src/main/java"));
+    assertThat(Paths.get(props.getProperty("sonar.tests"))).isEqualTo(baseDir.resolve("src/test/java"));
+    assertThat(Paths.get(props.getProperty("sonar.java.binaries"))).isEqualTo(baseDir.resolve("build/classes/java/main"));
+    assertThat(Paths.get(props.getProperty("sonar.java.test.binaries"))).isEqualTo(baseDir.resolve("build/classes/java/test"));
+    assertThat(props.getProperty("sonar.java.libraries")).contains("commons-io-2.5.jar");
+    assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.10.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.10.jar");
+    assertThat(props.getProperty("sonar.java.test.libraries")).contains("commons-io-2.5.jar");
+
+    Path moduleA = baseDir.resolve("moduleA");
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.sources"))).isEqualTo(moduleA.resolve("src/main/java"));
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.tests"))).isEqualTo(moduleA.resolve("src/test/java"));
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.binaries"))).isEqualTo(moduleA.resolve("build/classes/java/main"));
+    assertThat(Paths.get(props.getProperty(":moduleA.sonar.java.test.binaries"))).isEqualTo(moduleA.resolve("build/classes/java/test"));
+    assertThat(props.getProperty(":moduleA.sonar.java.libraries")).contains("commons-io-2.5.jar");
+    assertThat(props.getProperty(":moduleA.sonar.java.libraries")).doesNotContain("junit-4.10.jar");
+    assertThat(props.getProperty(":moduleA.sonar.java.test.libraries")).contains("junit-4.10.jar");
+    assertThat(props.getProperty(":moduleA.sonar.java.test.libraries")).contains("commons-io-2.5.jar");
+
+  }
+
+  @Test
+  public void testMultimoduleProjectWithSourceInRootParallel() throws Exception {
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-source-in-root-parallel", emptyMap(), "compileJava", "compileTestJava");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 

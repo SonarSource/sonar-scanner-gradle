@@ -20,20 +20,27 @@
 package org.sonarqube.gradle;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
@@ -57,6 +64,65 @@ public class SonarTask extends ConventionTask {
   private LogOutput logOutput = new DefaultLogOutput();
 
   private Provider<Map<String, String>> properties;
+
+  /**
+   * Compile class path for the top level project
+   */
+  @InputFiles
+  @Optional
+  private FileCollection topLevelMainClassPath = null;
+
+
+  /**
+   * Test compile class path for the top level project
+   */
+  @InputFiles
+  @Optional
+  private FileCollection topLevelTestClassPath = null;
+
+  /**
+   * Compile class paths for child projects
+   */
+  private Provider<Map<String, FileCollection>> mainClassPaths;
+
+  /**
+   * Test compile class paths for child projects
+   */
+  private Provider<Map<String, FileCollection>> testClassPaths;
+
+  public FileCollection getTopLevelMainClassPath() {
+    return this.topLevelMainClassPath;
+  }
+
+  public void setTopLevelMainClassPath(FileCollection compileClasspath) {
+    this.topLevelMainClassPath = compileClasspath;
+  }
+
+  public FileCollection getTopLevelTestClassPath() {
+    return topLevelTestClassPath;
+  }
+
+  public void setTopLevelTestClassPath(FileCollection testCompileClasspath) {
+    this.topLevelTestClassPath = testCompileClasspath;
+  }
+
+  @Input
+  public Provider<Map<String, FileCollection>> getMainClassPaths() {
+    return mainClassPaths;
+  }
+
+  public void setMainClassPaths(Provider<Map<String, FileCollection>> newValue) {
+    mainClassPaths = newValue;
+  }
+
+  @Input
+  public Provider<Map<String, FileCollection>> getTestClassPaths() {
+    return testClassPaths;
+  }
+
+  public void setTestClassPaths(Provider<Map<String, FileCollection>> testClassPaths) {
+    this.testClassPaths = testClassPaths;
+  }
 
   private static class DefaultLogOutput implements LogOutput {
     @Override
@@ -128,6 +194,9 @@ public class SonarTask extends ConventionTask {
       return;
     }
 
+
+    mapProperties = resolveJavaLibraries(mapProperties);
+
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
       .addBootstrapProperties(mapProperties);
@@ -193,6 +262,155 @@ public class SonarTask extends ConventionTask {
   public Provider<Map<String, String>> getProperties() {
     return properties;
   }
+
+  /**
+   * Finish the configuration of `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the class paths that
+   * were attached to the task at configuration time.
+   * The analysis parameters are added to a copy of the properties given as input.
+   */
+  Map<String, String> resolveJavaLibraries(Map<String, String> properties) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolving classpath entries");
+    }
+
+    final Map<String, String> result = new HashMap<>(properties);
+    resolveSonarJavaLibraries("", getTopLevelMainClassPath(), result);
+    Map<String, FileCollection> collectedMainClassPaths = getMainClassPaths().get();
+    collectedMainClassPaths.forEach((projectName, mainClassPath) -> resolveSonarJavaLibraries(projectName, mainClassPath, result));
+
+    Map<String, FileCollection> collectedTestClassPaths = getTestClassPaths().get();
+    resolveSonarJavaTestLibraries("", getTopLevelTestClassPath(), result);
+    collectedTestClassPaths.forEach((projectName, testClassPath) -> resolveSonarJavaTestLibraries(projectName, testClassPath, result));
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Finished resolving classpath entries");
+    }
+
+    return result;
+  }
+
+  /**
+   * Complete the resolution of <pre>sonar.java.libraries</pre> (and legacy <pre>sonar.binaries</pre>) by combining:
+   * <ol>
+   *   <li>the existing property</li>
+   *   <li>the resolution of the file collection provided at configuration time</li>
+   * </ol>
+   * The end result is stored in the map passed as input.
+   */
+  static void resolveSonarJavaLibraries(String projectName, @Nullable Iterable<File> mainClassPath, Map<String, String> properties) {
+    boolean isTopLevelProject = projectName.isBlank();
+    if (LOGGER.isDebugEnabled()) {
+      if (isTopLevelProject) {
+        LOGGER.debug("Resolving main class path for top-level project.");
+      } else {
+        LOGGER.debug("Resolving main class path for {}.", projectName);
+      }
+    }
+    if (mainClassPath == null) {
+      LOGGER.debug("No main class path configured. Skipping resolution.");
+      return;
+    }
+
+    List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
+    String resolvedAsAString = resolvedLibraries.stream()
+            .filter(File::exists)
+            .map(File::getAbsolutePath)
+            .collect(Collectors.joining(","));
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolved configured main class path as: {}", resolvedAsAString);
+    }
+
+    String propertyKey = isTopLevelProject ?
+            "sonar.java.libraries":
+            (":" + projectName + ".sonar.java.libraries");
+    String legacyPropertyKey = isTopLevelProject ?
+            "sonar.libraries":
+            (":" + projectName + ".sonar.libraries");
+
+    String libraries = properties.getOrDefault(propertyKey, "");
+    if (libraries.isEmpty()) {
+      libraries = resolvedAsAString;
+    } else {
+      libraries += "," + resolvedAsAString;
+    }
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolved {} as: {}", propertyKey, libraries);
+    }
+
+    properties.put(propertyKey, libraries);
+    properties.put(legacyPropertyKey, libraries);
+  }
+
+  /**
+   * Complete the resolution of <pre>sonar.java.test.libraries</pre> by combining:
+   * <ol>
+   *   <li><pre>sonar.java.binaries</pre></li>
+   *   <li>the existing property</li>
+   *   <li>the resolution of the file collection provided at configuration time</li>
+   * </ol>
+   * The end result is stored in the map passed as input.
+   */
+  static void resolveSonarJavaTestLibraries(String projectName, @Nullable Iterable<File> testClassPath, Map<String, String> properties) {
+    boolean isTopLevelProject = projectName.isBlank();
+    if (LOGGER.isDebugEnabled()) {
+      if (isTopLevelProject) {
+        LOGGER.debug("Resolving test class path for top-level project.");
+      } else {
+        LOGGER.debug("Resolving test class path for {}.", projectName);
+      }
+    }
+
+    if (testClassPath == null) {
+      LOGGER.debug("No test class path configured. Skipping resolution.");
+      return;
+    }
+
+    List<File> resolvedLibraries = SonarUtils.exists(testClassPath);
+    String resolvedAsAString = resolvedLibraries.stream()
+            .filter(File::exists)
+            .map(File::getAbsolutePath)
+            .collect(Collectors.joining(","));
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolved configured test class path as: {}", resolvedAsAString);
+    }
+
+    // Prepend sonar.java.binaries if it exists
+    String binariesPropertyKey = isTopLevelProject ?
+            "sonar.java.binaries" :
+            (":" + projectName + ".sonar.java.binaries");
+    String libraries = properties.getOrDefault(binariesPropertyKey, "");
+
+    // Add existing test libraries if they exist
+    String propertyKey = isTopLevelProject ?
+            "sonar.java.test.libraries" :
+            (":" + projectName + ".sonar.java.test.libraries");
+
+    // Append resolved libraries
+    if (properties.containsKey(propertyKey)) {
+      if (libraries.isEmpty()) {
+        libraries = properties.get(propertyKey);
+      } else {
+        libraries += "," + properties.get(propertyKey);
+      }
+    }
+
+    // Append libraries resolved at configuration time
+    if (libraries.isEmpty()) {
+      libraries = resolvedAsAString;
+    } else {
+      libraries += "," + resolvedAsAString;
+    }
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolved {} as: {}", propertyKey, libraries);
+    }
+
+    properties.put(propertyKey, libraries);
+  }
+
 
   void setProperties(Provider<Map<String, String>> properties) {
     this.properties = properties;

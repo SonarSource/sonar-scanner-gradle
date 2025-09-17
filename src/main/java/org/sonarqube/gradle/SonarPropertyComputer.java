@@ -54,7 +54,6 @@ import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.reporting.Report;
 import org.gradle.api.reporting.SingleFileReport;
@@ -457,12 +456,12 @@ public class SonarPropertyComputer {
     SourceSetContainer sourceSets = getSourceSets(project);
     SourceSet main = sourceSets.getAt("main");
     Collection<File> mainClassDirs = getJavaOutputDirs(main);
-    Collection<File> mainLibraries = getJavaLibraries(main);
+    Collection<File> mainLibraries = getRuntimeJars();
     setMainClasspathProps(properties, mainClassDirs, mainLibraries, addForGroovy);
 
     SourceSet test = sourceSets.getAt("test");
     Collection<File> testClassDirs = getJavaOutputDirs(test);
-    Collection<File> testLibraries = getJavaLibraries(test);
+    Collection<File> testLibraries = getRuntimeJars();
     setTestClasspathProps(properties, testClassDirs, testLibraries);
   }
 
@@ -523,8 +522,11 @@ public class SonarPropertyComputer {
     }
   }
 
-  private static Collection<File> getJavaLibraries(SourceSet main) {
-    List<File> libraries = exists(main.getCompileClasspath());
+  /**
+   * Returns the collection of Java and Java FX runtime jars, if available.
+   */
+  private static Collection<File> getRuntimeJars() {
+    List<File> libraries = new ArrayList<>(2);
 
     File runtimeJar = getRuntimeJar();
     if (runtimeJar != null) {

@@ -1,0 +1,49 @@
+buildscript {
+    repositories { 
+      mavenCentral()
+      mavenLocal()
+    }
+    dependencies { classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:${version}' }
+}
+
+apply plugin: 'org.sonarqube'
+
+allprojects {  
+  apply plugin: 'java'
+  apply plugin: 'jacoco'
+  
+  repositories {
+	    mavenLocal()
+	    mavenCentral()
+	}
+
+//  sourceCompatibility = 17
+//  targetCompatibility = 17
+
+  
+  ext.baseVersion = "0.1"
+  ext.snapshotVersion = true
+  
+  group = "org.sonar.tests"
+  version = "$baseVersion" + (snapshotVersion ? "-SNAPSHOT" : "")
+  
+  test {
+	  ignoreFailures = true
+	}
+	
+	jacoco {
+	  toolVersion = "0.8.7"
+	}
+	
+	dependencies {
+	    implementation group: 'commons-io', name: 'commons-io', version: '2.5'
+	    testImplementation group: 'junit', name: 'junit', version: '4.10'
+	}
+}
+
+sonar {
+    properties {
+        property "sonar.projectName", "Multi-module Project with sources in root"
+        property "sonar.projectKey", "org.sonarsource.gradle:example-multimodule-parallel"
+    }
+}
