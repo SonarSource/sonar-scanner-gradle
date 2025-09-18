@@ -40,6 +40,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   private static final Logger LOGGER = Logger.getLogger(SonarResolverTask.class.getName());
 
   private String projectName;
+  private boolean isTopLevelProject;
   private FileCollection compileClasspath;
   private FileCollection testCompileClasspath;
   private File outputDirectory;
@@ -51,6 +52,15 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   public void setProjectName(String name) {
     this.projectName = name;
+  }
+
+  @Input
+  public boolean isTopLevelProject() {
+    return isTopLevelProject;
+  }
+
+  public void setTopLevelProject(boolean topLevelProject) {
+    this.isTopLevelProject = topLevelProject;
   }
 
   @InputFiles
@@ -80,7 +90,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   @OutputFile
   public File getOutputFile() throws IOException {
     String filename;
-    if (projectName == null || projectName.isEmpty()) {
+    if (isTopLevelProject()) {
       filename = "properties";
     } else {
       filename = String.format("%s.properties", projectName);
@@ -98,9 +108,6 @@ public abstract class SonarResolverTask extends DefaultTask {
   @TaskAction
   void run() throws IOException {
     String displayName = getProjectName();
-    if (displayName.isEmpty()) {
-      displayName = "top-level project";
-    }
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }

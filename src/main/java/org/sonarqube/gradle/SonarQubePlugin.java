@@ -113,10 +113,9 @@ public class SonarQubePlugin implements Plugin<Project> {
     topLevelProject.getAllprojects().forEach(target ->
       target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
         if (target == topLevelProject) {
-          task.setProjectName("");
-        } else {
-          task.setProjectName(target.getName());
+          task.setTopLevelProject(true);
         }
+        task.setProjectName(target.getName());
         Configuration compileClasspath = target.getConfigurations().findByName(Constants.COMPILE_CLASSPATH);
         if (compileClasspath != null) {
           task.setCompileClasspath(compileClasspath);
