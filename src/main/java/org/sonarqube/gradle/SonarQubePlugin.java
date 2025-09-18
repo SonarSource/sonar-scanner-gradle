@@ -111,7 +111,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static List<File> registerAndConfigureResolverTasks(Project topLevelProject, File sonarResolver) {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register("sonarResolver", SonarResolverTask.class, task -> {
+      target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
         if (target == topLevelProject) {
           task.setProjectName("");
         } else {
@@ -200,7 +200,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getClassPathResolverTask(Project project) {
     return () -> project.getAllprojects().stream()
-            .map(p -> p.getTasks().getByName("sonarResolver"))
+            .map(p -> p.getTasks().getByName(SonarResolverTask.TASK_NAME))
             .collect(Collectors.toList());
   }
 
