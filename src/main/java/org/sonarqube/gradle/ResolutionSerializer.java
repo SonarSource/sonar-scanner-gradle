@@ -60,10 +60,11 @@ public class ResolutionSerializer {
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(output, StandardCharsets.UTF_8))) {
       for (Map.Entry<String, List<File>> entry : properties.entrySet()) {
         String key = entry.getKey();
-        String absolutePaths = entry.getValue().stream()
+        List<String> absolutePaths = entry.getValue().stream()
                 .map(File::getAbsolutePath)
-                .collect(Collectors.joining(","));
-        writer.write(String.format("%s=%s%s", key, absolutePaths, System.lineSeparator()));
+                .collect(Collectors.toList());
+        String csvString = SonarUtils.joinAsCsv(absolutePaths);
+        writer.write(String.format("%s=%s%s", key, csvString, System.lineSeparator()));
       }
       writer.newLine();
     }
