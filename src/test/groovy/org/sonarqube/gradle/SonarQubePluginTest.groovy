@@ -322,16 +322,17 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.sources"] == new File(project.projectDir, "src") as String
     properties["sonar.tests"] == new File(project.projectDir, "test") as String
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
-    properties["sonar.java.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
     properties["sonar.java.test.binaries"].contains(new File(project.buildDir, "test-out") as String)
-    properties["sonar.java.test.libraries"].contains(new File(project.projectDir, "lib/junit.jar") as String)
-    properties["sonar.java.test.libraries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.binaries"].contains(new File(project.buildDir, "out") as String)
-    properties["sonar.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
     properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results/test") as String
     properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results/test") as String
     properties["sonar.junit.reportPaths"] == new File(project.buildDir, "test-results/test") as String
     properties["sonar.sourceEncoding"] == "ISO-8859-1"
+
+    // Some properties can only be generated at execution time and should not be set at configuration time
+    properties["sonar.java.libraries"] == null
+    properties["sonar.libraries"] == null
+    properties["sonar.java.test.libraries"] == null
   }
 
   def "adds coverage properties for 'java' projects"() {
@@ -380,15 +381,17 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.tests"] == new File(project.projectDir, "test") as String
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.groovy.binaries"].contains(new File(project.buildDir, "out") as String)
-    properties["sonar.java.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
     properties["sonar.java.test.binaries"].contains(new File(project.buildDir, "test-out") as String)
-    properties["sonar.java.test.libraries"].contains(new File(project.projectDir, "lib/junit.jar") as String)
     properties["sonar.binaries"].contains(new File(project.buildDir, "out") as String)
-    properties["sonar.libraries"].contains(new File(project.projectDir, "lib/SomeLib.jar") as String)
     properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results/test") as String
     properties["sonar.junit.reportsPath"] == new File(project.buildDir, "test-results/test") as String
     properties["sonar.junit.reportPaths"] == new File(project.buildDir, "test-results/test") as String
     properties["sonar.sourceEncoding"] == "ISO-8859-1"
+
+    // Some properties can only be generated at execution time and should not be set at configuration time
+    properties["sonar.java.libraries"] == null
+    properties["sonar.java.test.libraries"] == null
+    properties["sonar.libraries"] == null
   }
 
   def "properties with list of file path should be escaped correctly"() {
@@ -432,14 +435,8 @@ class SonarQubePluginTest extends Specification {
     valueShouldNotBeEscaped(properties["sonar.tests"], new File(project.projectDir, "test") as String)
     valueShouldBeEscaped(properties["sonar.java.binaries"], new File(project.buildDir, "comma,out") as String)
     valueShouldBeEscaped(properties["sonar.groovy.binaries"], new File(project.buildDir, "comma,out") as String)
-    valueShouldBeEscaped(properties["sonar.java.libraries"], new File(project.projectDir, "lib/comma,lib.jar") as String)
-    valueShouldBeEscaped(properties["sonar.java.libraries"], new File(project.projectDir, "lib/comma,quote\"lib.jar") as String)
-    valueShouldNotBeEscaped(properties["sonar.java.libraries"], new File(project.projectDir, "lib/otherLib.jar") as String)
     valueShouldNotBeEscaped(properties["sonar.java.test.binaries"], new File(project.buildDir, "test-out") as String)
-    valueShouldNotBeEscaped(properties["sonar.java.test.libraries"], new File(project.projectDir, "lib/junit.jar") as String)
-    valueShouldBeEscaped(properties["sonar.java.test.libraries"], new File(project.projectDir, "lib/comma,junit.jar") as String)
     valueShouldBeEscaped(properties["sonar.binaries"], new File(project.buildDir, "comma,out") as String)
-    valueShouldBeEscaped(properties["sonar.libraries"], new File(project.projectDir, "lib/comma,lib.jar") as String)
 
 
     properties["sonar.surefire.reportsPath"] == new File(project.buildDir, "test-results/test") as String
@@ -793,7 +790,6 @@ class SonarQubePluginTest extends Specification {
       """.stripIndent().trim()
 
     relativize(project, "sonar.tests") == "src/jvmTest/java/me/user/application/SampleTest.java"
-    relativize(project, "sonar.java.libraries") == "lib/SomeLib.jar"
     relativize(project, "sonar.java.binaries") == "build/out"
   }
 
@@ -825,7 +821,7 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.kotlin.gradleProjectRoot"] == rootProject.projectDir as String
   }
 
-  def "Do not add implicit compile dependencies"() {
+  def "The sonar task should not have any dependency apart from 'sonarResolver'"() {
     def rootProject = ProjectBuilder.builder().withName("root").build()
     rootProject.pluginManager.apply(JavaPlugin)
 
@@ -835,7 +831,7 @@ class SonarQubePluginTest extends Specification {
     then:
     def sonarTask = rootProject.tasks.sonar
 
-    dependsOnTasks(sonarTask) == []
+    dependsOnTasks(sonarTask) == ["sonarResolver"]
     mustRunAfterTasks(sonarTask).size() == 3
     mustRunAfterTasks(sonarTask).containsAll(["root:test", "root:compileJava", "root:compileTestJava"])
   }

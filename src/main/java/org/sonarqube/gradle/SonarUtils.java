@@ -179,6 +179,9 @@ public class SonarUtils {
     properties.put(SONAR_JAVA_ENABLE_PREVIEW_PROP, config.getEnablePreview());
   }
 
+  /**
+   * Filters a collection files returning only the existing ones.
+   */
   static List<File> exists(Iterable<File> files) {
     List<File> list = new ArrayList<>();
     for (File file : files) {
