@@ -180,7 +180,7 @@ class SonarTaskTest {
     Map<String, String> properties = new HashMap<>();
     String binaries = "should-not-be-followed-by-a-comma";
     properties.put("sonar.java.binaries", binaries);
-    SonarTask.resolveSonarJavaTestLibraries("", Collections.emptyList(), properties);
+    SonarTask.resolveSonarJavaTestLibraries(new ProjectProperties("", true, Collections.emptyList(), Collections.emptyList()), Collections.emptyList(), properties);
     assertThat(properties).containsEntry("sonar.java.test.libraries", "should-not-be-followed-by-a-comma");
   }
 }
