@@ -21,6 +21,7 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,5 +173,15 @@ class SonarTaskTest {
                     "sonar.java.test.libraries", expectedValue
             )
     );
+  }
+
+  @Test
+  void resolveSonarJavaTestLibraries_does_not_leave_a_dangling_comma_when_there_are_no_libraries_to_add(@TempDir File tempDir) throws IOException {
+    Map<String, String> properties = new HashMap<>();
+    String binaries = "should-not-be-followed-by-a-comma";
+    properties.put("sonar.java.binaries", binaries);
+    SonarTask.resolveSonarJavaTestLibraries("", Collections.emptyList(), properties);
+    assertThat(properties.get("sonar.java.test.libraries"))
+            .isEqualTo("should-not-be-followed-by-a-comma");
   }
 }

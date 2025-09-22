@@ -364,10 +364,12 @@ public class SonarTask extends ConventionTask {
     }
 
     // Append libraries resolved at configuration time
-    if (libraries.isEmpty()) {
-      libraries = resolvedAsAString;
-    } else {
-      libraries += "," + resolvedAsAString;
+    if (!resolvedAsAString.isBlank()) {
+      if (libraries.isEmpty()) {
+        libraries = resolvedAsAString;
+      } else {
+        libraries += "," + resolvedAsAString;
+      }
     }
 
     if (LOGGER.isDebugEnabled()) {
