@@ -41,17 +41,19 @@ public class ResolutionSerializer {
   public static ProjectProperties read(File input) throws IOException {
     try (FileReader reader = new FileReader(input, StandardCharsets.UTF_8)) {
       ProjectProperties projectProperties = GSON.fromJson(reader, ProjectProperties.class);
-      LOGGER.info("Read project properties from file: {}", input.getAbsolutePath());
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Read project properties from file: {}", input.getAbsolutePath());
+      }
       return projectProperties;
     }
   }
 
   public static File write(File output, ProjectProperties properties) throws IOException {
-    try (FileWriter writer = new FileWriter(output)) {
+    try (FileWriter writer = new FileWriter(output, StandardCharsets.UTF_8)) {
       GSON.toJson(properties, writer);
-      LOGGER.info("Wrote project properties to file: {}", output.getAbsolutePath());
-    } catch (IOException e) {
-      LOGGER.error("Failed to write project properties to file: {}", output.getAbsolutePath(), e);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Wrote project properties to file: {}", output.getAbsolutePath());
+      }
     }
     return output;
   }
