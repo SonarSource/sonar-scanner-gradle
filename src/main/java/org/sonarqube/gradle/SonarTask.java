@@ -138,7 +138,7 @@ public class SonarTask extends ConventionTask {
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
       .addBootstrapProperties(mapProperties);
-    try(ScannerEngineBootstrapResult boostrapping = scanner.bootstrap()) {
+    try (ScannerEngineBootstrapResult boostrapping = scanner.bootstrap()) {
       // implement behavior according to SCANJLIB-169
       if (!boostrapping.isSuccessful()) {
         throw new AnalysisException("The scanner boostrapping has failed! See the logs for more details.");
@@ -244,32 +244,14 @@ public class SonarTask extends ConventionTask {
    */
   private static void processResolverFile(File resolverFile, Map<String, String> result) {
     LOGGER.info("Looking at file: {}", resolverFile);
-    String projectName = "";
-    String absolutePath = resolverFile.getAbsolutePath();
-    if (absolutePath.endsWith(".properties")) {
-      projectName = absolutePath.substring(absolutePath.lastIndexOf(File.separator) + 1, absolutePath.length() - ".properties".length());
-    }
-
-    Map<String, List<File>> resolvedProperties;
     try {
-      resolvedProperties = ResolutionSerializer.read(resolverFile);
+      ProjectProperties resolvedProperties = ResolutionSerializer.read(resolverFile);
+      List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
+      resolveSonarJavaLibraries(resolvedProperties, libraries, result);
+      List<File> testLibraries = resolvedProperties.testCompileClasspath.stream().map(File::new).collect(Collectors.toList());
+      resolveSonarJavaTestLibraries(resolvedProperties, testLibraries, result);
     } catch (IOException e) {
       LOGGER.warn("Could not read from resolver file {}", resolverFile, e);
-      return;
-    }
-    for (Map.Entry<String, List<File>> entry : resolvedProperties.entrySet()) {
-      String classPathKey = entry.getKey();
-      List<File> libraries = entry.getValue();
-      switch (classPathKey) {
-        case Constants.COMPILE_CLASSPATH:
-          resolveSonarJavaLibraries(projectName, libraries, result);
-          break;
-        case Constants.TEST_COMPILE_CLASSPATH:
-          resolveSonarJavaTestLibraries(projectName, libraries, result);
-          break;
-        default:
-          throw new IllegalArgumentException("Unknown key: " + classPathKey);
-      }
     }
   }
 
@@ -281,13 +263,13 @@ public class SonarTask extends ConventionTask {
    * </ol>
    * The end result is stored in the map passed as input.
    */
-  static void resolveSonarJavaLibraries(String projectName, @Nullable Iterable<File> mainClassPath, Map<String, String> properties) {
-    boolean isTopLevelProject = projectName.isBlank();
+  static void resolveSonarJavaLibraries(ProjectProperties projectProperties, @Nullable Iterable<File> mainClassPath, Map<String, String> properties) {
+    boolean isTopLevelProject = projectProperties.isRootProject;
     if (LOGGER.isDebugEnabled()) {
       if (isTopLevelProject) {
         LOGGER.debug("Resolving main class path for top-level project.");
       } else {
-        LOGGER.debug("Resolving main class path for {}.", projectName);
+        LOGGER.debug("Resolving main class path for {}.", projectProperties.projectName);
       }
     }
     if (mainClassPath == null) {
@@ -297,20 +279,20 @@ public class SonarTask extends ConventionTask {
 
     List<File> resolvedLibraries = SonarUtils.exists(mainClassPath);
     String resolvedAsAString = resolvedLibraries.stream()
-            .filter(File::exists)
-            .map(File::getAbsolutePath)
-            .collect(Collectors.joining(","));
+      .filter(File::exists)
+      .map(File::getAbsolutePath)
+      .collect(Collectors.joining(","));
 
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Resolved configured main class path as: {}", resolvedAsAString);
     }
 
     String propertyKey = isTopLevelProject ?
-            "sonar.java.libraries" :
-            (":" + projectName + ".sonar.java.libraries");
+      "sonar.java.libraries" :
+      (":" + projectProperties.projectName + ".sonar.java.libraries");
     String legacyPropertyKey = isTopLevelProject ?
-            "sonar.libraries" :
-            (":" + projectName + ".sonar.libraries");
+      "sonar.libraries" :
+      (":" + projectProperties.projectName + ".sonar.libraries");
 
     String libraries = properties.getOrDefault(propertyKey, "");
     if (libraries.isEmpty()) {
@@ -336,13 +318,13 @@ public class SonarTask extends ConventionTask {
    * </ol>
    * The end result is stored in the map passed as input.
    */
-  static void resolveSonarJavaTestLibraries(String projectName, @Nullable Iterable<File> testClassPath, Map<String, String> properties) {
-    boolean isTopLevelProject = projectName.isBlank();
+  static void resolveSonarJavaTestLibraries(ProjectProperties projectProperties, @Nullable Iterable<File> testClassPath, Map<String, String> properties) {
+    boolean isTopLevelProject = projectProperties.isRootProject;
     if (LOGGER.isDebugEnabled()) {
       if (isTopLevelProject) {
         LOGGER.debug("Resolving test class path for top-level project.");
       } else {
-        LOGGER.debug("Resolving test class path for {}.", projectName);
+        LOGGER.debug("Resolving test class path for {}.", projectProperties.projectName);
       }
     }
 
@@ -353,9 +335,9 @@ public class SonarTask extends ConventionTask {
 
     List<File> resolvedLibraries = SonarUtils.exists(testClassPath);
     String resolvedAsAString = resolvedLibraries.stream()
-            .filter(File::exists)
-            .map(File::getAbsolutePath)
-            .collect(Collectors.joining(","));
+      .filter(File::exists)
+      .map(File::getAbsolutePath)
+      .collect(Collectors.joining(","));
 
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Resolved configured test class path as: {}", resolvedAsAString);
@@ -363,14 +345,14 @@ public class SonarTask extends ConventionTask {
 
     // Prepend sonar.java.binaries if it exists
     String binariesPropertyKey = isTopLevelProject ?
-            "sonar.java.binaries" :
-            (":" + projectName + ".sonar.java.binaries");
+      "sonar.java.binaries" :
+      (":" + projectProperties.projectName + ".sonar.java.binaries");
     String libraries = properties.getOrDefault(binariesPropertyKey, "");
 
     // Add existing test libraries if they exist
     String propertyKey = isTopLevelProject ?
-            "sonar.java.test.libraries" :
-            (":" + projectName + ".sonar.java.test.libraries");
+      "sonar.java.test.libraries" :
+      (":" + projectProperties.projectName + ".sonar.java.test.libraries");
 
     // Append resolved libraries
     if (properties.containsKey(propertyKey)) {

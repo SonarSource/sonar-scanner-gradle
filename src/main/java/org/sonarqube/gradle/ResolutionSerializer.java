@@ -19,54 +19,41 @@
  */
 package org.sonarqube.gradle;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 
 public class ResolutionSerializer {
+
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+  private static final Logger LOGGER = Logging.getLogger(ResolutionSerializer.class);
+
   private ResolutionSerializer() {
     /* No instantiation expected */
   }
 
-  public static Map<String, List<File>> read(File input) throws IOException {
-    Map<String, List<File>> properties = new HashMap<>();
-    try (BufferedReader reader = new BufferedReader(new FileReader(input, StandardCharsets.UTF_8))) {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        if (line.isBlank()) {
-          continue;
-        }
-        String[] tokens = line.split("=");
-        String classPathKey = tokens[0].trim();
-        String librariesAsString = (tokens.length == 2) ? tokens[1].trim() : "";
-        List<File> files = SonarUtils.splitAsCsv(librariesAsString).stream()
-                .map(File::new)
-                .collect(Collectors.toList());
-        properties.put(classPathKey, files);
+  public static ProjectProperties read(File input) throws IOException {
+    try (FileReader reader = new FileReader(input, StandardCharsets.UTF_8)) {
+      ProjectProperties projectProperties = GSON.fromJson(reader, ProjectProperties.class);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Read project properties from file: {}", input.getAbsolutePath());
       }
+      return projectProperties;
     }
-    return properties;
   }
 
-  public static File write(File output, Map<String, List<File>> properties) throws IOException {
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(output, StandardCharsets.UTF_8))) {
-      for (Map.Entry<String, List<File>> entry : properties.entrySet()) {
-        String key = entry.getKey();
-        List<String> absolutePaths = entry.getValue().stream()
-                .map(File::getAbsolutePath)
-                .collect(Collectors.toList());
-        String csvString = SonarUtils.joinAsCsv(absolutePaths);
-        writer.write(String.format("%s=%s%s", key, csvString, System.lineSeparator()));
+  public static File write(File output, ProjectProperties properties) throws IOException {
+    try (FileWriter writer = new FileWriter(output, StandardCharsets.UTF_8)) {
+      GSON.toJson(properties, writer);
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Wrote project properties to file: {}", output.getAbsolutePath());
       }
-      writer.newLine();
     }
     return output;
   }
