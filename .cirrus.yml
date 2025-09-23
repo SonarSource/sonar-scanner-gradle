@@ -91,6 +91,39 @@ build_task:
       path: "**/test-results/**/*.xml"
       format: junit
 
+sonar_shadow_scan_and_issue_replication_task:
+  depends_on:
+    - build
+  # Only run when triggered by the cirrus-ci cron job named "nightly"
+  only_if: $CIRRUS_CRON == "nightly"
+  eks_container:
+    <<: *CONTAINER_DEFINITION_17
+    cpu: 1.5
+    memory: 6G
+  env:
+    SONAR_PROJECT_KEY: "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin"
+    SHADOW_ORGANIZATION: "sonarsource"
+    SHADOW_PROJECT_KEY: "SonarSource_sonar-scanner-gradle"
+    # to replicate issue states from next
+    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
+    SONAR_HOST_URL: VAULT[development/kv/data/next data.url]
+    matrix:
+      - name: "sonarcloud.io"
+        SHADOW_SONAR_TOKEN: VAULT[development/kv/data/sonarcloud data.token]
+        SHADOW_SONAR_HOST_URL: "https://sonarcloud.io"
+      - name: "sonarqube.us"
+        SHADOW_SONAR_TOKEN: VAULT[development/kv/data/sonarqube-us data.token]
+        SHADOW_SONAR_HOST_URL: "https://sonarqube.us"
+  gradle_cache:
+    folder: ~/.gradle/caches
+  maven_cache:
+    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+  build_and_shadow_scan_script:
+    - *log_develocity_url_script
+    - source cirrus-env BUILD
+    - source cirrus/define-gradle.sh
+    - ./shadow-scan-and-issue-replication.sh -Dsonar.sca.exclusions="integrationTests/src/test/resources/**,src/test/projects/**"
+
 build_win_task:
   ec2_instance:
     image: base-windows-jdk17-v*
@@ -224,6 +257,7 @@ gradle_qa_java11_task:
 promote_task:
   depends_on:
     - build
+    - sonar_shadow_scan_and_issue_replication
     - build_win
     - qa_win
     - validate_external_contributor_build
