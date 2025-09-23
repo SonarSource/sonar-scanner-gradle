@@ -22,8 +22,6 @@ package org.sonarqube.gradle;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -111,23 +109,23 @@ public abstract class SonarResolverTask extends DefaultTask {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
-    List<File> computedCompileClassPath = SonarUtils.exists(getCompileClasspath() == null ? Collections.emptyList() : getCompileClasspath())
-            .stream()
-            .collect(Collectors.toList());
 
-    List<File> computedTestCompileClassPath = SonarUtils.exists(getTestCompileClasspath() == null ? Collections.emptyList() : getTestCompileClasspath())
-            .stream()
-            .collect(Collectors.toList());
+    ProjectProperties projectProperties = new ProjectProperties(getProjectName(), isTopLevelProject());
+    projectProperties.compileClasspath = SonarUtils.exists(getCompileClasspath() == null ? Collections.emptyList() : getCompileClasspath())
+      .stream()
+      .map(File::getAbsolutePath)
+      .collect(Collectors.toList());
+    projectProperties.testCompileClasspath = SonarUtils.exists(getTestCompileClasspath() == null ? Collections.emptyList() : getTestCompileClasspath())
+      .stream()
+      .map(File::getAbsolutePath)
+      .collect(Collectors.toList());
 
     ResolutionSerializer.write(
-            getOutputFile(),
-            Map.of(
-                    Constants.COMPILE_CLASSPATH, computedCompileClassPath,
-                    Constants.TEST_COMPILE_CLASSPATH, computedTestCompileClassPath
-            )
+      getOutputFile(),
+      projectProperties
     );
     if (LOGGER.isLoggable(Level.INFO)) {
-      LOGGER.info("Resolved properties for " + displayName +" and wrote them to " + getOutputFile() + ".");
+      LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
   }
 }
