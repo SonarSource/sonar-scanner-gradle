@@ -23,14 +23,16 @@ import java.util.List;
 
 public class ProjectProperties {
 
-  String projectName;
-  Boolean isRootProject;
-  List<String> compileClasspath;
-  List<String> testCompileClasspath;
+  public final String projectName;
+  public final Boolean isRootProject;
+  public final List<String> compileClasspath;
+  public final List<String> testCompileClasspath;
 
-  public ProjectProperties(String projectName, Boolean isRootProject) {
+  public ProjectProperties(String projectName, Boolean isRootProject, List<String> compileClasspath, List<String> testCompileClasspath) {
     this.projectName = projectName;
     this.isRootProject = isRootProject;
+    this.compileClasspath = compileClasspath;
+    this.testCompileClasspath = testCompileClasspath;
   }
 
 }

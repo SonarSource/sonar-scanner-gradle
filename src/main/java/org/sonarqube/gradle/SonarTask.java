@@ -244,9 +244,8 @@ public class SonarTask extends ConventionTask {
    */
   private static void processResolverFile(File resolverFile, Map<String, String> result) {
     LOGGER.info("Looking at file: {}", resolverFile);
-    ProjectProperties resolvedProperties;
     try {
-      resolvedProperties = ResolutionSerializer.read(resolverFile);
+      ProjectProperties resolvedProperties = ResolutionSerializer.read(resolverFile);
       List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
       resolveSonarJavaLibraries(resolvedProperties, libraries, result);
       List<File> testLibraries = resolvedProperties.testCompileClasspath.stream().map(File::new).collect(Collectors.toList());

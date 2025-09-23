@@ -22,6 +22,7 @@ package org.sonarqube.gradle;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -110,15 +111,15 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    ProjectProperties projectProperties = new ProjectProperties(getProjectName(), isTopLevelProject());
-    projectProperties.compileClasspath = SonarUtils.exists(getCompileClasspath() == null ? Collections.emptyList() : getCompileClasspath())
+    List<String> compileClasspathFilenames = SonarUtils.exists(getCompileClasspath() == null ? Collections.emptyList() : getCompileClasspath())
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    projectProperties.testCompileClasspath = SonarUtils.exists(getTestCompileClasspath() == null ? Collections.emptyList() : getTestCompileClasspath())
+    List<String> testCompileClasspathFilenames = SonarUtils.exists(getTestCompileClasspath() == null ? Collections.emptyList() : getTestCompileClasspath())
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
+    ProjectProperties projectProperties = new ProjectProperties(getProjectName(), isTopLevelProject(), compileClasspathFilenames, testCompileClasspathFilenames);
 
     ResolutionSerializer.write(
       getOutputFile(),
