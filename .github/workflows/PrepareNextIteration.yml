@@ -21,6 +21,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Update Version Number
+        env:
+          NEXT_VERSION: ${{ inputs.nextVersion }}
         run: |
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
@@ -29,16 +31,17 @@ jobs:
           BRANCH="gh-action/next-iteration.${{ github.run_id }}"
           git checkout -b "$BRANCH"
           pushd integrationTests
-          mvn versions:set -DgenerateBackupPoms=false -DnewVersion="${{ inputs.nextVersion }}"
+          mvn versions:set -DgenerateBackupPoms=false -DnewVersion="$NEXT_VERSION"
           git add pom.xml
           popd
-          sed --in-place "s/version=.*$/version=${{ inputs.nextVersion }}/" gradle.properties
+          sed --in-place "s/version=.*$/version=$NEXT_VERSION/" gradle.properties
           git add gradle.properties
-          git commit -m "Prepare next development iteration ${{ inputs.nextVersion }}"
+          git commit -m "Prepare next development iteration $NEXT_VERSION"
           git push --set-upstream origin "$BRANCH"
 
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_VERSION: ${{ inputs.nextVersion }}
         run: |
-          gh pr create --base master --title "Prepare next development iteration ${{ inputs.nextVersion }}" --body ""
+          gh pr create --base master --title "Prepare next development iteration $NEXT_VERSION" --body ""
