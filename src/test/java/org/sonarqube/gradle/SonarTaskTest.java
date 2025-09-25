@@ -59,7 +59,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    SonarTask.resolveSonarJavaLibraries(new ProjectProperties("subproject", false, List.of(), List.of()), fileCollection, properties);
+    SonarTask.resolveSonarJavaLibraries(new ProjectProperties(":subproject", false, List.of(), List.of()), fileCollection, properties);
     assertThat(properties)
             .hasSize(2)
             .containsEntry(":subproject.sonar.java.libraries", emptyJar.getAbsolutePath())
@@ -110,7 +110,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    SonarTask.resolveSonarJavaTestLibraries(new ProjectProperties("subproject", false, List.of(), List.of()), fileCollection, properties);
+    SonarTask.resolveSonarJavaTestLibraries(new ProjectProperties(":subproject", false, List.of(), List.of()), fileCollection, properties);
     assertThat(properties)
             .hasSize(1)
             .containsEntry(":subproject.sonar.java.test.libraries", emptyJar.getAbsolutePath());
