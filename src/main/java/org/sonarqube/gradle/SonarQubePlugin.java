@@ -81,11 +81,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       addExtensions(project, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME, actionBroadcastMap);
       LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
 
-      // Configure resolver tasks
-      DirectoryProperty buildDirectory = project.getLayout().getBuildDirectory();
-      File sonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
-      sonarResolver.mkdirs();
-      List<File> resolverFiles = registerAndConfigureResolverTasks(project, sonarResolver);
+      List<File> resolverFiles = registerAndConfigureResolverTasks(project);
 
       TaskContainer tasks = project.getTasks();
       tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
@@ -108,7 +104,7 @@ public class SonarQubePlugin implements Plugin<Project> {
    * Register and configure a resolver task per (sub-)project.
    * As the tasks are configured, we capture list of output files where the resolved properties will be written.
    */
-  private static List<File> registerAndConfigureResolverTasks(Project topLevelProject, File sonarResolver) {
+  private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
       target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {

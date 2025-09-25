@@ -341,6 +341,9 @@ public class SonarUtils {
     TEST
   }
 
+  /**
+   * Produces a prefix for property keys that is appropriate and consumable by the scanner-engine
+   */
   public static String constructPrefixedProjectName(String projectPath) {
     String[] parts = projectPath.split(":");
     parts = Arrays.stream(parts).filter(s -> !s.isBlank()).toArray(String[]::new);
