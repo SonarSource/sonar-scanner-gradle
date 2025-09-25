@@ -108,8 +108,7 @@ public abstract class AbstractGradleIT {
       "sonar.scanner.appVersion",
       "sonar.scanner.arch",
       "sonar.scanner.internal.dumpToFile",
-      "sonar.scanner.os",
-      "sonar.scanner.wasEngineCacheHit"));
+      "sonar.scanner.os"));
     Map<String, String> replacementMap = new LinkedHashMap<>();
     replacementMap.put("${parentBaseDir}", Paths.get(absoluteProjectBaseDir).getParent().toString());
     replacementMap.put("${currentWorkingDir}", System.getProperty("user.dir"));
