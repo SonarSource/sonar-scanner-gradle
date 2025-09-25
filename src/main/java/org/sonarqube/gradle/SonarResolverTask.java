@@ -88,12 +88,7 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   @OutputFile
   public File getOutputFile() throws IOException {
-    String filename;
-    if (isTopLevelProject()) {
-      filename = "properties";
-    } else {
-      filename = String.format("%s.properties", projectName);
-    }
+    String filename = "properties";
     File output = new File(outputDirectory, filename);
     if (output.isFile() && output.exists()) {
       return output;

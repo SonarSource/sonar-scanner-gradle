@@ -115,7 +115,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         if (target == topLevelProject) {
           task.setTopLevelProject(true);
         }
-        task.setProjectName(target.getName());
+        task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
         Configuration compileClasspath = target.getConfigurations().findByName(Constants.COMPILE_CLASSPATH);
         if (compileClasspath != null) {
           task.setCompileClasspath(compileClasspath);
@@ -124,7 +124,10 @@ public class SonarQubePlugin implements Plugin<Project> {
         if (testCompileClasspath != null) {
           task.setTestCompileClasspath(testCompileClasspath);
         }
-        task.setOutputDirectory(sonarResolver);
+        DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
+        File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
+        localSonarResolver.mkdirs();
+        task.setOutputDirectory(localSonarResolver);
         try {
           resolverFiles.add(task.getOutputFile());
         } catch (IOException e) {
@@ -199,8 +202,8 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getClassPathResolverTask(Project project) {
     return () -> project.getAllprojects().stream()
-            .map(p -> p.getTasks().getByName(SonarResolverTask.TASK_NAME))
-            .collect(Collectors.toList());
+      .map(p -> p.getTasks().getByName(SonarResolverTask.TASK_NAME))
+      .collect(Collectors.toList());
   }
 
   static boolean notSkipped(Project p) {

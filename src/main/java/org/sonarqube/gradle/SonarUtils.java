@@ -341,4 +341,21 @@ public class SonarUtils {
     TEST
   }
 
+  public static String constructPrefixedProjectName(String projectPath) {
+    String[] parts = projectPath.split(":");
+    parts = Arrays.stream(parts).filter(s -> !s.isBlank()).toArray(String[]::new);
+    String result = ":";
+    for (int i = 0; i < parts.length - 1; i++) {
+      for (int j = 0; j <= i; j++) {
+        result += parts[j];
+        if (j < i) {
+          result += ":";
+        }
+      }
+      result += ".:";
+    }
+    result += projectPath.substring(1);
+    return result;
+  }
+
 }
