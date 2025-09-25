@@ -289,10 +289,10 @@ public class SonarTask extends ConventionTask {
 
     String propertyKey = isTopLevelProject ?
       "sonar.java.libraries" :
-      (":" + projectProperties.projectName + ".sonar.java.libraries");
+      (projectProperties.projectName + ".sonar.java.libraries");
     String legacyPropertyKey = isTopLevelProject ?
       "sonar.libraries" :
-      (":" + projectProperties.projectName + ".sonar.libraries");
+      (projectProperties.projectName + ".sonar.libraries");
 
     String libraries = properties.getOrDefault(propertyKey, "");
     if (libraries.isEmpty()) {
@@ -346,13 +346,13 @@ public class SonarTask extends ConventionTask {
     // Prepend sonar.java.binaries if it exists
     String binariesPropertyKey = isTopLevelProject ?
       "sonar.java.binaries" :
-      (":" + projectProperties.projectName + ".sonar.java.binaries");
+      (projectProperties.projectName + ".sonar.java.binaries");
     String libraries = properties.getOrDefault(binariesPropertyKey, "");
 
     // Add existing test libraries if they exist
     String propertyKey = isTopLevelProject ?
       "sonar.java.test.libraries" :
-      (":" + projectProperties.projectName + ".sonar.java.test.libraries");
+      (projectProperties.projectName + ".sonar.java.test.libraries");
 
     // Append resolved libraries
     if (properties.containsKey(propertyKey)) {

@@ -31,6 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SonarUtilsTest {
 
   @Test
+  void test_construct_prefixed_project_name() {
+    assertThat(SonarUtils.constructPrefixedProjectName(":module:submodule")).isEqualTo(":module.:module:submodule");
+    assertThat(SonarUtils.constructPrefixedProjectName(":module:submodule:mimimi")).isEqualTo(":module.:module:submodule.:module:submodule:mimimi");
+  }
+
+  @Test
   void append_props_to_without_previous_value() {
     Map<String, Object> properties = new HashMap<>();
     SonarUtils.appendProps(properties, "my-key", List.of("a", "b", "c", "d"));
