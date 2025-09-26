@@ -241,6 +241,14 @@ public class SonarUtils {
     return list.isEmpty() ? null : list;
   }
 
+  public static String joinCsvStringsWithoutDuplicates(String csv1, String csv2){
+    List<String> list1 = splitAsCsv(csv1);
+    List<String> list2 = splitAsCsv(csv2);
+    Set<String> resultSet = new LinkedHashSet<>(list1);
+    resultSet.addAll(list2);
+    return joinAsCsv(resultSet.stream().filter(s -> !s.isBlank()).collect(Collectors.toList()));
+  }
+
   /**
    * Joins a list of strings that may contain commas by wrapping those strings in double quotes, like in CSV format.
    * <p>

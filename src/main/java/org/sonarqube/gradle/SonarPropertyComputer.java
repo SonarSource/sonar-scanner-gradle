@@ -48,15 +48,12 @@ import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileSystemLocation;
-import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.GroovyPlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.reporting.Report;
 import org.gradle.api.reporting.SingleFileReport;
@@ -434,6 +431,7 @@ public class SonarPropertyComputer {
 
   private static void configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
     SourceSetContainer sourceSets = getSourceSets(project);
+
     SourceSet main = sourceSets.getAt("main");
     Collection<File> sourceDirectories = getJavaSourceFiles(main);
     if (sourceDirectories != null) {
@@ -451,14 +449,12 @@ public class SonarPropertyComputer {
       extractTestProperties(project, properties);
     }
 
-
     configureJavaClasspath(project, properties, addForGroovy);
   }
 
   private static void configureJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
     SourceSetContainer sourceSets = getSourceSets(project);
     SourceSet main = sourceSets.getAt("main");
-
     Collection<File> mainClassDirs = getJavaOutputDirs(main);
     Collection<File> mainLibraries = getRuntimeJars();
     setMainClasspathProps(properties, mainClassDirs, mainLibraries, addForGroovy);
@@ -585,8 +581,7 @@ public class SonarPropertyComputer {
     }
 
     Object kotlinExtension = project.getExtensions().findByName("kotlin");
-    if (kotlinExtension != null && kotlinExtension.getClass().getName().startsWith("org.jetbrains.kotlin.gradle.dsl" +
-      ".KotlinMultiplatformExtension")) {
+    if (kotlinExtension != null && kotlinExtension.getClass().getName().startsWith("org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension")) {
       configureForKotlin(project, properties, kotlinExtension);
     } else if (project.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
       // Groovy extends the Java plugin, so no need to configure twice

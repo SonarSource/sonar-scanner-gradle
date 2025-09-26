@@ -59,4 +59,17 @@ class SonarUtilsTest {
     assertThat((Collection<Object>) properties.get("my-key")).containsExactly("a", "b", "c", "d");
   }
 
+  @Test
+  void test_join_csv_without_duplicates(){
+    String a = "a,b,c";
+    String b = "b,c,d";
+    assertThat(SonarUtils.joinCsvStringsWithoutDuplicates(a, b)).isEqualTo("a,b,c,d");
+    String c = "";
+    assertThat(SonarUtils.joinCsvStringsWithoutDuplicates(a, c)).isEqualTo("a,b,c");
+    String d = "g,";
+    assertThat(SonarUtils.joinCsvStringsWithoutDuplicates(a, d)).isEqualTo("a,b,c,g");
+    String e = ",";
+    assertThat(SonarUtils.joinCsvStringsWithoutDuplicates(a, e)).isEqualTo("a,b,c");
+  }
+
 }
