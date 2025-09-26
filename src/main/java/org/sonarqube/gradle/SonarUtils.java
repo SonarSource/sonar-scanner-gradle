@@ -41,7 +41,6 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.NotNull;
 
 public class SonarUtils {
 
@@ -100,15 +99,22 @@ public class SonarUtils {
     return getSourceSetsGradleLegacy(project);
   }
 
-  @NotNull
+  @Nullable
   private static SourceSetContainer getSourceSetsGradle7orGreater(Project project) {
     JavaPluginExtension javaPluginExtension = new DslObject(project).getExtensions().findByType(JavaPluginExtension.class);
+    if (javaPluginExtension == null) {
+      return null;
+    }
     return javaPluginExtension.getSourceSets();
   }
 
-  @NotNull
+  @Nullable
+  @SuppressWarnings("java:S1874")
   private static SourceSetContainer getSourceSetsGradleLegacy(Project project) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().findByType(JavaPluginConvention.class);
+    if (javaPluginConvention == null) {
+      return null;
+    }
     return javaPluginConvention.getSourceSets();
   }
 

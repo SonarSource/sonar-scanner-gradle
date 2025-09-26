@@ -37,13 +37,10 @@ import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
@@ -52,7 +49,6 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.NotNull;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
@@ -119,24 +115,9 @@ public class SonarQubePlugin implements Plugin<Project> {
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
 
-        SourceSetContainer sourceSets = getSourceSets(target);
-        if (sourceSets != null) {
-          SourceSet main = sourceSets.findByName("main");
-          if (main != null) {
-            FileCollection compileClasspath = main.getCompileClasspath();
-            if (compileClasspath != null) {
-              task.setCompileClasspath(compileClasspath);
-            }
-          }
+        task.setCompileClasspath(getMainClassPath(target));
+        task.setTestCompileClasspath(getTestClassPath(target));
 
-          SourceSet test = sourceSets.findByName("test");
-          if (test != null) {
-            FileCollection testCompileClasspath = test.getCompileClasspath();
-            if (testCompileClasspath != null) {
-              task.setTestCompileClasspath(testCompileClasspath);
-            }
-          }
-        }
         DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
         localSonarResolver.mkdirs();
@@ -152,30 +133,30 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   @Nullable
-  static SourceSetContainer getSourceSets(Project project) {
-    GradleVersion gradleVersion = GradleVersion.version(project.getGradle().getGradleVersion());
-    if (SonarUtils.isCompatibleWithJavaPluginExtension(gradleVersion)) {
-      return getSourceSetsGradle7orGreater(project);
-    }
-    return getSourceSetsGradleLegacy(project);
+  private static FileCollection getMainClassPath(Project project) {
+    return getClassPath(project, "main");
   }
 
   @Nullable
-  private static SourceSetContainer getSourceSetsGradle7orGreater(Project project) {
-    JavaPluginExtension javaPluginExtension = new DslObject(project).getExtensions().findByType(JavaPluginExtension.class);
-    if (javaPluginExtension == null) {
-      return null;
-    }
-    return javaPluginExtension.getSourceSets();
+  private static FileCollection getTestClassPath(Project project) {
+    return getClassPath(project, "test");
   }
 
   @Nullable
-  private static SourceSetContainer getSourceSetsGradleLegacy(Project project) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().findByType(JavaPluginConvention.class);
-    if (javaPluginConvention == null) {
+  private static FileCollection getClassPath(Project project, String sourceSetName) {
+    SourceSetContainer sourceSets = SonarUtils.getSourceSets(project);
+    if (sourceSets == null) {
       return null;
     }
-    return javaPluginConvention.getSourceSets();
+    SourceSet sourceSet = sourceSets.findByName(sourceSetName);
+    if (sourceSet == null) {
+      return null;
+    }
+    FileCollection compileClasspath = sourceSet.getCompileClasspath();
+    if (compileClasspath == null) {
+      return null;
+    }
+    return compileClasspath;
   }
 
   private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
