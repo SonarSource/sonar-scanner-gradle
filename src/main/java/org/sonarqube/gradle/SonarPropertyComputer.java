@@ -455,6 +455,7 @@ public class SonarPropertyComputer {
   private static void configureJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
     SourceSetContainer sourceSets = getSourceSets(project);
     SourceSet main = sourceSets.getAt("main");
+
     Collection<File> mainClassDirs = getJavaOutputDirs(main);
     Collection<File> mainLibraries = getRuntimeJars();
     setMainClasspathProps(properties, mainClassDirs, mainLibraries, addForGroovy);
