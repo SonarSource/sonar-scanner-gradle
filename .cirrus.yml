@@ -50,12 +50,6 @@ win_vm_definition: &WINDOWS_VM_DEFINITION
   region: eu-central-1
   type: c5.4xlarge # 3.6 GHz (3.9GHz single core) Intel Xeon Scalable Processor, 16 vCPU, 32 GiB Memory
 
-setup_gradle_cache_template: &SETUP_GRADLE_CACHE
-  gradle_cache:
-    folder: .gradle/caches
-  create_gradle_directory_script:
-    - mkdir -p "${CIRRUS_WORKING_DIR}/.gradle"
-
 only_sonarsource_qa: &ONLY_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_RELEASE == "" && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
@@ -182,33 +176,6 @@ validate_external_contributor_build_task:
     junit_artifacts:
       path: "**/test-results/**/*.xml"
       format: junit
-
-mend_scan_task:
-  <<: *SETUP_GRADLE_CACHE
-  depends_on:
-    - build
-  # run only on master and long-living branches
-  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "mend-.*")
-  eks_container:
-    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j21-latest
-    region: eu-central-1
-    cluster_name: ${CIRRUS_CLUSTER_NAME}
-    namespace: default
-    cpu: 4
-    memory: 2G
-  env:
-    WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
-  maven_cache:
-    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  mend_script:
-    - source cirrus-env QA
-    - ./gradlew clean build -x test
-    - source ./export_ws_variables.sh
-    - source ws_scan.sh
-  allow_failures: "true"
-  always:
-    ws_scan_artifacts:
-      path: "whitesource/**/*"
 
 gradle_qa_task:
   depends_on:
