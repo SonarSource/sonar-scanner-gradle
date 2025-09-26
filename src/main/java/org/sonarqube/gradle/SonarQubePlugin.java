@@ -171,7 +171,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   @Nullable
   private static SourceSetContainer getSourceSetsGradleLegacy(Project project) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().findByType(JavaPluginConvention.class);
     if (javaPluginConvention == null) {
       return null;
     }
