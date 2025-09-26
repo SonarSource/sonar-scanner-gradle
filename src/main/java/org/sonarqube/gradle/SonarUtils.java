@@ -91,6 +91,7 @@ public class SonarUtils {
    * @param project The (sub-)project under analysis
    * @return A container with the "main" and "test" source sets
    */
+  @Nullable
   static SourceSetContainer getSourceSets(Project project) {
     GradleVersion gradleVersion = GradleVersion.version(project.getGradle().getGradleVersion());
     if (isCompatibleWithJavaPluginExtension(gradleVersion)) {

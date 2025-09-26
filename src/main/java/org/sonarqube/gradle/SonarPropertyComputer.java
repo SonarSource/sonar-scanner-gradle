@@ -135,7 +135,8 @@ public class SonarPropertyComputer {
 
     overrideWithUserDefinedProperties(project, rawProperties);
 
-    // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
+    // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their
+    // parent module.
     // This can eventually lead to a double indexing issue in the scanner-engine.
     rawProperties.putIfAbsent(ScanProperties.PROJECT_SOURCE_DIRS, "");
     rawProperties.putIfAbsent(ScanProperties.PROJECT_TEST_DIRS, "");
@@ -190,13 +191,15 @@ public class SonarPropertyComputer {
       var sonarProps = new SonarProperties(new HashMap<>());
       actionBroadcastMap.get(project.getPath()).execute(sonarProps);
 
-      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties().keySet(), EnvironmentConfig.load(System.getenv()).keySet(), sonarProps.getProperties().keySet())
+      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties().keySet(), EnvironmentConfig.load(System.getenv()).keySet(),
+          sonarProps.getProperties().keySet())
         .flatMap(Collection::stream)
         .map(String.class::cast)
         .anyMatch(k -> ScanProperties.PROJECT_SOURCE_DIRS.endsWith(k) || ScanProperties.PROJECT_TEST_DIRS.endsWith(k));
 
       if (sourcesOrTestsAlreadySet) {
-        LOGGER.warn("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources or sonar.tests has been overridden.");
+        LOGGER.warn("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources " +
+          "or sonar.tests has been overridden.");
         return false;
       }
     }
@@ -250,7 +253,8 @@ public class SonarPropertyComputer {
     appendAdditionalSourceFiles(properties, ScanProperties.PROJECT_TEST_DIRS, collectedTestSources);
   }
 
-  private static void appendAdditionalSourceFiles(Map<String, Object> properties, String sourcePropertyToUpdate, List<Path> collectedSources) {
+  private static void appendAdditionalSourceFiles(Map<String, Object> properties, String sourcePropertyToUpdate,
+    List<Path> collectedSources) {
     String existingValue = (String) properties.getOrDefault(sourcePropertyToUpdate, "");
     Set<Path> existingSources = existingValue.isBlank() ? Collections.emptySet() : SonarUtils.splitAsCsv(existingValue)
       .stream()
@@ -282,12 +286,14 @@ public class SonarPropertyComputer {
     return project.equals(targetProject);
   }
 
-  private static void evaluateSonarPropertiesBlocks(ActionBroadcast<? super SonarProperties> propertiesActions, Map<String, Object> properties) {
+  private static void evaluateSonarPropertiesBlocks(ActionBroadcast<? super SonarProperties> propertiesActions,
+    Map<String, Object> properties) {
     SonarProperties sqProperties = new SonarProperties(properties);
     propertiesActions.execute(sqProperties);
   }
 
-  private static void convertProperties(Map<String, Object> rawProperties, final String projectPrefix, final Map<String, Object> properties) {
+  private static void convertProperties(Map<String, Object> rawProperties, final String projectPrefix,
+    final Map<String, Object> properties) {
     for (Map.Entry<String, Object> entry : rawProperties.entrySet()) {
       String value = convertValue(entry.getValue(), false);
       if (value != null) {
@@ -431,23 +437,33 @@ public class SonarPropertyComputer {
 
   private static void configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
     SourceSetContainer sourceSets = getSourceSets(project);
+    if (sourceSets != null) {
+      SourceSet main = sourceSets.findByName("main");
+      Collection<File> sourceDirectories = null;
+      if (main != null) {
+        sourceDirectories = getJavaSourceFiles(main);
+        if (sourceDirectories != null) {
+          SonarUtils.appendSourcesProp(properties, sourceDirectories, false);
+        }
+      }
 
-    SourceSet main = sourceSets.getAt("main");
-    Collection<File> sourceDirectories = getJavaSourceFiles(main);
-    if (sourceDirectories != null) {
-      SonarUtils.appendSourcesProp(properties, sourceDirectories, false);
+
+      SourceSet test = sourceSets.findByName("test");
+      Collection<File> testDirectories = null;
+      if (test != null) {
+        testDirectories = getJavaSourceFiles(test);
+        if (testDirectories != null) {
+          SonarUtils.appendSourcesProp(properties, testDirectories, true);
+        }
+      }
+
+
+      if (sourceDirectories != null || testDirectories != null) {
+        configureSourceEncoding(project, properties);
+        extractTestProperties(project, properties);
+      }
     }
 
-    SourceSet test = sourceSets.getAt("test");
-    Collection<File> testDirectories = getJavaSourceFiles(test);
-    if (testDirectories != null) {
-      SonarUtils.appendSourcesProp(properties, testDirectories, true);
-    }
-
-    if (sourceDirectories != null || testDirectories != null) {
-      configureSourceEncoding(project, properties);
-      extractTestProperties(project, properties);
-    }
 
     configureJavaClasspath(project, properties, addForGroovy);
   }
@@ -582,7 +598,8 @@ public class SonarPropertyComputer {
     }
 
     Object kotlinExtension = project.getExtensions().findByName("kotlin");
-    if (kotlinExtension != null && kotlinExtension.getClass().getName().startsWith("org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension")) {
+    if (kotlinExtension != null && kotlinExtension.getClass().getName().startsWith("org.jetbrains.kotlin.gradle.dsl" +
+      ".KotlinMultiplatformExtension")) {
       configureForKotlin(project, properties, kotlinExtension);
     } else if (project.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
       // Groovy extends the Java plugin, so no need to configure twice
