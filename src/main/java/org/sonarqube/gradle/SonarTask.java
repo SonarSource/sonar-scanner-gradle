@@ -367,6 +367,17 @@ public class SonarTask extends ConventionTask {
     if (libraries.isEmpty()) {
       libraries = resolvedAsAString;
     } else {
+      String[] alreadyPresent = libraries.split(",");
+      for (String present : alreadyPresent) {
+        int i = resolvedAsAString.indexOf(present);
+        if (i >= 0) {
+          // already present, remove it from the string to append
+          resolvedAsAString = resolvedAsAString.substring(0, i) + resolvedAsAString.substring(i + present.length());
+          if(resolvedAsAString.startsWith(",")) {
+            resolvedAsAString = resolvedAsAString.substring(1);
+          }
+        }
+      }
       libraries += "," + resolvedAsAString;
     }
 
