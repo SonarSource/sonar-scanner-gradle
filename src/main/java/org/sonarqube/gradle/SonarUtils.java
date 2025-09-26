@@ -241,12 +241,18 @@ public class SonarUtils {
     return list.isEmpty() ? null : list;
   }
 
-  public static String joinCsvStringsWithoutDuplicates(String csv1, String csv2){
+  public static String joinCsvStringsWithoutDuplicates(String csv1, String csv2) {
     List<String> list1 = splitAsCsv(csv1);
     List<String> list2 = splitAsCsv(csv2);
-    Set<String> resultSet = new LinkedHashSet<>(list1);
+    Set<String> resultSet = new LinkedHashSet<>();
+    resultSet.addAll(list1);
     resultSet.addAll(list2);
-    return joinAsCsv(resultSet.stream().filter(s -> !s.isBlank()).collect(Collectors.toList()));
+    return joinAsCsv(
+      resultSet
+        .stream()
+        .filter(s -> !s.isBlank())
+        .collect(Collectors.toList())
+    );
   }
 
   /**
