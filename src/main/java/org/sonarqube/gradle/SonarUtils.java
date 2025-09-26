@@ -41,7 +41,6 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.NotNull;
 
 public class SonarUtils {
 
@@ -100,15 +99,22 @@ public class SonarUtils {
     return getSourceSetsGradleLegacy(project);
   }
 
-  @NotNull
+  @Nullable
   private static SourceSetContainer getSourceSetsGradle7orGreater(Project project) {
     JavaPluginExtension javaPluginExtension = new DslObject(project).getExtensions().findByType(JavaPluginExtension.class);
+    if (javaPluginExtension == null) {
+      return null;
+    }
     return javaPluginExtension.getSourceSets();
   }
 
-  @NotNull
+  @Nullable
+  @SuppressWarnings("java:S1874")
   private static SourceSetContainer getSourceSetsGradleLegacy(Project project) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().getPlugin(JavaPluginConvention.class);
+    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().findPlugin(JavaPluginConvention.class);
+    if (javaPluginConvention == null) {
+      return null;
+    }
     return javaPluginConvention.getSourceSets();
   }
 
@@ -233,6 +239,20 @@ public class SonarUtils {
   public static <T> List<T> nonEmptyOrNull(Collection<T> collection) {
     List<T> list = Collections.unmodifiableList(new ArrayList<>(collection));
     return list.isEmpty() ? null : list;
+  }
+
+  public static String joinCsvStringsWithoutDuplicates(String csv1, String csv2) {
+    List<String> list1 = splitAsCsv(csv1);
+    List<String> list2 = splitAsCsv(csv2);
+    Set<String> resultSet = new LinkedHashSet<>();
+    resultSet.addAll(list1);
+    resultSet.addAll(list2);
+    return joinAsCsv(
+      resultSet
+        .stream()
+        .filter(s -> !s.isBlank())
+        .collect(Collectors.toList())
+    );
   }
 
   /**

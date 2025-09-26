@@ -367,7 +367,7 @@ public class SonarTask extends ConventionTask {
     if (libraries.isEmpty()) {
       libraries = resolvedAsAString;
     } else {
-      libraries += "," + resolvedAsAString;
+      libraries = SonarUtils.joinCsvStringsWithoutDuplicates(libraries, resolvedAsAString);
     }
 
     if (LOGGER.isDebugEnabled()) {
