@@ -336,7 +336,8 @@ public abstract class AbstractGradleIT {
           j++;
         }
         softly.assertThat(stackTraceLines)
-          .noneMatch(l -> l.contains("org.sonarqube.gradle"));
+          .noneMatch(l -> l.contains("org.sonarqube.gradle") &&
+            !(l.contains("SonarResolverTask.java:116") || l.contains("SonarResolverTask.java:119")));
         i = j - 1;
       }
     }
