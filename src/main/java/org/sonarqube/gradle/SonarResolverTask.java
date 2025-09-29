@@ -68,27 +68,25 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.isTopLevelProject = topLevelProject;
   }
 
-  //TODO remove
-//  @InputFiles
-//  @Optional
-//  FileCollection getCompileClasspath() {
-//    return this.compileClasspath;
-//  }
-//
-//  public void setCompileClasspath(FileCollection compileClasspath) {
-//    this.compileClasspath = compileClasspath;
-//  }
+  @InputFiles
+  @Optional
+  FileCollection getCompileClasspath() {
+    return this.compileClasspath;
+  }
 
-  //TODO remove
-//  @InputFiles
-//  @Optional
-//  FileCollection getTestCompileClasspath() {
-//    return this.testCompileClasspath;
-//  }
-//
-//  public void setTestCompileClasspath(FileCollection testCompileClasspath) {
-//    this.testCompileClasspath = testCompileClasspath;
-//  }
+  public void setCompileClasspath(FileCollection compileClasspath) {
+    this.compileClasspath = compileClasspath;
+  }
+
+  @InputFiles
+  @Optional
+  FileCollection getTestCompileClasspath() {
+    return this.testCompileClasspath;
+  }
+
+  public void setTestCompileClasspath(FileCollection testCompileClasspath) {
+    this.testCompileClasspath = testCompileClasspath;
+  }
 
   public void setOutputDirectory(File outputDirectory) {
     this.outputDirectory = outputDirectory;
@@ -114,14 +112,18 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    FileCollection mainClassPath = getMainClassPath(getProject());
-    FileCollection testClassPath = getTestClassPath(getProject());
+    if(compileClasspath == null){
+      compileClasspath = getMainClassPath(getProject());
+    }
+    if(testCompileClasspath == null){
+      testCompileClasspath = getTestClassPath(getProject());
+    }
 
-    List<String> compileClasspathFilenames = SonarUtils.exists(mainClassPath == null ? Collections.emptyList() : mainClassPath)
+    List<String> compileClasspathFilenames = SonarUtils.exists(compileClasspath == null ? Collections.emptyList() : compileClasspath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    List<String> testCompileClasspathFilenames = SonarUtils.exists(testClassPath == null ? Collections.emptyList() : testClassPath)
+    List<String> testCompileClasspathFilenames = SonarUtils.exists(testCompileClasspath == null ? Collections.emptyList() : testCompileClasspath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());

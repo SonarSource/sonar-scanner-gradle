@@ -115,11 +115,10 @@ public class SonarQubePlugin implements Plugin<Project> {
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
 
-        //TODO remove
-//        FileCollection mainClassPath = getMainClassPath(target);
-//        task.setCompileClasspath(mainClassPath);
-//        FileCollection testClassPath = getTestClassPath(target);
-//        task.setTestCompileClasspath(testClassPath);
+        FileCollection mainClassPath = getMainClassPath(target);
+        task.setCompileClasspath(mainClassPath);
+        FileCollection testClassPath = getTestClassPath(target);
+        task.setTestCompileClasspath(testClassPath);
 
         DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
