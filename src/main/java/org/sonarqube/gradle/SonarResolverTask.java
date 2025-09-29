@@ -26,12 +26,18 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskAction;
 
 public abstract class SonarResolverTask extends DefaultTask {
@@ -62,25 +68,27 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.isTopLevelProject = topLevelProject;
   }
 
-  @InputFiles
-  @Optional
-  FileCollection getCompileClasspath() {
-    return this.compileClasspath;
-  }
+  //TODO remove
+//  @InputFiles
+//  @Optional
+//  FileCollection getCompileClasspath() {
+//    return this.compileClasspath;
+//  }
+//
+//  public void setCompileClasspath(FileCollection compileClasspath) {
+//    this.compileClasspath = compileClasspath;
+//  }
 
-  public void setCompileClasspath(FileCollection compileClasspath) {
-    this.compileClasspath = compileClasspath;
-  }
-
-  @InputFiles
-  @Optional
-  FileCollection getTestCompileClasspath() {
-    return this.testCompileClasspath;
-  }
-
-  public void setTestCompileClasspath(FileCollection testCompileClasspath) {
-    this.testCompileClasspath = testCompileClasspath;
-  }
+  //TODO remove
+//  @InputFiles
+//  @Optional
+//  FileCollection getTestCompileClasspath() {
+//    return this.testCompileClasspath;
+//  }
+//
+//  public void setTestCompileClasspath(FileCollection testCompileClasspath) {
+//    this.testCompileClasspath = testCompileClasspath;
+//  }
 
   public void setOutputDirectory(File outputDirectory) {
     this.outputDirectory = outputDirectory;
@@ -106,11 +114,14 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    List<String> compileClasspathFilenames = SonarUtils.exists(getCompileClasspath() == null ? Collections.emptyList() : getCompileClasspath())
+    FileCollection mainClassPath = getMainClassPath(getProject());
+    FileCollection testClassPath = getTestClassPath(getProject());
+
+    List<String> compileClasspathFilenames = SonarUtils.exists(mainClassPath == null ? Collections.emptyList() : mainClassPath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    List<String> testCompileClasspathFilenames = SonarUtils.exists(getTestCompileClasspath() == null ? Collections.emptyList() : getTestCompileClasspath())
+    List<String> testCompileClasspathFilenames = SonarUtils.exists(testClassPath == null ? Collections.emptyList() : testClassPath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
@@ -124,4 +135,32 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
   }
+
+  @Nullable
+  private static FileCollection getMainClassPath(Project project) {
+    return getClassPath(project, "main");
+  }
+
+  @Nullable
+  private static FileCollection getTestClassPath(Project project) {
+    return getClassPath(project, "test");
+  }
+
+  @Nullable
+  private static FileCollection getClassPath(Project project, String sourceSetName) {
+    SourceSetContainer sourceSets = SonarUtils.getSourceSets(project);
+    if (sourceSets == null) {
+      return null;
+    }
+    SourceSet sourceSet = sourceSets.findByName(sourceSetName);
+    if (sourceSet == null) {
+      return null;
+    }
+    FileCollection compileClasspath = sourceSet.getCompileClasspath();
+    if (compileClasspath == null) {
+      return null;
+    }
+    return compileClasspath;
+  }
+
 }
