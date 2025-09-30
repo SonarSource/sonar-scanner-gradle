@@ -133,6 +133,10 @@ public class SonarUtils {
   @Nullable
   public static FileCollection getClassPath(Project project, String sourceSetName) {
     SourceSetContainer sourceSets = SonarUtils.getSourceSets(project);
+    return getClassPathFromSourceSets(sourceSetName, sourceSets);
+  }
+
+  public static @org.jetbrains.annotations.Nullable FileCollection getClassPathFromSourceSets(String sourceSetName, SourceSetContainer sourceSets) {
     if (sourceSets == null) {
       return null;
     }
