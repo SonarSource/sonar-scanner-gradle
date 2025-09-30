@@ -26,19 +26,16 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.plugins.DslObject;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskAction;
+
+import static org.sonarqube.gradle.SonarUtils.getMainClassPath;
+import static org.sonarqube.gradle.SonarUtils.getTestClassPath;
 
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
@@ -136,33 +133,6 @@ public abstract class SonarResolverTask extends DefaultTask {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
-  }
-
-  @Nullable
-  private static FileCollection getMainClassPath(Project project) {
-    return getClassPath(project, "main");
-  }
-
-  @Nullable
-  private static FileCollection getTestClassPath(Project project) {
-    return getClassPath(project, "test");
-  }
-
-  @Nullable
-  private static FileCollection getClassPath(Project project, String sourceSetName) {
-    SourceSetContainer sourceSets = SonarUtils.getSourceSets(project);
-    if (sourceSets == null) {
-      return null;
-    }
-    SourceSet sourceSet = sourceSets.findByName(sourceSetName);
-    if (sourceSet == null) {
-      return null;
-    }
-    FileCollection compileClasspath = sourceSet.getCompileClasspath();
-    if (compileClasspath == null) {
-      return null;
-    }
-    return compileClasspath;
   }
 
 }
