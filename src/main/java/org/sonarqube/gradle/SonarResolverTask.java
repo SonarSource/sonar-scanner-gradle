@@ -109,10 +109,10 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    if(compileClasspath == null){
+    if (compileClasspath == null) {
       compileClasspath = getClasspathFromSourceSets("main");
     }
-    if(testCompileClasspath == null){
+    if (testCompileClasspath == null) {
       testCompileClasspath = getClasspathFromSourceSets("test");
     }
 
@@ -137,15 +137,15 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   // Suppress warning about using deprecated API for Gradle < 7 compatibility
   @SuppressWarnings("java:S1874")
-  private FileCollection getClasspathFromSourceSets(String sourceSetName) {
-    if(isAtLeastGradle7()){
+  protected FileCollection getClasspathFromSourceSets(String sourceSetName) {
+    if (isAtLeastGradle7()) {
       JavaPluginExtension javaExt = getExtensions().findByType(JavaPluginExtension.class);
-      if(javaExt != null){
+      if (javaExt != null) {
         return SonarUtils.getClassPathFromSourceSets(sourceSetName, javaExt.getSourceSets());
       }
-    }else{
+    } else {
       JavaPluginConvention javaPlugin = getConvention().findPlugin(JavaPluginConvention.class);
-      if(javaPlugin != null){
+      if (javaPlugin != null) {
         return SonarUtils.getClassPathFromSourceSets(sourceSetName, javaPlugin.getSourceSets());
       }
     }
