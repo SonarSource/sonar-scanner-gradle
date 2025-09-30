@@ -37,9 +37,6 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 
-import static org.sonarqube.gradle.SonarUtils.getMainClassPath;
-import static org.sonarqube.gradle.SonarUtils.getTestClassPath;
-
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
   private static final Logger LOGGER = Logger.getLogger(SonarResolverTask.class.getName());
