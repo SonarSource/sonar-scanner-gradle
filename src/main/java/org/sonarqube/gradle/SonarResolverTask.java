@@ -28,11 +28,14 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GradleVersion;
 
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
@@ -106,11 +109,18 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    List<String> compileClasspathFilenames = SonarUtils.exists(getCompileClasspath() == null ? Collections.emptyList() : getCompileClasspath())
+    if (compileClasspath == null) {
+      compileClasspath = getClasspathFromSourceSets("main");
+    }
+    if (testCompileClasspath == null) {
+      testCompileClasspath = getClasspathFromSourceSets("test");
+    }
+
+    List<String> compileClasspathFilenames = SonarUtils.exists(compileClasspath == null ? Collections.emptyList() : compileClasspath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    List<String> testCompileClasspathFilenames = SonarUtils.exists(getTestCompileClasspath() == null ? Collections.emptyList() : getTestCompileClasspath())
+    List<String> testCompileClasspathFilenames = SonarUtils.exists(testCompileClasspath == null ? Collections.emptyList() : testCompileClasspath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
@@ -124,4 +134,26 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
   }
+
+  // Suppress warning about using deprecated API for Gradle < 7 compatibility
+  @SuppressWarnings("java:S1874")
+  protected FileCollection getClasspathFromSourceSets(String sourceSetName) {
+    if (isAtLeastGradle7()) {
+      JavaPluginExtension javaExt = getExtensions().findByType(JavaPluginExtension.class);
+      if (javaExt != null) {
+        return SonarUtils.getClassPathFromSourceSets(sourceSetName, javaExt.getSourceSets());
+      }
+    } else {
+      JavaPluginConvention javaPlugin = getConvention().findPlugin(JavaPluginConvention.class);
+      if (javaPlugin != null) {
+        return SonarUtils.getClassPathFromSourceSets(sourceSetName, javaPlugin.getSourceSets());
+      }
+    }
+    return null;
+  }
+
+  private static boolean isAtLeastGradle7() {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("7.0")) >= 0;
+  }
+
 }
