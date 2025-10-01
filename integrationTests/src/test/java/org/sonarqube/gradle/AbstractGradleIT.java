@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -336,10 +337,19 @@ public abstract class AbstractGradleIT {
           j++;
         }
         softly.assertThat(stackTraceLines)
-          .noneMatch(l -> l.contains("org.sonarqube.gradle"));
+          .noneMatch(AbstractGradleIT::isUnexpectedWarning);
         i = j - 1;
       }
     }
     softly.assertAll();
   }
+
+  static boolean isUnexpectedWarning(String line){
+    if(line.contains("SonarResolverTask.java:111") || line.contains("SonarResolverTask.java:114")){
+      // These warnings are expected until we properly support Gradle 9
+      return false;
+    }
+    return line.contains("org.sonarqube.gradle");
+  }
+
 }
