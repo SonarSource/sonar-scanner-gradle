@@ -53,6 +53,31 @@ class FunctionalTests extends Specification {
         Files.copy(is, projectDir.resolve('gradle.properties'), StandardCopyOption.REPLACE_EXISTING)
     }
 
+    def "'java' project"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withProjectDir(projectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonarqube").outcome == SUCCESS
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props.containsKey("sonar.java.jdkHome")
+    }
+
     def "no jdkHome, source and target for non 'java' projects"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"

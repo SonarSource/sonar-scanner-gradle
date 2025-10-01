@@ -33,6 +33,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GradleVersion;
 
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
@@ -106,11 +107,18 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    List<String> compileClasspathFilenames = SonarUtils.exists(getCompileClasspath() == null ? Collections.emptyList() : getCompileClasspath())
+    if (compileClasspath == null) {
+      compileClasspath = SonarUtils.getMainClassPath(getProject());
+    }
+    if (testCompileClasspath == null) {
+      testCompileClasspath = SonarUtils.getTestClassPath(getProject());
+    }
+
+    List<String> compileClasspathFilenames = SonarUtils.exists(compileClasspath == null ? Collections.emptyList() : compileClasspath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    List<String> testCompileClasspathFilenames = SonarUtils.exists(getTestCompileClasspath() == null ? Collections.emptyList() : getTestCompileClasspath())
+    List<String> testCompileClasspathFilenames = SonarUtils.exists(testCompileClasspath == null ? Collections.emptyList() : testCompileClasspath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
@@ -124,4 +132,5 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
   }
+
 }

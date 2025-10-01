@@ -35,8 +35,8 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -49,6 +49,8 @@ import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
+import static org.sonarqube.gradle.SonarUtils.getMainClassPath;
+import static org.sonarqube.gradle.SonarUtils.getTestClassPath;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 
 /**
@@ -112,14 +114,12 @@ public class SonarQubePlugin implements Plugin<Project> {
           task.setTopLevelProject(true);
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
-        Configuration compileClasspath = target.getConfigurations().findByName(Constants.COMPILE_CLASSPATH);
-        if (compileClasspath != null) {
-          task.setCompileClasspath(compileClasspath);
-        }
-        Configuration testCompileClasspath = target.getConfigurations().findByName(Constants.TEST_COMPILE_CLASSPATH);
-        if (testCompileClasspath != null) {
-          task.setTestCompileClasspath(testCompileClasspath);
-        }
+
+        FileCollection mainClassPath = getMainClassPath(target);
+        task.setCompileClasspath(mainClassPath);
+        FileCollection testClassPath = getTestClassPath(target);
+        task.setTestCompileClasspath(testClassPath);
+
         DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
         localSonarResolver.mkdirs();
