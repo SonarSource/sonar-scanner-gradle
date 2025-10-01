@@ -28,8 +28,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
@@ -110,10 +108,10 @@ public abstract class SonarResolverTask extends DefaultTask {
     }
 
     if (compileClasspath == null) {
-      compileClasspath = getClasspathFromSourceSets("main");
+      compileClasspath = SonarUtils.getMainClassPath(getProject());
     }
     if (testCompileClasspath == null) {
-      testCompileClasspath = getClasspathFromSourceSets("test");
+      testCompileClasspath = SonarUtils.getTestClassPath(getProject());
     }
 
     List<String> compileClasspathFilenames = SonarUtils.exists(compileClasspath == null ? Collections.emptyList() : compileClasspath)
@@ -133,27 +131,6 @@ public abstract class SonarResolverTask extends DefaultTask {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
-  }
-
-  // Suppress warning about using deprecated API for Gradle < 7 compatibility
-  @SuppressWarnings("java:S1874")
-  protected FileCollection getClasspathFromSourceSets(String sourceSetName) {
-    if (isAtLeastGradle7()) {
-      JavaPluginExtension javaExt = getExtensions().findByType(JavaPluginExtension.class);
-      if (javaExt != null) {
-        return SonarUtils.getClassPathFromSourceSets(sourceSetName, javaExt.getSourceSets());
-      }
-    } else {
-      JavaPluginConvention javaPlugin = getConvention().findPlugin(JavaPluginConvention.class);
-      if (javaPlugin != null) {
-        return SonarUtils.getClassPathFromSourceSets(sourceSetName, javaPlugin.getSourceSets());
-      }
-    }
-    return null;
-  }
-
-  private static boolean isAtLeastGradle7() {
-    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("7.0")) >= 0;
   }
 
 }
