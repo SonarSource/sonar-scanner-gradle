@@ -110,6 +110,8 @@ public class SonarQubePlugin implements Plugin<Project> {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
       target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
+        task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
+        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         if (target == topLevelProject) {
           task.setTopLevelProject(true);
         }

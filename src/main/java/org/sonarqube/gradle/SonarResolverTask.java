@@ -33,10 +33,10 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.util.GradleVersion;
 
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
+  public static final String TASK_DESCRIPTION = "Resolves and serializes project information and classpath for SonarQube analysis.";
   private static final Logger LOGGER = Logger.getLogger(SonarResolverTask.class.getName());
 
   private String projectName;
