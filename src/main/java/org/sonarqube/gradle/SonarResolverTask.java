@@ -107,10 +107,10 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    if (compileClasspath == null) {
+    if (compileClasspath == null && configurationIsDisabled()) {
       compileClasspath = SonarUtils.getMainClassPath(getProject());
     }
-    if (testCompileClasspath == null) {
+    if (testCompileClasspath == null && configurationIsDisabled()) {
       testCompileClasspath = SonarUtils.getTestClassPath(getProject());
     }
 
@@ -131,6 +131,11 @@ public abstract class SonarResolverTask extends DefaultTask {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
+  }
+
+  // On gradle 9 projects with configuration cache enabled, we CANNOT rely on the project at execution time
+  public boolean configurationIsDisabled() {
+    return true;
   }
 
 }
