@@ -26,13 +26,16 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.configuration.BuildFeatures;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GradleVersion;
 
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
@@ -44,6 +47,9 @@ public abstract class SonarResolverTask extends DefaultTask {
   private FileCollection compileClasspath;
   private FileCollection testCompileClasspath;
   private File outputDirectory;
+
+  @Inject
+  public abstract BuildFeatures getBuildFeatures();
 
   @Input
   public String getProjectName() {
@@ -107,10 +113,10 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    if (compileClasspath == null) {
+    if (compileClasspath == null && canRelyOnProjectAtExecutionTime()) {
       compileClasspath = SonarUtils.getMainClassPath(getProject());
     }
-    if (testCompileClasspath == null) {
+    if (testCompileClasspath == null && canRelyOnProjectAtExecutionTime()) {
       testCompileClasspath = SonarUtils.getTestClassPath(getProject());
     }
 
@@ -131,6 +137,13 @@ public abstract class SonarResolverTask extends DefaultTask {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
+  }
+
+  // On gradle 9 projects with configuration cache enabled, we CANNOT rely on the project at execution time
+  private boolean canRelyOnProjectAtExecutionTime() {
+    boolean isConfigurationCacheDisabled = !getBuildFeatures().getConfigurationCache().getActive().get();
+    boolean isBelowGradle9 = GradleVersion.current().compareTo(GradleVersion.version("9.0")) < 0;
+    return isBelowGradle9 || isConfigurationCacheDisabled;
   }
 
 }
