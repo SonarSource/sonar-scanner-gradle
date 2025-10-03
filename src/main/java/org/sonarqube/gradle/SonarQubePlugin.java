@@ -37,6 +37,7 @@ import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -47,6 +48,7 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.sonarqube.gradle.resolver.ResolverTaskFactory;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.getMainClassPath;
@@ -109,13 +111,15 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
+      target.getTasks().register(SonarResolverTask.TASK_NAME, ResolverTaskFactory.create(GradleVersion.current()), task -> {
         task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         if (target == topLevelProject) {
           task.setTopLevelProject(true);
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
+
+        Gradle gradle = target.getGradle();
 
         FileCollection mainClassPath = getMainClassPath(target);
         task.setCompileClasspath(mainClassPath);
