@@ -161,6 +161,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarTask.mustRunAfter(getAndroidCompileTasks(project));
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
+    sonarTask.dependsOn(getClassPathResolverTask(project));
   }
 
   private static boolean isGradleVersionGreaterOrEqualTo(String version) {
