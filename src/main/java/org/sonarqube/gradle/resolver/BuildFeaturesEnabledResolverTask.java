@@ -21,7 +21,6 @@ package org.sonarqube.gradle.resolver;
 
 import javax.inject.Inject;
 import org.gradle.api.configuration.BuildFeatures;
-import org.gradle.util.GradleVersion;
 import org.sonarqube.gradle.SonarResolverTask;
 
 public abstract class BuildFeaturesEnabledResolverTask extends SonarResolverTask {
@@ -30,9 +29,7 @@ public abstract class BuildFeaturesEnabledResolverTask extends SonarResolverTask
 
   @Override
   public boolean configurationCacheIsDisabled() {
-    boolean isConfigurationCacheDisabled = !getBuildFeatures().getConfigurationCache().getActive().get();
-    boolean isBelowGradle9 = GradleVersion.current().compareTo(GradleVersion.version("9.0")) < 0;
-    return isBelowGradle9 || isConfigurationCacheDisabled;
+    return !getBuildFeatures().getConfigurationCache().getActive().get();
   }
 
 }
