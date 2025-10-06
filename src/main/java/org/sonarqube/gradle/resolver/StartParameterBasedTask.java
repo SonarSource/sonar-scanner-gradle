@@ -22,9 +22,9 @@ package org.sonarqube.gradle.resolver;
 import org.gradle.StartParameter;
 import org.sonarqube.gradle.SonarResolverTask;
 
-@SuppressWarnings("java:S6813")
 public class StartParameterBasedTask extends SonarResolverTask {
   @Override
+  @SuppressWarnings("java:S1874")
   public boolean configurationCacheIsDisabled() {
     StartParameter startParameter = getProject().getGradle().getStartParameter();
     return startParameter.isConfigurationCacheRequested();

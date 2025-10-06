@@ -37,7 +37,6 @@ import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -48,7 +47,8 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
-import org.sonarqube.gradle.resolver.ResolverTaskFactory;
+import org.sonarqube.gradle.resolver.BuildFeaturesEnabledResolverTask;
+import org.sonarqube.gradle.resolver.StartParameterBasedTask;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.getMainClassPath;
@@ -111,15 +111,13 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register(SonarResolverTask.TASK_NAME, ResolverTaskFactory.create(GradleVersion.current()), task -> {
+      target.getTasks().register(SonarResolverTask.TASK_NAME, getCompatibleTaskType(GradleVersion.current()), task -> {
         task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         if (target == topLevelProject) {
           task.setTopLevelProject(true);
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
-
-        Gradle gradle = target.getGradle();
 
         FileCollection mainClassPath = getMainClassPath(target);
         task.setCompileClasspath(mainClassPath);
@@ -138,6 +136,15 @@ public class SonarQubePlugin implements Plugin<Project> {
       })
     );
     return resolverFiles;
+  }
+
+  private static Class<? extends SonarResolverTask> getCompatibleTaskType(GradleVersion version) {
+    if (version.compareTo(GradleVersion.version("8.5.0")) >= 0) {
+      return BuildFeaturesEnabledResolverTask.class;
+    } else if (version.compareTo(GradleVersion.version("7.6.1")) >= 0) {
+      return StartParameterBasedTask.class;
+    }
+    return SonarResolverTask.class;
   }
 
   private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
