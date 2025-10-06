@@ -107,10 +107,12 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    if (compileClasspath == null) {
+    // If we failed to initialize class paths at configuration time AND the configuration cache is not active/requested,
+    // we attempt to rebuild them using the source sets.
+    if (compileClasspath == null && configurationCacheIsDisabled()) {
       compileClasspath = SonarUtils.getMainClassPath(getProject());
     }
-    if (testCompileClasspath == null) {
+    if (testCompileClasspath == null && configurationCacheIsDisabled()) {
       testCompileClasspath = SonarUtils.getTestClassPath(getProject());
     }
 
@@ -131,6 +133,10 @@ public abstract class SonarResolverTask extends DefaultTask {
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
+  }
+
+  public boolean configurationCacheIsDisabled() {
+    return true;
   }
 
 }
