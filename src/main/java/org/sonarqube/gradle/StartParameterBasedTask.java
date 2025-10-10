@@ -17,19 +17,15 @@
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
-package org.sonarqube.gradle.resolver;
+package org.sonarqube.gradle;
 
-import javax.inject.Inject;
-import org.gradle.api.configuration.BuildFeatures;
-import org.sonarqube.gradle.SonarResolverTask;
+import org.gradle.StartParameter;
 
-public abstract class BuildFeaturesEnabledResolverTask extends SonarResolverTask {
-  @Inject
-  public abstract BuildFeatures getBuildFeatures();
-
+public class StartParameterBasedTask extends SonarResolverTask {
   @Override
+  @SuppressWarnings("java:S1874")
   public boolean configurationCacheIsDisabled() {
-    return !getBuildFeatures().getConfigurationCache().getActive().get();
+    StartParameter startParameter = getProject().getGradle().getStartParameter();
+    return startParameter.isConfigurationCacheRequested();
   }
-
 }

@@ -47,8 +47,6 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
-import org.sonarqube.gradle.resolver.BuildFeaturesEnabledResolverTask;
-import org.sonarqube.gradle.resolver.StartParameterBasedTask;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.getMainClassPath;
