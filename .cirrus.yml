@@ -119,6 +119,7 @@ sonar_shadow_scan_and_issue_replication_task:
     - ./shadow-scan-and-issue-replication.sh -Dsonar.sca.exclusions="integrationTests/src/test/resources/**,src/test/projects/**"
 
 build_win_task:
+  only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
   ec2_instance:
     image: base-windows-jdk17-v*
     <<: *WINDOWS_VM_DEFINITION
@@ -131,7 +132,7 @@ build_win_task:
   build_script:
     - *log_develocity_url_script
     - source cirrus-env CI
-    - ./gradlew --no-daemon --info --stacktrace --console plain build artifactoryPublish -DbuildNumber="$BUILD_NUMBER"
+    - ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
 
 qa_win_task:
   env:
