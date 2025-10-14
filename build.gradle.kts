@@ -246,6 +246,10 @@ tasks.withType<Sign> {
     }
 }
 
+tasks.named("artifactoryPublish") {
+    dependsOn(tasks.withType<Sign>())
+}
+
 tasks.withType<Test>().configureEach {
     doLast {
         Thread.sleep(2000) // https://github.com/gradle/gradle/issues/16603
