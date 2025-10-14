@@ -89,7 +89,7 @@ sonar_shadow_scan_and_issue_replication_task:
   depends_on:
     - build
   # Only run when triggered by the cirrus-ci cron job named "nightly"
-  only_if: $CIRRUS_CRON == "nightly"
+  # only_if: $CIRRUS_CRON == "nightly"
   eks_container:
     <<: *CONTAINER_DEFINITION_17
     cpu: 1.5

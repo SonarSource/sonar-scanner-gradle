@@ -3,7 +3,9 @@
 set -euo pipefail
 
 # IRIS: Issue Replication for Sonarqube
-IRIS_JAR_URL="${ARTIFACTORY_URL}/sonarsource-private-releases/com/sonarsource/iris/iris/\[RELEASE\]/iris-\[RELEASE\]-jar-with-dependencies.jar"
+# IRIS_JAR_URL="${ARTIFACTORY_URL}/sonarsource-private-releases/com/sonarsource/iris/iris/\[RELEASE\]/iris-\[RELEASE\]-jar-with-dependencies.jar"
+IRIS_JAR_URL="${ARTIFACTORY_URL}/sonarsource-private-builds/com/sonarsource/iris/iris/1.7.3.2434/iris-1.7.3.2434-jar-with-dependencies.jar"
+
 IRIS_JAR_PATH="target/libs/iris.jar"
 
 function build_and_analyze_the_project() {
