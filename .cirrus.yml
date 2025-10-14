@@ -135,7 +135,7 @@ build_win_task:
 
 qa_win_task:
   env:
-    GRADLE_VERSION: 9.0.0
+    GRADLE_VERSION: 9.1.0
   depends_on:
     - build_win
   ec2_instance:
@@ -187,6 +187,7 @@ gradle_qa_task:
     memory: 4G
   env:
     matrix:
+      - GRADLE_VERSION: 9.1.0
       - GRADLE_VERSION: 9.0.0
       - GRADLE_VERSION: 8.13
       - GRADLE_VERSION: 8.4
