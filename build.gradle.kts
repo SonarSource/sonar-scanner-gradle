@@ -12,7 +12,7 @@ plugins {
     groovy
     jacoco
     `maven-publish`
-    id("com.jfrog.artifactory") version "4.24.23"
+    id("com.jfrog.artifactory") version "5.2.5"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
     id("org.cyclonedx.bom") version "1.5.0"
