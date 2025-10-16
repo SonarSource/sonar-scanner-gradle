@@ -131,14 +131,14 @@ build_win_task:
     folder: ${CIRRUS_WORKING_DIR}/.java_download_cache
   build_script:
     - *log_develocity_url_script
-    - source cirrus-env CI
+    - source cirrus-env BUILD
     - ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
 
 qa_win_task:
   env:
     GRADLE_VERSION: 9.1.0
   depends_on:
-    - build_win
+    - build
   ec2_instance:
     image: base-windows-jdk17-v*
     <<: *WINDOWS_VM_DEFINITION
