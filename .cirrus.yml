@@ -119,6 +119,7 @@ sonar_shadow_scan_and_issue_replication_task:
     - ./shadow-scan-and-issue-replication.sh -Dsonar.sca.exclusions="integrationTests/src/test/resources/**,src/test/projects/**"
 
 build_win_task:
+  only_if: $CIRRUS_RELEASE == "" && $CIRRUS_TAG == ""
   ec2_instance:
     image: base-windows-jdk17-v*
     <<: *WINDOWS_VM_DEFINITION
@@ -130,14 +131,14 @@ build_win_task:
     folder: ${CIRRUS_WORKING_DIR}/.java_download_cache
   build_script:
     - *log_develocity_url_script
-    - source cirrus-env CI
-    - ./gradlew --no-daemon --info --stacktrace --console plain build artifactoryPublish -DbuildNumber="$BUILD_NUMBER"
+    - source cirrus-env BUILD
+    - ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
 
 qa_win_task:
   env:
     GRADLE_VERSION: 9.1.0
   depends_on:
-    - build_win
+    - build
   ec2_instance:
     image: base-windows-jdk17-v*
     <<: *WINDOWS_VM_DEFINITION
