@@ -1,0 +1,20 @@
+[versions]
+# Per your request, AGP 9.0.0-alpha is needed for Gradle 9
+agp = "9.0.0-alpha11"
+# AGP 9.0 requires a minimum of Kotlin 2.0
+kotlin = "2.0.0"
+sonar = "7.0.0.6105"
+
+# Android SDK versions
+compileSdk = "34"
+minSdk = "24"
+targetSdk = "34"
+
+[libraries]
+# No app dependencies needed for this simple example
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonar" }

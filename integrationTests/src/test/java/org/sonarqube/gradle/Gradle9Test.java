@@ -80,4 +80,67 @@ public class Gradle9Test extends AbstractGradleIT {
       entry("sonar.working.directory", "${parentBaseDir}/gradle-9-example/build/sonar"));
   }
 
+  @Test
+  public void gradle9parallelExample() throws Exception {
+    Map<String, String> env = Collections.emptyMap();
+    Properties props = runGradlewSonarSimulationModeWithEnv("/gradle-9-parallel-example", env,
+      "--quiet",
+      "--console=plain",
+      "build",
+      "-Dorg.gradle.parallel=true");
+    assertThat(extractComparableProperties(props)).containsOnly(
+      entry("sonar.binaries", "${parentBaseDir}/gradle-9-parallel-example/build/classes/java/main"),
+      entry("sonar.host.url", "https://sonarcloud.io"),
+      entry("sonar.java.binaries", "${parentBaseDir}/gradle-9-parallel-example/build/classes/java/main"),
+      entry("sonar.java.enablePreview", "false"),
+      entry("sonar.java.jdkHome", "<hidden>"),
+      entry("sonar.java.source", "17"),
+      entry("sonar.java.target", "17"),
+      entry("sonar.java.test.binaries", "${parentBaseDir}/gradle-9-parallel-example/build/classes/java/test"),
+      entry("sonar.junit.reportPaths", "${parentBaseDir}/gradle-9-parallel-example/build/test-results/test"),
+      entry("sonar.junit.reportsPath", "${parentBaseDir}/gradle-9-parallel-example/build/test-results/test"),
+      entry("sonar.kotlin.gradleProjectRoot", "${parentBaseDir}/gradle-9-parallel-example"),
+      entry("sonar.projectBaseDir", "${parentBaseDir}/gradle-9-parallel-example"),
+      entry("sonar.projectKey", "gradle-9-parallel-example"),
+      entry("sonar.projectName", "Gradle 9 parallel example"),
+      entry("sonar.projectVersion", "1.0-SNAPSHOT"),
+      entry("sonar.scanner.apiBaseUrl", "https://api.sonarcloud.io"),
+      entry("sonar.scanner.app", "ScannerGradle"),
+      entry("sonar.scanner.appVersion", "<hidden>"),
+      entry("sonar.scanner.arch", "<hidden>"),
+      entry("sonar.scanner.internal.dumpToFile", "<hidden>"),
+      entry("sonar.scanner.os", "<hidden>"),
+      entry("sonar.scanner.wasEngineCacheHit", "false"),
+      entry("sonar.surefire.reportsPath", "${parentBaseDir}/gradle-9-parallel-example/build/test-results/test"),
+      entry("sonar.tests", "${parentBaseDir}/gradle-9-parallel-example/src/test/java"),
+      entry("sonar.working.directory", "${parentBaseDir}/gradle-9-parallel-example/build/sonar"),
+      entry("sonar.sources",
+        "${parentBaseDir}/gradle-9-parallel-example/src/main/java," +
+          "${parentBaseDir}/gradle-9-parallel-example/build.gradle.kts," +
+          "${parentBaseDir}/gradle-9-parallel-example/module/build.gradle.kts," +
+          "${parentBaseDir}/gradle-9-parallel-example/settings.gradle.kts"),
+      entry("sonar.java.libraries", "${M2}/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar"),
+      entry("sonar.libraries", "${M2}/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar"),
+      entry("sonar.java.test.libraries",
+        "${parentBaseDir}/gradle-9-parallel-example/build/classes/java/main," +
+          "${M2}/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar," +
+          "${M2}/repository/org/junit/jupiter/junit-jupiter/5.10.0/junit-jupiter-5.10.0.jar," +
+          "${M2}/repository/org/junit/jupiter/junit-jupiter-params/5.10.0/junit-jupiter-params-5.10.0.jar," +
+          "${M2}/repository/org/junit/jupiter/junit-jupiter-api/5.10.0/junit-jupiter-api-5.10.0.jar," +
+          "${M2}/repository/org/junit/platform/junit-platform-commons/1.10.0/junit-platform-commons-1.10.0.jar," +
+          "${M2}/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar," +
+          "${M2}/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar"
+      ),
+      entry("sonar.modules", ":module"),
+      entry(":module.sonar.java.libraries", ""),
+      entry(":module.sonar.java.test.libraries", ""),
+      entry(":module.sonar.libraries", ""),
+      entry(":module.sonar.moduleKey", "gradle-9-parallel-example:module"),
+      entry(":module.sonar.projectBaseDir", "${parentBaseDir}/gradle-9-parallel-example/module"),
+      entry(":module.sonar.projectName", "module"),
+      entry(":module.sonar.projectVersion", "unspecified"),
+      entry(":module.sonar.sources", ""),
+      entry(":module.sonar.tests", ""));
+  }
+
 }
