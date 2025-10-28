@@ -2824,6 +2824,11 @@
             <sha256 value="1b309dfa51d778d1ada188e0ca4f0a3f67af68e07859b8f08081f85f43c956df" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.sonarsource.scanner.gradle" name="sonarqube-gradle-plugin" version="7.0.1.6134">
+         <artifact name="sonarqube-gradle-plugin-7.0.1.6134.jar">
+            <sha256 value="4951582445832326cb5eb72309d3418f3c985133877fd007c6bebf33666e1fe3" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="3.1.1.261">
          <artifact name="sonar-scanner-java-library-3.1.1.261.jar">
             <sha256 value="adb2ffbf5542b2560e23193675fecc88d90995fcc533b0851cada3e226bd68e6" origin="Verified"/>
