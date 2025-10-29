@@ -65,8 +65,6 @@ jobs:
           artifactory-reader-role: private-reader
           working-directory: integrationTests
       - name: Run QA
-        env:
-          SONARSOURCE_QA: true
         shell: bash # Set explicitly so Bash is used on Windows runners too.
         run: |
           source "./cirrus/set-version-from-build-number.sh"
