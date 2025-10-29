@@ -139,6 +139,7 @@ qa_win_task:
     GRADLE_VERSION: 9.1.0
   depends_on:
     - build
+  <<: *ONLY_SONARSOURCE_QA
   ec2_instance:
     image: base-windows-jdk17-v*
     <<: *WINDOWS_VM_DEFINITION
