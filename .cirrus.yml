@@ -189,6 +189,7 @@ gradle_qa_task:
     memory: 4G
   env:
     matrix:
+      - GRADLE_VERSION: 9.2.0
       - GRADLE_VERSION: 9.1.0
       - GRADLE_VERSION: 9.0.0
       - GRADLE_VERSION: 8.13
