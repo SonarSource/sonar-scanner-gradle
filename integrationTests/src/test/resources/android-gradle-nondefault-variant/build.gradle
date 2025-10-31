@@ -59,6 +59,6 @@ sonar {
         property "sonar.projectName", "Simple Android Gradle Project"
         property "sonar.projectKey", "org.sonarqube:example-android-gradle"
     }
-    androidVariant 'fullMinApi23Release'
+    androidVariant = 'fullMinApi23Release'
 }
 

@@ -50,6 +50,6 @@ project(":app3"){
 
 project(":app4"){
     sonar {
-        androidVariant "fullRelease"
+        androidVariant = "fullRelease"
     }
 }

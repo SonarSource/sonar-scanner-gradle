@@ -251,7 +251,7 @@ parameter `androidVariant`:
 ```
 build.gradle
 sonar {
-    androidVariant 'fullDebug'
+    androidVariant = 'fullDebug'
 }
 ```
 
