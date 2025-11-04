@@ -44,4 +44,4 @@ jobs:
           deploy-pull-request: true
           artifactory-reader-role: private-reader    # Override default public-reader
           artifactory-deployer-role: qa-deployer     # Override default public-deployer
-          gradle-args: "-Dsonar.sca.exclusions=\"integrationTests/src/test/resources/**,src/test/projects/**\""
+          gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
