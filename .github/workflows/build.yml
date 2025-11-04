@@ -31,6 +31,7 @@ jobs:
           mvn -f property-dump-plugin/pom.xml -B install
       # Run setup-gradle to prevent validating the wrapper in
       # integrationTests/src/test/resources/AndroidTestingBlueprintWithFeatureModule
+      # TODO: This should be a parameter is some shared Sonar step.
       - name: Configure Gradle
         uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
         with:
