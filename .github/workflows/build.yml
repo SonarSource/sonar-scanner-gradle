@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   build:
+    # Build takes over 30 minutes on "s" and around 5 minutes on "m".
     runs-on: github-ubuntu-latest-m  # Public repo
     name: Build
     permissions:
