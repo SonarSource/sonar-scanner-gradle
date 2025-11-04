@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: github-ubuntu-latest-m  # Public repo
+    runs-on: github-ubuntu-latest-s  # Public repo
     name: Build
     permissions:
       id-token: write  # Required for Vault OIDC authentication
