@@ -7,7 +7,7 @@ on:
       - dogfood-*
   pull_request:
   workflow_dispatch:
-    schedule:
+  schedule:
     - cron: "30 1 * * *" # Run daily at 1:30 AM UTC
 
 concurrency:
@@ -49,16 +49,12 @@ jobs:
           gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
 
   qa:
-    needs:
-      - build
     strategy:
       fail-fast: false
       matrix:
         item:
           - gradle_version: "9.2.0"
-          - gradle_version: "9.1.0"
-          - gradle_version: "9.1.0"
-            runner: "github-windows-latest-m"
+          - gradle_version: &gradle-version-to-test-on-windows-too "9.1.0"
           - gradle_version: "9.0.0"
           - gradle_version: "8.13"
           - gradle_version: "8.13"
@@ -74,47 +70,33 @@ jobs:
     name: >
       QA Gradle ${{ matrix.item.gradle_version }}
       ${{ matrix.item.android_gradle_version && format(' Android {0}', matrix.item.android_gradle_version) || '' }}
-      ${{ matrix.item.runner || '' }}
-    runs-on: ${{ matrix.item.runner || 'github-ubuntu-latest-m' }}
+    needs:
+      - build
+    runs-on: 'github-ubuntu-latest-m'
     permissions:
       id-token: write
       contents: write
-    env:
-      GRADLE_VERSION: ${{ matrix.item.gradle_version }}
-      ANDROID_GRADLE_VERSION: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
     steps:
-      - name: Configure Long Paths on Windows
-        if: runner.os == 'Windows'
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/qa
+        with:
+          gradle-version: ${{ matrix.item.gradle_version }}
+          android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
+
+  qa-windows:
+    name: QA Windows
+    needs:
+      - build
+    runs-on: 'github-windows-latest-m'
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      # Windows needs this.
+      - name: Configure Long Paths
         run: git config --global core.longpaths true
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: ./.github/actions/qa
         with:
-          version: 2025.7.12
-      - name: Get Vault secrets
-        id: secrets
-        uses: SonarSource/vault-action-wrapper@v3
-        with:
-          secrets: |
-            development/github/token/licenses-ro token | GITHUB_TOKEN;
-            development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
-      - name: Configure Maven
-        uses: SonarSource/ci-github-actions/config-maven@v1
-        with:
-          artifactory-reader-role: private-reader
-          working-directory: integrationTests
-        env:
-          GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
-          ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
-      - name: Run QA
-        env:
-          GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
-          ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
-          SONARSOURCE_QA: true
-        shell: bash
-        run: |
-          # TODO: Move the script or create a step when we remove Cirrus.
-          source "./cirrus/set-version-from-build-number.sh"
-          mvn -f property-dump-plugin/pom.xml --batch-mode install
-          cd integrationTests
-          mvn --errors --batch-mode --no-transfer-progress org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion="${NEW_VERSION}" -DgenerateBackupPoms=false
-          mvn --errors --batch-mode --no-transfer-progress clean verify -Dgradle.version="${GRADLE_VERSION}" -DandroidGradle.version="${ANDROID_GRADLE_VERSION}"
+          gradle-version: *gradle-version-to-test-on-windows-too
+          android-gradle-version: 'NOT_AVAILABLE'

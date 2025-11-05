@@ -1,0 +1,45 @@
+name: QA Gradle
+description: Run QA tests with different Gradle versions
+
+inputs:
+  gradle-version:
+    required: true
+  android-gradle-version:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      with:
+        version: 2025.7.12
+    - name: Get Vault secrets
+      id: secrets
+      uses: SonarSource/vault-action-wrapper@v3
+      with:
+        secrets: |
+          development/github/token/licenses-ro token | GITHUB_TOKEN;
+          development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
+    - name: Configure Maven
+      uses: SonarSource/ci-github-actions/config-maven@v1
+      with:
+        artifactory-reader-role: private-reader
+        working-directory: integrationTests
+      env:
+        GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
+        ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+    - name: Run QA
+      env:
+        GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
+        ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+        SONARSOURCE_QA: true
+        GRADLE_VERSION: ${{ inputs.gradle-version }}
+        ANDROID_GRADLE_VERSION: ${{ inputs.android-gradle-version }}
+      shell: bash
+      run: |
+        # TODO: Move the script or create a step when we remove Cirrus.
+        source "./cirrus/set-version-from-build-number.sh"
+        mvn -f property-dump-plugin/pom.xml --batch-mode install
+        cd integrationTests
+        mvn --errors --batch-mode --no-transfer-progress org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion="${NEW_VERSION}" -DgenerateBackupPoms=false
+        mvn --errors --batch-mode --no-transfer-progress clean verify -Dgradle.version="${GRADLE_VERSION}" -DandroidGradle.version="${ANDROID_GRADLE_VERSION}"
