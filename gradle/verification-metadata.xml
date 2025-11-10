@@ -2273,6 +2273,9 @@
          <artifact name="kotlin-gradle-plugin-1.8.21-gradle76.jar">
             <sha256 value="eeb014fcab1bdc49e02ad959ea1b36a63c8cfec3fc24694e37f4eb48b23518b8" origin="Verified"/>
          </artifact>
+         <artifact name="kotlin-gradle-plugin-1.8.21.jar">
+            <sha256 value="5dcab84d28d072a8d5a47002b0396e6f42b4cdf1ff31fe6e92827b5d6db230e6" origin="Verified"/>
+         </artifact>
          <artifact name="kotlin-gradle-plugin-1.8.21.module">
             <sha256 value="08a5310a6a95ced220173efdd8d9f03ec6553cb1a4b5c12e82e45bb99c9cec9b" origin="Verified"/>
          </artifact>
@@ -2571,7 +2574,9 @@
       </component>
       <component group="org.jfrog.buildinfo" name="build-info-extractor-gradle" version="5.2.5">
          <artifact name="build-info-extractor-gradle-5.2.5.jar">
-            <sha256 value="11dfff60a6b351034a589e08f148c1007ec24a08237b62e5c0c8be043b723f64" origin="Verified"/>
+            <sha256 value="11dfff60a6b351034a589e08f148c1007ec24a08237b62e5c0c8be043b723f64" origin="Verified">
+               <also-trust value="a06c1956fec972926f11b1f2ead50bf42366f3e36a72e86efedec887e54049d1"/>
+            </sha256>
          </artifact>
       </component>
       <component group="org.jfrog.filespecs" name="file-specs-java" version="1.1.0">
