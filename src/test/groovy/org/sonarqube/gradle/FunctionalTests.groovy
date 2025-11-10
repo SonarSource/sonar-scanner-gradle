@@ -758,4 +758,29 @@ class FunctionalTests extends Specification {
         then:
         assert result.task(":sonar").getOutcome() == TaskOutcome.SUCCESS
     }
+
+    def "clean sonar"() {
+        given:
+        settingsFile << "rootProject.name = 'java-task-toolchains'"
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withProjectDir(projectDir.toFile())
+          .withGradleVersion("9.1.0")
+          .forwardOutput()
+          .withArguments('clean', 'sonar',  '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        assert result.task(":clean").getOutcome() == SUCCESS
+        assert result.task(":sonar").getOutcome() == SUCCESS
+    }
 }
+
