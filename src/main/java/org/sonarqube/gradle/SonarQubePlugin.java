@@ -20,7 +20,6 @@
 package org.sonarqube.gradle;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -126,11 +125,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
         localSonarResolver.mkdirs();
         task.setOutputDirectory(localSonarResolver);
-        try {
-          resolverFiles.add(task.getOutputFile());
-        } catch (IOException e) {
-          LOGGER.warn("Could not get output file from task {} on project {}", task.getName(), target.getName());
-        }
+        resolverFiles.add(task.getOutputFile());
       })
     );
     return resolverFiles;
