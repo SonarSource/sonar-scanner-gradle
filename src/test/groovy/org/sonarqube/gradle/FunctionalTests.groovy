@@ -781,6 +781,7 @@ class FunctionalTests extends Specification {
         then:
         assert result.task(":clean").getOutcome() == SUCCESS
         assert result.task(":sonar").getOutcome() == SUCCESS
+        assert projectDir.resolve("build").resolve("sonar-resolver").resolve("properties").toFile().exists()
     }
 }
 
