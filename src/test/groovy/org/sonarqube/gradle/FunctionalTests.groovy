@@ -759,7 +759,7 @@ class FunctionalTests extends Specification {
         assert result.task(":sonar").getOutcome() == TaskOutcome.SUCCESS
     }
 
-    def "clean sonar"() {
+    def "clean sonar does not fail on a clean project"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"
         buildFile << """
