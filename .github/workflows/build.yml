@@ -53,7 +53,8 @@ jobs:
       fail-fast: false
       matrix:
         item:
-          - gradle_version: &gradle-version-to-test-on-windows-too "9.2.0"
+        # Make sure to move `&latest-gradle-version` when adding a new test case with a new version.
+          - gradle_version: &latest-gradle-version "9.2.0"
           - gradle_version: "9.1.0"
           - gradle_version: "9.0.0"
           - gradle_version: "8.13"
@@ -98,5 +99,5 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: ./.github/actions/qa
         with:
-          gradle-version: *gradle-version-to-test-on-windows-too
+          gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
