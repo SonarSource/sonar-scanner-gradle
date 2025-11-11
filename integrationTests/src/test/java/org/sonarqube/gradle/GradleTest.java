@@ -422,4 +422,14 @@ public class GradleTest extends AbstractGradleIT {
       baseDir.resolve("src/main/java"),
       baseDir.resolve(".github"));
   }
+
+  @Test
+  public void testClasspathDependency() throws Exception {
+
+      // we do not care about the properties just that gradle execute task sonar and return code 0
+      String propertyPath = this.temp.newFile().getAbsolutePath();
+      RunResult result = runGradlewSonarWithEnvQuietly("/java-gradle-classpath-dependency", new HashMap<>(), "-Dsonar.scanner.internal.dumpToFile="+propertyPath);
+
+      assertThat(result.getExitValue()).isZero();
+  }
 }
