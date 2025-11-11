@@ -121,6 +121,13 @@ public class SonarQubePlugin implements Plugin<Project> {
         FileCollection testClassPath = getTestClassPath(target);
         task.setTestCompileClasspath(testClassPath);
 
+        if (isAndroidProject(target)) {
+          FileCollection androidLibraries = AndroidUtils.getLibrariesFileCollection(target, getConfiguredAndroidVariant(target));
+          if (androidLibraries != null) {
+            task.setMainLibraries(androidLibraries);
+          }
+        }
+
         DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
         localSonarResolver.mkdirs();
