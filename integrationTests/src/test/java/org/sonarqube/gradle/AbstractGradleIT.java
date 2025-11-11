@@ -76,12 +76,12 @@ public abstract class AbstractGradleIT {
 
   protected static void ignoreThisTestIfGradleVersionIsLessThan(String version) {
     Semver gradleVersion = getGradleVersion();
-    Assume.assumeTrue("Test is ignored for Gradle version " + gradleVersion + " which is greater than or equal to ", gradleVersion.isGreaterThanOrEqualTo(version));
+    Assume.assumeTrue("Test is ignored for Gradle version " + gradleVersion + " which should be greater than or equal to " + version, gradleVersion.isGreaterThanOrEqualTo(version));
   }
 
   protected static void ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo(String version) {
     Semver gradleVersion = getGradleVersion();
-    Assume.assumeTrue("Test is ignored for Gradle version " + gradleVersion + " which is greater than or equal to ", gradleVersion.isLowerThan(version));
+    Assume.assumeTrue("Test is ignored for Gradle version " + gradleVersion + " which should be lower than " + version, gradleVersion.isLowerThan(version));
   }
 
   protected static void ignoreThisTestIfGradleVersionIsNotBetween(String minVersionIncluded, String maxVersionExcluded) {
