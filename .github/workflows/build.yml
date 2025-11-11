@@ -101,3 +101,20 @@ jobs:
         with:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
+
+  qa-java11:
+    name: QA Java 11
+    # needs:
+    #   - build
+    runs-on: 'github-ubuntu-latest-m'
+    permissions:
+      id-token: write
+      contents: write
+    env:
+      BUILD_NUMBER: 7239
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/qa
+        with:
+          gradle-version: "7.5.1"
+          android-gradle-version: "7.1.0"
