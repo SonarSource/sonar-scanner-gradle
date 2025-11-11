@@ -106,7 +106,7 @@ Run with:
 See the previous point about including the plugin's build when building a target project.
 To debug, simply add the parameter:
 ```
-./gradlew sonar --include-build /path/to/sonar-scanner-gradle -Dorg.gradle.debug=true
+./gradlew sonar --include-build /path/to/sonar-scanner-gradle/build/classes/java/main/ -Dorg.gradle.debug=true
 ```
 
 Now debug remotely by connecting to the port 5005.
