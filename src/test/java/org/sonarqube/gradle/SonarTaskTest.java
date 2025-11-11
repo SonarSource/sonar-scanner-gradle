@@ -31,10 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SonarTaskTest {
 
+  private final ProjectProperties projectProperties = new ProjectProperties("", true, List.of(), List.of(), List.of(), List.of());
+
   @Test
   void resolveSonarJavaLibraries_skips_resolution_when_no_configuration_provided() {
     Map<String, String> emptyMap = new HashMap<>();
-    SonarTask.resolveSonarJavaLibraries(new ProjectProperties("", true, List.of(), List.of()), null, emptyMap);
+    SonarTask.resolveSonarJavaLibraries(projectProperties, null, emptyMap);
     assertThat(emptyMap).isEmpty();
   }
 
@@ -44,7 +46,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    SonarTask.resolveSonarJavaLibraries(new ProjectProperties("", true, List.of(), List.of()), fileCollection, properties);
+    SonarTask.resolveSonarJavaLibraries(projectProperties, fileCollection, properties);
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
             Map.of(
                     "sonar.java.libraries", emptyJar.getAbsolutePath(),
@@ -59,7 +61,8 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    SonarTask.resolveSonarJavaLibraries(new ProjectProperties(":subproject", false, List.of(), List.of()), fileCollection, properties);
+    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of());
+    SonarTask.resolveSonarJavaLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
             .hasSize(2)
             .containsEntry(":subproject.sonar.java.libraries", emptyJar.getAbsolutePath())
@@ -75,7 +78,7 @@ class SonarTaskTest {
     File toBeResolved = new File(tempDir, "resolved.jar");
     toBeResolved.createNewFile();
     List<File> fileCollection = List.of(toBeResolved);
-    SonarTask.resolveSonarJavaLibraries(new ProjectProperties("", true, List.of(), List.of()), fileCollection, properties);
+    SonarTask.resolveSonarJavaLibraries(projectProperties, fileCollection, properties);
     String expectedValue = String.format("%s,%s", known.getAbsolutePath(), toBeResolved.getAbsolutePath());
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
             Map.of(
@@ -88,7 +91,7 @@ class SonarTaskTest {
   @Test
   void resolveSonarJavaTestLibraries_skips_resolution_when_no_configuration_provided() {
     Map<String, String> emptyMap = new HashMap<>();
-    SonarTask.resolveSonarJavaTestLibraries(new ProjectProperties("", true, List.of(), List.of()), null, emptyMap);
+    SonarTask.resolveSonarJavaTestLibraries(projectProperties, null, emptyMap);
     assertThat(emptyMap).isEmpty();
   }
 
@@ -98,7 +101,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    SonarTask.resolveSonarJavaTestLibraries(new ProjectProperties("", true, List.of(), List.of()), fileCollection, properties);
+    SonarTask.resolveSonarJavaTestLibraries(projectProperties, fileCollection, properties);
     assertThat(properties)
             .hasSize(1)
             .containsEntry("sonar.java.test.libraries", emptyJar.getAbsolutePath());
@@ -110,7 +113,8 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    SonarTask.resolveSonarJavaTestLibraries(new ProjectProperties(":subproject", false, List.of(), List.of()), fileCollection, properties);
+    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of());
+    SonarTask.resolveSonarJavaTestLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
             .hasSize(1)
             .containsEntry(":subproject.sonar.java.test.libraries", emptyJar.getAbsolutePath());
@@ -127,7 +131,7 @@ class SonarTaskTest {
     File toBeResolved = new File(tempDir, "resolved.jar");
     toBeResolved.createNewFile();
     List<File> fileCollection = List.of(toBeResolved);
-    SonarTask.resolveSonarJavaTestLibraries(new ProjectProperties("", true, List.of(), List.of()), fileCollection, properties);
+    SonarTask.resolveSonarJavaTestLibraries(projectProperties, fileCollection, properties);
 
     String expectedValue = String.format(
             "%s,%s",
@@ -157,7 +161,7 @@ class SonarTaskTest {
     File toBeResolved = new File(tempDir, "resolved.jar");
     toBeResolved.createNewFile();
     List<File> fileCollection = List.of(toBeResolved);
-    SonarTask.resolveSonarJavaTestLibraries(new ProjectProperties("", true, List.of(), List.of()), fileCollection, properties);
+    SonarTask.resolveSonarJavaTestLibraries(projectProperties, fileCollection, properties);
 
     String expectedValue = String.format(
             "%s,%s,%s",

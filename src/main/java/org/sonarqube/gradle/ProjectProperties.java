@@ -27,12 +27,17 @@ public class ProjectProperties {
   public final Boolean isRootProject;
   public final List<String> compileClasspath;
   public final List<String> testCompileClasspath;
+  public final List<String> mainLibraries;
+  public final List<String> testLibraries;
 
-  public ProjectProperties(String projectName, Boolean isRootProject, List<String> compileClasspath, List<String> testCompileClasspath) {
+  public ProjectProperties(String projectName, Boolean isRootProject, List<String> compileClasspath, List<String> testCompileClasspath,
+                           List<String> mainLibraries, List<String> testLibraries) {
     this.projectName = projectName;
     this.isRootProject = isRootProject;
     this.compileClasspath = compileClasspath;
     this.testCompileClasspath = testCompileClasspath;
+    this.mainLibraries = mainLibraries;
+    this.testLibraries = testLibraries;
   }
 
 }

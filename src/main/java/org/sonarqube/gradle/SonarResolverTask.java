@@ -45,6 +45,8 @@ public abstract class SonarResolverTask extends DefaultTask {
   private boolean isTopLevelProject;
   private FileCollection compileClasspath;
   private FileCollection testCompileClasspath;
+  private FileCollection mainLibraries;
+  private FileCollection testLibraries;
   private File outputDirectory;
 
   @Input
@@ -83,6 +85,24 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.testCompileClasspath = testCompileClasspath;
   }
 
+  @Internal
+  FileCollection getMainLibraries() {
+    return this.mainLibraries;
+  }
+
+  public void setMainLibraries(FileCollection mainLibraries) {
+    this.mainLibraries = mainLibraries;
+  }
+
+  @Internal
+  FileCollection getTestLibraries() {
+    return this.testLibraries;
+  }
+
+  public void setTestLibraries(FileCollection testLibraries) {
+    this.testLibraries = testLibraries;
+  }
+
   public void setOutputDirectory(File outputDirectory) {
     this.outputDirectory = outputDirectory;
   }
@@ -119,7 +139,16 @@ public abstract class SonarResolverTask extends DefaultTask {
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    ProjectProperties projectProperties = new ProjectProperties(getProjectName(), isTopLevelProject(), compileClasspathFilenames, testCompileClasspathFilenames);
+    List<String> mainLibrariesFilenames = SonarUtils.exists(getMainLibraries() == null ? Collections.emptyList() : getMainLibraries())
+      .stream()
+      .map(File::getAbsolutePath)
+      .collect(Collectors.toList());
+    List<String> testLibrariesFilenames = SonarUtils.exists(getTestLibraries() == null ? Collections.emptyList() : getTestLibraries())
+      .stream()
+      .map(File::getAbsolutePath)
+      .collect(Collectors.toList());
+    ProjectProperties projectProperties = new ProjectProperties(getProjectName(), isTopLevelProject(), compileClasspathFilenames, testCompileClasspathFilenames,
+      mainLibrariesFilenames, testLibrariesFilenames);
 
     ResolutionSerializer.write(
       getOutputFile(),
