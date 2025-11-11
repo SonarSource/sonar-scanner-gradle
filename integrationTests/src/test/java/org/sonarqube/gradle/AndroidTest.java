@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 
@@ -447,6 +448,47 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(Paths.get(props.getProperty(":app2.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app2/build/reports/lint-results-debug.xml"));
     assertThat(props.getProperty(":app3.sonar.androidLint.reportPaths")).isEqualTo("/custom/path/to/report.xml");
     assertThat(Paths.get(props.getProperty(":app4.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app4/build/reports/lint-results-fullRelease.xml"));
+  }
 
+  @Test
+  public void gradle9AndroidParallelExample() throws Exception {
+    ignoreThisTestIfGradleVersionIsLessThan("9.0.0");
+    Map<String, String> env = Collections.emptyMap();
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle9", env, "--quiet", "--console=plain");
+    Map<String, String> comparableProps = extractComparableProperties(props);
+
+    // Verify key project structure properties
+    assertThat(comparableProps)
+      .containsEntry("sonar.projectKey", "org.sonarqube:example-android-gradle-dynamic-module")
+      .containsEntry("sonar.projectName", "Simple Android Gradle Project With Dynamic Module")
+      .containsEntry("sonar.projectVersion", "unspecified")
+      .containsEntry("sonar.modules", ":app,:mydynamicfeature")
+      .containsEntry("sonar.host.url", "https://sonarcloud.io");
+
+    // Verify :app module properties
+    assertThat(comparableProps)
+      .containsEntry(":app.sonar.android.detected", "true")
+      .containsEntry(":app.sonar.java.source", "1.8")
+      .containsEntry(":app.sonar.java.target", "1.8")
+      .containsEntry(":app.sonar.moduleKey", "org.sonarqube:example-android-gradle-dynamic-module:app")
+      .containsEntry(":app.sonar.projectName", "app");
+
+    // Verify :mydynamicfeature module properties
+    assertThat(comparableProps)
+      .containsEntry(":mydynamicfeature.sonar.android.detected", "true")
+      .containsEntry(":mydynamicfeature.sonar.java.source", "1.8")
+      .containsEntry(":mydynamicfeature.sonar.java.target", "1.8")
+      .containsEntry(":mydynamicfeature.sonar.moduleKey", "org.sonarqube:example-android-gradle-dynamic-module:mydynamicfeature")
+      .containsEntry(":mydynamicfeature.sonar.projectName", "mydynamicfeature");
+
+    // Verify Android libraries are resolved and present
+    assertThat(comparableProps.get(":app.sonar.java.libraries"))
+      .isNotEmpty()
+      .contains("android.jar")
+      .contains("core-lambda-stubs.jar");
+
+    assertThat(comparableProps.get(":mydynamicfeature.sonar.java.libraries"))
+      .isNotEmpty()
+      .contains("android.jar");
   }
 }
