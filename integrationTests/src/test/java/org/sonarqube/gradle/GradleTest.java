@@ -438,6 +438,8 @@ public class GradleTest extends AbstractGradleIT {
                 new HashMap<>(),
                 "-Dsonar.scanner.internal.dumpToFile=" + propertyPath);
 
+        System.out.println("test task dependency on classpath logs");
+        System.out.println(result.getLog());
         // verify that gradle do not report a conflict with writeToResources
         assertThat(result.getExitValue()).isZero();
     }
