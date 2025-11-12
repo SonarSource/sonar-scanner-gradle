@@ -359,13 +359,7 @@ class AndroidUtils {
    * This allows the FileCollection to be attached as a task input and resolved later at execution time.
    */
   @Nullable
-  static FileCollection getLibrariesFileCollection(Project project, @Nullable String userConfiguredBuildVariantName) {
-    AndroidVariantAndExtension android = findVariantAndExtension(project, userConfiguredBuildVariantName);
-    if (android == null || android.getVariant() == null) {
-      return null;
-    }
-    BaseVariant variant = android.getVariant();
-
+  static FileCollection getLibrariesFileCollection(Project project, BaseVariant variant) {
     // Get boot classpath
     List<File> bootClassPath = getBootClasspath(project);
     FileCollection bootClassPathFiles = bootClassPath != null ? project.files(bootClassPath) : project.files();
