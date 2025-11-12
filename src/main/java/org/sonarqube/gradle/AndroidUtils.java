@@ -44,7 +44,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +53,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
@@ -68,7 +66,6 @@ import org.gradle.util.GradleVersion;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
-import static org.sonarqube.gradle.SonarUtils.exists;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
 import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
 import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
@@ -96,6 +93,24 @@ class AndroidUtils {
     return Version.of(ANDROID_GRADLE_PLUGIN_VERSION);
   }
 
+  /**
+   * Get the variants used for testing for a given variant.
+   */
+  public static List<BaseVariant> getTestVariants(BaseVariant variant) {
+    if (variant instanceof TestedVariant) {
+      TestedVariant testedVariant = (TestedVariant) variant;
+      return Stream.of(
+          // Local tests
+          testedVariant.getUnitTestVariant(),
+          // Instrumentation tests
+          testedVariant.getTestVariant())
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+    }
+    return Collections.emptyList();
+  }
+
   private static void configureForAndroid(Project project, AndroidVariantAndExtension android, Map<String, Object> properties) {
     BaseVariant variant = android.getVariant();
 
@@ -103,25 +118,14 @@ class AndroidUtils {
 
     configureTestReports(project, variant, properties);
     configureLintReports(project, variant, properties);
-
     if (project.getPlugins().hasPlugin("com.android.test")) {
       // Instrumentation tests only
       populateSonarQubeProps(properties, variant, true);
-    } else {
-      populateSonarQubeProps(properties, variant, false);
-      if (variant instanceof TestedVariant) {
-        // Local tests
-        UnitTestVariant unitTestVariant = ((TestedVariant) variant).getUnitTestVariant();
-        if (unitTestVariant != null) {
-          populateSonarQubeProps(properties, unitTestVariant, true);
-        }
-        // Instrumentation tests
-        TestVariant testVariant = ((TestedVariant) variant).getTestVariant();
-        if (testVariant != null) {
-          populateSonarQubeProps(properties, testVariant, true);
-        }
-      }
+      return;
     }
+    populateSonarQubeProps(properties, variant, false);
+    getTestVariants(variant)
+      .forEach(testVariant -> populateSonarQubeProps(properties, testVariant, true));
   }
 
   private static void populateSonarQubeAndroidProperties(AndroidVariantAndExtension android, Map<String, Object> properties) {
