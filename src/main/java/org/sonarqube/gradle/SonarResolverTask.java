@@ -87,17 +87,12 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.outputDirectory = outputDirectory;
   }
 
+  /**
+   * @return the path where resolved properties will be written. Does not create the file itself or check that it exists.
+   */
   @OutputFile
-  public File getOutputFile() throws IOException {
-    String filename = "properties";
-    File output = new File(outputDirectory, filename);
-    if (output.isFile() && output.exists()) {
-      return output;
-    }
-    if (!output.createNewFile()) {
-      throw new IOException("Could not create output file: " + output.getAbsolutePath());
-    }
-    return output;
+  public File getOutputFile() {
+    return new File(outputDirectory, "properties");
   }
 
   @TaskAction
