@@ -768,6 +768,7 @@ class FunctionalTests extends Specification {
             id 'org.sonarqube'
         }
         """
+        assert !projectDir.resolve("build").resolve("sonar-resolver").resolve("properties").toFile().exists()
 
         when:
         def result = GradleRunner.create()
