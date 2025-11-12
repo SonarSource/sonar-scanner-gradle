@@ -28,7 +28,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.UntrackedTask;
 
 
 @UntrackedTask(because = "to avoid conflict with tasks defined by other plugin, the task must always be out of date")
