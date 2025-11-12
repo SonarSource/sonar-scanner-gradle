@@ -108,6 +108,7 @@ license {
     mapping("java", "SLASHSTAR_STYLE")
     strictCheck = true
     exclude("**/*-version.txt")
+    exclude("**/projects/*")
 }
 
 jacoco {

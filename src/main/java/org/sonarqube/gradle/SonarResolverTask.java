@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
@@ -48,6 +49,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   private FileCollection mainLibraries;
   private FileCollection testLibraries;
   private File outputDirectory;
+  private Provider<Boolean> skipProject;
 
   @Input
   public String getProjectName() {
@@ -115,8 +117,21 @@ public abstract class SonarResolverTask extends DefaultTask {
     return new File(outputDirectory, "properties");
   }
 
+  @Input
+  public Provider<Boolean> getSkipProject() {
+    return skipProject;
+  }
+
+  public void setSkipProject(Provider<Boolean> skipProject) {
+    this.skipProject = skipProject;
+  }
+
   @TaskAction
   void run() throws IOException {
+    if(Boolean.TRUE.equals(this.skipProject.get())){
+      return;
+    }
+
     String displayName = getProjectName();
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolving properties for " + displayName + ".");

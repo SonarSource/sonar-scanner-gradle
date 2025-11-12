@@ -21,6 +21,8 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -176,5 +178,33 @@ class SonarTaskTest {
                     "sonar.java.test.libraries", expectedValue
             )
     );
+  }
+
+  @Test
+  void processResolverFile_skips_when_file_does_not_exist() {
+    Map<String, String> result = new HashMap<>();
+    File nonExistentFile = new File("non-existent-file.json");
+    SonarTask.processResolverFile(nonExistentFile, result);
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void processResolverFile_processes_when_file_exists_with_valid_data(@TempDir File tempDir) throws IOException {
+    Map<String, String> result = new HashMap<>();
+    File resolverFile = new File(tempDir, "resolver.json");
+
+
+    Path lib1 = Files.createFile(tempDir.toPath().resolve("lib1.jar"));
+    Path lib2 = Files.createFile(tempDir.toPath().resolve("lib2.jar"));
+    Path testLib1 = Files.createFile(tempDir.toPath().resolve("testlib1.jar"));
+
+    ProjectProperties props = new ProjectProperties("", true,
+      List.of(lib1.toAbsolutePath().toString(), lib2.toAbsolutePath().toString()),
+      List.of(testLib1.toAbsolutePath().toString()));
+    ResolutionSerializer.write(resolverFile, props);
+    SonarTask.processResolverFile(resolverFile, result);
+    assertThat(result)
+      .containsEntry("sonar.java.libraries", lib1.toAbsolutePath() + "," + lib2.toAbsolutePath())
+      .containsEntry("sonar.java.test.libraries", testLib1.toAbsolutePath().toString());
   }
 }

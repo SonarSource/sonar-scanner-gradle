@@ -109,7 +109,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
       target.getTasks().register(SonarResolverTask.TASK_NAME, getCompatibleTaskType(GradleVersion.current()), task -> {
+        Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
+
         task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
+        task.setSkipProject(skipProject);
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         if (target == topLevelProject) {
           task.setTopLevelProject(true);

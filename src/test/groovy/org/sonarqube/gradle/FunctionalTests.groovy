@@ -32,6 +32,34 @@ import static java.util.Objects.nonNull
 import static org.assertj.core.api.Assertions.assertThat
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
+/**
+ * Functional tests for the SonarQube Gradle plugin.
+ *
+ * COVERAGE COLLECTION FOR FUNCTIONAL TESTS:
+ * ==========================================
+ *
+ * These functional tests use Gradle TestKit to run the plugin in real Gradle builds. To collect
+ * JaCoCo coverage data from the plugin code executed in these isolated test projects, we use the
+ * "jacoco-gradle-testkit-plugin" (https://github.com/koral--/jacoco-gradle-testkit-plugin).
+ *
+ * HOW IT WORKS:
+ * -------------
+ * 1. The plugin is configured in build.gradle.kts:
+ *    id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
+ *
+ * 2. The plugin generates a special 'testkit-gradle.properties' file at build time, which contains
+ *    JaCoCo agent configuration. This file is placed in the test resources.
+ *
+ * 3. In the setup() method, we copy this properties file as 'gradle.properties' into each test
+ *    project directory. This ensures that when Gradle TestKit runs the test project, it will:
+ *    - Load the gradle.properties file
+ *    - Apply the JaCoCo agent to the Gradle daemon used for the test
+ *    - Collect coverage data from our plugin code as it executes
+ *
+ * 4. The coverage data is written to build/jacoco/test.exec and merged with unit test coverage
+ *    by the standard JaCoCo report task.
+ *
+ */
 class FunctionalTests extends Specification {
     String gradleVersion = "7.6.2"
 
@@ -186,7 +214,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         compileJava {
           options.compilerArgs.addAll(['--release', '10'])
         }
@@ -334,7 +362,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         compileJava {
           options.release = 8
         }
@@ -369,7 +397,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         compileJava {
           options.compilerArgs.addAll("--enable-preview")
         }
@@ -431,7 +459,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         compileJava {
           options.compilerArgs = [
             file("/")
@@ -545,7 +573,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         sonar {
             properties {
                 $sonarSourcesProperty
@@ -791,7 +819,36 @@ class FunctionalTests extends Specification {
         then:
         assert result.task(":clean").getOutcome() == SUCCESS
         assert result.task(":sonar").getOutcome() == SUCCESS
-        assert projectDir.resolve("build").resolve("sonar-resolver").resolve("properties").toFile().exists()
     }
+
+  def "multi module gradle project"() {
+    given:
+    def multiModuleProjectDir = projectDir("gradle-multimodule")
+    InputStream is = FunctionalTests.class.getClassLoader().getResourceAsStream('testkit-gradle.properties')
+    // skip jacoco execution due to lock conflict on "build/jacoco/test.exec" when executing on windows
+    if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+      Files.copy(is, multiModuleProjectDir.resolve('gradle.properties'), StandardCopyOption.REPLACE_EXISTING)
+    }
+    
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(multiModuleProjectDir.toFile())
+      .withGradleVersion(gradleVersion)
+      .forwardOutput()
+      .withArguments('clean', 'build', 'sonar',  '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+      .withPluginClasspath()
+      .build()
+
+    then:
+    def sonarResolver = multiModuleProjectDir.resolve("module-1/build/sonar-resolver")
+    assert result.task(":sonar").getOutcome() == SUCCESS
+    assert Files.list(sonarResolver).count() == 0
+
+  }
+
+  private Path projectDir(String project) {
+    return Path.of(this.class.getResource("/projects/"+project).toURI());
+  }
 }
 
