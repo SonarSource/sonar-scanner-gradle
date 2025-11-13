@@ -47,7 +47,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   private FileCollection testCompileClasspath;
   private File outputDirectory;
 
-  @Internal
+  @Input
   public String getProjectName() {
     return projectName;
   }
@@ -65,7 +65,7 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.isTopLevelProject = topLevelProject;
   }
 
-  @Input
+  @Internal
   FileCollection getCompileClasspath() {
     return this.compileClasspath;
   }
