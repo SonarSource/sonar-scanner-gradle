@@ -34,7 +34,7 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.UntrackedTask;
 
 
-@UntrackedTask(because = "to avoid conflict with tasks defined by other plugin, the task must always be out of date")
+@UntrackedTask(because = "task must always be recomputed, as we cannot declare input output properly")
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
   public static final String TASK_DESCRIPTION = "Resolves and serializes project information and classpath for SonarQube analysis.";
@@ -63,7 +63,6 @@ public abstract class SonarResolverTask extends DefaultTask {
   public void setTopLevelProject(boolean topLevelProject) {
     this.isTopLevelProject = topLevelProject;
   }
-
 
   @Internal
   FileCollection getCompileClasspath() {
