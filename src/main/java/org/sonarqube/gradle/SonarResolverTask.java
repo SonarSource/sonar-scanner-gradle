@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -55,7 +56,7 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.projectName = name;
   }
 
-  @Internal
+  @Input
   public boolean isTopLevelProject() {
     return isTopLevelProject;
   }
@@ -64,7 +65,7 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.isTopLevelProject = topLevelProject;
   }
 
-  @Internal
+  @Input
   FileCollection getCompileClasspath() {
     return this.compileClasspath;
   }
