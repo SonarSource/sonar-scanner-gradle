@@ -65,6 +65,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
+import static org.sonarqube.gradle.SonarQubePlugin.getConfiguredAndroidVariant;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
 import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
@@ -358,7 +359,6 @@ class AndroidUtils {
    * Get the libraries FileCollection for an Android variant without resolving it.
    * This allows the FileCollection to be attached as a task input and resolved later at execution time.
    */
-  @Nullable
   static FileCollection getLibrariesFileCollection(Project project, BaseVariant variant) {
     // Get boot classpath
     List<File> bootClassPath = getBootClasspath(project);
@@ -438,6 +438,43 @@ class AndroidUtils {
 
     boolean isVariantProvidedByUser() {
       return variantProvidedByUser;
+    }
+  }
+
+  public static class LibrariesAndTestLibraries {
+    private final FileCollection mainLibraries;
+    private final List<FileCollection> testLibraries;
+
+    public LibrariesAndTestLibraries(FileCollection mainLibraries, List<FileCollection> testLibraries) {
+      this.mainLibraries = mainLibraries;
+      this.testLibraries = testLibraries;
+    }
+
+    public FileCollection getMainLibraries() {
+      return mainLibraries;
+    }
+
+    public List<FileCollection> getTestLibraries() {
+      return testLibraries;
+    }
+
+    public static LibrariesAndTestLibraries ofProject(Project project) {
+      AndroidUtils.AndroidVariantAndExtension variantAndExtension =
+        AndroidUtils.findVariantAndExtension(project, getConfiguredAndroidVariant(project));
+
+      List<FileCollection> testLibraries = new ArrayList<>();
+      FileCollection mainLibraries = null;
+
+      if (variantAndExtension != null) {
+        var variant = variantAndExtension.getVariant();
+        mainLibraries = AndroidUtils.getLibrariesFileCollection(project, variant);
+
+        getTestVariants(variant).stream()
+          .map(testVariant -> AndroidUtils.getLibrariesFileCollection(project, testVariant))
+          .filter(Objects::nonNull)
+          .forEach(testLibraries::add);
+      }
+      return new LibrariesAndTestLibraries(mainLibraries == null ? project.files() : mainLibraries, testLibraries);
     }
   }
 }

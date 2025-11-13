@@ -136,18 +136,9 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static void setAndroidLibrariesProperties(Project target, SonarResolverTask task) {
-    AndroidUtils.AndroidVariantAndExtension variantAndExtension = AndroidUtils.findVariantAndExtension(target, getConfiguredAndroidVariant(target));
-    if (variantAndExtension != null) {
-      var variant = variantAndExtension.getVariant();
-      FileCollection mainLibraries = AndroidUtils.getLibrariesFileCollection(target, variant);
-      if (mainLibraries != null) {
-        task.setMainLibraries(mainLibraries);
-      }
-      AndroidUtils.getTestVariants(variant).stream()
-        .map(testVariant ->AndroidUtils.getLibrariesFileCollection(target, testVariant))
-        .filter(Objects::nonNull)
-        .forEach(task::setTestLibraries);
-    }
+    AndroidUtils.LibrariesAndTestLibraries libraries = AndroidUtils.LibrariesAndTestLibraries.ofProject(target);
+    task.setMainLibraries(libraries.getMainLibraries());
+    libraries.getTestLibraries().forEach(task::setTestLibraries);
   }
 
   private static Class<? extends SonarResolverTask> getCompatibleTaskType(GradleVersion version) {
