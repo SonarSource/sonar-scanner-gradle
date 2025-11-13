@@ -29,11 +29,13 @@ import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.UntrackedTask;
 
+
+@UntrackedTask(because = "task must always be recomputed, as we cannot declare input output properly")
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
   public static final String TASK_DESCRIPTION = "Resolves and serializes project information and classpath for SonarQube analysis.";
@@ -63,8 +65,7 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.isTopLevelProject = topLevelProject;
   }
 
-  @InputFiles
-  @Optional
+  @Internal
   FileCollection getCompileClasspath() {
     return this.compileClasspath;
   }
@@ -73,8 +74,7 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.compileClasspath = compileClasspath;
   }
 
-  @InputFiles
-  @Optional
+  @Internal
   FileCollection getTestCompileClasspath() {
     return this.testCompileClasspath;
   }

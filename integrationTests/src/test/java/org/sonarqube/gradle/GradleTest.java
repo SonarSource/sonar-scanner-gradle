@@ -422,4 +422,26 @@ public class GradleTest extends AbstractGradleIT {
       baseDir.resolve("src/main/java"),
       baseDir.resolve(".github"));
   }
+
+    /**
+     * SCANGRADLE-293
+     *
+     * <a href="file://../../../../resources/java-gradle-classpath-dependency/build.gradle.kts#L23">WriteToResources</a> affects the classpath, SonarResolverTask depends on the classpath.
+     *
+     * Verify that gradle do not report a conflict.
+     */
+    @Test
+    public void testClasspathDependency() throws Exception {
+
+      String propertyPath = this.temp.newFile().getAbsolutePath();
+      RunResult result = runGradlewSonarWithEnvQuietly("/java-gradle-classpath-dependency",
+        new HashMap<>(),
+        "-Dsonar.scanner.internal.dumpToFile=" + propertyPath);
+
+
+      // verify that gradle does not report a conflict with writeToResources
+      assertThat(result.getExitValue()).isZero();
+      // the conflict happens on "/resources/main", if we have a message containing "/resources/main" it surely impliy we have the error message
+      assertThat(result.getLog()).doesNotContain("/resources/main");
+    }
 }
