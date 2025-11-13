@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.gradle.api.file.Directory;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
@@ -39,6 +40,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -63,6 +65,7 @@ public class SonarTask extends ConventionTask {
   private LogOutput logOutput = new DefaultLogOutput();
 
   private Provider<Map<String, String>> properties;
+  private Provider<Directory> buildSonar;
 
   private static class DefaultLogOutput implements LogOutput {
     @Override
@@ -211,6 +214,15 @@ public class SonarTask extends ConventionTask {
 
   public void setResolverFiles(List<File> resolverFiles) {
     this.resolverFiles = resolverFiles;
+  }
+
+  @OutputDirectory
+  public Provider<Directory> getBuildSonar() {
+    return this.buildSonar;
+  }
+
+  public void setBuildSonar(Provider<Directory> buildSonar) {
+    this.buildSonar = buildSonar;
   }
 
   /**
