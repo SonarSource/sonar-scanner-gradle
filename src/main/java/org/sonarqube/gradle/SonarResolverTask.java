@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
@@ -51,7 +52,8 @@ public abstract class SonarResolverTask extends DefaultTask {
   private File outputDirectory;
   private Provider<Boolean> skipProject;
 
-  SonarResolverTask() {
+  @Inject
+  public SonarResolverTask() {
     super();
     // UntrackedTask should be enough, but gradle is buggy
     this.getOutputs().upToDateWhen(task -> false);

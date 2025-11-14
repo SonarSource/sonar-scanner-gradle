@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 import org.gradle.api.file.Directory;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
@@ -94,7 +95,8 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  SonarTask(){
+  @Inject
+  public SonarTask(){
     super();
     // UntrackedTask should be enough, but gradle is buggy
     this.getOutputs().upToDateWhen(task -> false);
