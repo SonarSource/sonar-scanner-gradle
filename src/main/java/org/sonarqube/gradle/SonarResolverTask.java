@@ -136,12 +136,14 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
+    var compile = compileClasspath.getOrNull();
+    var test = testCompileClasspath.getOrNull();
 
-    List<String> compileClasspathFilenames = SonarUtils.exists(compileClasspath.get())
+    List<String> compileClasspathFilenames = SonarUtils.exists(compile==null?List.of():compile)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    List<String> testCompileClasspathFilenames = SonarUtils.exists(testCompileClasspath.get())
+    List<String> testCompileClasspathFilenames = SonarUtils.exists(test==null?List.of():test)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());

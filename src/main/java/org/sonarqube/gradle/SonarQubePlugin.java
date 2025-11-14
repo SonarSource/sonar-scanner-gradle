@@ -40,9 +40,9 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
@@ -119,9 +119,21 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
 
 
-        Provider<FileCollection> compile =  target.provider(() -> target.getExtensions().findByType(JavaPluginExtension.class).getSourceSets().getByName("main").getCompileClasspath());
+        Provider<FileCollection> compile =  target.provider(() -> {
+           var sourceSets = SonarUtils.getSourceSets(target);
+           if(sourceSets==null){
+             return null;
+           }
+           return sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath();
+          });
         task.setCompileClasspath(compile);
-        Provider<FileCollection> test =  target.provider(() -> target.getExtensions().findByType(JavaPluginExtension.class).getSourceSets().getByName("test").getCompileClasspath());
+        Provider<FileCollection> test = target.provider(() -> {
+            var sourceSets = SonarUtils.getSourceSets(target);
+            if(sourceSets==null){
+              return null;
+            }
+            return sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME).getCompileClasspath();
+          });
         task.setTestCompileClasspath(test);
 
         if (isAndroidProject(target)) {
