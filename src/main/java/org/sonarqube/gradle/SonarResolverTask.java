@@ -51,6 +51,13 @@ public abstract class SonarResolverTask extends DefaultTask {
   private File outputDirectory;
   private Provider<Boolean> skipProject;
 
+  SonarResolverTask() {
+    super();
+    // UntrackedTask should be enough, but gradle is buggy
+    this.getOutputs().upToDateWhen(task -> false);
+  }
+
+
   @Input
   public String getProjectName() {
     return projectName;

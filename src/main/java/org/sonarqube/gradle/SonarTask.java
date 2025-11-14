@@ -94,6 +94,12 @@ public class SonarTask extends ConventionTask {
     }
   }
 
+  SonarTask(){
+    super();
+    // UntrackedTask should be enough, but gradle is buggy
+    this.getOutputs().upToDateWhen(task -> false);
+  }
+
   /**
    * Logs output from the given {@link Level} at the {@link LogLevel#LIFECYCLE} log level, which is the default log
    * level for Gradle tasks. This can be used to specify the level of Sonar Scanner which it output during standard
