@@ -20,11 +20,13 @@
 package org.sonarqube.gradle
 
 import groovy.json.JsonSlurper
+import org.gradle.internal.impldep.org.junit.Assume
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import spock.lang.Requires
 import spock.lang.Specification
 
-import java.nio.file.Path;
+import java.nio.file.Path
 import spock.lang.TempDir
 
 /**
@@ -74,6 +76,7 @@ class AndroidUtilsIT extends Specification {
         return (pluginClasspath + testClasspath).unique()
     }
 
+    @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
     def "Libraries of android project are correctly retrieved"() {
         given: "a simple android project"
         settingsFile << "rootProject.name = 'java-task-toolchains'"
