@@ -55,7 +55,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   @Inject
   public SonarResolverTask() {
     super();
-    // UntrackedTask should be enough, but gradle is buggy
+    // UntrackedTask should be enough, but gradle is buggy and for some version it does not work
     this.getOutputs().upToDateWhen(task -> false);
   }
 

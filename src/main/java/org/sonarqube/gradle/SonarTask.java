@@ -98,7 +98,7 @@ public class SonarTask extends ConventionTask {
   @Inject
   public SonarTask(){
     super();
-    // UntrackedTask should be enough, but gradle is buggy
+    // UntrackedTask should be enough, but gradle is buggy and for some version it does not work
     this.getOutputs().upToDateWhen(task -> false);
   }
 

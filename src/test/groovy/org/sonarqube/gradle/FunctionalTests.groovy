@@ -186,7 +186,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-
+        
         compileJava {
           options.compilerArgs.addAll(['--release', '10'])
         }
@@ -334,7 +334,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-
+        
         compileJava {
           options.release = 8
         }
@@ -369,7 +369,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-
+        
         compileJava {
           options.compilerArgs.addAll("--enable-preview")
         }
@@ -431,7 +431,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-
+        
         compileJava {
           options.compilerArgs = [
             file("/")
@@ -545,7 +545,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-
+        
         sonar {
             properties {
                 $sonarSourcesProperty
@@ -800,7 +800,7 @@ class FunctionalTests extends Specification {
     if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
       configureJacocoGradleTestkitPlugin(multiModuleProjectDir);
     }
-    
+
 
     when:
     def result = GradleRunner.create()
@@ -817,6 +817,33 @@ class FunctionalTests extends Specification {
     assert Files.list(sonarResolver).count() == 0
 
   }
+
+   def "sonar and sonarResolver are never not up to date"() {
+     given:
+     settingsFile << "rootProject.name = 'java-task-toolchains'"
+     buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java'
+        }
+        """
+
+     when:
+     def command = GradleRunner.create()
+       .withProjectDir(projectDir.toFile())
+       .forwardOutput()
+       .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '--info')
+       .withPluginClasspath()
+
+     def run1 = command.build()
+     def run2 = command.build()
+
+     then:
+     assert run1.task(":sonar").getOutcome() == SUCCESS
+     assert run2.task(":sonar").getOutcome() == SUCCESS
+     assert run2.getOutput().contains("':sonarResolver' is not up-to-date")
+     assert run2.getOutput().contains("':sonar' is not up-to-date")
+   }
 
   private Path projectDir(String project) {
     return Path.of(this.class.getResource("/projects/"+project).toURI());
