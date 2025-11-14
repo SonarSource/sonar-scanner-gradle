@@ -40,6 +40,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
@@ -48,8 +49,6 @@ import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
-import static org.sonarqube.gradle.SonarUtils.getMainClassPath;
-import static org.sonarqube.gradle.SonarUtils.getTestClassPath;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 
 /**
@@ -119,10 +118,11 @@ public class SonarQubePlugin implements Plugin<Project> {
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
 
-        FileCollection mainClassPath = getMainClassPath(target);
-        task.setCompileClasspath(mainClassPath);
-        FileCollection testClassPath = getTestClassPath(target);
-        task.setTestCompileClasspath(testClassPath);
+
+        Provider<FileCollection> compile =  target.provider(() -> target.getExtensions().findByType(JavaPluginExtension.class).getSourceSets().getByName("main").getCompileClasspath());
+        task.setCompileClasspath(compile);
+        Provider<FileCollection> test =  target.provider(() -> target.getExtensions().findByType(JavaPluginExtension.class).getSourceSets().getByName("test").getCompileClasspath());
+        task.setTestCompileClasspath(test);
 
         if (isAndroidProject(target)) {
           setAndroidLibrariesProperties(target, task);
