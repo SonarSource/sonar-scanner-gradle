@@ -21,7 +21,6 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,10 +43,10 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   private String projectName;
   private boolean isTopLevelProject;
-  private FileCollection compileClasspath;
-  private FileCollection testCompileClasspath;
   private FileCollection mainLibraries;
   private FileCollection testLibraries;
+  private Provider<FileCollection> compileClasspath;
+  private Provider<FileCollection> testCompileClasspath;
   private File outputDirectory;
   private Provider<Boolean> skipProject;
 
@@ -71,19 +70,19 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   @Internal
   FileCollection getCompileClasspath() {
-    return this.compileClasspath;
+    return this.compileClasspath.get();
   }
 
-  public void setCompileClasspath(FileCollection compileClasspath) {
+  public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
   }
 
   @Internal
-  FileCollection getTestCompileClasspath() {
+  Provider<FileCollection> getTestCompileClasspath() {
     return this.testCompileClasspath;
   }
 
-  public void setTestCompileClasspath(FileCollection testCompileClasspath) {
+  public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
   }
 
@@ -137,20 +136,12 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    // If we failed to initialize class paths at configuration time AND the configuration cache is not active/requested,
-    // we attempt to rebuild them using the source sets.
-    if (compileClasspath == null && configurationCacheIsDisabled()) {
-      compileClasspath = SonarUtils.getMainClassPath(getProject());
-    }
-    if (testCompileClasspath == null && configurationCacheIsDisabled()) {
-      testCompileClasspath = SonarUtils.getTestClassPath(getProject());
-    }
 
-    List<String> compileClasspathFilenames = SonarUtils.exists(compileClasspath == null ? Collections.emptyList() : compileClasspath)
+    List<String> compileClasspathFilenames = SonarUtils.exists(compileClasspath.get())
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    List<String> testCompileClasspathFilenames = SonarUtils.exists(testCompileClasspath == null ? Collections.emptyList() : testCompileClasspath)
+    List<String> testCompileClasspathFilenames = SonarUtils.exists(testCompileClasspath.get())
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
