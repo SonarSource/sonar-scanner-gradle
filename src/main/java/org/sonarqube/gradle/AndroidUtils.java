@@ -367,19 +367,9 @@ class AndroidUtils {
     // Get variant libraries
     if (variant instanceof ApkVariant) {
       ApkVariant apkVariant = (ApkVariant) variant;
-      try {
-        // Try the old API first (Android Gradle Plugin < 3.0)
-        Method getCompileLibraries = apkVariant.getClass().getMethod("getCompileLibraries");
-        Set<File> libraries = (Set<File>) getCompileLibraries.invoke(apkVariant, (Object[]) null);
-        return bootClassPathFiles.plus(project.files(libraries));
-      } catch (NoSuchMethodException e) {
-        // Fall back to getCompileClasspath - this returns a FileCollection
-        FileCollection compileClasspath = apkVariant.getCompileClasspath(null);
-        if (compileClasspath != null) {
-          return bootClassPathFiles.plus(compileClasspath);
-        }
-      } catch (IllegalAccessException | InvocationTargetException e) {
-        throw new IllegalArgumentException("Unable to call getCompileLibraries", e);
+      FileCollection compileClasspath = apkVariant.getCompileClasspath(null);
+      if (compileClasspath != null) {
+        return bootClassPathFiles.plus(compileClasspath);
       }
     }
 
