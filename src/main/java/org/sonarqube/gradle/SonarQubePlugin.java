@@ -118,22 +118,21 @@ public class SonarQubePlugin implements Plugin<Project> {
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
 
-
-        Provider<FileCollection> compile =  target.provider(() -> {
-           var sourceSets = SonarUtils.getSourceSets(target);
-           if(sourceSets==null){
-             return null;
-           }
-           return sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath();
-          });
+        Provider<FileCollection> compile = target.provider(() -> {
+          var sourceSets = SonarUtils.getSourceSets(target);
+          if (sourceSets == null) {
+            return null;
+          }
+          return sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath();
+        });
         task.setCompileClasspath(compile);
         Provider<FileCollection> test = target.provider(() -> {
-            var sourceSets = SonarUtils.getSourceSets(target);
-            if(sourceSets==null){
-              return null;
-            }
-            return sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME).getCompileClasspath();
-          });
+          var sourceSets = SonarUtils.getSourceSets(target);
+          if (sourceSets == null) {
+            return null;
+          }
+          return sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME).getCompileClasspath();
+        });
         task.setTestCompileClasspath(test);
 
         // Currently we only use the SonarResolverTask for Android projects to resolve libraries. Other projects use
