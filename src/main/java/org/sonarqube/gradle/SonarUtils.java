@@ -39,11 +39,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
-import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
 
@@ -122,37 +120,6 @@ public class SonarUtils {
       return null;
     }
     return javaPluginConvention.getSourceSets();
-  }
-
-  @Nullable
-  public static FileCollection getMainClassPath(Project project) {
-    return getClassPath(project, "main");
-  }
-
-  @Nullable
-  public static FileCollection getTestClassPath(Project project) {
-    return getClassPath(project, "test");
-  }
-
-  @Nullable
-  public static FileCollection getClassPath(Project project, String sourceSetName) {
-    SourceSetContainer sourceSets = SonarUtils.getSourceSets(project);
-    return getClassPathFromSourceSets(sourceSetName, sourceSets);
-  }
-
-  public static @Nullable FileCollection getClassPathFromSourceSets(String sourceSetName, @Nullable SourceSetContainer sourceSets) {
-    if (sourceSets == null) {
-      return null;
-    }
-    SourceSet sourceSet = sourceSets.findByName(sourceSetName);
-    if (sourceSet == null) {
-      return null;
-    }
-    FileCollection compileClasspath = sourceSet.getCompileClasspath();
-    if (compileClasspath == null) {
-      return null;
-    }
-    return compileClasspath;
   }
 
   static boolean isCompatibleWithJavaPluginExtension(GradleVersion version) {
