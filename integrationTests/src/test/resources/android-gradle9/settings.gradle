@@ -1,3 +1,4 @@
 include ':mydynamicfeature'
 include ':app'
+include ':javalib'
 rootProject.name = "My Application"
