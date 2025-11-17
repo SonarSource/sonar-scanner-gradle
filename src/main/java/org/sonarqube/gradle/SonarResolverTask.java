@@ -147,8 +147,14 @@ public abstract class SonarResolverTask extends DefaultTask {
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    ProjectProperties projectProperties = new ProjectProperties(getProjectName(), isTopLevelProject(), compileClasspathFilenames, testCompileClasspathFilenames,
-      mainLibrariesFilenames, testLibrariesFilenames);
+    ProjectProperties projectProperties = new ProjectProperties(
+      getProjectName(),
+      isTopLevelProject(),
+      compileClasspathFilenames,
+      testCompileClasspathFilenames,
+      mainLibrariesFilenames,
+      testLibrariesFilenames
+    );
 
     ResolutionSerializer.write(
       getOutputFile(),
