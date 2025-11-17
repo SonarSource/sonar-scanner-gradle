@@ -66,10 +66,10 @@ import org.gradle.util.GradleVersion;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 import static org.sonarqube.gradle.SonarQubePlugin.getConfiguredAndroidVariant;
+import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
+import static org.sonarqube.gradle.SonarUtils.exists;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
-import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
-import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
 
 /**
  * Only access this class when running on an Android application
@@ -349,9 +349,11 @@ class AndroidUtils {
       : Collections.emptySet();
 
     if (isTest) {
-      setTestClasspathProps(properties, destinationDirs, Collections.emptyList());
+      appendProps(properties, "sonar.java.test.binaries", exists(destinationDirs));
     } else {
-      setMainClasspathProps(properties, destinationDirs, Collections.emptyList(), false);
+      appendProps(properties, "sonar.java.binaries", exists(destinationDirs));
+      // Populate deprecated properties for backward compatibility
+      appendProps(properties, "sonar.binaries", exists(destinationDirs));
     }
   }
 
