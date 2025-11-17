@@ -79,4 +79,5 @@ public class Gradle9Test extends AbstractGradleIT {
       entry("sonar.tests", "${parentBaseDir}/gradle-9-example/src/test/java"),
       entry("sonar.working.directory", "${parentBaseDir}/gradle-9-example/build/sonar"));
   }
+
 }
