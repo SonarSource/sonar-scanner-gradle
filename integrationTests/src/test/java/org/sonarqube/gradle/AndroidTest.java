@@ -462,7 +462,7 @@ public class AndroidTest extends AbstractGradleIT {
       .containsEntry("sonar.projectKey", "org.sonarqube:example-android-gradle-dynamic-module")
       .containsEntry("sonar.projectName", "Simple Android Gradle Project With Dynamic Module")
       .containsEntry("sonar.projectVersion", "unspecified")
-      .containsEntry("sonar.modules", ":app,:mydynamicfeature")
+      .containsEntry("sonar.modules", ":app,:javalib,:mydynamicfeature")
       .containsEntry("sonar.host.url", "https://sonarcloud.io");
 
     // Verify :app module properties
@@ -496,5 +496,21 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(comparableProps.get(":mydynamicfeature.sonar.java.test.libraries"))
       .isNotEmpty()
       .contains("android.jar", "core-lambda-stubs.jar", "R.jar", "jetified-junit-4.13.2.jar", "jetified-hamcrest-core-1.3.jar", "jetified-junit-1.1.2-api.jar");
+
+    // Verify :javalib module properties (plain Java library, not Android)
+    assertThat(comparableProps)
+      .doesNotContainKey(":javalib.sonar.android.detected")
+      .containsEntry(":javalib.sonar.java.source", "1.8")
+      .containsEntry(":javalib.sonar.java.target", "1.8")
+      .containsEntry(":javalib.sonar.moduleKey", "org.sonarqube:example-android-gradle-dynamic-module:javalib")
+      .containsEntry(":javalib.sonar.projectName", "javalib");
+
+    // Verify javalib does NOT contain Android-specific libraries
+    assertThat(comparableProps.get(":javalib.sonar.java.libraries"))
+      .doesNotContain("android.jar");
+    assertThat(comparableProps.get(":javalib.sonar.java.test.libraries"))
+      .isNotEmpty()
+      .contains("junit-4.13.2.jar", "hamcrest-core-1.3.jar")
+      .doesNotContain("android.jar", "jetified-junit-", "jetified-hamcrest-core-");
   }
 }
