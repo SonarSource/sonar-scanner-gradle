@@ -123,7 +123,8 @@ public class SonarQubePlugin implements Plugin<Project> {
           if (sourceSets == null) {
             return null;
           }
-          return sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).getCompileClasspath();
+          var set = sourceSets.findByName(SourceSet.MAIN_SOURCE_SET_NAME);
+          return set == null ? null : set.getCompileClasspath();
         });
         task.setCompileClasspath(compile);
         Provider<FileCollection> test = target.provider(() -> {
@@ -131,7 +132,8 @@ public class SonarQubePlugin implements Plugin<Project> {
           if (sourceSets == null) {
             return null;
           }
-          return sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME).getCompileClasspath();
+          var set = sourceSets.findByName(SourceSet.TEST_SOURCE_SET_NAME);
+          return set == null ? null : set.getCompileClasspath();
         });
         task.setTestCompileClasspath(test);
 
