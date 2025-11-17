@@ -486,9 +486,15 @@ public class AndroidTest extends AbstractGradleIT {
       .isNotEmpty()
       .contains("android.jar")
       .contains("core-lambda-stubs.jar");
+    assertThat(comparableProps.get(":app.sonar.java.test.libraries"))
+      .isNotEmpty()
+      .contains("android.jar", "core-lambda-stubs.jar", "R.jar", "jetified-junit-4.13.2.jar", "jetified-hamcrest-core-1.3.jar", "jetified-junit-1.1.2-api.jar");
 
     assertThat(comparableProps.get(":mydynamicfeature.sonar.java.libraries"))
       .isNotEmpty()
       .contains("android.jar");
+    assertThat(comparableProps.get(":mydynamicfeature.sonar.java.test.libraries"))
+      .isNotEmpty()
+      .contains("android.jar", "core-lambda-stubs.jar", "R.jar", "jetified-junit-4.13.2.jar", "jetified-hamcrest-core-1.3.jar", "jetified-junit-1.1.2-api.jar");
   }
 }
