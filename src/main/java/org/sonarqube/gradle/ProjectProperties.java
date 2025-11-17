@@ -27,6 +27,12 @@ public class ProjectProperties {
   public final Boolean isRootProject;
   public final List<String> compileClasspath;
   public final List<String> testCompileClasspath;
+
+  /**
+   * Currently libraries field are only populated for Android projects and other
+   * projects rely on the SonarPropertyComputer to compute them. Ultimately we should use
+   * the SonarResolverTask to compute everything and remove that logic from SonarPropertyComputer.
+   */
   public final List<String> mainLibraries;
   public final List<String> testLibraries;
 
