@@ -20,6 +20,7 @@
 package org.sonarqube.gradle;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -411,33 +412,29 @@ public class SonarUtils {
    * Returns the collection of Java and Java FX runtime jars, if available.
    */
   public static Collection<File> getRuntimeJars() {
-    return Stream.of(getRuntimeJar(), getFxRuntimeJar()).filter(Objects::nonNull).collect(Collectors.toList());
-  }
-
-  @Nullable
-  private static File getRuntimeJar() {
     try {
-      final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
-      return Stream.of(new File(javaBase, "lib/rt.jar"), new File(javaBase, "jre/lib/rt.jar"))
-        .filter(File::exists)
-        .findFirst()
-        .orElse(null);
-    } catch (Exception e) {
+      return Stream.of(getRuntimeJar(), getFxRuntimeJar()).filter(Objects::nonNull).collect(Collectors.toList());
+    } catch (IOException e) {
       throw new IllegalStateException(e);
     }
   }
 
   @Nullable
-  private static File getFxRuntimeJar() {
-    try {
-      final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
-      return Stream.of(new File(javaBase, "lib/ext/jfxrt.jar"), new File(javaBase, "jre/lib/ext/jfxrt.jar"))
-        .filter(File::exists)
-        .findFirst()
-        .orElse(null);
-    } catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
+  private static File getRuntimeJar() throws IOException {
+    final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
+    return Stream.of(new File(javaBase, "lib/rt.jar"), new File(javaBase, "jre/lib/rt.jar"))
+      .filter(File::exists)
+      .findFirst()
+      .orElse(null);
+  }
+
+  @Nullable
+  private static File getFxRuntimeJar() throws IOException {
+    final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
+    return Stream.of(new File(javaBase, "lib/ext/jfxrt.jar"), new File(javaBase, "jre/lib/ext/jfxrt.jar"))
+      .filter(File::exists)
+      .findFirst()
+      .orElse(null);
   }
 
 }
