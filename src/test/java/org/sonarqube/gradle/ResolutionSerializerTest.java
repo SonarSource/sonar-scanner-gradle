@@ -26,8 +26,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,12 +42,11 @@ class ResolutionSerializerTest {
   @TempDir
   Path tempDir;
 
-  @Test
-  void testWriteReadWithProperties() throws IOException {
+  @ParameterizedTest
+  @MethodSource(value="provideProperties")
+  void testWriteReadWithProperties(List<String> compileClasspath, List<String> testCompileClasspath, List<String> mainLibraries, List<String> testLibraries) throws IOException {
     File file = tempDir.resolve("test.json").toFile();
-    List<String> compileClasspath = Arrays.asList("path1.jar", "path2.jar");
-    List<String> testCompileClasspath = Arrays.asList("test1.jar", "test2.jar");
-    ProjectProperties properties = new ProjectProperties(TEST_PROJECT_NAME, true, compileClasspath, testCompileClasspath);
+    ProjectProperties properties = new ProjectProperties(TEST_PROJECT_NAME, true, compileClasspath, testCompileClasspath, mainLibraries, testLibraries);
 
     ResolutionSerializer.write(file, properties);
     Optional<ProjectProperties> readProperties = ResolutionSerializer.read(file);
@@ -53,14 +56,26 @@ class ResolutionSerializerTest {
     assertThat(readProperties.get().isRootProject).isTrue();
     assertThat(readProperties.get().compileClasspath).isEqualTo(compileClasspath);
     assertThat(readProperties.get().testCompileClasspath).isEqualTo(testCompileClasspath);
+    assertThat(readProperties.get().mainLibraries).isEqualTo(mainLibraries);
+    assertThat(readProperties.get().testLibraries).isEqualTo(testLibraries);
   }
 
+  static Stream<Arguments> provideProperties() {
+    List<String> nonEmpty = Arrays.asList("path1.jar", "path2.jar");
+    List<String> empty = Collections.emptyList();
+    return Stream.of(
+      Arguments.of(nonEmpty, empty, empty, empty),
+      Arguments.of(nonEmpty, nonEmpty, empty, empty),
+      Arguments.of(nonEmpty, nonEmpty, nonEmpty, empty),
+      Arguments.of(nonEmpty, nonEmpty, nonEmpty, nonEmpty)
+    );
+  }
 
   @Test
   void testWriteReadWithoutProperties() throws IOException {
     File file = tempDir.resolve("test.json").toFile();
     List<String> emptyList = Collections.emptyList();
-    ProjectProperties properties = new ProjectProperties(TEST_PROJECT_NAME, false, emptyList, emptyList);
+    ProjectProperties properties = new ProjectProperties(TEST_PROJECT_NAME, false, emptyList, emptyList, emptyList,emptyList);
 
     ResolutionSerializer.write(file, properties);
     Optional<ProjectProperties> readProperties = ResolutionSerializer.read(file);

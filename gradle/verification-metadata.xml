@@ -2633,6 +2633,11 @@
             <sha256 value="abe72c8fbf9a9c8f9ee79bac29ba6479d32b0dffaab88080a502911d24d39463" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.junit.jupiter" name="junit-jupiter-params" version="5.10.2">
+         <artifact name="junit-jupiter-params-5.10.2.jar">
+            <sha256 value="edb1e43ff0b8067626ffb55e5e9eeca1d9ab2478141a7c7f253d115b29cc7cf2" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.junit.platform" name="junit-platform-commons" version="1.10.2">
          <artifact name="junit-platform-commons-1.10.2.jar">
             <sha256 value="b56a5ec000a479df4973b18bba24c98fe0db8faa14c8907d3ef451d8c71fd8ae" origin="Verified"/>

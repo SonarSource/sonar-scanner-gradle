@@ -200,7 +200,9 @@ class SonarTaskTest {
 
     ProjectProperties props = new ProjectProperties("", true,
       List.of(lib1.toAbsolutePath().toString(), lib2.toAbsolutePath().toString()),
-      List.of(testLib1.toAbsolutePath().toString()));
+      List.of(testLib1.toAbsolutePath().toString()),
+      List.of(),
+      List.of());
     ResolutionSerializer.write(resolverFile, props);
     SonarTask.processResolverFile(resolverFile, result);
     assertThat(result)

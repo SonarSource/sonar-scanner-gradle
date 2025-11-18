@@ -56,7 +56,10 @@ public class ResolutionSerializer {
   }
 
   public static void write(File output, ProjectProperties properties) throws IOException {
-    if (properties.compileClasspath.isEmpty() && properties.testCompileClasspath.isEmpty()) {
+    if (properties.compileClasspath.isEmpty()
+      && properties.testCompileClasspath.isEmpty()
+      && properties.mainLibraries.isEmpty()
+      && properties.testLibraries.isEmpty()) {
       // make sure we do not reuse output from previous execution
       Files.deleteIfExists(output.toPath());
       return;
