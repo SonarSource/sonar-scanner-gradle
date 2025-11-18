@@ -44,8 +44,8 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   private String projectName;
   private boolean isTopLevelProject;
-  private FileCollection mainLibraries;
-  private FileCollection testLibraries;
+  private Provider<FileCollection> mainLibraries;
+  private Provider<FileCollection> testLibraries;
   private Provider<FileCollection> compileClasspath;
   private Provider<FileCollection> testCompileClasspath;
   private File outputDirectory;
@@ -88,20 +88,20 @@ public abstract class SonarResolverTask extends DefaultTask {
   }
 
   @Internal
-  FileCollection getMainLibraries() {
+  Provider<FileCollection> getMainLibraries() {
     return this.mainLibraries;
   }
 
-  public void setMainLibraries(FileCollection mainLibraries) {
+  public void setMainLibraries(Provider<FileCollection> mainLibraries) {
     this.mainLibraries = mainLibraries;
   }
 
   @Internal
-  FileCollection getTestLibraries() {
+  Provider<FileCollection> getTestLibraries() {
     return this.testLibraries;
   }
 
-  public void setTestLibraries(FileCollection testLibraries) {
+  public void setTestLibraries(Provider<FileCollection> testLibraries) {
     this.testLibraries = testLibraries;
   }
 
@@ -126,6 +126,21 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.skipProject = skipProject;
   }
 
+  /**
+   * Returns the absolute paths of the files in the given FileCollection provider.
+   * If the provider is null or the collection is empty, returns an empty list.
+   */
+  private static List<String> getAbsolutePaths(Provider<FileCollection> fileCollection) {
+    var collection = fileCollection.getOrNull();
+    if (collection == null) {
+      return Collections.emptyList();
+    }
+    return SonarUtils.exists(collection)
+      .stream()
+      .map(File::getAbsolutePath)
+      .collect(Collectors.toList());
+  }
+
   @TaskAction
   void run() throws IOException {
     if(Boolean.TRUE.equals(this.skipProject.get())){
@@ -137,26 +152,10 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
-    var mainClasspath = this.compileClasspath.getOrNull();
-    var testClasspath = testCompileClasspath.getOrNull();
-
-    List<String> compileClasspathFilenames = SonarUtils.exists(mainClasspath == null ? Collections.emptyList() : mainClasspath)
-      .stream()
-      .map(File::getAbsolutePath)
-      .collect(Collectors.toList());
-    List<String> testCompileClasspathFilenames = SonarUtils.exists(testClasspath == null ? Collections.emptyList() : testClasspath)
-      .stream()
-      .map(File::getAbsolutePath)
-      .collect(Collectors.toList());
-
-    List<String> mainLibrariesFilenames = SonarUtils.exists(getMainLibraries() == null ? Collections.emptyList() : getMainLibraries())
-      .stream()
-      .map(File::getAbsolutePath)
-      .collect(Collectors.toList());
-    List<String> testLibrariesFilenames = SonarUtils.exists(getTestLibraries() == null ? Collections.emptyList() : getTestLibraries())
-      .stream()
-      .map(File::getAbsolutePath)
-      .collect(Collectors.toList());
+    List<String> compileClasspathFilenames = getAbsolutePaths(compileClasspath);
+    List<String> testCompileClasspathFilenames = getAbsolutePaths(testCompileClasspath);
+    List<String> mainLibrariesFilenames = getAbsolutePaths(getMainLibraries());
+    List<String> testLibrariesFilenames = getAbsolutePaths(getTestLibraries());
 
     ProjectProperties projectProperties = new ProjectProperties(
       getProjectName(),
