@@ -68,14 +68,14 @@ import org.sonarsource.scanner.lib.EnvironmentConfig;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
+import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.computeReportPaths;
 import static org.sonarqube.gradle.SonarUtils.exists;
 import static org.sonarqube.gradle.SonarUtils.findProjectBaseDir;
 import static org.sonarqube.gradle.SonarUtils.getSourceSets;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
-import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
-import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
+import static org.sonarqube.gradle.SonarUtils.setMainBinariesProps;
 
 public class SonarPropertyComputer {
   private static final Logger LOGGER = Logging.getLogger(SonarPropertyComputer.class);
@@ -456,13 +456,11 @@ public class SonarPropertyComputer {
     SourceSetContainer sourceSets = getSourceSets(project);
     SourceSet main = sourceSets.getAt("main");
     Collection<File> mainClassDirs = getJavaOutputDirs(main);
-    Collection<File> mainLibraries = getRuntimeJars();
-    setMainClasspathProps(properties, mainClassDirs, mainLibraries, addForGroovy);
+    setMainBinariesProps(properties, mainClassDirs, addForGroovy);
 
     SourceSet test = sourceSets.getAt("test");
     Collection<File> testClassDirs = getJavaOutputDirs(test);
-    Collection<File> testLibraries = getRuntimeJars();
-    setTestClasspathProps(properties, testClassDirs, testLibraries);
+    appendProps(properties, "sonar.java.test.binaries", exists(testClassDirs));
   }
 
   private static @Nullable Collection<File> getJavaSourceFiles(SourceSet sourceSet) {
@@ -519,53 +517,6 @@ public class SonarPropertyComputer {
       }
 
       return internalKotlinSourceSet;
-    }
-  }
-
-  /**
-   * Returns the collection of Java and Java FX runtime jars, if available.
-   */
-  private static Collection<File> getRuntimeJars() {
-    List<File> libraries = new ArrayList<>(2);
-
-    File runtimeJar = getRuntimeJar();
-    if (runtimeJar != null) {
-      libraries.add(runtimeJar);
-    }
-
-    File fxRuntimeJar = getFxRuntimeJar();
-    if (fxRuntimeJar != null) {
-      libraries.add(fxRuntimeJar);
-    }
-
-    return libraries;
-  }
-
-  private static File getRuntimeJar() {
-    try {
-      final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
-      File runtimeJar = new File(javaBase, "lib/rt.jar");
-      if (runtimeJar.exists()) {
-        return runtimeJar;
-      }
-      runtimeJar = new File(javaBase, "jre/lib/rt.jar");
-      return runtimeJar.exists() ? runtimeJar : null;
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  private static File getFxRuntimeJar() {
-    try {
-      final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
-      File runtimeJar = new File(javaBase, "lib/ext/jfxrt.jar");
-      if (runtimeJar.exists()) {
-        return runtimeJar;
-      }
-      runtimeJar = new File(javaBase, "jre/lib/ext/jfxrt.jar");
-      return runtimeJar.exists() ? runtimeJar : null;
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
     }
   }
 

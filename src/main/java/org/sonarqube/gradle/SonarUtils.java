@@ -187,22 +187,13 @@ public class SonarUtils {
     return rootBaseDir.toString();
   }
 
-  static void setTestClasspathProps(Map<String, Object> properties, Collection<File> testClassDirs, Collection<File> testLibraries) {
-    appendProps(properties, "sonar.java.test.binaries", exists(testClassDirs));
-    appendProps(properties, "sonar.java.test.libraries", exists(testLibraries));
-  }
-
-  static void setMainClasspathProps(Map<String, Object> properties, Collection<File> mainClassDirs, Collection<File> mainLibraries, boolean addForGroovy) {
+  static void setMainBinariesProps(Map<String, Object> properties, Collection<File> mainClassDirs, boolean addForGroovy) {
     appendProps(properties, "sonar.java.binaries", exists(mainClassDirs));
     if (addForGroovy) {
       appendProps(properties, "sonar.groovy.binaries", exists(mainClassDirs));
     }
     // Populate deprecated properties for backward compatibility
     appendProps(properties, "sonar.binaries", exists(mainClassDirs));
-
-    appendProps(properties, "sonar.java.libraries", exists(mainLibraries));
-    // Populate deprecated properties for backward compatibility
-    appendProps(properties, "sonar.libraries", exists(mainLibraries));
   }
 
   static void populateJdkProperties(Map<String, Object> properties, JavaCompilerConfiguration config) {
