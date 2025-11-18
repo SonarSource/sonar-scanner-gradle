@@ -41,6 +41,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
@@ -242,10 +243,15 @@ public class SonarTask extends ConventionTask {
    * Reads class path information produced as output of {@link SonarResolverTask}, regenerates related
    * sonar.java.libraries and sonar.java.test.libraries and stores them into the result map.
    */
-  private static void processResolverFile(File resolverFile, Map<String, String> result) {
+  @VisibleForTesting
+  static void processResolverFile(File resolverFile, Map<String, String> result) {
     LOGGER.info("Looking at file: {}", resolverFile);
     try {
-      ProjectProperties resolvedProperties = ResolutionSerializer.read(resolverFile);
+      var prop = ResolutionSerializer.read(resolverFile);
+      if(prop.isEmpty()){
+        return;
+      }
+      ProjectProperties resolvedProperties = prop.get();
       List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
 
       // Add mainLibraries if present (for Android projects)

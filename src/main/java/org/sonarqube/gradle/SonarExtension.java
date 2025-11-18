@@ -58,7 +58,7 @@ public class SonarExtension {
   public static final String SONAR_TASK_NAME = "sonar";
   public static final String SONAR_DEPRECATED_TASK_NAME = "sonarqube";
 
-  private boolean skipProject;
+  private boolean skipProject = false;
   private final ActionBroadcast<SonarProperties> propertiesActions;
   private String androidVariant;
 

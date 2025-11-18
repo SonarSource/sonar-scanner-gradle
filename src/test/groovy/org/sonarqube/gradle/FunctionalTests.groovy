@@ -186,7 +186,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         compileJava {
           options.compilerArgs.addAll(['--release', '10'])
         }
@@ -334,7 +334,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         compileJava {
           options.release = 8
         }
@@ -369,7 +369,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         compileJava {
           options.compilerArgs.addAll("--enable-preview")
         }
@@ -431,7 +431,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         compileJava {
           options.compilerArgs = [
             file("/")
@@ -545,7 +545,7 @@ class FunctionalTests extends Specification {
             id 'java'
             id 'org.sonarqube'
         }
-        
+
         sonar {
             properties {
                 $sonarSourcesProperty
@@ -791,7 +791,35 @@ class FunctionalTests extends Specification {
         then:
         assert result.task(":clean").getOutcome() == SUCCESS
         assert result.task(":sonar").getOutcome() == SUCCESS
-        assert projectDir.resolve("build").resolve("sonar-resolver").resolve("properties").toFile().exists()
     }
+
+  def "multi module gradle project"() {
+    given:
+    def multiModuleProjectDir = projectDir("gradle-multimodule")
+    // skip jacoco execution due to lock conflict on "build/jacoco/test.exec" when executing on windows
+    if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+      configureJacocoGradleTestkitPlugin(multiModuleProjectDir);
+    }
+    
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(multiModuleProjectDir.toFile())
+      .withGradleVersion(gradleVersion)
+      .forwardOutput()
+      .withArguments('clean', 'build', 'sonar',  '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+      .withPluginClasspath()
+      .build()
+
+    then:
+    def sonarResolver = multiModuleProjectDir.resolve("module-1/build/sonar-resolver")
+    assert result.task(":sonar").getOutcome() == SUCCESS
+    assert Files.list(sonarResolver).count() == 0
+
+  }
+
+  private Path projectDir(String project) {
+    return Path.of(this.class.getResource("/projects/"+project).toURI());
+  }
 }
 

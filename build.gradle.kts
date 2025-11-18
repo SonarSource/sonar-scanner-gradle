@@ -81,6 +81,7 @@ dependencies {
     testImplementation(localGroovy())
     testImplementation("org.assertj:assertj-core:3.26.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
     testImplementation("org.hamcrest:hamcrest-all:1.3")
     testImplementation("org.mockito:mockito-core:5.12.0")
     testImplementation("org.spockframework:spock-core:2.3-groovy-3.0") {
@@ -108,6 +109,7 @@ license {
     mapping("java", "SLASHSTAR_STYLE")
     strictCheck = true
     exclude("**/*-version.txt")
+    exclude("**/projects/*")
 }
 
 jacoco {

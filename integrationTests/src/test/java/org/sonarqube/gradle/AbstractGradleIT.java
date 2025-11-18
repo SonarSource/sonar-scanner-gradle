@@ -345,7 +345,7 @@ public abstract class AbstractGradleIT {
   }
 
   static boolean isUnexpectedWarning(String line){
-    if(line.contains("SonarResolverTask.java:128") || line.contains("SonarResolverTask.java:131")){
+    if(line.contains("SonarResolverTask.java:143") || line.contains("SonarResolverTask.java:146")){
       // These warnings are expected until we properly support Gradle 9
       return false;
     }
