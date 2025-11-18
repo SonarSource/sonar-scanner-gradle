@@ -29,10 +29,12 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
@@ -409,31 +411,17 @@ public class SonarUtils {
    * Returns the collection of Java and Java FX runtime jars, if available.
    */
   public static Collection<File> getRuntimeJars() {
-    List<File> libraries = new ArrayList<>(2);
-
-    File runtimeJar = getRuntimeJar();
-    if (runtimeJar != null) {
-      libraries.add(runtimeJar);
-    }
-
-    File fxRuntimeJar = getFxRuntimeJar();
-    if (fxRuntimeJar != null) {
-      libraries.add(fxRuntimeJar);
-    }
-
-    return libraries;
+    return Stream.of(getRuntimeJar(), getFxRuntimeJar()).filter(Objects::nonNull).collect(Collectors.toList());
   }
 
   @Nullable
   private static File getRuntimeJar() {
     try {
       final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
-      File runtimeJar = new File(javaBase, "lib/rt.jar");
-      if (runtimeJar.exists()) {
-        return runtimeJar;
-      }
-      runtimeJar = new File(javaBase, "jre/lib/rt.jar");
-      return runtimeJar.exists() ? runtimeJar : null;
+      return Stream.of(new File(javaBase, "lib/rt.jar"), new File(javaBase, "jre/lib/rt.jar"))
+        .filter(File::exists)
+        .findFirst()
+        .orElse(null);
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -443,12 +431,10 @@ public class SonarUtils {
   private static File getFxRuntimeJar() {
     try {
       final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
-      File runtimeJar = new File(javaBase, "lib/ext/jfxrt.jar");
-      if (runtimeJar.exists()) {
-        return runtimeJar;
-      }
-      runtimeJar = new File(javaBase, "jre/lib/ext/jfxrt.jar");
-      return runtimeJar.exists() ? runtimeJar : null;
+      return Stream.of(new File(javaBase, "lib/ext/jfxrt.jar"), new File(javaBase, "jre/lib/ext/jfxrt.jar"))
+        .filter(File::exists)
+        .findFirst()
+        .orElse(null);
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
