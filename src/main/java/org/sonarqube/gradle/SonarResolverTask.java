@@ -140,11 +140,11 @@ public abstract class SonarResolverTask extends DefaultTask {
     var mainClasspath = this.compileClasspath.getOrNull();
     var testClasspath = testCompileClasspath.getOrNull();
 
-    List<String> compileClasspathFilenames = SonarUtils.exists(mainClasspath == null ? List.of() : mainClasspath)
+    List<String> compileClasspathFilenames = SonarUtils.exists(mainClasspath == null ? Collections.emptyList() : mainClasspath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
-    List<String> testCompileClasspathFilenames = SonarUtils.exists(testClasspath == null ? List.of() : testClasspath)
+    List<String> testCompileClasspathFilenames = SonarUtils.exists(testClasspath == null ? Collections.emptyList() : testClasspath)
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
@@ -175,9 +175,4 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.info("Resolved properties for " + displayName + " and wrote them to " + getOutputFile() + ".");
     }
   }
-
-  public boolean configurationCacheIsDisabled() {
-    return true;
-  }
-
 }

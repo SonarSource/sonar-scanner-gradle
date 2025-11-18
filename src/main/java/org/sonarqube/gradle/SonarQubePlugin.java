@@ -118,23 +118,9 @@ public class SonarQubePlugin implements Plugin<Project> {
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
 
-        Provider<FileCollection> compile = target.provider(() -> {
-          var sourceSets = SonarUtils.getSourceSets(target);
-          if (sourceSets == null) {
-            return null;
-          }
-          var set = sourceSets.findByName(SourceSet.MAIN_SOURCE_SET_NAME);
-          return set == null ? null : set.getCompileClasspath();
-        });
+        Provider<FileCollection> compile = target.provider(() -> querySourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME));
+        Provider<FileCollection> test = target.provider(() -> querySourceSet(target, SourceSet.TEST_SOURCE_SET_NAME));
         task.setCompileClasspath(compile);
-        Provider<FileCollection> test = target.provider(() -> {
-          var sourceSets = SonarUtils.getSourceSets(target);
-          if (sourceSets == null) {
-            return null;
-          }
-          var set = sourceSets.findByName(SourceSet.TEST_SOURCE_SET_NAME);
-          return set == null ? null : set.getCompileClasspath();
-        });
         task.setTestCompileClasspath(test);
 
         if (isAndroidProject(target)) {
@@ -151,6 +137,16 @@ public class SonarQubePlugin implements Plugin<Project> {
       })
     );
     return resolverFiles;
+  }
+
+  @Nullable
+  private static FileCollection querySourceSet(Project project, String sourceSetName) {
+    var sourceSets = SonarUtils.getSourceSets(project);
+    if (sourceSets == null) {
+      return null;
+    }
+    var set = sourceSets.findByName(sourceSetName);
+    return set == null ? null : set.getCompileClasspath();
   }
 
   private static void setAndroidLibrariesProperties(Project target, SonarResolverTask task) {
