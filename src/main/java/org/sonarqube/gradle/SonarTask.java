@@ -247,8 +247,23 @@ public class SonarTask extends ConventionTask {
     try {
       ProjectProperties resolvedProperties = ResolutionSerializer.read(resolverFile);
       List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
+
+      // Add mainLibraries if present (for Android projects)
+      if (resolvedProperties.mainLibraries != null && !resolvedProperties.mainLibraries.isEmpty()) {
+        List<File> mainLibraries = resolvedProperties.mainLibraries.stream().map(File::new).collect(Collectors.toList());
+        libraries.addAll(mainLibraries);
+      }
+
       resolveSonarJavaLibraries(resolvedProperties, libraries, result);
+
       List<File> testLibraries = resolvedProperties.testCompileClasspath.stream().map(File::new).collect(Collectors.toList());
+
+      // Add testLibraries if present (for Android projects)
+      if (resolvedProperties.testLibraries != null && !resolvedProperties.testLibraries.isEmpty()) {
+        List<File> testLibs = resolvedProperties.testLibraries.stream().map(File::new).collect(Collectors.toList());
+        testLibraries.addAll(testLibs);
+      }
+
       resolveSonarJavaTestLibraries(resolvedProperties, testLibraries, result);
     } catch (IOException e) {
       LOGGER.warn("Could not read from resolver file {}", resolverFile, e);

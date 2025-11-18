@@ -44,7 +44,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,10 +53,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginCollection;
@@ -66,11 +65,11 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.util.GradleVersion;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
+import static org.sonarqube.gradle.SonarQubePlugin.getConfiguredAndroidVariant;
+import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
 import static org.sonarqube.gradle.SonarUtils.exists;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
-import static org.sonarqube.gradle.SonarUtils.setMainClasspathProps;
-import static org.sonarqube.gradle.SonarUtils.setTestClasspathProps;
 
 /**
  * Only access this class when running on an Android application
@@ -95,33 +94,39 @@ class AndroidUtils {
     return Version.of(ANDROID_GRADLE_PLUGIN_VERSION);
   }
 
+  /**
+   * Get the variants used for testing for a given variant.
+   */
+  public static List<BaseVariant> getTestVariants(BaseVariant variant) {
+    if (variant instanceof TestedVariant) {
+      TestedVariant testedVariant = (TestedVariant) variant;
+      return Stream.of(
+          // Local tests
+          testedVariant.getUnitTestVariant(),
+          // Instrumentation tests
+          testedVariant.getTestVariant())
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+    }
+    return Collections.emptyList();
+  }
+
   private static void configureForAndroid(Project project, AndroidVariantAndExtension android, Map<String, Object> properties) {
-    List<File> bootClassPath = getBootClasspath(project);
     BaseVariant variant = android.getVariant();
 
     populateSonarQubeAndroidProperties(android, properties);
 
     configureTestReports(project, variant, properties);
     configureLintReports(project, variant, properties);
-
     if (project.getPlugins().hasPlugin("com.android.test")) {
       // Instrumentation tests only
-      populateSonarQubeProps(properties, bootClassPath, variant, true);
-    } else {
-      populateSonarQubeProps(properties, bootClassPath, variant, false);
-      if (variant instanceof TestedVariant) {
-        // Local tests
-        UnitTestVariant unitTestVariant = ((TestedVariant) variant).getUnitTestVariant();
-        if (unitTestVariant != null) {
-          populateSonarQubeProps(properties, bootClassPath, unitTestVariant, true);
-        }
-        // Instrumentation tests
-        TestVariant testVariant = ((TestedVariant) variant).getTestVariant();
-        if (testVariant != null) {
-          populateSonarQubeProps(properties, bootClassPath, testVariant, true);
-        }
-      }
+      populateSonarQubeProps(properties, variant, true);
+      return;
     }
+    populateSonarQubeProps(properties, variant, false);
+    getTestVariants(variant)
+      .forEach(testVariant -> populateSonarQubeProps(properties, testVariant, true));
   }
 
   private static void populateSonarQubeAndroidProperties(AndroidVariantAndExtension android, Map<String, Object> properties) {
@@ -321,7 +326,7 @@ class AndroidUtils {
     }
   }
 
-  private static void populateSonarQubeProps(Map<String, Object> properties, @Nullable List<File> bootClassPath, BaseVariant variant, boolean isTest) {
+  private static void populateSonarQubeProps(Map<String, Object> properties, BaseVariant variant, boolean isTest) {
     List<File> srcDirs = variant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
       ArrayList::new,
       ArrayList::addAll,
@@ -339,36 +344,44 @@ class AndroidUtils {
       JavaCompilerUtils.extractConfiguration(javaCompile);
     }
 
-    Set<File> libraries = new LinkedHashSet<>(bootClassPath);
-    // I don't know what is best: ApkVariant::getCompileClasspath() or BaseVariant::getJavaCompile()::getClasspath()
-    // In doubt I put both in a set to remove duplicates
-    if (variant instanceof ApkVariant) {
-      libraries.addAll(getLibraries((ApkVariant) variant));
-    }
-    if (javaCompile != null) {
-      libraries.addAll(exists(javaCompile.getClasspath()));
-    }
-
     Collection<File> destinationDirs = (javaCompile != null)
       ? Collections.singleton(javaCompile.getDestinationDirectory().getAsFile().get())
       : Collections.emptySet();
+
     if (isTest) {
-      setTestClasspathProps(properties, destinationDirs, libraries);
+      appendProps(properties, "sonar.java.test.binaries", exists(destinationDirs));
     } else {
-      setMainClasspathProps(properties, destinationDirs, libraries, false);
+      appendProps(properties, "sonar.java.binaries", exists(destinationDirs));
+      // Populate deprecated properties for backward compatibility
+      appendProps(properties, "sonar.binaries", exists(destinationDirs));
     }
   }
 
-  @Nonnull
-  private static Collection<File> getLibraries(ApkVariant variant) {
-    try {
-      Method methodOnAndroidBefore30 = variant.getClass().getMethod("getCompileLibraries");
-      return (Set<File>) methodOnAndroidBefore30.invoke(variant, (Object[]) null);
-    } catch (NoSuchMethodException e) {
-      return exists(variant.getCompileClasspath(null));
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new IllegalArgumentException("Unable to call getCompileLibraries", e);
+  /**
+   * Get the libraries FileCollection for an Android variant without resolving it.
+   * This allows the FileCollection to be attached as a task input and resolved later at execution time.
+   */
+  static FileCollection getLibrariesFileCollection(Project project, BaseVariant variant) {
+    // Get boot classpath
+    List<File> bootClassPath = getBootClasspath(project);
+    FileCollection bootClassPathFiles = bootClassPath != null ? project.files(bootClassPath) : project.files();
+
+    // Get variant libraries
+    if (variant instanceof ApkVariant) {
+      ApkVariant apkVariant = (ApkVariant) variant;
+      FileCollection compileClasspath = apkVariant.getCompileClasspath(null);
+      if (compileClasspath != null) {
+        return bootClassPathFiles.plus(compileClasspath);
+      }
     }
+
+    // For non-ApkVariant or if we couldn't get libraries, try getJavaCompiler
+    JavaCompile javaCompile = getJavaCompiler(variant);
+    if (javaCompile != null) {
+      return bootClassPathFiles.plus(javaCompile.getClasspath());
+    }
+
+    return bootClassPathFiles;
   }
 
   private static boolean isMinSdkSupported() {
@@ -417,6 +430,43 @@ class AndroidUtils {
 
     boolean isVariantProvidedByUser() {
       return variantProvidedByUser;
+    }
+  }
+
+  public static class LibrariesAndTestLibraries {
+    private final FileCollection mainLibraries;
+    private final List<FileCollection> testLibraries;
+
+    public LibrariesAndTestLibraries(FileCollection mainLibraries, List<FileCollection> testLibraries) {
+      this.mainLibraries = mainLibraries;
+      this.testLibraries = testLibraries;
+    }
+
+    public FileCollection getMainLibraries() {
+      return mainLibraries;
+    }
+
+    public List<FileCollection> getTestLibraries() {
+      return testLibraries;
+    }
+
+    public static LibrariesAndTestLibraries ofProject(Project project) {
+      AndroidUtils.AndroidVariantAndExtension variantAndExtension =
+        AndroidUtils.findVariantAndExtension(project, getConfiguredAndroidVariant(project));
+
+      List<FileCollection> testLibraries = new ArrayList<>();
+      FileCollection mainLibraries = null;
+
+      if (variantAndExtension != null) {
+        var variant = variantAndExtension.getVariant();
+        mainLibraries = AndroidUtils.getLibrariesFileCollection(project, variant);
+
+        getTestVariants(variant).stream()
+          .map(testVariant -> AndroidUtils.getLibrariesFileCollection(project, testVariant))
+          .filter(Objects::nonNull)
+          .forEach(testLibraries::add);
+      }
+      return new LibrariesAndTestLibraries(mainLibraries == null ? project.files() : mainLibraries, testLibraries);
     }
   }
 }

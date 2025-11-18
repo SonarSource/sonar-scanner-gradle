@@ -121,6 +121,12 @@ public class SonarQubePlugin implements Plugin<Project> {
         FileCollection testClassPath = getTestClassPath(target);
         task.setTestCompileClasspath(testClassPath);
 
+        // Currently we only use the SonarResolverTask for Android projects to resolve libraries. Other projects use
+        // the SonarPropertyComputer, but ultimately the SonarResolverTask should be used for all project types.
+        if (isAndroidProject(target)) {
+          setAndroidLibrariesProperties(target, task);
+        }
+
         DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
         localSonarResolver.mkdirs();
@@ -129,6 +135,12 @@ public class SonarQubePlugin implements Plugin<Project> {
       })
     );
     return resolverFiles;
+  }
+
+  private static void setAndroidLibrariesProperties(Project target, SonarResolverTask task) {
+    AndroidUtils.LibrariesAndTestLibraries libraries = AndroidUtils.LibrariesAndTestLibraries.ofProject(target);
+    task.setMainLibraries(libraries.getMainLibraries());
+    task.setTestLibraries(libraries.getTestLibraries().stream().reduce(target.files(), FileCollection::plus));
   }
 
   private static Class<? extends SonarResolverTask> getCompatibleTaskType(GradleVersion version) {
