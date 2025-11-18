@@ -414,4 +414,53 @@ public class SonarUtils {
     return result.toString();
   }
 
+  /**
+   * Returns the collection of Java and Java FX runtime jars, if available.
+   */
+  public static Collection<File> getRuntimeJars() {
+    List<File> libraries = new ArrayList<>(2);
+
+    File runtimeJar = getRuntimeJar();
+    if (runtimeJar != null) {
+      libraries.add(runtimeJar);
+    }
+
+    File fxRuntimeJar = getFxRuntimeJar();
+    if (fxRuntimeJar != null) {
+      libraries.add(fxRuntimeJar);
+    }
+
+    return libraries;
+  }
+
+  @Nullable
+  private static File getRuntimeJar() {
+    try {
+      final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
+      File runtimeJar = new File(javaBase, "lib/rt.jar");
+      if (runtimeJar.exists()) {
+        return runtimeJar;
+      }
+      runtimeJar = new File(javaBase, "jre/lib/rt.jar");
+      return runtimeJar.exists() ? runtimeJar : null;
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @Nullable
+  private static File getFxRuntimeJar() {
+    try {
+      final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
+      File runtimeJar = new File(javaBase, "lib/ext/jfxrt.jar");
+      if (runtimeJar.exists()) {
+        return runtimeJar;
+      }
+      runtimeJar = new File(javaBase, "jre/lib/ext/jfxrt.jar");
+      return runtimeJar.exists() ? runtimeJar : null;
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
 }
