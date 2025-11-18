@@ -150,9 +150,8 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static void setAndroidLibrariesProperties(Project target, SonarResolverTask task) {
-    AndroidUtils.LibrariesAndTestLibraries libraries = AndroidUtils.LibrariesAndTestLibraries.ofProject(target);
-    task.setMainLibraries(libraries.getMainLibraries());
-    task.setTestLibraries(libraries.getTestLibraries().stream().reduce(target.files(), FileCollection::plus));
+    task.setMainLibraries(AndroidUtils.findMainLibraries(target));
+    task.setTestLibraries(AndroidUtils.findTestLibraries(target));
   }
 
   private static void setJavaLibrariesProperties(Project target, SonarResolverTask task) {
