@@ -21,6 +21,7 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -147,6 +148,7 @@ public abstract class SonarResolverTask extends DefaultTask {
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
+
     List<String> mainLibrariesFilenames = SonarUtils.exists(getMainLibraries() == null ? Collections.emptyList() : getMainLibraries())
       .stream()
       .map(File::getAbsolutePath)
@@ -155,6 +157,7 @@ public abstract class SonarResolverTask extends DefaultTask {
       .stream()
       .map(File::getAbsolutePath)
       .collect(Collectors.toList());
+
     ProjectProperties projectProperties = new ProjectProperties(
       getProjectName(),
       isTopLevelProject(),
