@@ -20,6 +20,7 @@
 package org.sonarqube.gradle;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -29,10 +30,12 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
@@ -187,22 +190,13 @@ public class SonarUtils {
     return rootBaseDir.toString();
   }
 
-  static void setTestClasspathProps(Map<String, Object> properties, Collection<File> testClassDirs, Collection<File> testLibraries) {
-    appendProps(properties, "sonar.java.test.binaries", exists(testClassDirs));
-    appendProps(properties, "sonar.java.test.libraries", exists(testLibraries));
-  }
-
-  static void setMainClasspathProps(Map<String, Object> properties, Collection<File> mainClassDirs, Collection<File> mainLibraries, boolean addForGroovy) {
+  static void setMainBinariesProps(Map<String, Object> properties, Collection<File> mainClassDirs, boolean addForGroovy) {
     appendProps(properties, "sonar.java.binaries", exists(mainClassDirs));
     if (addForGroovy) {
       appendProps(properties, "sonar.groovy.binaries", exists(mainClassDirs));
     }
     // Populate deprecated properties for backward compatibility
     appendProps(properties, "sonar.binaries", exists(mainClassDirs));
-
-    appendProps(properties, "sonar.java.libraries", exists(mainLibraries));
-    // Populate deprecated properties for backward compatibility
-    appendProps(properties, "sonar.libraries", exists(mainLibraries));
   }
 
   static void populateJdkProperties(Map<String, Object> properties, JavaCompilerConfiguration config) {
@@ -412,6 +406,35 @@ public class SonarUtils {
     }
     result.append(projectPath.substring(1));
     return result.toString();
+  }
+
+  /**
+   * Returns the collection of Java and Java FX runtime jars, if available.
+   */
+  public static Collection<File> getRuntimeJars() {
+    try {
+      return Stream.of(getRuntimeJar(), getFxRuntimeJar()).filter(Objects::nonNull).collect(Collectors.toList());
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  @Nullable
+  private static File getRuntimeJar() throws IOException {
+    final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
+    return Stream.of(new File(javaBase, "lib/rt.jar"), new File(javaBase, "jre/lib/rt.jar"))
+      .filter(File::exists)
+      .findFirst()
+      .orElse(null);
+  }
+
+  @Nullable
+  private static File getFxRuntimeJar() throws IOException {
+    final File javaBase = new File(System.getProperty("java.home")).getCanonicalFile();
+    return Stream.of(new File(javaBase, "lib/ext/jfxrt.jar"), new File(javaBase, "jre/lib/ext/jfxrt.jar"))
+      .filter(File::exists)
+      .findFirst()
+      .orElse(null);
   }
 
 }
