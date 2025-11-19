@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 class SonarUtilsTest {
@@ -87,6 +88,19 @@ class SonarUtilsTest {
     assertThat(SonarUtils.joinCsvStringsWithoutDuplicates(a, d)).isEqualTo("a,b,c,g");
     String e = ",";
     assertThat(SonarUtils.joinCsvStringsWithoutDuplicates(a, e)).isEqualTo("a,b,c");
+  }
+
+  @Test
+  void test_getRuntimeJars_throws_IllegalStateException_when_java_home_is_invalid() {
+    String originalJavaHome = System.getProperty("java.home");
+    try {
+      // Set java.home to a path with null character, which will cause an exception in getCanonicalFile()
+      System.setProperty("java.home", "/invalid\u0000path");
+      assertThatThrownBy(SonarUtils::getRuntimeJars)
+        .isInstanceOf(IllegalStateException.class);
+    } finally {
+      System.setProperty("java.home", originalJavaHome);
+    }
   }
 
 }
