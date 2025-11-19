@@ -107,7 +107,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register(SonarResolverTask.TASK_NAME, getCompatibleTaskType(GradleVersion.current()), task -> {
+      target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
         Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
 
         task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
