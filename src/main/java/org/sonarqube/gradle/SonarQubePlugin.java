@@ -107,7 +107,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register(SonarResolverTask.TASK_NAME, getCompatibleTaskType(GradleVersion.current()), task -> {
+      target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
         Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
 
         task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
@@ -153,15 +153,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     AndroidUtils.LibrariesAndTestLibraries libraries = AndroidUtils.LibrariesAndTestLibraries.ofProject(target);
     task.setMainLibraries(libraries.getMainLibraries());
     task.setTestLibraries(libraries.getTestLibraries().stream().reduce(target.files(), FileCollection::plus));
-  }
-
-  private static Class<? extends SonarResolverTask> getCompatibleTaskType(GradleVersion version) {
-    if (version.compareTo(GradleVersion.version("8.5.0")) >= 0) {
-      return BuildFeaturesEnabledResolverTask.class;
-    } else if (version.compareTo(GradleVersion.version("7.6.1")) >= 0) {
-      return StartParameterBasedTask.class;
-    }
-    return SonarResolverTask.class;
   }
 
   private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
