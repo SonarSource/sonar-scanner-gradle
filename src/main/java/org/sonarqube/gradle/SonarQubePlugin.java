@@ -162,15 +162,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     task.setTestLibraries(libraries);
   }
 
-  private static Class<? extends SonarResolverTask> getCompatibleTaskType(GradleVersion version) {
-    if (version.compareTo(GradleVersion.version("8.5.0")) >= 0) {
-      return BuildFeaturesEnabledResolverTask.class;
-    } else if (version.compareTo(GradleVersion.version("7.6.1")) >= 0) {
-      return StartParameterBasedTask.class;
-    }
-    return SonarResolverTask.class;
-  }
-
   private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
     project.getAllprojects().forEach(p -> {
       LOGGER.debug("Adding " + name + " extension to " + p);
