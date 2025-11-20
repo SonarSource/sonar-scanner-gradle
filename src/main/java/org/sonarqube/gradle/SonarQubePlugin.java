@@ -188,7 +188,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
     sonarTask.dependsOn(getClassPathResolverTask(project));
-    setNotCompatibleWithConfigurationCache(sonarTask);
+    // setNotCompatibleWithConfigurationCache(sonarTask);
 
   }
 
