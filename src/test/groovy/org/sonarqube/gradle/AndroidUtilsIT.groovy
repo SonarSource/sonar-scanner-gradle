@@ -121,7 +121,7 @@ class AndroidUtilsIT extends Specification {
         def result = GradleRunner.create()
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('--stacktrace', ':sonarResolver')
+          .withArguments('--configuration-cache', '--stacktrace', ':sonarResolver')
           .withPluginClasspath(getPluginClasspathWithAndroid())
           .build()
 
@@ -149,7 +149,7 @@ class AndroidUtilsIT extends Specification {
         def sonarResult = GradleRunner.create()
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('--stacktrace', 'sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('--configuration-cache', '--stacktrace', 'sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath(getPluginClasspathWithAndroid())
           .build()
 
