@@ -19,6 +19,9 @@
  */
 package org.sonarqube.gradle;
 
+/**
+ * Constants for SonarQube scan property names.
+ */
 public final class ScanPropertyNames {
   // General
   public static final String SKIP = "sonar.skip";
