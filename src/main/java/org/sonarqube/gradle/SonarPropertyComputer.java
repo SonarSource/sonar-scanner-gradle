@@ -97,10 +97,10 @@ public class SonarPropertyComputer {
 
     computeSonarProperties(targetProject, properties);
 
-    properties.computeIfPresent(ScanProperties.PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(properties));
+    properties.computeIfPresent(ScanPropertyNames.PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(properties));
 
     if (SonarQubePlugin.notSkipped(targetProject)) {
-      properties.put(ScanProperties.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getRootProject().getProjectDir().getAbsolutePath());
+      properties.put(ScanPropertyNames.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getRootProject().getProjectDir().getAbsolutePath());
     }
 
     return properties;
@@ -135,14 +135,14 @@ public class SonarPropertyComputer {
 
     // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
     // This can eventually lead to a double indexing issue in the scanner-engine.
-    rawProperties.putIfAbsent(ScanProperties.PROJECT_SOURCE_DIRS, "");
-    rawProperties.putIfAbsent(ScanProperties.PROJECT_TEST_DIRS, "");
+    rawProperties.putIfAbsent(ScanPropertyNames.PROJECT_SOURCE_DIRS, "");
+    rawProperties.putIfAbsent(ScanPropertyNames.PROJECT_TEST_DIRS, "");
 
     if (project.equals(targetProject)) {
-      rawProperties.putIfAbsent(ScanProperties.PROJECT_KEY, computeProjectKey());
+      rawProperties.putIfAbsent(ScanPropertyNames.PROJECT_KEY, computeProjectKey());
     } else {
-      String projectKey = (String) properties.get(ScanProperties.PROJECT_KEY);
-      rawProperties.putIfAbsent(ScanProperties.MODULE_KEY, projectKey + project.getPath());
+      String projectKey = (String) properties.get(ScanPropertyNames.PROJECT_KEY);
+      rawProperties.putIfAbsent(ScanPropertyNames.MODULE_KEY, projectKey + project.getPath());
     }
 
     convertProperties(rawProperties, prefix, properties);
@@ -173,12 +173,12 @@ public class SonarPropertyComputer {
       computeDefaultProperties(childProject, properties, modulePrefix);
     }
 
-    properties.put(convertKey(ScanProperties.MODULES, prefix), String.join(",", moduleIds));
+    properties.put(convertKey(ScanPropertyNames.MODULES, prefix), String.join(",", moduleIds));
   }
 
   private boolean shouldApplyScanAll(Project project, Map<String, Object> properties) {
     // when the parent module is skipped, the properties are empty thus the scan all logic is not applied
-    var scanAllValue = (String) properties.getOrDefault(ScanProperties.GRADLE_SCAN_ALL, "false");
+    var scanAllValue = (String) properties.getOrDefault(ScanPropertyNames.GRADLE_SCAN_ALL, "false");
     var scanAllEnabled = "true".equalsIgnoreCase(scanAllValue.trim());
 
     if (scanAllEnabled) {
@@ -191,7 +191,7 @@ public class SonarPropertyComputer {
       boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties().keySet(), EnvironmentConfig.load(System.getenv()).keySet(), sonarProps.getProperties().keySet())
         .flatMap(Collection::stream)
         .map(String.class::cast)
-        .anyMatch(k -> ScanProperties.PROJECT_SOURCE_DIRS.endsWith(k) || ScanProperties.PROJECT_TEST_DIRS.endsWith(k));
+        .anyMatch(k -> ScanPropertyNames.PROJECT_SOURCE_DIRS.endsWith(k) || ScanPropertyNames.PROJECT_TEST_DIRS.endsWith(k));
 
       if (sourcesOrTestsAlreadySet) {
         LOGGER.warn("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources or sonar.tests has been overridden.");
@@ -206,7 +206,7 @@ public class SonarPropertyComputer {
     // Collecting the existing sources from all modules, i.e. 'sonar.sources' and all 'submodule.sonar.sources'
     Set<Path> allModulesExistingSourcesAndTests = properties.entrySet()
       .stream()
-      .filter(e -> e.getKey().endsWith(ScanProperties.PROJECT_SOURCE_DIRS) || e.getKey().endsWith(ScanProperties.PROJECT_TEST_DIRS))
+      .filter(e -> e.getKey().endsWith(ScanPropertyNames.PROJECT_SOURCE_DIRS) || e.getKey().endsWith(ScanPropertyNames.PROJECT_TEST_DIRS))
       .map(Map.Entry::getValue)
       .map(String.class::cast)
       .map(SonarUtils::splitAsCsv)
@@ -242,10 +242,10 @@ public class SonarPropertyComputer {
       .collect(groupingBy(path -> SonarUtils.findProjectFileType(projectDir, path)));
 
     List<Path> collectedMainSources = collectedSourceByType.getOrDefault(InputFileType.MAIN, List.of());
-    appendAdditionalSourceFiles(properties, ScanProperties.PROJECT_SOURCE_DIRS, collectedMainSources);
+    appendAdditionalSourceFiles(properties, ScanPropertyNames.PROJECT_SOURCE_DIRS, collectedMainSources);
 
     List<Path> collectedTestSources = collectedSourceByType.getOrDefault(InputFileType.TEST, List.of());
-    appendAdditionalSourceFiles(properties, ScanProperties.PROJECT_TEST_DIRS, collectedTestSources);
+    appendAdditionalSourceFiles(properties, ScanPropertyNames.PROJECT_TEST_DIRS, collectedTestSources);
   }
 
   private static void appendAdditionalSourceFiles(Map<String, Object> properties, String sourcePropertyToUpdate, List<Path> collectedSources) {
@@ -328,7 +328,7 @@ public class SonarPropertyComputer {
     project.getTasks().withType(JavaCompile.class, compile -> {
       String encoding = compile.getOptions().getEncoding();
       if (encoding != null) {
-        properties.put(ScanProperties.SOURCE_ENCODING, encoding);
+        properties.put(ScanPropertyNames.SOURCE_ENCODING, encoding);
       }
     });
   }
@@ -405,7 +405,7 @@ public class SonarPropertyComputer {
       SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
       File reportDestination = getDestination(xmlReport);
       if (isReportEnabled(xmlReport) && reportDestination != null && reportDestination.exists()) {
-        appendProp(properties, ScanProperties.JACOCO_XML_REPORT_PATHS, reportDestination);
+        appendProp(properties, ScanPropertyNames.JACOCO_XML_REPORT_PATHS, reportDestination);
       } else {
         LOGGER.info("JaCoCo report task detected, but XML report is not enabled or it was not produced. " +
           "Coverage for this task will not be reported.");
@@ -420,10 +420,10 @@ public class SonarPropertyComputer {
     // do not set a custom test reports path if there are no files, otherwise Sonar will emit a warning
     if (testResultsDir != null && testResultsDir.isDirectory()
       && Arrays.stream(testResultsDir.list()).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
-      appendProp(properties, ScanProperties.JUNIT_REPORT_PATHS, testResultsDir);
+      appendProp(properties, ScanPropertyNames.JUNIT_REPORT_PATHS, testResultsDir);
       // For backward compatibility
-      appendProp(properties, ScanProperties.JUNIT_REPORTS_PATH, testResultsDir);
-      appendProp(properties, ScanProperties.SUREFIRE_REPORTS_PATH, testResultsDir);
+      appendProp(properties, ScanPropertyNames.JUNIT_REPORTS_PATH, testResultsDir);
+      appendProp(properties, ScanPropertyNames.SUREFIRE_REPORTS_PATH, testResultsDir);
     }
   }
 
@@ -458,7 +458,7 @@ public class SonarPropertyComputer {
 
     SourceSet test = sourceSets.getAt("test");
     Collection<File> testClassDirs = getJavaOutputDirs(test);
-    appendProps(properties, ScanProperties.JAVA_TEST_BINARIES, exists(testClassDirs));
+    appendProps(properties, ScanPropertyNames.JAVA_TEST_BINARIES, exists(testClassDirs));
   }
 
   private static @Nullable Collection<File> getJavaSourceFiles(SourceSet sourceSet) {
@@ -519,14 +519,14 @@ public class SonarPropertyComputer {
   }
 
   private void addGradleDefaults(final Project project, final Map<String, Object> properties) {
-    properties.put(ScanProperties.PROJECT_NAME, project.getName());
-    properties.put(ScanProperties.PROJECT_DESCRIPTION, project.getDescription());
-    properties.put(ScanProperties.PROJECT_VERSION, project.getVersion());
-    properties.put(ScanProperties.PROJECT_BASE_DIR, project.getProjectDir());
+    properties.put(ScanPropertyNames.PROJECT_NAME, project.getName());
+    properties.put(ScanPropertyNames.PROJECT_DESCRIPTION, project.getDescription());
+    properties.put(ScanPropertyNames.PROJECT_VERSION, project.getVersion());
+    properties.put(ScanPropertyNames.PROJECT_BASE_DIR, project.getProjectDir());
 
     if (project.equals(targetProject)) {
       // Root project of the analysis
-      properties.put(ScanProperties.WORKING_DIRECTORY, new File(project.getBuildDir(), "sonar"));
+      properties.put(ScanPropertyNames.WORKING_DIRECTORY, new File(project.getBuildDir(), "sonar"));
     }
 
     Object kotlinExtension = project.getExtensions().findByName("kotlin");

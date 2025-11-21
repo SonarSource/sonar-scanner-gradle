@@ -186,7 +186,7 @@ public class SonarTask extends ConventionTask {
   }
 
   private static boolean isSkippedWithProperty(Map<String, String> properties) {
-    if ("true".equalsIgnoreCase(properties.getOrDefault(ScanProperties.SKIP, "false"))) {
+    if ("true".equalsIgnoreCase(properties.getOrDefault(ScanPropertyNames.SKIP, "false"))) {
       LOGGER.warn("Sonar Scanner analysis skipped");
       return true;
     }

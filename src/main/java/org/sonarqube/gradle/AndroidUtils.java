@@ -76,7 +76,7 @@ import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
  */
 class AndroidUtils {
   private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
-  private static final String SONAR_ANDROID_LINT_REPORT_PATHS_PROP = ScanProperties.ANDROID_LINT_REPORT_PATHS;
+  private static final String SONAR_ANDROID_LINT_REPORT_PATHS_PROP = ScanPropertyNames.ANDROID_LINT_REPORT_PATHS;
 
   private AndroidUtils() {
   }
@@ -202,7 +202,7 @@ class AndroidUtils {
       .map(d -> d.get().getAsFile())
       .filter(file -> file.isDirectory() && file.list().length > 0)
       .collect(Collectors.toList());
-    map.put(ScanProperties.JUNIT_REPORT_PATHS, value);
+    map.put(ScanPropertyNames.JUNIT_REPORT_PATHS, value);
   }
 
   private static DirectoryProperty getReportsDirBeforeGradle42(DeviceProviderInstrumentTestTask testTask) {
@@ -349,11 +349,11 @@ class AndroidUtils {
       : Collections.emptySet();
 
     if (isTest) {
-      appendProps(properties, ScanProperties.JAVA_TEST_BINARIES, exists(destinationDirs));
+      appendProps(properties, ScanPropertyNames.JAVA_TEST_BINARIES, exists(destinationDirs));
     } else {
-      appendProps(properties, ScanProperties.JAVA_BINARIES, exists(destinationDirs));
+      appendProps(properties, ScanPropertyNames.JAVA_BINARIES, exists(destinationDirs));
       // Populate deprecated properties for backward compatibility
-      appendProps(properties, ScanProperties.BINARIES, exists(destinationDirs));
+      appendProps(properties, ScanPropertyNames.BINARIES, exists(destinationDirs));
     }
   }
 

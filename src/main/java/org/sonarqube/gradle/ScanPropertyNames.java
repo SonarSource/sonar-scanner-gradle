@@ -19,7 +19,7 @@
  */
 package org.sonarqube.gradle;
 
-public final class ScanProperties {
+public final class ScanPropertyNames {
   // General
   public static final String SKIP = "sonar.skip";
   public static final String GRADLE_SCAN_ALL = "sonar.gradle.scanAll";
@@ -75,7 +75,7 @@ public final class ScanProperties {
   @Deprecated
   public static final String BINARIES = "sonar.binaries";
 
-  private ScanProperties() {
+  private ScanPropertyNames() {
     /* This is a utility class with constants */
   }
 }
