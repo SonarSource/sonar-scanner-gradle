@@ -27,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,7 +70,6 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.computeReportPaths;
-import static org.sonarqube.gradle.SonarUtils.exists;
 import static org.sonarqube.gradle.SonarUtils.findProjectBaseDir;
 import static org.sonarqube.gradle.SonarUtils.getSourceSets;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
@@ -413,7 +411,7 @@ public class SonarPropertyComputer {
     project.getTasks().withType(JacocoReport.class, jacocoReportTask -> {
       SingleFileReport xmlReport = jacocoReportTask.getReports().getXml();
       File reportDestination = getDestination(xmlReport);
-      if (isReportEnabled(xmlReport) && reportDestination != null && reportDestination.exists()) {
+      if (isReportEnabled(xmlReport) && reportDestination != null) {
         appendProp(properties, ScanPropertyNames.JACOCO_XML_REPORT_PATHS, reportDestination);
       } else {
         LOGGER.info("JaCoCo report task detected, but XML report is not enabled or it was not produced. " +
@@ -425,15 +423,14 @@ public class SonarPropertyComputer {
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
     File testResultsDir = getDestination(testTask.getReports().getJunitXml());
 
-    // do not set a custom test reports path if it does not exists, otherwise Sonar will emit an error
-    // do not set a custom test reports path if there are no files, otherwise Sonar will emit a warning
-    if (testResultsDir != null && testResultsDir.isDirectory()
-      && Arrays.stream(testResultsDir.list()).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
-      appendProp(properties, ScanPropertyNames.JUNIT_REPORT_PATHS, testResultsDir);
-      // For backward compatibility
-      appendProp(properties, ScanPropertyNames.JUNIT_REPORTS_PATH, testResultsDir);
-      appendProp(properties, ScanPropertyNames.SUREFIRE_REPORTS_PATH, testResultsDir);
+    if(testResultsDir==null){
+      return;
     }
+
+    appendProp(properties, ScanPropertyNames.JUNIT_REPORT_PATHS, testResultsDir);
+    // For backward compatibility
+    appendProp(properties, ScanPropertyNames.JUNIT_REPORTS_PATH, testResultsDir);
+    appendProp(properties, ScanPropertyNames.SUREFIRE_REPORTS_PATH, testResultsDir);
   }
 
   private static void configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
@@ -467,20 +464,21 @@ public class SonarPropertyComputer {
 
     SourceSet test = sourceSets.getAt("test");
     Collection<File> testClassDirs = getJavaOutputDirs(test);
-    appendProps(properties, ScanPropertyNames.JAVA_TEST_BINARIES, exists(testClassDirs));
+    appendProps(properties,  ScanPropertyNames.JAVA_TEST_BINARIES, testClassDirs);
   }
 
   private static @Nullable Collection<File> getJavaSourceFiles(SourceSet sourceSet) {
-    List<File> sourceDirectories = sourceSet.getAllJava().getSrcDirs()
-      .stream()
-      .filter(File::exists)
-      .collect(Collectors.toList());
+    List<File> sourceDirectories = new ArrayList<>(sourceSet.getAllJava().getSrcDirs());
 
     return nonEmptyOrNull(sourceDirectories);
   }
 
   private static Collection<File> getJavaOutputDirs(SourceSet sourceSet) {
-    return exists(sourceSet.getOutput().getClassesDirs());
+    ArrayList<File> fs = new ArrayList<>();
+    for(File f : sourceSet.getOutput().getClassesDirs()){
+      fs.add(f);
+    }
+    return fs;
   }
 
   private static @Nullable Collection<File> getKotlinSourceFiles(Object extension, String sourceSetNameSuffix) {
@@ -491,7 +489,6 @@ public class SonarPropertyComputer {
         .map(InternalKotlinSourceSet::of)
         .filter(s -> s.name.toLowerCase(Locale.ROOT).endsWith(sourceSetNameSuffix))
         .flatMap(s -> s.srcDirs.stream())
-        .filter(File::exists)
         .collect(Collectors.toList());
       return nonEmptyOrNull(sourceFiles);
     } catch (Exception e) {

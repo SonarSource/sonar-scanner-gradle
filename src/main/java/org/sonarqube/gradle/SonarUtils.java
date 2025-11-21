@@ -159,12 +159,12 @@ public class SonarUtils {
   }
 
   static void setMainBinariesProps(Map<String, Object> properties, Collection<File> mainClassDirs, boolean addForGroovy) {
-    appendProps(properties, ScanPropertyNames.JAVA_BINARIES, exists(mainClassDirs));
+    appendProps(properties, ScanPropertyNames.JAVA_BINARIES, mainClassDirs);
     if (addForGroovy) {
-      appendProps(properties, ScanPropertyNames.GROOVY_BINARIES, exists(mainClassDirs));
+      appendProps(properties, ScanPropertyNames.GROOVY_BINARIES, mainClassDirs);
     }
     // Populate deprecated properties for backward compatibility
-    appendProps(properties, ScanPropertyNames.BINARIES, exists(mainClassDirs));
+    appendProps(properties, ScanPropertyNames.BINARIES, mainClassDirs);
   }
 
   static void populateJdkProperties(Map<String, Object> properties, JavaCompilerConfiguration config) {

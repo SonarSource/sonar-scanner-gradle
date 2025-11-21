@@ -25,10 +25,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -152,6 +157,7 @@ public class SonarTask extends ConventionTask {
     }
 
     mapProperties = resolveJavaLibraries(mapProperties);
+    postProcessProperties(mapProperties);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -304,6 +310,41 @@ public class SonarTask extends ConventionTask {
     } catch (IOException e) {
       LOGGER.warn("Could not read from resolver file {}", resolverFile, e);
     }
+  }
+
+  /** Post process the sonar properties to prepare them for analysis.
+   *  Before, we do not have any guarantees that all tasks were executed.
+   *
+   * Remove file and directories that are not present on the file system.
+   */
+  static void postProcessProperties(Map<String, String> properties) {
+
+    // remove directories
+    Set<String> propertiesWithPaths = Set.of("sonar.java.binaries",
+     "sonar.groovy.binaries",
+      "sonar.java.test.binaries",
+     "sonar.binaries",
+     "sonar.junit.reportPaths",
+     "sonar.junit.reportsPath",
+     "sonar.surefire.reportsPath",
+      "sonar.coverage.jacoco.xmlReportPaths",
+      "sonar.sources",
+      "sonar.tests");
+    // do we want to do it for all the properties?
+    Set<String> emptyProperties = new HashSet<>();
+    for(var prop : properties.entrySet()){
+      if (propertiesWithPaths.contains(prop.getKey())) {
+        List<String> paths = Arrays.asList(prop.getValue().split(","));
+        String filtered = paths.stream().filter(p -> Files.exists(Path.of(p))).collect(Collectors.joining(","));
+        properties.put(prop.getKey(), filtered);
+        if(filtered.isEmpty()){
+          emptyProperties.add(prop.getValue());
+        }
+      }
+    }
+
+    properties.keySet().removeAll(emptyProperties);
+
   }
 
   /**

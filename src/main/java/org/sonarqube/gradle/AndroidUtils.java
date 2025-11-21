@@ -353,11 +353,11 @@ class AndroidUtils {
       : Collections.emptySet();
 
     if (isTest) {
-      appendProps(properties, ScanPropertyNames.JAVA_TEST_BINARIES, exists(destinationDirs));
+      appendProps(properties, ScanPropertyNames.JAVA_TEST_BINARIES, destinationDirs);
     } else {
-      appendProps(properties, ScanPropertyNames.JAVA_BINARIES, exists(destinationDirs));
+      appendProps(properties, ScanPropertyNames.JAVA_BINARIES, destinationDirs);
       // Populate deprecated properties for backward compatibility
-      appendProps(properties, ScanPropertyNames.BINARIES, exists(destinationDirs));
+      appendProps(properties, ScanPropertyNames.BINARIES, destinationDirs);
     }
   }
 
