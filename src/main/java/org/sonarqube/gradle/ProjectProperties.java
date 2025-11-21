@@ -21,15 +21,54 @@ package org.sonarqube.gradle;
 
 import java.util.List;
 
+/**
+ * An immutable data transfer object that holds resolved dependency information for a Gradle project.
+ * <p>
+ * This class is used during the Gradle <strong>execution phase</strong> to transfer resolved classpath
+ * information between tasks, specifically from {@link SonarResolverTask} to {@link SonarTask}.
+ * It is an <strong>internal implementation detail</strong> and is not exposed to users.
+ *
+ * <h3>Purpose:</h3>
+ * <ul>
+ * <li>Carries resolved compile and test classpaths after dependency resolution</li>
+ * <li>Supports Gradle configuration cache by being serializable/deserializable</li>
+ * <li>Ensures immutability for safe sharing between tasks</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Note:</strong> This class is for internal task-to-task communication, not for user configuration.
+ * For user-facing property configuration, see {@link SonarProperties}.
+ */
 public class ProjectProperties {
 
+  /** The Gradle project name (e.g., ":subproject" for subprojects, "" for root) */
   public final String projectName;
+
+  /** Whether this project is the root project of the analysis */
   public final Boolean isRootProject;
+
+  /** Resolved absolute paths of compile classpath dependencies */
   public final List<String> compileClasspath;
+
+  /** Resolved absolute paths of test compile classpath dependencies */
   public final List<String> testCompileClasspath;
+
+  /** Filtered main libraries (subset of compileClasspath) for SonarQube analysis */
   public final List<String> mainLibraries;
+
+  /** Filtered test libraries (subset of testCompileClasspath) for SonarQube analysis */
   public final List<String> testLibraries;
 
+  /**
+   * Creates a new immutable ProjectProperties instance.
+   *
+   * @param projectName the Gradle project name
+   * @param isRootProject whether this is the root project
+   * @param compileClasspath resolved compile classpath as absolute paths
+   * @param testCompileClasspath resolved test compile classpath as absolute paths
+   * @param mainLibraries filtered main libraries for analysis
+   * @param testLibraries filtered test libraries for analysis
+   */
   public ProjectProperties(String projectName, Boolean isRootProject, List<String> compileClasspath, List<String> testCompileClasspath,
                            List<String> mainLibraries, List<String> testLibraries) {
     this.projectName = projectName;
