@@ -818,7 +818,7 @@ class FunctionalTests extends Specification {
 
   }
 
-   def "sonar and sonarResolver are never not up to date"() {
+   def "check sonar and sonarResolver are not up to date"() {
      given:
      settingsFile << "rootProject.name = 'java-task-toolchains'"
      buildFile << """
