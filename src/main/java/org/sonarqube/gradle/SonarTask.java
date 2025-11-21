@@ -47,6 +47,9 @@ import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
 import org.sonarsource.scanner.lib.internal.batch.LogOutput;
 
+import static org.sonarqube.gradle.ScanPropertyNames.JAVA_LIBRARIES;
+import static org.sonarqube.gradle.ScanPropertyNames.LIBRARIES;
+
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
  * Can be used with or without the {@code "sonar-gradle"} plugin.
@@ -308,12 +311,12 @@ public class SonarTask extends ConventionTask {
       LOGGER.debug("Resolved configured main class path as: {}", resolvedAsAString);
     }
 
-    String propertyKey = isTopLevelProject ?
-      "sonar.java.libraries" :
-      (projectProperties.projectName + ".sonar.java.libraries");
-    String legacyPropertyKey = isTopLevelProject ?
-      "sonar.libraries" :
-      (projectProperties.projectName + ".sonar.libraries");
+    String propertyKey = isTopLevelProject
+      ? JAVA_LIBRARIES
+      : projectProperties.projectName + "." + JAVA_LIBRARIES;
+    String legacyPropertyKey = isTopLevelProject
+      ? LIBRARIES
+      :  projectProperties.projectName + "." + LIBRARIES;
 
     String libraries = properties.getOrDefault(propertyKey, "");
     if (libraries.isEmpty()) {

@@ -48,6 +48,9 @@ public final class ScanPropertyNames {
   public static final String JAVA_LIBRARIES = "sonar.java.libraries";
   public static final String JAVA_TEST_BINARIES = "sonar.java.test.binaries";
   public static final String JAVA_TEST_LIBRARIES = "sonar.java.test.libraries";
+  /** @deprecated Kept for backward compatibility */
+  @Deprecated
+  public static final String LIBRARIES = "sonar.libraries";
 
   // Groovy configuration
   public static final String GROOVY_BINARIES = "sonar.groovy.binaries";
