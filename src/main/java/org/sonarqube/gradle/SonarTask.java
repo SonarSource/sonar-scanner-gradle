@@ -47,7 +47,9 @@ import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
 import org.sonarsource.scanner.lib.internal.batch.LogOutput;
 
+import static org.sonarqube.gradle.ScanPropertyNames.JAVA_BINARIES;
 import static org.sonarqube.gradle.ScanPropertyNames.JAVA_LIBRARIES;
+import static org.sonarqube.gradle.ScanPropertyNames.JAVA_TEST_LIBRARIES;
 import static org.sonarqube.gradle.ScanPropertyNames.LIBRARIES;
 
 /**
@@ -368,15 +370,15 @@ public class SonarTask extends ConventionTask {
     }
 
     // Prepend sonar.java.binaries if it exists
-    String binariesPropertyKey = isTopLevelProject ?
-      "sonar.java.binaries" :
-      (projectProperties.projectName + ".sonar.java.binaries");
+    String binariesPropertyKey = isTopLevelProject
+      ? JAVA_BINARIES
+      : projectProperties.projectName + "." + JAVA_BINARIES;
     String libraries = properties.getOrDefault(binariesPropertyKey, "");
 
     // Add existing test libraries if they exist
-    String propertyKey = isTopLevelProject ?
-      "sonar.java.test.libraries" :
-      (projectProperties.projectName + ".sonar.java.test.libraries");
+    String propertyKey = isTopLevelProject
+      ? JAVA_TEST_LIBRARIES
+      : projectProperties.projectName + "." + JAVA_TEST_LIBRARIES;
 
     // Append resolved libraries
     if (properties.containsKey(propertyKey)) {
