@@ -23,8 +23,10 @@ import groovy.json.JsonSlurper
 import org.gradle.internal.impldep.org.junit.Assume
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import org.junit.jupiter.params.ParameterizedTest
 import spock.lang.Requires
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.nio.file.Path
 import spock.lang.TempDir
@@ -47,7 +49,6 @@ class AndroidUtilsIT extends Specification {
         def manifestDir = projectDir.resolve('src').resolve('main')
         manifestDir.toFile().mkdirs()
         manifestFile = manifestDir.resolve('AndroidManifest.xml')
-        FunctionalTests.configureJacocoGradleTestkitPlugin(projectDir)
     }
 
     /**
@@ -118,10 +119,14 @@ class AndroidUtilsIT extends Specification {
         """
 
         when: "run sonarResolver task"
+        // Agent are not supported with Gradle TestKit and configuration cache
+        if (!useConfigCache) {
+            FunctionalTests.configureJacocoGradleTestkitPlugin(projectDir)
+        }
         def result = GradleRunner.create()
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('--stacktrace', ':sonarResolver')
+          .withArguments([useConfigCache ? '--configuration-cache' : null, '--stacktrace', ':sonarResolver'].findAll { it != null })
           .withPluginClasspath(getPluginClasspathWithAndroid())
           .build()
 
@@ -146,10 +151,13 @@ class AndroidUtilsIT extends Specification {
         json.testLibraries.any { it.contains("junit-4.12") }
 
         when: "Run sonar task"
+
+        def arguments = [useConfigCache ? '--configuration-cache' : null, '--stacktrace', 'sonar',
+                         '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath()].findAll { it != null }
         def sonarResult = GradleRunner.create()
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments('--stacktrace', 'sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments(arguments)
           .withPluginClasspath(getPluginClasspathWithAndroid())
           .build()
 
@@ -166,5 +174,8 @@ class AndroidUtilsIT extends Specification {
         props."sonar.java.test.libraries".contains("android.jar")
         props."sonar.java.test.libraries".contains("joda-time-2.7")
         props."sonar.java.test.libraries".contains("junit-4.12")
+
+        where:
+        useConfigCache << [true, false]
     }
 }
