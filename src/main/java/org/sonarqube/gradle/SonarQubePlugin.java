@@ -42,14 +42,13 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 
 import static org.sonarqube.gradle.SonarUtils.capitalize;
-import static org.sonarqube.gradle.SonarUtils.getMainClassPath;
-import static org.sonarqube.gradle.SonarUtils.getTestClassPath;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 
 /**
@@ -108,7 +107,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
     List<File> resolverFiles = new ArrayList<>();
     topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register(SonarResolverTask.TASK_NAME, getCompatibleTaskType(GradleVersion.current()), task -> {
+      target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
         Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
 
         task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
@@ -119,10 +118,10 @@ public class SonarQubePlugin implements Plugin<Project> {
         }
         task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
 
-        FileCollection mainClassPath = getMainClassPath(target);
-        task.setCompileClasspath(mainClassPath);
-        FileCollection testClassPath = getTestClassPath(target);
-        task.setTestCompileClasspath(testClassPath);
+        Provider<FileCollection> compile = target.provider(() -> querySourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME));
+        Provider<FileCollection> test = target.provider(() -> querySourceSet(target, SourceSet.TEST_SOURCE_SET_NAME));
+        task.setCompileClasspath(compile);
+        task.setTestCompileClasspath(test);
 
         if (isAndroidProject(target)) {
           setAndroidLibrariesProperties(target, task);
@@ -140,6 +139,16 @@ public class SonarQubePlugin implements Plugin<Project> {
     return resolverFiles;
   }
 
+  @Nullable
+  private static FileCollection querySourceSet(Project project, String sourceSetName) {
+    var sourceSets = SonarUtils.getSourceSets(project);
+    if (sourceSets == null) {
+      return null;
+    }
+    var set = sourceSets.findByName(sourceSetName);
+    return set == null ? null : set.getCompileClasspath();
+  }
+
   private static void setAndroidLibrariesProperties(Project target, SonarResolverTask task) {
     AndroidUtils.LibrariesAndTestLibraries libraries = AndroidUtils.LibrariesAndTestLibraries.ofProject(target);
     task.setMainLibraries(libraries.getMainLibraries());
@@ -151,15 +160,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     FileCollection libraries = target.files(runtimeJars);
     task.setMainLibraries(libraries);
     task.setTestLibraries(libraries);
-  }
-
-  private static Class<? extends SonarResolverTask> getCompatibleTaskType(GradleVersion version) {
-    if (version.compareTo(GradleVersion.version("8.5.0")) >= 0) {
-      return BuildFeaturesEnabledResolverTask.class;
-    } else if (version.compareTo(GradleVersion.version("7.6.1")) >= 0) {
-      return StartParameterBasedTask.class;
-    }
-    return SonarResolverTask.class;
   }
 
   private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
