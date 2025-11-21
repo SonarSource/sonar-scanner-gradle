@@ -23,6 +23,7 @@ public final class ScanPropertyNames {
   // General
   public static final String SKIP = "sonar.skip";
   public static final String GRADLE_SCAN_ALL = "sonar.gradle.scanAll";
+  public static final String VERBOSE = "sonar.verbose";
 
   // Project structure
   public static final String PROJECT_KEY = "sonar.projectKey";

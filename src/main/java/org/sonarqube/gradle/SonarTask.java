@@ -51,6 +51,7 @@ import static org.sonarqube.gradle.ScanPropertyNames.JAVA_BINARIES;
 import static org.sonarqube.gradle.ScanPropertyNames.JAVA_LIBRARIES;
 import static org.sonarqube.gradle.ScanPropertyNames.JAVA_TEST_LIBRARIES;
 import static org.sonarqube.gradle.ScanPropertyNames.LIBRARIES;
+import static org.sonarqube.gradle.ScanPropertyNames.VERBOSE;
 
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
@@ -131,7 +132,7 @@ public class SonarTask extends ConventionTask {
 
     if (LOGGER.isDebugEnabled()) {
       mapProperties = new HashMap<>(mapProperties);
-      mapProperties.put("sonar.verbose", "true");
+      mapProperties.put(VERBOSE, "true");
       mapProperties = Collections.unmodifiableMap(mapProperties);
     }
 
