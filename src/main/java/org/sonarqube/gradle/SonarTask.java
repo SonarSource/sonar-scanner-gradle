@@ -43,7 +43,6 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.UntrackedTask;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
@@ -60,7 +59,6 @@ import org.sonarsource.scanner.lib.internal.batch.LogOutput;
  * For more information on how to configure the SonarQube Scanner, and on which properties are available, see the
  * <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner documentation</a>.
  */
-@UntrackedTask(because = "sources are not annotated with @InputFiles, but are part of the properties. Gradle cannot track correctly if the sources have changed or not.")
 public class SonarTask extends ConventionTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
@@ -98,7 +96,7 @@ public class SonarTask extends ConventionTask {
   @Inject
   public SonarTask(){
     super();
-    // UntrackedTask should be enough, but gradle is buggy and for some version it does not work
+    // some input are annotated with internal, thus grade cannot correctly compute if the task is up to date or not
     this.getOutputs().upToDateWhen(task -> false);
   }
 

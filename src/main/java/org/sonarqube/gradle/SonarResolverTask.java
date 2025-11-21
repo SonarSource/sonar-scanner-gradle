@@ -34,10 +34,8 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.UntrackedTask;
 
 
-@UntrackedTask(because = "task must always be recomputed, as we cannot declare input output properly")
 public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
   public static final String TASK_DESCRIPTION = "Resolves and serializes project information and classpath for SonarQube analysis.";
@@ -55,7 +53,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   @Inject
   public SonarResolverTask() {
     super();
-    // UntrackedTask should be enough, but gradle is buggy and for some version it does not work
+    // some input are annotated with internal, thus grade cannot correctly compute if the task is up to date or not
     this.getOutputs().upToDateWhen(task -> false);
   }
 
