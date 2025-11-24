@@ -30,7 +30,8 @@ import java.util.Map;
  * The wrapped {@code properties} map is pre-populated with defaults computed from the Gradle project model,
  * and can be further manipulated by users through the convenience methods provided.
  *
- * <h3>Usage Example:</h3>
+ * <p>
+ * <strong>Usage Example:</strong>
  * <pre>{@code
  * sonarqube {
  *     properties {
@@ -43,7 +44,8 @@ import java.util.Map;
  * }
  * }</pre>
  *
- * <h3>Property Value Conversion:</h3>
+ * <p>
+ * <strong>Property Value Conversion:</strong>
  * Before passing properties to the Scanner, values are converted to Strings as follows:
  * <ul>
  * <li>{@code Iterable}s are recursively converted and joined into a comma-separated String</li>

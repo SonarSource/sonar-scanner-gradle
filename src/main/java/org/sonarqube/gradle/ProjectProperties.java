@@ -28,7 +28,8 @@ import java.util.List;
  * information between tasks, specifically from {@link SonarResolverTask} to {@link SonarTask}.
  * It is an <strong>internal implementation detail</strong> and is not exposed to users.
  *
- * <h3>Purpose:</h3>
+ * <p>
+ * <strong>Purpose:</strong>
  * <ul>
  * <li>Carries resolved compile and test classpaths after dependency resolution</li>
  * <li>Supports Gradle configuration cache by being serializable/deserializable</li>
