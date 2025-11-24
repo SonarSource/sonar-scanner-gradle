@@ -72,6 +72,7 @@ if (project.version.toString().endsWith("-SNAPSHOT") && buildNumber != null) {
 }
 
 val junitVersion = "5.10.2"
+val archunitVersion = "1.2.1"
 
 dependencies {
     implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:3.3.1.450")
@@ -89,6 +90,7 @@ dependencies {
     testImplementation("org.spockframework:spock-core:2.3-groovy-3.0") {
         exclude(module = "groovy-all")
     }
+    testImplementation("com.tngtech.archunit:archunit-junit5:$archunitVersion")
 }
 
 gradlePlugin {
