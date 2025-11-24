@@ -353,7 +353,7 @@ public class AndroidTest extends AbstractGradleIT {
     assertThat(props.getProperty(":module_android_feature.sonar.java.target")).isEqualTo("1.8");
 
     // test only module
-    assertThat(props.getProperty(":module-flavor1-androidTest-only.sonar.sources")).isEmpty();
+    assertThat(props.getProperty(":module-flavor1-androidTest-only.sonar.sources")).isNull();
     assertThat(stream(props.getProperty(":module-flavor1-androidTest-only.sonar.tests").split(",")).map(Paths::get))
       .containsOnly(
         baseDir.resolve("module-flavor1-androidTest-only/src/main/java"),
