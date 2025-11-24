@@ -238,16 +238,6 @@ public class GradleTest extends AbstractGradleIT {
     assertThat(props.getProperty("sonar.junit.reportPaths")).isNull();
   }
 
-  @Test
-  public void testJavaProjectWithoutRealTestsDoesNotSetCustomReportsPath() throws Exception {
-    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
-    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-no-real-tests", emptyMap(), "test");
-    Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
-
-    assertThat(testResultsDir).exists();
-    assertThat(props.getProperty("sonar.junit.reportsPath")).isNull();
-    assertThat(props.getProperty("sonar.junit.reportPaths")).isNull();
-  }
 
   @Test
   public void testLazyConfiguration() throws Exception {

@@ -50,6 +50,7 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.sonarqube.gradle.properties.SonarProperty;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
@@ -320,25 +321,28 @@ public class SonarTask extends ConventionTask {
   static void postProcessProperties(Map<String, String> properties) {
 
     // remove directories
-    Set<String> propertiesWithPaths = Set.of("sonar.java.binaries",
-     "sonar.groovy.binaries",
-      "sonar.java.test.binaries",
-     "sonar.binaries",
-     "sonar.junit.reportPaths",
-     "sonar.junit.reportsPath",
-     "sonar.surefire.reportsPath",
-      "sonar.coverage.jacoco.xmlReportPaths",
-      "sonar.sources",
-      "sonar.tests");
+    Set<String> propertiesWithPaths = Set.of(SonarProperty.JAVA_BINARIES,
+      SonarProperty.GROOVY_BINARIES,
+      SonarProperty.JAVA_TEST_BINARIES,
+      SonarProperty.BINARIES,
+      SonarProperty.JUNIT_REPORT_PATHS,
+      SonarProperty.JUNIT_REPORTS_PATH,
+      SonarProperty.SUREFIRE_REPORTS_PATH,
+      SonarProperty.JACOCO_XML_REPORT_PATHS,
+      SonarProperty.PROJECT_SOURCE_DIRS,
+      SonarProperty.PROJECT_TEST_DIRS);
+
     // do we want to do it for all the properties?
     Set<String> emptyProperties = new HashSet<>();
-    for(var prop : properties.entrySet()){
-      if (propertiesWithPaths.contains(prop.getKey())) {
+    for (var prop : properties.entrySet()) {
+      var parsed = SonarProperty.parse(prop.getKey());
+
+      if (parsed.isPresent() && propertiesWithPaths.contains(parsed.get().getProperty())) {
         List<String> paths = Arrays.asList(prop.getValue().split(","));
         String filtered = paths.stream().filter(p -> Files.exists(Path.of(p))).collect(Collectors.joining(","));
         properties.put(prop.getKey(), filtered);
-        if(filtered.isEmpty()){
-          emptyProperties.add(prop.getValue());
+        if (filtered.isEmpty()) {
+          emptyProperties.add(prop.getKey());
         }
       }
     }

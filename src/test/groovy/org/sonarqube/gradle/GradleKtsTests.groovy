@@ -186,10 +186,7 @@ class GradleKtsTests extends Specification {
         props.load(outFile.newDataInputStream())
 
         then:
-        // sources not present on filesystem are not yet removed, the only source we have is "src/main/java"
-        def subProjectSonarSources = props[":subproject.sonar.sources"].split(",")
-        subProjectSonarSources.size() == 1
-        (subProjectSonarSources.getAt(0) as String).endsWith("subproject/src/main/java")
+        props[":subproject.sonar.sources"] == ""
 
         def sonarSources = props["sonar.sources"].split(",")
         Assertions.assertThat(sonarSources)
