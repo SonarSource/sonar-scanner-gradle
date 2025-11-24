@@ -263,7 +263,7 @@ class GradleKtsTests extends Specification {
                      
                      sonar {
                          properties {
-                             property("sonar.sources", "${customSources.toAbsolutePath().toString()}")
+                             property("sonar.sources", \""""+customSources.toAbsolutePath().toString()+"""\")
                          }
                      }
                      """
