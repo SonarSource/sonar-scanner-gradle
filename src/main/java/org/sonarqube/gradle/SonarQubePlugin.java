@@ -88,6 +88,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         task.setResolverFiles(resolverFiles);
+        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
         configureTask(task, project, actionBroadcastMap);
       });
 
@@ -95,6 +96,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         task.setResolverFiles(resolverFiles);
+        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
         configureTask(task, project, actionBroadcastMap);
       });
     }
