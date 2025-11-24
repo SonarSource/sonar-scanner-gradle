@@ -338,17 +338,23 @@ public class SonarTask extends ConventionTask {
       var parsed = SonarProperty.parse(prop.getKey());
 
       if (parsed.isPresent() && propertiesWithPaths.contains(parsed.get().getProperty())) {
+
         List<String> paths = Arrays.asList(prop.getValue().split(","));
         String filtered = paths.stream().filter(p -> Files.exists(Path.of(p))).collect(Collectors.joining(","));
         properties.put(prop.getKey(), filtered);
-        if (filtered.isEmpty()) {
+
+        String propertyName = parsed.get().getProperty();
+        // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
+        // This can eventually lead to a double indexing issue in the scanner-engine.
+        if (filtered.isEmpty()
+          && !SonarProperty.PROJECT_SOURCE_DIRS.equals(propertyName)
+          && !SonarProperty.PROJECT_TEST_DIRS.equals(propertyName)) {
           emptyProperties.add(prop.getKey());
         }
       }
     }
 
     properties.keySet().removeAll(emptyProperties);
-
   }
 
   /**
