@@ -1,4 +1,4 @@
-package org.sonarqube.gradle.properties;/*
+/*
  * SonarQube Scanner for Gradle
  * Copyright (C) 2015-2025 SonarSource
  * mailto:info AT sonarsource DOT com
@@ -17,6 +17,7 @@ package org.sonarqube.gradle.properties;/*
  * License along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
+package org.sonarqube.gradle.properties;
 
 import java.util.Optional;
 import java.util.Set;

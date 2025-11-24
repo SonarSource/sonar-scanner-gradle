@@ -321,16 +321,21 @@ public class SonarTask extends ConventionTask {
   static void postProcessProperties(Map<String, String> properties) {
 
     // remove directories
-    Set<String> propertiesWithPaths = Set.of(SonarProperty.JAVA_BINARIES,
-      SonarProperty.GROOVY_BINARIES,
+    Set<String> propertiesWithPaths = Set.of(
+      SonarProperty.PROJECT_SOURCE_DIRS,
+      SonarProperty.PROJECT_TEST_DIRS,
+      SonarProperty.JAVA_BINARIES,
+      SonarProperty.JAVA_LIBRARIES,
       SonarProperty.JAVA_TEST_BINARIES,
-      SonarProperty.BINARIES,
+      SonarProperty.JAVA_TEST_LIBRARIES,
+      SonarProperty.LIBRARIES,
+      SonarProperty.GROOVY_BINARIES,
       SonarProperty.JUNIT_REPORT_PATHS,
       SonarProperty.JUNIT_REPORTS_PATH,
       SonarProperty.SUREFIRE_REPORTS_PATH,
       SonarProperty.JACOCO_XML_REPORT_PATHS,
-      SonarProperty.PROJECT_SOURCE_DIRS,
-      SonarProperty.PROJECT_TEST_DIRS);
+      SonarProperty.ANDROID_LINT_REPORT_PATHS,
+      SonarProperty.BINARIES);
 
     // do we want to do it for all the properties?
     Set<String> emptyProperties = new HashSet<>();
