@@ -302,6 +302,10 @@ class AndroidUtils {
     return null;
   }
 
+  private static Optional<AndroidVariantAndExtension> findVariantAndExtension(Project project) {
+    return Optional.ofNullable(AndroidUtils.findVariantAndExtension(project, getConfiguredAndroidVariant(project)));
+  }
+
   @Nullable
   private static BaseVariant findVariant(List<BaseVariant> candidates, @Nullable String testBuildType, @Nullable String userConfiguredBuildVariantName) {
     if (candidates.isEmpty()) {
@@ -433,40 +437,22 @@ class AndroidUtils {
     }
   }
 
-  public static class LibrariesAndTestLibraries {
-    private final FileCollection mainLibraries;
-    private final List<FileCollection> testLibraries;
+  public static FileCollection findMainLibraries(Project project) {
+    return findVariantAndExtension(project)
+      .map(AndroidVariantAndExtension::getVariant)
+      .map(variant -> AndroidUtils.getLibrariesFileCollection(project, variant))
+      .orElse(project.files());
+  }
 
-    public LibrariesAndTestLibraries(FileCollection mainLibraries, List<FileCollection> testLibraries) {
-      this.mainLibraries = mainLibraries;
-      this.testLibraries = testLibraries;
+  public static FileCollection findTestLibraries(Project project) {
+    var variantAndExtension = findVariantAndExtension(project);
+    if (variantAndExtension.isEmpty()) {
+      return project.files();
     }
-
-    public FileCollection getMainLibraries() {
-      return mainLibraries;
-    }
-
-    public List<FileCollection> getTestLibraries() {
-      return testLibraries;
-    }
-
-    public static LibrariesAndTestLibraries ofProject(Project project) {
-      AndroidUtils.AndroidVariantAndExtension variantAndExtension =
-        AndroidUtils.findVariantAndExtension(project, getConfiguredAndroidVariant(project));
-
-      List<FileCollection> testLibraries = new ArrayList<>();
-      FileCollection mainLibraries = null;
-
-      if (variantAndExtension != null) {
-        var variant = variantAndExtension.getVariant();
-        mainLibraries = AndroidUtils.getLibrariesFileCollection(project, variant);
-
-        getTestVariants(variant).stream()
-          .map(testVariant -> AndroidUtils.getLibrariesFileCollection(project, testVariant))
-          .filter(Objects::nonNull)
-          .forEach(testLibraries::add);
-      }
-      return new LibrariesAndTestLibraries(mainLibraries == null ? project.files() : mainLibraries, testLibraries);
-    }
+    var testVariants = getTestVariants(variantAndExtension.get().getVariant());
+    return testVariants.stream()
+      .map(testVariant -> AndroidUtils.getLibrariesFileCollection(project, testVariant))
+      .filter(Objects::nonNull)
+      .reduce(project.files(), FileCollection::plus);
   }
 }
