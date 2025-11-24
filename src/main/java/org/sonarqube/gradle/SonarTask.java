@@ -334,7 +334,8 @@ public class SonarTask extends ConventionTask {
       SonarProperty.JUNIT_REPORTS_PATH,
       SonarProperty.SUREFIRE_REPORTS_PATH,
       SonarProperty.JACOCO_XML_REPORT_PATHS,
-      SonarProperty.ANDROID_LINT_REPORT_PATHS,
+      //some e2e tests fails if we filter them
+      //SonarProperty.ANDROID_LINT_REPORT_PATHS,
       SonarProperty.BINARIES);
 
     // do we want to do it for all the properties?
