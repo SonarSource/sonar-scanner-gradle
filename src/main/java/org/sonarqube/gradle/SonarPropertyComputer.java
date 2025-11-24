@@ -190,7 +190,8 @@ public class SonarPropertyComputer {
       var sonarProps = new SonarProperties(new HashMap<>());
       actionBroadcastMap.get(project.getPath()).execute(sonarProps);
 
-      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties().keySet(), EnvironmentConfig.load(System.getenv()).keySet(), sonarProps.getProperties().keySet())
+      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties(), getSonarEnvironmentVariables(project), sonarProps.getProperties())
+        .map(Map::keySet)
         .flatMap(Collection::stream)
         .map(String.class::cast)
         .anyMatch(k -> ScanProperties.PROJECT_SOURCE_DIRS.endsWith(k) || ScanProperties.PROJECT_TEST_DIRS.endsWith(k));
@@ -202,6 +203,14 @@ public class SonarPropertyComputer {
     }
 
     return scanAllEnabled;
+  }
+
+  /**
+   * Get environment variables starting with SONAR. This should include all variables that are considered by
+   * {@link org.sonarsource.scanner.lib.EnvironmentConfig#load(java.util.Map)}.
+   */
+  private static Map<String, String> getSonarEnvironmentVariables(Project project) {
+    return EnvironmentConfig.load(project.getProviders().environmentVariablesPrefixedBy("SONAR").get());
   }
 
   private static void computeScanAllProperties(Project project, Map<String, Object> properties) {
@@ -273,7 +282,7 @@ public class SonarPropertyComputer {
       evaluateSonarPropertiesBlocks(actionBroadcast, rawProperties);
     }
     if (isRootProject(project)) {
-      addEnvironmentProperties(rawProperties);
+      rawProperties.putAll(getSonarEnvironmentVariables(project));
       addSystemProperties(rawProperties);
     }
   }
@@ -333,12 +342,6 @@ public class SonarPropertyComputer {
         properties.put("sonar.sourceEncoding", encoding);
       }
     });
-  }
-
-  private static void addEnvironmentProperties(Map<String, Object> properties) {
-    for (Map.Entry<String, String> e : EnvironmentConfig.load(System.getenv()).entrySet()) {
-      properties.put(e.getKey(), e.getValue());
-    }
   }
 
   private static void addSystemProperties(Map<String, Object> properties) {
