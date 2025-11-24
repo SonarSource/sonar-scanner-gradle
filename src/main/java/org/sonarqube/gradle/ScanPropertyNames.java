@@ -52,8 +52,8 @@ public final class ScanPropertyNames {
   public static final String JAVA_LIBRARIES = "sonar.java.libraries";
   public static final String JAVA_TEST_BINARIES = "sonar.java.test.binaries";
   public static final String JAVA_TEST_LIBRARIES = "sonar.java.test.libraries";
-  /** @deprecated Kept for backward compatibility */
-  @Deprecated
+
+  /** Kept for backward compatibility */
   public static final String LIBRARIES = "sonar.libraries";
 
   // Groovy configuration
@@ -64,11 +64,11 @@ public final class ScanPropertyNames {
 
   // Test reports
   public static final String JUNIT_REPORT_PATHS = "sonar.junit.reportPaths";
-  /** @deprecated Kept for backward compatibility */
-  @Deprecated
+
+  /** Kept for backward compatibility */
   public static final String JUNIT_REPORTS_PATH = "sonar.junit.reportsPath";
-  /** @deprecated Kept for backward compatibility */
-  @Deprecated
+
+  /** Kept for backward compatibility */
   public static final String SUREFIRE_REPORTS_PATH = "sonar.surefire.reportsPath";
 
   // Coverage reports
@@ -77,9 +77,7 @@ public final class ScanPropertyNames {
   // Android
   public static final String ANDROID_LINT_REPORT_PATHS = "sonar.androidLint.reportPaths";
 
-  // Deprecated properties
-  /** @deprecated Kept for backward compatibility */
-  @Deprecated
+  /** Kept for backward compatibility */
   public static final String BINARIES = "sonar.binaries";
 
   private ScanPropertyNames() {
