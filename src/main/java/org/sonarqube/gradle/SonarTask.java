@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -334,26 +335,21 @@ public class SonarTask extends ConventionTask {
 
     List<PropertyInfo> sourcesProperties = propertiesInfo(properties, sourcePropNames);
 
-    // filter non-existing paths
-    for (var prop : sourcesProperties) {
-      var value = properties.get(prop.fullName);
-      List<String> paths = Arrays.asList(value.split(","));
-      String filtered = paths.stream().filter(p -> Files.exists(Path.of(p))).collect(Collectors.joining(","));
-      properties.put(prop.fullName, filtered);
-    }
 
-    // remove empty source properties
+    // filter non-existing paths and remove empty source properties
     for (PropertyInfo prop : sourcesProperties) {
-      // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
-      // This can eventually lead to a double indexing issue in the scanner-engine.
+      properties.computeIfPresent(prop.fullName, (k, value) -> filterPaths(value, Files::exists));
       var value = properties.get(prop.fullName);
+      // empty assignments for `sonar.sources` and `sonar.tests` are required,
+      // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
+      // This can eventually lead to a double indexing issue in the scanner-engine.
       if (value.isEmpty() && !SonarProperty.PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
         && !SonarProperty.PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
         properties.remove(prop.fullName);
       }
     }
 
-    // remove reports paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
+
     Set<String> junitReportNames = Set.of(
       SonarProperty.JUNIT_REPORT_PATHS,
       SonarProperty.SUREFIRE_REPORTS_PATH,
@@ -361,11 +357,20 @@ public class SonarTask extends ConventionTask {
     );
     List<PropertyInfo> junitReportProperties = propertiesInfo(properties, junitReportNames);
 
+    // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
     for (PropertyInfo prop : junitReportProperties) {
-      var reportPath = Path.of(properties.get(prop.fullName));
-      var children = reportPath.toFile().list();
-      if (children == null ||
-        Arrays.stream(children).noneMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
+      var commaList = properties.get(prop.fullName);
+      var filteredCommaList = filterPaths(commaList, p -> {
+        var children = p.toFile().list();
+        if (children != null) {
+          return Arrays.stream(children).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches());
+        } else {
+          return false;
+        }
+      });
+
+      properties.put(prop.fullName, filteredCommaList);
+      if (filteredCommaList.isEmpty()) {
         properties.remove(prop.fullName);
       }
     }
@@ -373,8 +378,8 @@ public class SonarTask extends ConventionTask {
     // remove xml report if directory do not exist
     List<PropertyInfo> xmlReportProperties = propertiesInfo(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
     for (PropertyInfo prop : xmlReportProperties) {
-      var reportPath = Path.of(properties.get(prop.fullName));
-      if (!Files.exists(reportPath)) {
+      properties.computeIfPresent(prop.fullName, (k, value) -> filterPaths(value, Files::exists));
+      if (properties.get(prop.fullName).isEmpty()) {
         properties.remove(prop.fullName);
       }
     }
@@ -382,13 +387,24 @@ public class SonarTask extends ConventionTask {
 
   private static List<PropertyInfo> propertiesInfo(Map<String, String> properties, Set<String> sonarNames) {
     List<PropertyInfo> pathProperties = new ArrayList<>();
-    for(String propName : properties.keySet()) {
+    for (String propName : properties.keySet()) {
       var parsed = SonarProperty.parse(propName);
       parsed
         .filter(p -> sonarNames.contains(p.getProperty()))
         .ifPresent(property -> pathProperties.add(new PropertyInfo(property, propName)));
     }
     return pathProperties;
+  }
+
+  /**
+   *
+   * @param value  a comma-delimited list of paths
+   * @param filter predicated to filter the paths
+   * @return filtered comma-delimited list of paths
+   */
+  private static String filterPaths(String value, Predicate<Path> filter) {
+    List<String> paths = Arrays.asList(value.split(","));
+    return paths.stream().filter(p -> filter.test(Path.of(p))).collect(Collectors.joining(","));
   }
 
   private static class PropertyInfo {
