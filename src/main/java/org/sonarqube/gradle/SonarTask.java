@@ -335,7 +335,7 @@ public class SonarTask extends ConventionTask {
       SonarProperty.GROOVY_BINARIES,
       SonarProperty.BINARIES);
 
-    List<PropertyInfo> sourcesProperties = propertiesInfo(properties, sourcePropNames);
+    List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
 
 
     // filter non-existing paths and remove empty source properties
@@ -360,7 +360,7 @@ public class SonarTask extends ConventionTask {
       SonarProperty.SUREFIRE_REPORTS_PATH,
       SonarProperty.JUNIT_REPORTS_PATH
     );
-    List<PropertyInfo> junitReportProperties = propertiesInfo(properties, junitReportNames);
+    List<PropertyInfo> junitReportProperties = parsePropertiesWithNames(properties, junitReportNames);
 
     // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
     for (PropertyInfo prop : junitReportProperties) {
@@ -371,7 +371,7 @@ public class SonarTask extends ConventionTask {
     }
 
     // remove xml report if directory do not exist
-    List<PropertyInfo> xmlReportProperties = propertiesInfo(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
+    List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
     for (PropertyInfo prop : xmlReportProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, Files::exists);
@@ -380,15 +380,15 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  private static List<PropertyInfo> propertiesInfo(Map<String, String> properties, Set<String> sonarNames) {
-    List<PropertyInfo> pathProperties = new ArrayList<>();
+  private static List<PropertyInfo> parsePropertiesWithNames(Map<String, String> properties, Set<String> sonarNames) {
+    List<PropertyInfo> parsedProperties = new ArrayList<>();
     for (String propName : properties.keySet()) {
       var parsed = SonarProperty.parse(propName);
       parsed
         .filter(p -> sonarNames.contains(p.getProperty()))
-        .ifPresent(property -> pathProperties.add(new PropertyInfo(property, propName)));
+        .ifPresent(property -> parsedProperties.add(new PropertyInfo(property, propName)));
     }
-    return pathProperties;
+    return parsedProperties;
   }
 
   /**
