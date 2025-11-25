@@ -209,7 +209,7 @@ public class SonarPropertyComputer {
    * Get environment variables starting with SONAR. This should include all variables that are considered by
    * {@link org.sonarsource.scanner.lib.EnvironmentConfig#load(java.util.Map)}.
    */
-  private static Map<String, String> getSonarEnvironmentVariables(Project project) {
+  static Map<String, String> getSonarEnvironmentVariables(Project project) {
     try {
       return EnvironmentConfig.load(project.getProviders().environmentVariablesPrefixedBy("SONAR").get());
     } catch (NoSuchMethodError e) {
