@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -78,7 +77,6 @@ import static org.sonarqube.gradle.SonarUtils.setMainBinariesProps;
 
 public class SonarPropertyComputer {
   private static final Logger LOGGER = Logging.getLogger(SonarPropertyComputer.class);
-  private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
 
   private static final String MAIN_SOURCE_SET_SUFFIX = "main";
   private static final String TEST_SOURCE_SET_SUFFIX = "test";

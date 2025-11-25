@@ -27,13 +27,14 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -74,6 +75,7 @@ import static org.sonarqube.gradle.ScanPropertyNames.VERBOSE;
 public class SonarTask extends ConventionTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
+  private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
 
   private LogOutput logOutput = new DefaultLogOutput();
 
@@ -158,7 +160,7 @@ public class SonarTask extends ConventionTask {
     }
 
     mapProperties = resolveJavaLibraries(mapProperties);
-    postProcessProperties(mapProperties);
+    filterPathProperties(mapProperties);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -318,10 +320,8 @@ public class SonarTask extends ConventionTask {
    *
    * Remove file and directories that are not present on the file system.
    */
-  static void postProcessProperties(Map<String, String> properties) {
-
-    // remove directories
-    Set<String> propertiesWithPaths = Set.of(
+  static void filterPathProperties(Map<String, String> properties) {
+    Set<String> sourcePropNames = Set.of(
       SonarProperty.PROJECT_SOURCE_DIRS,
       SonarProperty.PROJECT_TEST_DIRS,
       SonarProperty.JAVA_BINARIES,
@@ -330,37 +330,75 @@ public class SonarTask extends ConventionTask {
       SonarProperty.JAVA_TEST_LIBRARIES,
       SonarProperty.LIBRARIES,
       SonarProperty.GROOVY_BINARIES,
-      SonarProperty.JUNIT_REPORT_PATHS,
-      SonarProperty.JUNIT_REPORTS_PATH,
-      SonarProperty.SUREFIRE_REPORTS_PATH,
-      SonarProperty.JACOCO_XML_REPORT_PATHS,
-      //some e2e tests fails if we filter them
-      //SonarProperty.ANDROID_LINT_REPORT_PATHS,
       SonarProperty.BINARIES);
 
-    // do we want to do it for all the properties?
-    Set<String> emptyProperties = new HashSet<>();
-    for (var prop : properties.entrySet()) {
-      var parsed = SonarProperty.parse(prop.getKey());
+    List<PropertyInfo> sourcesProperties = propertiesInfo(properties, sourcePropNames);
 
-      if (parsed.isPresent() && propertiesWithPaths.contains(parsed.get().getProperty())) {
+    // filter non-existing paths
+    for (var prop : sourcesProperties) {
+      var value = properties.get(prop.fullName);
+      List<String> paths = Arrays.asList(value.split(","));
+      String filtered = paths.stream().filter(p -> Files.exists(Path.of(p))).collect(Collectors.joining(","));
+      properties.put(prop.fullName, filtered);
+    }
 
-        List<String> paths = Arrays.asList(prop.getValue().split(","));
-        String filtered = paths.stream().filter(p -> Files.exists(Path.of(p))).collect(Collectors.joining(","));
-        properties.put(prop.getKey(), filtered);
-
-        String propertyName = parsed.get().getProperty();
-        // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
-        // This can eventually lead to a double indexing issue in the scanner-engine.
-        if (filtered.isEmpty()
-          && !SonarProperty.PROJECT_SOURCE_DIRS.equals(propertyName)
-          && !SonarProperty.PROJECT_TEST_DIRS.equals(propertyName)) {
-          emptyProperties.add(prop.getKey());
-        }
+    // remove empty source properties
+    for (PropertyInfo prop : sourcesProperties) {
+      // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
+      // This can eventually lead to a double indexing issue in the scanner-engine.
+      var value = properties.get(prop.fullName);
+      if (value.isEmpty() && !SonarProperty.PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
+        && !SonarProperty.PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
+        properties.remove(prop.fullName);
       }
     }
 
-    properties.keySet().removeAll(emptyProperties);
+    // remove reports paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
+    Set<String> junitReportNames = Set.of(
+      SonarProperty.JUNIT_REPORT_PATHS,
+      SonarProperty.SUREFIRE_REPORTS_PATH,
+      SonarProperty.JUNIT_REPORTS_PATH
+    );
+    List<PropertyInfo> junitReportProperties = propertiesInfo(properties, junitReportNames);
+
+    for (PropertyInfo prop : junitReportProperties) {
+      var reportPath = Path.of(properties.get(prop.fullName));
+      var children = reportPath.toFile().list();
+      if (children == null ||
+        Arrays.stream(children).noneMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches())) {
+        properties.remove(prop.fullName);
+      }
+    }
+
+    // remove xml report if directory do not exist
+    List<PropertyInfo> xmlReportProperties = propertiesInfo(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
+    for (PropertyInfo prop : xmlReportProperties) {
+      var reportPath = Path.of(properties.get(prop.fullName));
+      if (!Files.exists(reportPath)) {
+        properties.remove(prop.fullName);
+      }
+    }
+  }
+
+  private static List<PropertyInfo> propertiesInfo(Map<String, String> properties, Set<String> sonarNames) {
+    List<PropertyInfo> pathProperties = new ArrayList<>();
+    for(String propName : properties.keySet()) {
+      var parsed = SonarProperty.parse(propName);
+      parsed
+        .filter(p -> sonarNames.contains(p.getProperty()))
+        .ifPresent(property -> pathProperties.add(new PropertyInfo(property, propName)));
+    }
+    return pathProperties;
+  }
+
+  private static class PropertyInfo {
+    final SonarProperty property;
+    final String fullName;
+
+    public PropertyInfo(SonarProperty property, String fullName) {
+      this.property = property;
+      this.fullName = fullName;
+    }
   }
 
   /**
