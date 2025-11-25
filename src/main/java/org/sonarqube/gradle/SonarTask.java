@@ -50,6 +50,12 @@ import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
 import org.sonarsource.scanner.lib.internal.batch.LogOutput;
 
+import static org.sonarqube.gradle.ScanPropertyNames.JAVA_BINARIES;
+import static org.sonarqube.gradle.ScanPropertyNames.JAVA_LIBRARIES;
+import static org.sonarqube.gradle.ScanPropertyNames.JAVA_TEST_LIBRARIES;
+import static org.sonarqube.gradle.ScanPropertyNames.LIBRARIES;
+import static org.sonarqube.gradle.ScanPropertyNames.VERBOSE;
+
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
  * Can be used with or without the {@code "sonar-gradle"} plugin.
@@ -137,7 +143,7 @@ public class SonarTask extends ConventionTask {
 
     if (LOGGER.isDebugEnabled()) {
       mapProperties = new HashMap<>(mapProperties);
-      mapProperties.put("sonar.verbose", "true");
+      mapProperties.put(VERBOSE, "true");
       mapProperties = Collections.unmodifiableMap(mapProperties);
     }
 
@@ -197,7 +203,7 @@ public class SonarTask extends ConventionTask {
   }
 
   private static boolean isSkippedWithProperty(Map<String, String> properties) {
-    if ("true".equalsIgnoreCase(properties.getOrDefault(ScanProperties.SKIP, "false"))) {
+    if ("true".equalsIgnoreCase(properties.getOrDefault(ScanPropertyNames.SKIP, "false"))) {
       LOGGER.warn("Sonar Scanner analysis skipped");
       return true;
     }
@@ -332,12 +338,12 @@ public class SonarTask extends ConventionTask {
       LOGGER.debug("Resolved configured main class path as: {}", resolvedAsAString);
     }
 
-    String propertyKey = isTopLevelProject ?
-      "sonar.java.libraries" :
-      (projectProperties.projectName + ".sonar.java.libraries");
-    String legacyPropertyKey = isTopLevelProject ?
-      "sonar.libraries" :
-      (projectProperties.projectName + ".sonar.libraries");
+    String propertyKey = isTopLevelProject
+      ? JAVA_LIBRARIES
+      : (projectProperties.projectName + "." + JAVA_LIBRARIES);
+    String legacyPropertyKey = isTopLevelProject
+      ? LIBRARIES
+      : (projectProperties.projectName + "." + LIBRARIES);
 
     String libraries = properties.getOrDefault(propertyKey, "");
     if (libraries.isEmpty()) {
@@ -389,15 +395,15 @@ public class SonarTask extends ConventionTask {
     }
 
     // Prepend sonar.java.binaries if it exists
-    String binariesPropertyKey = isTopLevelProject ?
-      "sonar.java.binaries" :
-      (projectProperties.projectName + ".sonar.java.binaries");
+    String binariesPropertyKey = isTopLevelProject
+      ? JAVA_BINARIES
+      : (projectProperties.projectName + "." + JAVA_BINARIES);
     String libraries = properties.getOrDefault(binariesPropertyKey, "");
 
     // Add existing test libraries if they exist
-    String propertyKey = isTopLevelProject ?
-      "sonar.java.test.libraries" :
-      (projectProperties.projectName + ".sonar.java.test.libraries");
+    String propertyKey = isTopLevelProject
+      ? JAVA_TEST_LIBRARIES
+      : (projectProperties.projectName + "." + JAVA_TEST_LIBRARIES);
 
     // Append resolved libraries
     if (properties.containsKey(propertyKey)) {

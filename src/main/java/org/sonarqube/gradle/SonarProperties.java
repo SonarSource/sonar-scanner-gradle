@@ -22,14 +22,42 @@ package org.sonarqube.gradle;
 import java.util.Map;
 
 /**
- * The Sonar properties for the current Gradle project that are to be passed to the Scanner.
+ * A mutable wrapper for user-facing SonarQube property configuration in Gradle build scripts.
  * <p>
- * The {@code properties} map is already populated with the defaults provided by Gradle, and can be further manipulated as necessary.
- * Before passing them on to the Scanner, property values are converted to Strings as follows:
+ * This class is part of the public API and is used during the Gradle <strong>configuration phase</strong>
+ * to allow users to configure SonarQube analysis properties via the {@code sonarqube { }} DSL block.
+ * <p>
+ * The wrapped {@code properties} map is pre-populated with defaults computed from the Gradle project model,
+ * and can be further manipulated by users through the convenience methods provided.
+ *
+ * <p>
+ * <strong>Usage Example:</strong>
+ * <pre>{@code
+ * sonarqube {
+ *     properties {
+ *         property "sonar.projectKey", "my-project"
+ *         properties([
+ *             "sonar.sources": "src",
+ *             "sonar.tests": "test"
+ *         ])
+ *     }
+ * }
+ * }</pre>
+ *
+ * <p>
+ * <strong>Property Value Conversion:</strong>
+ * Before passing properties to the Scanner, values are converted to Strings as follows:
  * <ul>
- * <li>{@code Iterable}s are recursively converted and joined into a comma-separated String.</li>
- * <li>All other values are converted to Strings by calling their {@code toString()} method.</li>
+ * <li>{@code Iterable}s are recursively converted and joined into a comma-separated String</li>
+ * <li>All other values are converted to Strings by calling their {@code toString()} method</li>
  * </ul>
+ *
+ * <p>
+ * <strong>Note:</strong> This class is used for configuration, not for transferring resolved dependency information.
+ * For that purpose, see {@link ProjectProperties}.
+ *
+ * @see SonarExtension
+ * @see ProjectProperties
  */
 public class SonarProperties {
 
