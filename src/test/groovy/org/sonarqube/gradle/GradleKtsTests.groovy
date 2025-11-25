@@ -51,7 +51,7 @@ class GradleKtsTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('--configuration-cache', 'sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -74,7 +74,7 @@ class GradleKtsTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('--configuration-cache', 'sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -95,7 +95,7 @@ class GradleKtsTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('--configuration-cache', 'sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -115,7 +115,7 @@ class GradleKtsTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('--configuration-cache', 'sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -136,7 +136,7 @@ class GradleKtsTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('--configuration-cache', 'sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -156,7 +156,7 @@ class GradleKtsTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('--configuration-cache', 'sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -178,7 +178,7 @@ class GradleKtsTests extends Specification {
         GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('--configuration-cache', 'sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
@@ -208,7 +208,7 @@ class GradleKtsTests extends Specification {
         GradleRunner.create()
                 .withProjectDir(testProjectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+                .withArguments('--configuration-cache', 'sonarqube', '--info', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
                 .withPluginClasspath()
                 .build()
 
