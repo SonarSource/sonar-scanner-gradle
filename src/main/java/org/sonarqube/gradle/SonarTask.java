@@ -58,11 +58,11 @@ import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
 import org.sonarsource.scanner.lib.internal.batch.LogOutput;
 
-import static org.sonarqube.gradle.ScanPropertyNames.JAVA_BINARIES;
-import static org.sonarqube.gradle.ScanPropertyNames.JAVA_LIBRARIES;
-import static org.sonarqube.gradle.ScanPropertyNames.JAVA_TEST_LIBRARIES;
-import static org.sonarqube.gradle.ScanPropertyNames.LIBRARIES;
-import static org.sonarqube.gradle.ScanPropertyNames.VERBOSE;
+import static org.sonarqube.gradle.properties.SonarProperty.JAVA_BINARIES;
+import static org.sonarqube.gradle.properties.SonarProperty.JAVA_LIBRARIES;
+import static org.sonarqube.gradle.properties.SonarProperty.JAVA_TEST_LIBRARIES;
+import static org.sonarqube.gradle.properties.SonarProperty.LIBRARIES;
+import static org.sonarqube.gradle.properties.SonarProperty.VERBOSE;
 
 /**
  * Analyses one or more projects with the <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner</a>.
@@ -213,7 +213,7 @@ public class SonarTask extends ConventionTask {
   }
 
   private static boolean isSkippedWithProperty(Map<String, String> properties) {
-    if ("true".equalsIgnoreCase(properties.getOrDefault(ScanPropertyNames.SKIP, "false"))) {
+    if ("true".equalsIgnoreCase(properties.getOrDefault(SonarProperty.SKIP, "false"))) {
       LOGGER.warn("Sonar Scanner analysis skipped");
       return true;
     }

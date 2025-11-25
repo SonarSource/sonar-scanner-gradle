@@ -44,6 +44,7 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
+import org.sonarqube.gradle.properties.SonarProperty;
 
 public class SonarUtils {
 
@@ -52,9 +53,9 @@ public class SonarUtils {
     Pattern.CASE_INSENSITIVE
   );
 
-  static final String SONAR_JAVA_SOURCE_PROP = ScanPropertyNames.JAVA_SOURCE;
-  static final String SONAR_JAVA_TARGET_PROP = ScanPropertyNames.JAVA_TARGET;
-  static final String SONAR_JAVA_ENABLE_PREVIEW_PROP = ScanPropertyNames.JAVA_ENABLE_PREVIEW;
+  static final String SONAR_JAVA_SOURCE_PROP = SonarProperty.JAVA_SOURCE;
+  static final String SONAR_JAVA_TARGET_PROP = SonarProperty.JAVA_TARGET;
+  static final String SONAR_JAVA_ENABLE_PREVIEW_PROP = SonarProperty.JAVA_ENABLE_PREVIEW;
 
   /**
    * Find test files given the path by looking for the keyword "test", for example:
@@ -131,7 +132,7 @@ public class SonarUtils {
   }
 
   static String findProjectBaseDir(Map<String, Object> properties) {
-    Path rootBaseDir = Paths.get(properties.get(ScanPropertyNames.PROJECT_BASE_DIR).toString()).toAbsolutePath().normalize();
+    Path rootBaseDir = Paths.get(properties.get(SonarProperty.PROJECT_BASE_DIR).toString()).toAbsolutePath().normalize();
 
     List<Path> allProjectsBaseDir = properties.entrySet().stream()
       .filter(e -> e.getKey().endsWith(".projectBaseDir"))
@@ -159,16 +160,16 @@ public class SonarUtils {
   }
 
   static void setMainBinariesProps(Map<String, Object> properties, Collection<File> mainClassDirs, boolean addForGroovy) {
-    appendProps(properties, ScanPropertyNames.JAVA_BINARIES, mainClassDirs);
+    appendProps(properties, SonarProperty.JAVA_BINARIES, mainClassDirs);
     if (addForGroovy) {
-      appendProps(properties, ScanPropertyNames.GROOVY_BINARIES, mainClassDirs);
+      appendProps(properties, SonarProperty.GROOVY_BINARIES, mainClassDirs);
     }
     // Populate deprecated properties for backward compatibility
-    appendProps(properties, ScanPropertyNames.BINARIES, mainClassDirs);
+    appendProps(properties, SonarProperty.BINARIES, mainClassDirs);
   }
 
   static void populateJdkProperties(Map<String, Object> properties, JavaCompilerConfiguration config) {
-    config.getJdkHome().ifPresent(s -> properties.put(ScanPropertyNames.JAVA_JDK_HOME, s));
+    config.getJdkHome().ifPresent(s -> properties.put(SonarProperty.JAVA_JDK_HOME, s));
     Optional<String> release = config.getRelease();
     if (release.isPresent()) {
       properties.put(SONAR_JAVA_SOURCE_PROP, release.get());
@@ -209,7 +210,7 @@ public class SonarUtils {
 
   static void appendSourcesProp(Map<String, Object> properties, Iterable<File> filesToAppend, boolean testSources) {
     List<File> filteredList = filterOutSubFiles(filesToAppend);
-    appendProps(properties, testSources ? ScanPropertyNames.PROJECT_TEST_DIRS : ScanPropertyNames.PROJECT_SOURCE_DIRS, filteredList);
+    appendProps(properties, testSources ? SonarProperty.PROJECT_TEST_DIRS : SonarProperty.PROJECT_SOURCE_DIRS, filteredList);
   }
 
   static List<File> filterOutSubFiles(Iterable<File> files) {
@@ -332,8 +333,8 @@ public class SonarUtils {
    * @throws IllegalStateException if the property "sonar.projectBaseDir" is not defined in the properties argument
    */
   public static Set<Path> computeReportPaths(Map<String, Object> properties) {
-    if (!properties.containsKey(ScanPropertyNames.PROJECT_BASE_DIR)) {
-      throw new IllegalStateException("Cannot compute absolute paths for reports because \"" + ScanPropertyNames.PROJECT_BASE_DIR + "\" is not defined.");
+    if (!properties.containsKey(SonarProperty.PROJECT_BASE_DIR)) {
+      throw new IllegalStateException("Cannot compute absolute paths for reports because \"" + SonarProperty.PROJECT_BASE_DIR + "\" is not defined.");
     }
     Path projectBaseDir = Path.of(findProjectBaseDir(properties));
     return extractReportPaths(properties)
