@@ -210,7 +210,12 @@ public class SonarPropertyComputer {
    * {@link org.sonarsource.scanner.lib.EnvironmentConfig#load(java.util.Map)}.
    */
   private static Map<String, String> getSonarEnvironmentVariables(Project project) {
-    return EnvironmentConfig.load(project.getProviders().environmentVariablesPrefixedBy("SONAR").get());
+    try {
+      return EnvironmentConfig.load(project.getProviders().environmentVariablesPrefixedBy("SONAR").get());
+    } catch (NoSuchMethodError e) {
+      // Fallback for Gradle versions < 7.5 which don't have environmentVariablesPrefixedBy
+      return EnvironmentConfig.load();
+    }
   }
 
   private static void computeScanAllProperties(Project project, Map<String, Object> properties) {
