@@ -472,11 +472,7 @@ public class SonarPropertyComputer {
   }
 
   private static Collection<File> getJavaOutputDirs(SourceSet sourceSet) {
-    ArrayList<File> fs = new ArrayList<>();
-    for(File f : sourceSet.getOutput().getClassesDirs()){
-      fs.add(f);
-    }
-    return fs;
+    return sourceSet.getOutput().getClassesDirs().getFiles();
   }
 
   private static @Nullable Collection<File> getKotlinSourceFiles(Object extension, String sourceSetNameSuffix) {

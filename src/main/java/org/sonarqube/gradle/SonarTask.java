@@ -316,9 +316,11 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  /** Post process the sonar properties to prepare them for analysis.
-   *  Before, we do not have any guarantees that all tasks were executed.
-   *
+  /**
+   * Post-process the sonar properties to prepare them for analysis.
+   * You should not filter properties inside Provider, as you do not have any guarantees about when they will be executed.
+   * It could be that files haven't been generated yet.
+   * <p>
    * Remove file and directories that are not present on the file system.
    */
   static void filterPathProperties(Map<String, String> properties) {
@@ -338,15 +340,18 @@ public class SonarTask extends ConventionTask {
 
     // filter non-existing paths and remove empty source properties
     for (PropertyInfo prop : sourcesProperties) {
-      properties.computeIfPresent(prop.fullName, (k, value) -> filterPaths(value, Files::exists));
-      var value = properties.get(prop.fullName);
-      // empty assignments for `sonar.sources` and `sonar.tests` are required,
-      // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
-      // This can eventually lead to a double indexing issue in the scanner-engine.
-      if (value.isEmpty() && !SonarProperty.PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
-        && !SonarProperty.PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
-        properties.remove(prop.fullName);
-      }
+      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
+        var filtered = filterPaths(commaList, Files::exists);
+        // empty assignments for `sonar.sources` and `sonar.tests` are required,
+        // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
+        // This can eventually lead to a double indexing issue in the scanner-engine.
+        if (filtered.isEmpty() && !SonarProperty.PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
+          && !SonarProperty.PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
+          return null;
+        }
+
+        return filtered;
+      });
     }
 
 
@@ -359,29 +364,19 @@ public class SonarTask extends ConventionTask {
 
     // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
     for (PropertyInfo prop : junitReportProperties) {
-      var commaList = properties.get(prop.fullName);
-      var filteredCommaList = filterPaths(commaList, p -> {
-        var children = p.toFile().list();
-        if (children != null) {
-          return Arrays.stream(children).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches());
-        } else {
-          return false;
-        }
+      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
+        var filtered = filterPaths(commaList, SonarTask::containJunitReport);
+        return filtered.isEmpty() ? null : filtered;
       });
-
-      properties.put(prop.fullName, filteredCommaList);
-      if (filteredCommaList.isEmpty()) {
-        properties.remove(prop.fullName);
-      }
     }
 
     // remove xml report if directory do not exist
     List<PropertyInfo> xmlReportProperties = propertiesInfo(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
     for (PropertyInfo prop : xmlReportProperties) {
-      properties.computeIfPresent(prop.fullName, (k, value) -> filterPaths(value, Files::exists));
-      if (properties.get(prop.fullName).isEmpty()) {
-        properties.remove(prop.fullName);
-      }
+      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
+        var filtered = filterPaths(commaList, Files::exists);
+        return filtered.isEmpty() ? null : filtered;
+      });
     }
   }
 
@@ -397,14 +392,14 @@ public class SonarTask extends ConventionTask {
   }
 
   /**
-   *
    * @param value  a comma-delimited list of paths
    * @param filter predicated to filter the paths
    * @return filtered comma-delimited list of paths
    */
   private static String filterPaths(String value, Predicate<Path> filter) {
-    List<String> paths = Arrays.asList(value.split(","));
-    return paths.stream().filter(p -> filter.test(Path.of(p))).collect(Collectors.joining(","));
+    return Arrays.stream(value.split(","))
+      .filter(p -> filter.test(Path.of(p)))
+      .collect(Collectors.joining(","));
   }
 
   private static class PropertyInfo {
@@ -414,6 +409,15 @@ public class SonarTask extends ConventionTask {
     public PropertyInfo(SonarProperty property, String fullName) {
       this.property = property;
       this.fullName = fullName;
+    }
+  }
+
+  private static boolean containJunitReport(Path p) {
+    var children = p.toFile().list();
+    if (children != null) {
+      return Arrays.stream(children).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches());
+    } else {
+      return false;
     }
   }
 
