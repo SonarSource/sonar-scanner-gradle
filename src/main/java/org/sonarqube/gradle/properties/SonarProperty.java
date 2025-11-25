@@ -21,6 +21,7 @@ package org.sonarqube.gradle.properties;
 
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * a property of the sonar scanner
@@ -124,14 +125,16 @@ public class SonarProperty {
     BINARIES
   );
 
-  private final String module;
+  @Nullable
+  private final String subproject;
   private final String property;
 
   /**
-   * parse a property as a string, the format of a property as a string is given by toString
-   * parse(prop.toString()).equals(prop) is true
+   * Parse a property as a string, refer to {@code toString()} for the  exact format.
+   * The format is approximately {@code "${subproject_name}.{property_name}"}.
+   * {@code parse(prop.toString()).equals(prop)} is always true
    * <p>
-   * Note, module can also contain points the only way to parse a property is to verify if it has as suffix one of the properties above.
+   * Note, module names can also contain dots. The only way to parse a property is to verify if it has as suffix one of the properties above.
    *
    * @param value a string that respects the property format
    * @return parsed property or empty if parsing failed
@@ -155,16 +158,17 @@ public class SonarProperty {
   }
 
   public static SonarProperty rootProjectProperty(String property) {
-    return new SonarProperty("", property);
+    return new SonarProperty(null, property);
   }
 
-  public SonarProperty(String module, String property) {
-    this.module = module;
+  public SonarProperty(@Nullable String subproject, String property) {
+    this.subproject = subproject;
     this.property = property;
   }
 
-  public String getModule() {
-    return module;
+  @Nullable
+  public String getSubproject() {
+    return subproject;
   }
 
   public String getProperty() {
@@ -173,8 +177,8 @@ public class SonarProperty {
 
   @Override
   public String toString() {
-    if (!module.isEmpty()) {
-      return module + "." + property;
+    if (subproject != null) {
+      return subproject + "." + property;
     } else {
       return property;
     }
@@ -184,7 +188,12 @@ public class SonarProperty {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     SonarProperty that = (SonarProperty) o;
-    return module.equals(that.module) && property.equals(that.property);
+
+    if (subproject == null && that.subproject == null) {
+      return property.equals(that.property);
+    } else {
+      return property.equals(that.property) && subproject != null && subproject.equals(that.subproject);
+    }
   }
 
   @Override

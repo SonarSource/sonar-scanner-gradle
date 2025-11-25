@@ -402,6 +402,9 @@ public class SonarTask extends ConventionTask {
       .collect(Collectors.joining(","));
   }
 
+  /**
+   * A simple data holder class that associates a {@link SonarProperty} with its full property name.
+   */
   private static class PropertyInfo {
     final SonarProperty property;
     final String fullName;

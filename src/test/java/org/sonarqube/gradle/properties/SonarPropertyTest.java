@@ -56,7 +56,7 @@ class SonarPropertyTest {
     Optional<SonarProperty> result = SonarProperty.parse(input);
     assertThat(result).isPresent();
     SonarProperty property = result.get();
-    assertThat(property.getModule()).isEqualTo(expectedModule);
+    assertThat(property.getSubproject()).isEqualTo(expectedModule);
     assertThat(property.getProperty()).isEqualTo(expectedProperty);
   }
 
@@ -71,7 +71,7 @@ class SonarPropertyTest {
   @Test
   void rootProjectPropertyCreatesPropertyWithEmptyModule() {
     SonarProperty property = SonarProperty.rootProjectProperty(PROJECT_KEY);
-    assertThat(property.getModule()).isEmpty();
+    assertThat(property.getSubproject()).isEmpty();
     assertThat(property.getProperty()).isEqualTo(PROJECT_KEY);
   }
 
@@ -80,7 +80,7 @@ class SonarPropertyTest {
     String module = "test.module";
     String prop = VERBOSE;
     SonarProperty property = new SonarProperty(module, prop);
-    assertThat(property.getModule()).isEqualTo(module);
+    assertThat(property.getSubproject()).isEqualTo(module);
     assertThat(property.getProperty()).isEqualTo(prop);
   }
 
