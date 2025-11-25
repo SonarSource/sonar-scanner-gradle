@@ -126,11 +126,12 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setTestCompileClasspath(test);
 
         if (isAndroidProject(target)) {
-          setAndroidLibrariesProperties(target, task);
+          task.setMainLibraries(target.provider(() -> AndroidUtils.findMainLibraries(target)));
+          task.setTestLibraries(target.provider(() -> AndroidUtils.findTestLibraries(target)));
         } else {
-          setJavaLibrariesProperties(target, task);
+          task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
+          task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
         }
-
         DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
         localSonarResolver.mkdirs();
@@ -149,19 +150,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
     var set = sourceSets.findByName(sourceSetName);
     return set == null ? null : set.getCompileClasspath();
-  }
-
-  private static void setAndroidLibrariesProperties(Project target, SonarResolverTask task) {
-    AndroidUtils.LibrariesAndTestLibraries libraries = AndroidUtils.LibrariesAndTestLibraries.ofProject(target);
-    task.setMainLibraries(libraries.getMainLibraries());
-    task.setTestLibraries(libraries.getTestLibraries().stream().reduce(target.files(), FileCollection::plus));
-  }
-
-  private static void setJavaLibrariesProperties(Project target, SonarResolverTask task) {
-    Collection<File> runtimeJars = SonarUtils.getRuntimeJars();
-    FileCollection libraries = target.files(runtimeJars);
-    task.setMainLibraries(libraries);
-    task.setTestLibraries(libraries);
   }
 
   private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
