@@ -52,11 +52,11 @@ class SonarPropertyTest {
 
   @ParameterizedTest
   @MethodSource("provideValidProperties")
-  void parseValidProperty(String input, String expectedModule, String expectedProperty) {
+  void parseValidProperty(String input, String expectedSubproject, String expectedProperty) {
     Optional<SonarProperty> result = SonarProperty.parse(input);
     assertThat(result).isPresent();
     SonarProperty property = result.get();
-    assertThat(property.getSubproject()).isEqualTo(expectedModule);
+    assertThat(property.getSubproject()).isEqualTo(expectedSubproject);
     assertThat(property.getProperty()).isEqualTo(expectedProperty);
   }
 
@@ -69,9 +69,9 @@ class SonarPropertyTest {
   }
 
   @Test
-  void rootProjectPropertyCreatesPropertyWithEmptyModule() {
+  void rootProjectPropertyCreatesPropertyWithEmptySubproject() {
     SonarProperty property = SonarProperty.rootProjectProperty(PROJECT_KEY);
-    assertThat(property.getSubproject()).isEmpty();
+    assertThat(property.getSubproject()).isNull();
     assertThat(property.getProperty()).isEqualTo(PROJECT_KEY);
   }
 
@@ -85,14 +85,14 @@ class SonarPropertyTest {
   }
 
   @Test
-  void toStringWithModule() {
+  void toStringWithSubproject() {
     SonarProperty property = new SonarProperty("my.module", SKIP);
     assertThat(property).hasToString("my.module." + SKIP);
   }
 
   @Test
-  void toStringWithoutModule() {
-    SonarProperty property = new SonarProperty("", SKIP);
+  void toStringWithoutSubproject() {
+    SonarProperty property = new SonarProperty(null, SKIP);
     assertThat(property).hasToString(SKIP);
   }
 
@@ -114,9 +114,9 @@ class SonarPropertyTest {
 
   private static Stream<Arguments> provideValidProperties() {
     return Stream.of(
-      Arguments.of(SKIP, "", SKIP),
-      Arguments.of(PROJECT_KEY, "", PROJECT_KEY),
-      Arguments.of("myModule." + SKIP, "myModule", SKIP),
+      Arguments.of(SKIP, null, SKIP),
+      Arguments.of(PROJECT_KEY, null, PROJECT_KEY),
+      Arguments.of("mySubproject." + SKIP, "mySubproject", SKIP),
       Arguments.of("a.b.c." + PROJECT_KEY, "a.b.c", PROJECT_KEY),
       Arguments.of("module.with.dots." + VERBOSE, "module.with.dots", VERBOSE)
     );

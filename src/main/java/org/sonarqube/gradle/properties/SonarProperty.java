@@ -125,6 +125,10 @@ public class SonarProperty {
     BINARIES
   );
 
+
+  /**
+   * if subproject is null then the property belong to the root project.
+   */
   @Nullable
   private final String subproject;
   private final String property;
@@ -162,6 +166,9 @@ public class SonarProperty {
   }
 
   public SonarProperty(@Nullable String subproject, String property) {
+    if (subproject != null && subproject.isEmpty()) {
+      subproject = null;
+    }
     this.subproject = subproject;
     this.property = property;
   }
