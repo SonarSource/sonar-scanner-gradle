@@ -997,6 +997,31 @@
             <sha256 value="ee375e067f510fcc778e7949aab1778375b2b969a49b2074fa9182b9662d2978" origin="Verified"/>
          </artifact>
       </component>
+      <component group="com.tngtech.archunit" name="archunit" version="1.2.1">
+         <artifact name="archunit-1.2.1.jar">
+            <sha256 value="78b3cb0f835098f2264a59e791d885f808ad80d2425ef298dc2cfed033c6b9e8" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="com.tngtech.archunit" name="archunit-junit5" version="1.2.1">
+         <artifact name="archunit-junit5-1.2.1.jar">
+            <sha256 value="942a2a194eda4024a3ed8ff08dc5fbf120548148ed83da295adc2136515f0547" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="com.tngtech.archunit" name="archunit-junit5-api" version="1.2.1">
+         <artifact name="archunit-junit5-api-1.2.1.jar">
+            <sha256 value="cc0c68fef19addfa41c1a183608b1075debefe2b9e2f3cdc01f4096194f6bb48" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="com.tngtech.archunit" name="archunit-junit5-engine" version="1.2.1">
+         <artifact name="archunit-junit5-engine-1.2.1.jar">
+            <sha256 value="6c6c06c8302db79ae4abdc4aa5610fa9951115f69381b342cb63b7a819a079f4" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="com.tngtech.archunit" name="archunit-junit5-engine-api" version="1.2.1">
+         <artifact name="archunit-junit5-engine-api-1.2.1.jar">
+            <sha256 value="eb45cb842523da77bc0e50d044fbd67edbb0684c008ec0291891b34c1482a8f7" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="commons-codec" name="commons-codec" version="1.13">
          <artifact name="commons-codec-1.13.pom">
             <sha256 value="c2e2a902d38230cf3031d0b434d5de2614fa0ff26d384b6d282aab56c7d3fc69" origin="Verified"/>
