@@ -218,7 +218,7 @@ class GradleKtsTests extends Specification {
         props.load(outFile.newDataInputStream())
 
         then:
-        (props["sonar.sources"] as String).endsWith("src/main/custom")
+        Path.of(props["sonar.sources"] as String).endsWith(Path.of("src/main/custom"))
 
     }
 
