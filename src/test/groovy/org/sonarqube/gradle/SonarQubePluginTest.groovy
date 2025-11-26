@@ -19,7 +19,7 @@
  */
 package org.sonarqube.gradle
 
-import org.codehaus.groovy.ant.Groovy
+
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -378,7 +378,11 @@ class SonarQubePluginTest extends Specification {
 
     then:
     properties["sonar.sources"] == new File(project.projectDir, "src") as String
-    properties["sonar.tests"] == new File(project.projectDir, "test") as String
+    def expectedGroovyTestDirs = [
+      new File(project.projectDir, "src/test/java") as String,
+      new File(project.projectDir, "test") as String,
+    ] as Set
+    (properties["sonar.tests"].split(",") as Set) == expectedGroovyTestDirs
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.groovy.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.java.test.binaries"].contains(new File(project.buildDir, "test-out") as String)
@@ -475,19 +479,20 @@ class SonarQubePluginTest extends Specification {
     !properties.containsKey("sonar.groovy.jacoco.reportPath")
   }
 
-  def "only adds existing directories"() {
+  def "includes default java directories even when empty"() {
     parentProject.pluginManager.apply(JavaPlugin)
 
     when:
     def properties = parentSonarTask().properties.get()
 
     then:
-    properties["sonar.tests"].isEmpty()
-    !properties.containsKey("sonar.surefire.reportsPath")
-    !properties.containsKey("sonar.junit.reportsPath")
+    properties["sonar.sources"] == new File(parentProject.projectDir, "src/main/java") as String
+    properties["sonar.tests"] == new File(parentProject.projectDir, "src/test/java") as String
+    properties["sonar.surefire.reportsPath"] == new File(parentProject.buildDir, "test-results/test") as String
+    properties["sonar.junit.reportsPath"] == new File(parentProject.buildDir, "test-results/test") as String
   }
 
-  def "adds empty 'sonar.sources' property if no sources exist (because Sonar Runner 2.0 always expects this property to be set)"() {
+  def "prefills sonar source and test directories for java subprojects"() {
     childProject2.pluginManager.apply(JavaPlugin)
 
     when:
@@ -496,7 +501,8 @@ class SonarQubePluginTest extends Specification {
     then:
     properties["sonar.sources"] == ""
     properties[":parent:child.sonar.sources"] == ""
-    properties[":parent:child2.sonar.sources"] == ""
+    properties[":parent:child2.sonar.sources"] == new File(childProject2.projectDir, "src/main/java") as String
+    properties[":parent:child2.sonar.tests"] == new File(childProject2.projectDir, "src/test/java") as String
     properties[":parent:child.:parent:child:leaf.sonar.sources"] == ""
   }
 
@@ -912,9 +918,10 @@ class SonarQubePluginTest extends Specification {
       module1/build.gradle.kts
       module2/build.gradle.kts
       settings.gradle.kts
+      src/main/java
       """.stripIndent().trim()
 
-    relativize(parent, "sonar.tests") == ""
+    relativize(parent, "sonar.tests") == "src/test/java"
     relativize(parent, ":module1.sonar.sources") == ""
     relativize(parent, ":module2.sonar.sources") == ""
   }
@@ -949,7 +956,7 @@ class SonarQubePluginTest extends Specification {
       build.gradle.kts
       src/main/java
       """.stripIndent().trim()
-    testSources == ""
+    testSources == "src/test/java"
   }
 
   def "scan all detects scripts only within non skipped submodules"() {
@@ -1011,11 +1018,13 @@ class SonarQubePluginTest extends Specification {
       module1/scriptM1.sh
       module1/src/main/resources/applicationM1.properties
       settings.gradle.kts
+      src/main/java
       """.stripIndent().trim()
 
     testSources == """
       .hidden/folder/test-config.config
       module1/src/main/resources/applicationM1-test.properties
+      src/test/java
       """.stripIndent().trim()
 
     module1Sources == "module1/src/main/java"
@@ -1087,11 +1096,13 @@ class SonarQubePluginTest extends Specification {
       module2/submodule/build.gradle.kts
       module2/submodule/scriptM2S.sh
       settings.gradle.kts
+      src/main/java
       """.stripIndent().trim()
 
     testSources == """
       .hidden/folder/test-config.config
       module1/src/main/resources/applicationM1-test.properties
+      src/test/java
       """.stripIndent().trim()
     module1Sources == "module1/src/main/java"
     module2Sources == "module2/src/main/java"

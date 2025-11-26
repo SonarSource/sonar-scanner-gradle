@@ -186,8 +186,7 @@ class GradleKtsTests extends Specification {
         props.load(outFile.newDataInputStream())
 
         then:
-        def subProjectSonarSources = props[":subproject.sonar.sources"]
-        Assertions.assertThat(subProjectSonarSources).isEmpty()
+        props[":subproject.sonar.sources"] == ""
 
         def sonarSources = props["sonar.sources"].split(",")
         Assertions.assertThat(sonarSources)
@@ -201,8 +200,11 @@ class GradleKtsTests extends Specification {
 
     def "don't add .gradle.kts files if sources are overridden"() {
         given:
-        addBuildKtsWithCustomSources()
+        def customSources = testProjectDir.resolve("src/main/custom")
+        Files.createDirectories(testProjectDir.resolve("src/main/custom"))
+        addBuildKtsWithCustomSources(customSources)
         addSettingsKts()
+
 
         when:
         GradleRunner.create()
@@ -216,7 +218,7 @@ class GradleKtsTests extends Specification {
         props.load(outFile.newDataInputStream())
 
         then:
-        props["sonar.sources"] == "src/main/custom"
+        Path.of(props["sonar.sources"] as String).endsWith(Path.of("src/main/custom"))
 
     }
 
@@ -251,7 +253,7 @@ class GradleKtsTests extends Specification {
                      """
     }
 
-    private def addBuildKtsWithCustomSources() {
+    private def addBuildKtsWithCustomSources(Path customSources) {
         buildFile = testProjectDir.resolve('build.gradle.kts')
         buildFile << """
                      plugins {
@@ -261,7 +263,7 @@ class GradleKtsTests extends Specification {
                      
                      sonar {
                          properties {
-                             property("sonar.sources", "src/main/custom")
+                             property("sonar.sources", "${customSources.toAbsolutePath().toString().replace("\\","\\\\")}")
                          }
                      }
                      """
