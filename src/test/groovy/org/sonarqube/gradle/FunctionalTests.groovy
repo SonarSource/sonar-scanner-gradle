@@ -867,7 +867,7 @@ class FunctionalTests extends Specification {
     def result = GradleRunner.create()
       .withProjectDir(projectDir.toFile())
       .forwardOutput()
-      .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '--info')
+      .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '--info', '--configuration-cache')
       .withPluginClasspath()
       .build()
 
