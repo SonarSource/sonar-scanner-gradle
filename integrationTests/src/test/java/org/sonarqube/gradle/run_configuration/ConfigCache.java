@@ -35,8 +35,10 @@ public class ConfigCache implements RunConfiguration{
   @Override
   public void checkOutput(AbstractGradleIT.RunResult result) {
     String log = result.getLog();
-    if(!log.contains("0 problems were found storing the configuration cache.")) {
-      throw new CheckException("problem found when storing configuration cache");
+    if (!log.contains("0 problems were found storing the configuration cache.")
+      || log.contains("Configuration cache entry discarded because incompatible task was found: ':sonar'")
+    ) {
+      throw new CheckException("problem found with configuration cache:\n" + log);
     }
   }
 }

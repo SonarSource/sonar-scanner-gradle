@@ -19,18 +19,27 @@
  */
 package org.sonarqube.gradle.run_configuration;
 
-
 import java.util.List;
 import org.sonarqube.gradle.AbstractGradleIT;
 
-/**
- * Apply run configuration that should be applied by default except some exception.
- */
-public class DefaultRunConfiguration extends RunConfigurationList {
+public class RunConfigurationList implements RunConfiguration {
+  private List<RunConfiguration> configs;
 
-  public static final List<RunConfiguration> DEFAULT_CONFIGS = List.of(new ConfigCache());
+  public RunConfigurationList(List<RunConfiguration> configs) {
+    this.configs = configs;
+  }
 
-  public DefaultRunConfiguration() {
-    super(DEFAULT_CONFIGS);
+  @Override
+  public void updateProcessArgument(List<String> arguments) {
+    for (var conf : this.configs) {
+      conf.updateProcessArgument(arguments);
+    }
+  }
+
+  @Override
+  public void checkOutput(AbstractGradleIT.RunResult result) {
+    for (var conf : this.configs) {
+      conf.checkOutput(result);
+    }
   }
 }

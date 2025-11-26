@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
+import org.sonarqube.gradle.run_configuration.RunConfigurationList;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
@@ -291,7 +292,8 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testKotlinMultiplatformProject() throws Exception {
     ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
-    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform", emptyMap(), new DefaultRunConfiguration(), "compileCommonMainKotlinMetadata",
+    // kotlin multiplatform plugin do not support configuration cache
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform", emptyMap(), new RunConfigurationList(List.of()), "compileCommonMainKotlinMetadata",
       "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -314,7 +316,8 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testKotlinMultiplatformWithSubmoduleProject() throws Exception {
     ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
-    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform-with-submodule", emptyMap(), new DefaultRunConfiguration(), "compileCommonMainKotlinMetadata",
+    // kotlin multiplatform plugin do not support configuration cache
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform-with-submodule", emptyMap(), new RunConfigurationList(List.of()), "compileCommonMainKotlinMetadata",
       "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -370,7 +373,7 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testScanAllOnMultiModuleWithSubModulesProjectCollectsTheExpectedSources() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-with-submodules", emptyMap(), new DefaultRunConfiguration(), "compileJava", "compileTestJava");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-with-submodules", emptyMap(), new DefaultRunConfiguration(), "compileJava", "compileTestJava", "--info");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
     assertThat(baseDir.getFileName().toString()).hasToString("multi-module-with-submodules");
