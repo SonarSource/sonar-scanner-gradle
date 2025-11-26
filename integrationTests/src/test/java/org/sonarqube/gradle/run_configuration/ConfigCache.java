@@ -26,17 +26,23 @@ import org.sonarqube.gradle.AbstractGradleIT;
 /**
  * Enable gradle configuration cache during run.
  */
-public class ConfigCache implements RunConfiguration{
+public class ConfigCache implements RunConfiguration {
   @Override
   public void updateProcessArgument(List<String> arguments) {
     arguments.add("--configuration-cache");
+    arguments.add("--info");
   }
 
   @Override
   public void checkOutput(AbstractGradleIT.RunResult result) {
     String log = result.getLog();
-    if (!log.contains("0 problems were found storing the configuration cache.")
-      || log.contains("Configuration cache entry discarded because incompatible task was found: ':sonar'")
+    boolean mustContainAtLeastOne = log.contains("0 problems were found storing the configuration cache.")
+      || log.contains("Configuration cache entry stored");
+    boolean mustNotContain = log.contains("Configuration cache problems found")
+      || log.contains("configuration cache problem")
+      || log.contains("Configuration cache entry discarded because incompatible task was found: ':sonar'");
+
+    if (mustNotContain || !mustContainAtLeastOne
     ) {
       throw new CheckException("problem found with configuration cache:\n" + log);
     }
