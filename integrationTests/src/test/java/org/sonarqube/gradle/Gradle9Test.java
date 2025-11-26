@@ -39,7 +39,7 @@ public class Gradle9Test extends AbstractGradleIT {
   @Test
   public void gradle9Example() throws Exception {
     Map<String, String> env = Collections.emptyMap();
-    Properties props = runGradlewSonarSimulationModeWithEnv("/gradle-9-example", env, new DefaultRunConfiguration(), "--quiet", "--console=plain", "build");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/gradle-9-example", env, new DefaultRunConfiguration(), "--console=plain", "build");
     assertThat(extractComparableProperties(props)).containsOnly(
       entry("sonar.binaries", "${parentBaseDir}/gradle-9-example/build/classes/java/main"),
       entry("sonar.host.url", "https://sonarcloud.io"),
