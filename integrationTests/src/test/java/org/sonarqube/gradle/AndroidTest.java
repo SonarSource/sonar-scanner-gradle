@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
+import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
@@ -50,7 +51,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testUsingDefaultVariant() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-default-variant", emptyMap(), "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-default-variant", emptyMap(), new DefaultRunConfiguration(), "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -101,7 +102,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testAndroidDynamicFeature() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-dynamic-feature", emptyMap(), "test", "compileDebugAndroidTestJavaWithJavac");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-dynamic-feature", emptyMap(), new DefaultRunConfiguration(), "test", "compileDebugAndroidTestJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -174,7 +175,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testSpecifyVariant() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-nondefault-variant", emptyMap(), "test");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-nondefault-variant", emptyMap(), new DefaultRunConfiguration(), "test");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -206,7 +207,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testMultiModule() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-android-studio", emptyMap(), "test", "compileDebugAndroidTestJavaWithJavac");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-android-studio", emptyMap(), new DefaultRunConfiguration(), "test", "compileDebugAndroidTestJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -257,6 +258,7 @@ public class AndroidTest extends AbstractGradleIT {
     Properties props = runGradlewSonarSimulationModeWithEnv(
       "/AndroidTestingBlueprintWithDynamicFeatureModule",
       emptyMap(),
+      new DefaultRunConfiguration(),
       "assembleDebug",
       "compileFlavor1DebugUnitTestJavaWithJavac",
       "compileFlavor1DebugAndroidTestJavaWithJavac",
@@ -388,7 +390,7 @@ public class AndroidTest extends AbstractGradleIT {
   public void testSonarTaskHasNoDependencies() throws Exception {
     // First flavor that is picked up seems to be the flavor1
 
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, emptyMap(), "sonar", "--dry-run", "--max-workers=1");
+    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", null, emptyMap(), new DefaultRunConfiguration(), "sonar", "--dry-run", "--max-workers=1");
 
     Stream<String> logs = stream(result.getLog().split("\\r?\\n")).sorted();
 
@@ -408,7 +410,7 @@ public class AndroidTest extends AbstractGradleIT {
   // SONARGRADL-22
   @Test
   public void noDebugVariant() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-no-debug", emptyMap(), "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-no-debug", emptyMap(), new DefaultRunConfiguration(), "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -441,7 +443,7 @@ public class AndroidTest extends AbstractGradleIT {
 
   @Test
   public void testAndroidLintReport() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-android-studio-lint", Collections.emptyMap(), "lint", "lintFullRelease");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/multi-module-android-studio-lint", Collections.emptyMap(), new DefaultRunConfiguration(), "lint", "lintFullRelease");
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
     assertThat(Paths.get(props.getProperty(":app.sonar.androidLint.reportPaths"))).isEqualTo(baseDir.resolve("app/build/reports/lint-results-debug.xml"));
@@ -454,7 +456,7 @@ public class AndroidTest extends AbstractGradleIT {
   public void gradle9AndroidParallelExample() throws Exception {
     ignoreThisTestIfGradleVersionIsLessThan("9.0.0");
     Map<String, String> env = Collections.emptyMap();
-    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle9", env, "--quiet", "--console=plain");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle9", env, new DefaultRunConfiguration(), "--quiet", "--console=plain");
     Map<String, String> comparableProps = extractComparableProperties(props);
 
     // Verify key project structure properties

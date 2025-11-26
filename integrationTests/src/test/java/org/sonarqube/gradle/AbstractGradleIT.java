@@ -37,7 +37,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -46,6 +45,8 @@ import org.jspecify.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
+import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
+import org.sonarqube.gradle.run_configuration.RunConfiguration;
 
 public abstract class AbstractGradleIT {
 
@@ -163,30 +164,30 @@ public abstract class AbstractGradleIT {
   }
 
   protected Properties runGradlewSonarSimulationMode(String project) throws Exception {
-    return runGradlewSonarSimulationModeWithEnv(project, Collections.emptyMap());
+    return runGradlewSonarSimulationModeWithEnv(project, Collections.emptyMap(), new DefaultRunConfiguration());
   }
 
-  protected Properties runGradlewSonarSimulationModeWithEnv(String project, Map<String, String> env, String... args) throws Exception {
-    return runGradlewSonarSimulationModeWithEnv(project, null, env, args);
+  protected Properties runGradlewSonarSimulationModeWithEnv(String project, Map<String, String> env,  RunConfiguration runConfiguration, String... args) throws Exception {
+    return runGradlewSonarSimulationModeWithEnv(project, null, env, runConfiguration, args);
   }
 
-  protected Properties runGradlewSonarSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
+  protected Properties runGradlewSonarSimulationModeWithEnv(String project, String exeRelativePath, Map<String, String> env,  RunConfiguration runConfiguration, String... args) throws Exception {
     File out = temp.newFile();
     String[] newArgs = Stream.concat(
         Stream.of("-Dsonar.scanner.internal.dumpToFile=" + out.getAbsolutePath()),
         Arrays.stream(args))
       .toArray(String[]::new);
-    RunResult result = runGradlewSonarWithEnv(project, exeRelativePath, env, newArgs);
+    RunResult result = runGradlewSonarWithEnv(project, exeRelativePath, env, runConfiguration, newArgs);
 
     return result.getDumpedProperties().get();
   }
 
-  protected RunResult runGradlewSonarWithEnv(String project, Map<String, String> env, String... args) throws Exception {
-    return runGradlewSonarWithEnv(project, null, env, args);
+  protected RunResult runGradlewSonarWithEnv(String project, Map<String, String> env,  RunConfiguration runConfiguration, String... args) throws Exception {
+    return runGradlewSonarWithEnv(project, null, env, runConfiguration, args);
   }
 
-  protected RunResult runGradlewSonarWithEnv(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
-    RunResult result = runGradlewSonarWithEnvQuietly(project, exeRelativePath, env, args);
+  protected RunResult runGradlewSonarWithEnv(String project, String exeRelativePath, Map<String, String> env,  RunConfiguration runConfiguration, String... args) throws Exception {
+    RunResult result = runGradlewSonarWithEnvQuietly(project, exeRelativePath, env, runConfiguration, args);
     System.out.println(result.getLog());
     if (result.exitValue != 0) {
       throw new RuntimeException(result.log);
@@ -194,18 +195,22 @@ public abstract class AbstractGradleIT {
     return result;
   }
 
-  protected RunResult runGradlewSonarWithEnvQuietly(String project, Map<String, String> env, String... args) throws Exception {
-    return runGradlewSonarWithEnvQuietly(project, null, env, args);
+  protected RunResult runGradlewSonarWithEnvQuietly(String project, Map<String, String> env,  RunConfiguration runConfiguration, String... args) throws Exception {
+    return runGradlewSonarWithEnvQuietly(project, null, env, runConfiguration, args);
   }
 
-  protected RunResult runGradlewSonarWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
+  protected RunResult runGradlewSonarWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, RunConfiguration runConfiguration, String... args) throws Exception {
     List<String> newArgs = new ArrayList<>(args.length + 1);
     newArgs.addAll(Arrays.asList(args));
     newArgs.add("sonar");
-    return runGradlewWithEnvQuietly(project, exeRelativePath, env, newArgs.toArray(new String[args.length + 1]));
+    return runGradlewWithEnvQuietly(project, exeRelativePath, env, runConfiguration, newArgs.toArray(new String[args.length + 1]));
   }
 
   protected RunResult runGradlewWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
+    return runGradlewWithEnvQuietly(project, exeRelativePath, env, new DefaultRunConfiguration(), args);
+  }
+
+  protected RunResult runGradlewWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, RunConfiguration runConfiguration, String... args) throws Exception {
     File projectBaseDir = new File(this.getClass().getResource(project).toURI());
     String projectDir = project.startsWith("/") ? "." + project : project;
     File tempProjectDir = new File(temp.getRoot(), projectDir);
@@ -222,6 +227,7 @@ public abstract class AbstractGradleIT {
       command.add("gradlew");
     }
     command.addAll(Arrays.asList("--stacktrace", "--no-daemon", "--warning-mode", "all"));
+    runConfiguration.updateProcessArgument(command);
     command.addAll(Arrays.asList(args));
     File exeDir = tempProjectDir;
     if (exeRelativePath != null) {
@@ -245,7 +251,9 @@ public abstract class AbstractGradleIT {
 
     assertThatPluginDoesNotCreateGradleDeprecationWarnings(output);
 
-    return new RunResult(output, p.exitValue(), getDumpedProperties(command));
+    RunResult result = new RunResult(output, p.exitValue(), getDumpedProperties(command));
+    runConfiguration.checkOutput(result);
+    return result;
   }
 
   protected List<String> getGradlewCommand() {
@@ -291,7 +299,7 @@ public abstract class AbstractGradleIT {
     return props;
   }
 
-  protected static class RunResult {
+  public static class RunResult {
     private final String log;
     private final int exitValue;
     private final Properties dumpedProperties;
