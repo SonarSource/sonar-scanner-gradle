@@ -30,10 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SonarPropertyTest {
 
-  private static final String SKIP = SonarProperty.SKIP;
-  private static final String PROJECT_KEY = SonarProperty.PROJECT_KEY;
-  private static final String VERBOSE = SonarProperty.VERBOSE;
-
   @ParameterizedTest
   @MethodSource("provideInvalidProperties")
   void parseInvalidPropertyReturnsEmpty(String input) {
@@ -62,7 +58,7 @@ class SonarPropertyTest {
 
   @Test
   void parseRoundTrip() {
-    SonarProperty original = new SonarProperty("my.module", SKIP);
+    SonarProperty original = new SonarProperty("my.module", SonarProperty.SKIP);
     String stringValue = original.toString();
     Optional<SonarProperty> parsed = SonarProperty.parse(stringValue);
     assertThat(parsed).contains(original);
@@ -70,15 +66,15 @@ class SonarPropertyTest {
 
   @Test
   void rootProjectPropertyCreatesPropertyWithEmptySubproject() {
-    SonarProperty property = SonarProperty.rootProjectProperty(PROJECT_KEY);
+    SonarProperty property = SonarProperty.rootProjectProperty(SonarProperty.PROJECT_KEY);
     assertThat(property.getSubproject()).isNull();
-    assertThat(property.getProperty()).isEqualTo(PROJECT_KEY);
+    assertThat(property.getProperty()).isEqualTo(SonarProperty.PROJECT_KEY);
   }
 
   @Test
   void constructorAndGetters() {
     String module = "test.module";
-    String prop = VERBOSE;
+    String prop = SonarProperty.VERBOSE;
     SonarProperty property = new SonarProperty(module, prop);
     assertThat(property.getSubproject()).isEqualTo(module);
     assertThat(property.getProperty()).isEqualTo(prop);
@@ -86,22 +82,22 @@ class SonarPropertyTest {
 
   @Test
   void toStringWithSubproject() {
-    SonarProperty property = new SonarProperty("my.module", SKIP);
-    assertThat(property).hasToString("my.module." + SKIP);
+    SonarProperty property = new SonarProperty("my.module", SonarProperty.SKIP);
+    assertThat(property).hasToString("my.module." + SonarProperty.SKIP);
   }
 
   @Test
   void toStringWithoutSubproject() {
-    SonarProperty property = new SonarProperty(null, SKIP);
-    assertThat(property).hasToString(SKIP);
+    SonarProperty property = new SonarProperty(null, SonarProperty.SKIP);
+    assertThat(property).hasToString(SonarProperty.SKIP);
   }
 
   @Test
   void equalsAndHashCode() {
-    SonarProperty p1 = new SonarProperty("mod", SKIP);
-    SonarProperty p2 = new SonarProperty("mod", SKIP);
-    SonarProperty p3 = new SonarProperty("other", SKIP);
-    SonarProperty p4 = new SonarProperty("mod", VERBOSE);
+    SonarProperty p1 = new SonarProperty("mod", SonarProperty.SKIP);
+    SonarProperty p2 = new SonarProperty("mod", SonarProperty.SKIP);
+    SonarProperty p3 = new SonarProperty("other", SonarProperty.SKIP);
+    SonarProperty p4 = new SonarProperty("mod", SonarProperty.VERBOSE);
 
     assertThat(p1)
       .isEqualTo(p2)
@@ -114,11 +110,11 @@ class SonarPropertyTest {
 
   private static Stream<Arguments> provideValidProperties() {
     return Stream.of(
-      Arguments.of(SKIP, null, SKIP),
-      Arguments.of(PROJECT_KEY, null, PROJECT_KEY),
-      Arguments.of("mySubproject." + SKIP, "mySubproject", SKIP),
-      Arguments.of("a.b.c." + PROJECT_KEY, "a.b.c", PROJECT_KEY),
-      Arguments.of("module.with.dots." + VERBOSE, "module.with.dots", VERBOSE)
+      Arguments.of(SonarProperty.SKIP, null, SonarProperty.SKIP),
+      Arguments.of(SonarProperty.PROJECT_KEY, null, SonarProperty.PROJECT_KEY),
+      Arguments.of("mySubproject." + SonarProperty.SKIP, "mySubproject", SonarProperty.SKIP),
+      Arguments.of("a.b.c." + SonarProperty.PROJECT_KEY, "a.b.c", SonarProperty.PROJECT_KEY),
+      Arguments.of("module.with.dots." + SonarProperty.VERBOSE, "module.with.dots", SonarProperty.VERBOSE)
     );
   }
 }

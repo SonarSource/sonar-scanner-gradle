@@ -24,7 +24,9 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * a property of the sonar scanner
+ * Full identifier of a sonar property, they are passed to the analyzers.
+ * Some properties are only global and other can be scoped within a subproject.
+ * The full identifier consists of subproject + property name.
  */
 public class SonarProperty {
   public static final String SKIP = "sonar.skip";
@@ -131,7 +133,7 @@ public class SonarProperty {
    */
   @Nullable
   private final String subproject;
-  private final String property;
+  private final String propertyName;
 
   /**
    * Parse a property as a string, refer to {@code toString()} for the  exact format.
@@ -165,12 +167,12 @@ public class SonarProperty {
     return new SonarProperty(null, property);
   }
 
-  public SonarProperty(@Nullable String subproject, String property) {
+  public SonarProperty(@Nullable String subproject, String propertyName) {
     if (subproject != null && subproject.isEmpty()) {
       subproject = null;
     }
     this.subproject = subproject;
-    this.property = property;
+    this.propertyName = propertyName;
   }
 
   @Nullable
@@ -179,15 +181,15 @@ public class SonarProperty {
   }
 
   public String getProperty() {
-    return property;
+    return propertyName;
   }
 
   @Override
   public String toString() {
     if (subproject != null) {
-      return subproject + "." + property;
+      return subproject + "." + propertyName;
     } else {
-      return property;
+      return propertyName;
     }
   }
 
@@ -197,9 +199,9 @@ public class SonarProperty {
     SonarProperty that = (SonarProperty) o;
 
     if (subproject == null && that.subproject == null) {
-      return property.equals(that.property);
+      return propertyName.equals(that.propertyName);
     } else {
-      return property.equals(that.property) && subproject != null && subproject.equals(that.subproject);
+      return propertyName.equals(that.propertyName) && subproject != null && subproject.equals(that.subproject);
     }
   }
 
