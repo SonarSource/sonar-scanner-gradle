@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
@@ -38,7 +39,7 @@ public class Gradle9Test extends AbstractGradleIT {
   @Test
   public void gradle9Example() throws Exception {
     Map<String, String> env = Collections.emptyMap();
-    Properties props = runGradlewSonarSimulationModeWithEnv("/gradle-9-example", env, "--quiet", "--console=plain", "build");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/gradle-9-example", env, new DefaultRunConfiguration(), "--quiet", "--console=plain", "build");
     assertThat(extractComparableProperties(props)).containsOnly(
       entry("sonar.binaries", "${parentBaseDir}/gradle-9-example/build/classes/java/main"),
       entry("sonar.host.url", "https://sonarcloud.io"),
