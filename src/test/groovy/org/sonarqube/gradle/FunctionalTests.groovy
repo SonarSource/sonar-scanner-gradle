@@ -62,6 +62,13 @@ class FunctionalTests extends Specification {
         Files.copy(is, dir.resolve('gradle.properties'), StandardCopyOption.REPLACE_EXISTING)
     }
 
+    /**
+     * you can use it if your test is not compatible with java agent, for instance when enabling the configuration cache
+     */
+    static def removeJacocoGradleTestkitPlugin(Path dir) {
+      Files.deleteIfExists(dir.resolve('gradle.properties'))
+    }
+
     def "'java' project"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -844,6 +851,30 @@ class FunctionalTests extends Specification {
      assert run2.getOutput().contains("':sonarResolver' is not up-to-date")
      assert run2.getOutput().contains("':sonar' is not up-to-date")
    }
+
+  def "check no problem found related to configuration cache"() {
+    given:
+    removeJacocoGradleTestkitPlugin(projectDir)
+    settingsFile << "rootProject.name = 'java-task-toolchains'"
+    buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java'
+        }
+        """
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .forwardOutput()
+      .withArguments('sonarqube', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '--info')
+      .withPluginClasspath()
+      .build()
+
+    then:
+    result.task(":sonarqube").outcome == SUCCESS
+    result.output.contains("0 problems were found storing the configuration cache.")
+  }
 
   private Path projectDir(String project) {
     return Path.of(this.class.getResource("/projects/"+project).toURI());
