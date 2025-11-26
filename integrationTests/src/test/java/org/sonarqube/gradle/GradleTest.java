@@ -282,11 +282,19 @@ public class GradleTest extends AbstractGradleIT {
 
     String dumpProperty = String.format("-Dsonar.scanner.internal.dumpToFile=%s", temp.newFile().getAbsolutePath());
 
-    runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), new DefaultRunConfiguration(), dumpProperty, "--configuration-cache");
-    RunResult runResult = runGradlewSonarWithEnv("/java-gradle-simple", emptyMap(), new DefaultRunConfiguration(), dumpProperty, "--configuration-cache");
+    runGradlewSonarWithEnv("/java-gradle-simple",
+      emptyMap(),
+      new DefaultRunConfiguration(),
+      dumpProperty,
+      "--configuration-cache");
+    // in the second execution we expect to reuse the configuration cache
+    RunResult runResult = runGradlewSonarWithEnv("/java-gradle-simple",
+      emptyMap(),
+      new RunConfigurationList(List.of()),
+      dumpProperty,
+      "--configuration-cache");
 
-    assertThat(runResult.getLog()).doesNotContain("no properties configured, was it skipped in all projects?");
-    assertThat(runResult.getLog()).contains("BUILD SUCCESSFUL");
+    assertThat(runResult.getLog()).contains("Reusing configuration cache.");
   }
 
   @Test
