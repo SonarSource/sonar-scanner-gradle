@@ -562,19 +562,15 @@ public class SonarPropertyComputer {
       .collect(Collectors.toList());
 
     var settingsFile = Path.of(project.getProjectDir().getAbsolutePath(), "settings.gradle.kts").toFile();
-    if (settingsFile.exists()) {
-      buildScripts.add(settingsFile);
-    }
-    if (!buildScripts.isEmpty()) {
-      SonarUtils.appendSourcesProp(properties, buildScripts, false);
-    }
+    buildScripts.add(settingsFile);
+    SonarUtils.appendSourcesProp(properties, buildScripts, false);
   }
 
   private static void addGithubFolder(Project project, Map<String, Object> properties) {
     File githubFolder = project.getProjectDir().toPath().resolve(".github").toFile();
-    if (githubFolder.exists() && githubFolder.isDirectory()) {
-      SonarUtils.appendSourcesProp(properties, List.of(githubFolder), false);
-    }
+    // Note that we don't check that .github exists or is a directory, because this is executed in configuration phase
+    // and the folder could be created later. The task removes non-existing paths later.
+    SonarUtils.appendSourcesProp(properties, List.of(githubFolder), false);
   }
 
   private String computeProjectKey() {
