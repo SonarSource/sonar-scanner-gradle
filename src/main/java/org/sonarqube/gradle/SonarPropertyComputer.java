@@ -84,6 +84,7 @@ public class SonarPropertyComputer {
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
+  private final String SONAR = "sonar";
 
   public SonarPropertyComputer(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project targetProject) {
     this.actionBroadcastMap = actionBroadcastMap;
@@ -284,7 +285,7 @@ public class SonarPropertyComputer {
     }
     if (isRootProject(project)) {
       rawProperties.putAll(getSonarEnvironmentVariables(project));
-      addSystemProperties(rawProperties);
+      rawProperties.putAll(project.getProviders().systemPropertiesPrefixedBy(SONAR).get());
     }
   }
 
@@ -343,15 +344,6 @@ public class SonarPropertyComputer {
         properties.put(SonarProperty.SOURCE_ENCODING, encoding);
       }
     });
-  }
-
-  private static void addSystemProperties(Map<String, Object> properties) {
-    for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
-      String key = entry.getKey().toString();
-      if (key.startsWith("sonar")) {
-        properties.put(key, entry.getValue());
-      }
-    }
   }
 
   private static void configureForJava(final Project project, final Map<String, Object> properties) {
@@ -527,7 +519,7 @@ public class SonarPropertyComputer {
 
     if (project.equals(targetProject)) {
       // Root project of the analysis
-      Provider<Directory> workingDir = project.getLayout().getBuildDirectory().dir("sonar");
+      Provider<Directory> workingDir = project.getLayout().getBuildDirectory().dir(SONAR);
       properties.put(SonarProperty.WORKING_DIRECTORY, workingDir.get().getAsFile());
     }
 
