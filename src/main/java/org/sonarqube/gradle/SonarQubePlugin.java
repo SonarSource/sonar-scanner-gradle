@@ -174,7 +174,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
 
     sonarTask.mustRunAfter(getJavaCompileTasks(project));
-    sonarTask.mustRunAfter(getAndroidCompileTasks(project));
+    sonarTask.mustRunAfter(getAndroidTasks(project));
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
     sonarTask.dependsOn(getClassPathResolverTask(project));
@@ -234,24 +234,31 @@ public class SonarQubePlugin implements Plugin<Project> {
       .findFirst().orElse(null);
   }
 
-  private static Callable<Iterable<? extends Task>> getAndroidCompileTasks(Project project) {
+  /**
+   * must run after compile to have access to class files
+   * must run after test to have access to test reports
+   */
+  private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && notSkipped(p))
       .map(p -> {
         AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
 
-        List<Task> allCompileTasks = new ArrayList<>();
+        List<Task> allTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
           final String compileTaskPrefix = "compile" + capitalize(androidVariantAndExtension.getVariant().getName());
-          boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allCompileTasks);
-          boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allCompileTasks);
+          final String testTaskPrefix = "test" + capitalize(androidVariantAndExtension.getVariant().getName());
+
+          boolean unitTestCompileTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
+          boolean androidTestCompileTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
+          addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
           // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
           // that would lead to run main compile task several times
-          if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
-            addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allCompileTasks);
+          if (!unitTestCompileTaskDepAdded && !androidTestCompileTaskDepAdded) {
+            addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
           }
         }
-        return allCompileTasks;
+        return allTasks;
       })
       .flatMap(List::stream)
       .collect(Collectors.toList());
