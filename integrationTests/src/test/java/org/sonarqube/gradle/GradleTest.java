@@ -300,8 +300,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testKotlinMultiplatformProject() throws Exception {
     ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
-    // kotlin multiplatform plugin do not support configuration cache
-    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform", emptyMap(), new DefaultRunConfiguration(), "compileCommonMainKotlinMetadata",
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform", emptyMap(), new DefaultRunConfiguration(),
       "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -324,8 +323,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testKotlinMultiplatformWithSubmoduleProject() throws Exception {
     ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
-    // kotlin multiplatform plugin do not support configuration cache
-    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform-with-submodule", emptyMap(), new DefaultRunConfiguration(), "compileCommonMainKotlinMetadata",
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform-with-submodule", emptyMap(), new DefaultRunConfiguration(),
       "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
