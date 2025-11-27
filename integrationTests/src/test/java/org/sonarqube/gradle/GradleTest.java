@@ -282,9 +282,10 @@ public class GradleTest extends AbstractGradleIT {
 
     String dumpProperty = String.format("-Dsonar.scanner.internal.dumpToFile=%s", temp.newFile().getAbsolutePath());
 
+
     runGradlewSonarWithEnv("/java-gradle-simple",
       emptyMap(),
-      new DefaultRunConfiguration(),
+      new RunConfigurationList(List.of()),
       dumpProperty,
       "--configuration-cache");
     // in the second execution we expect to reuse the configuration cache
