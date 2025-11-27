@@ -66,4 +66,21 @@ class SonarPropertyComputerTest {
     // Assert
     assertThat(result).containsEntry("sonar.host.url", "http://localhost:9000");
   }
+
+  @Test
+  void getSonarSystemProperties_shouldFallbackWhenNoSuchMethodError() {
+    // Arrange
+    Project project = mock(Project.class);
+    ProviderFactory providers = mock(ProviderFactory.class);
+
+    when(project.getProviders()).thenReturn(providers);
+    when(providers.systemPropertiesPrefixedBy("sonar"))
+      .thenThrow(new NoSuchMethodError("systemPropertiesPrefixedBy"));
+
+    // Act
+    Map<String, String> result = SonarPropertyComputer.getSonarSystemProperties(project);
+
+    // Assert
+    assertThat(result).isNotNull().allSatisfy((key, value) -> assertThat(key).startsWith("sonar."));
+  }
 }

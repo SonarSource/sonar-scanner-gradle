@@ -62,6 +62,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.sonarqube.gradle.SonarUtils.InputFileType;
 import org.sonarqube.gradle.properties.SonarProperty;
 import org.sonarsource.scanner.lib.EnvironmentConfig;
@@ -215,7 +216,8 @@ public class SonarPropertyComputer {
     }
   }
 
-  private static Map<String, String> getSonarSystemProperties(Project project) {
+  @VisibleForTesting
+  static Map<String, String> getSonarSystemProperties(Project project) {
     try {
       return project.getProviders().systemPropertiesPrefixedBy(SONAR).get();
     } catch (NoSuchMethodError e) {
