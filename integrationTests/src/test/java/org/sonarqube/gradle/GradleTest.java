@@ -150,7 +150,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void mixJavaGroovyProject() throws Exception {
     ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
-    Properties props = runGradlewSonarSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), new RunConfigurationList(List.of()), "build");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), new DefaultRunConfiguration(), "build");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -243,7 +243,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testJavaProjectWithoutRealTestsDoesNotSetCustomReportsPath() throws Exception {
     ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
-    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-no-real-tests", emptyMap(), new RunConfigurationList(List.of()), "test");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-no-real-tests", emptyMap(), new DefaultRunConfiguration(), "test");
     Path testResultsDir = Paths.get(props.getProperty("sonar.projectBaseDir")).resolve("build/test-results");
 
     assertThat(testResultsDir).exists();
@@ -254,7 +254,7 @@ public class GradleTest extends AbstractGradleIT {
   @Test
   public void testLazyConfiguration() throws Exception {
     ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
-    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-lazy-configuration", emptyMap(), new RunConfigurationList(List.of()), "test");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-lazy-configuration", emptyMap(), new DefaultRunConfiguration(), "test");
     assertThat(props.getProperty("sonar.projectKey")).isEqualTo("org.codehaus.sonar:example-java-gradle");
   }
 
@@ -269,7 +269,7 @@ public class GradleTest extends AbstractGradleIT {
       // Use report.required
       project = "/java-gradle-jacoco-after-7";
     }
-    Properties props = runGradlewSonarSimulationModeWithEnv(project, emptyMap(), new RunConfigurationList(List.of()), "processResources", "processTestResources", "test",
+    Properties props = runGradlewSonarSimulationModeWithEnv(project, emptyMap(), new DefaultRunConfiguration(), "processResources", "processTestResources", "test",
       "jacocoTestReport");
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
     assertThat(props).doesNotContainKey("sonar.jacoco.reportPaths");
@@ -301,7 +301,7 @@ public class GradleTest extends AbstractGradleIT {
   public void testKotlinMultiplatformProject() throws Exception {
     ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
     // kotlin multiplatform plugin do not support configuration cache
-    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform", emptyMap(), new RunConfigurationList(List.of()), "compileCommonMainKotlinMetadata",
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform", emptyMap(), new DefaultRunConfiguration(), "compileCommonMainKotlinMetadata",
       "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -325,7 +325,7 @@ public class GradleTest extends AbstractGradleIT {
   public void testKotlinMultiplatformWithSubmoduleProject() throws Exception {
     ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
     // kotlin multiplatform plugin do not support configuration cache
-    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform-with-submodule", emptyMap(), new RunConfigurationList(List.of()), "compileCommonMainKotlinMetadata",
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-multiplatform-with-submodule", emptyMap(), new DefaultRunConfiguration(), "compileCommonMainKotlinMetadata",
       "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
@@ -349,7 +349,7 @@ public class GradleTest extends AbstractGradleIT {
   public void testKotlinJvmProject() throws Exception {
     ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
 
-    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-jvm", emptyMap(), new RunConfigurationList(List.of()), "compileKotlin", "compileTestKotlin");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-jvm", emptyMap(), new DefaultRunConfiguration(), "compileKotlin", "compileTestKotlin");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -366,7 +366,7 @@ public class GradleTest extends AbstractGradleIT {
   public void testKotlinJvmWithSubmoduleProject() throws Exception {
     ignoreThisTestIfGradleVersionIsNotBetween("6.8.3", "9.0.0");
 
-    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-jvm-submodule", emptyMap(), new RunConfigurationList(List.of()), "compileKotlin", "compileTestKotlin");
+    Properties props = runGradlewSonarSimulationModeWithEnv("/kotlin-jvm-submodule", emptyMap(), new DefaultRunConfiguration(), "compileKotlin", "compileTestKotlin");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
