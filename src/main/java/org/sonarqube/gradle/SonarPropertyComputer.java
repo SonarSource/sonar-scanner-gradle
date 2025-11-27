@@ -216,7 +216,18 @@ public class SonarPropertyComputer {
   }
 
   private static Map<String, String> getSonarSystemProperties(Project project) {
-    return project.getProviders().systemPropertiesPrefixedBy(SONAR).get();
+    try {
+      return project.getProviders().systemPropertiesPrefixedBy(SONAR).get();
+    } catch (NoSuchMethodError e) {
+      // Fallback for Gradle versions < 7.5 which don't have systemPropertiesPrefixedBy
+      return fallbackSystemPropertiesForOlderGradle();
+    }
+  }
+
+  private static Map<String, String> fallbackSystemPropertiesForOlderGradle() {
+    return System.getProperties().entrySet().stream()
+      .filter(entry -> entry.getKey().toString().startsWith(SONAR))
+      .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> entry.getValue().toString()));
   }
 
   private static void computeScanAllProperties(Project project, Map<String, Object> properties) {

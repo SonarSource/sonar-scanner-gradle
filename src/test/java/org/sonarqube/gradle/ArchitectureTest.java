@@ -19,9 +19,13 @@
  */
 package org.sonarqube.gradle;
 
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -47,10 +51,29 @@ class ArchitectureTest {
   void plugin_code_should_not_use_system_getproperties() {
     ArchRule rule = noClasses()
       .that().resideInAPackage("org.sonarqube.gradle..")
-      .should().callMethod(System.class, "getProperties")
+      .should(notCallSystemGetPropertiesExceptInFallbackMethods())
       .because("System.getProperties() captures all system properties which doesn't play nicely with Gradle's configuration cache. "
-        + "Use explicit system property names with project.getProviders().systemProperty() or project.getProviders().systemPropertiesPrefixedBy() instead.");
+        + "Use explicit system property names with project.getProviders().systemProperty() or project.getProviders().systemPropertiesPrefixedBy() instead. "
+        + "System.getProperties() is only allowed in methods with 'fallback' in their name for older Gradle versions.");
 
     rule.check(PLUGIN_CLASSES);
+  }
+
+  private static ArchCondition<JavaClass> notCallSystemGetPropertiesExceptInFallbackMethods() {
+    return new ArchCondition<>("not call System.getProperties() except in methods with 'fallback' in their name") {
+      @Override
+      public void check(JavaClass javaClass, ConditionEvents events) {
+        javaClass.getMethodCallsFromSelf().stream()
+          .filter(call -> call.getTargetOwner().isEquivalentTo(System.class) && call.getName().equals("getProperties"))
+          .filter(call -> !call.getOriginOwner().getName().toLowerCase().contains("fallback"))
+          .forEach(call -> {
+            String message = String.format(
+              "Method %s.%s() calls System.getProperties() but is not in a method with 'fallback' in its name",
+              javaClass.getSimpleName(),
+              call.getOriginOwner().getName());
+            events.add(SimpleConditionEvent.violated(call, message));
+          });
+      }
+    };
   }
 }
