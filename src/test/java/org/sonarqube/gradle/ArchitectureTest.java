@@ -42,4 +42,15 @@ class ArchitectureTest {
 
     rule.check(PLUGIN_CLASSES);
   }
+
+  @Test
+  void plugin_code_should_not_use_system_getproperties() {
+    ArchRule rule = noClasses()
+      .that().resideInAPackage("org.sonarqube.gradle..")
+      .should().callMethod(System.class, "getProperties")
+      .because("System.getProperties() captures all system properties which doesn't play nicely with Gradle's configuration cache. "
+        + "Use explicit system property names with project.getProviders().systemProperty() or project.getProviders().systemPropertiesPrefixedBy() instead.");
+
+    rule.check(PLUGIN_CLASSES);
+  }
 }
