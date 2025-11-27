@@ -84,7 +84,7 @@ public class SonarPropertyComputer {
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
-  private final String SONAR = "sonar";
+  private static final String SONAR = "sonar";
 
   public SonarPropertyComputer(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project targetProject) {
     this.actionBroadcastMap = actionBroadcastMap;
@@ -187,10 +187,10 @@ public class SonarPropertyComputer {
       var sonarProps = new SonarProperties(new HashMap<>());
       actionBroadcastMap.get(project.getPath()).execute(sonarProps);
 
-      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties(), getSonarEnvironmentVariables(project), sonarProps.getProperties())
+      boolean sourcesOrTestsAlreadySet = Stream
+        .of(getSonarSystemProperties(project), getSonarEnvironmentVariables(project), sonarProps.getProperties())
         .map(Map::keySet)
         .flatMap(Collection::stream)
-        .map(String.class::cast)
         .anyMatch(k -> SonarProperty.PROJECT_SOURCE_DIRS.endsWith(k) || SonarProperty.PROJECT_TEST_DIRS.endsWith(k));
 
       if (sourcesOrTestsAlreadySet) {
@@ -213,6 +213,10 @@ public class SonarPropertyComputer {
       // Fallback for Gradle versions < 7.5 which don't have environmentVariablesPrefixedBy
       return EnvironmentConfig.load();
     }
+  }
+
+  private static Map<String, String> getSonarSystemProperties(Project project) {
+    return project.getProviders().systemPropertiesPrefixedBy(SONAR).get();
   }
 
   private static void computeScanAllProperties(Project project, Map<String, Object> properties) {
@@ -285,7 +289,7 @@ public class SonarPropertyComputer {
     }
     if (isRootProject(project)) {
       rawProperties.putAll(getSonarEnvironmentVariables(project));
-      rawProperties.putAll(project.getProviders().systemPropertiesPrefixedBy(SONAR).get());
+      rawProperties.putAll(getSonarSystemProperties(project));
     }
   }
 
