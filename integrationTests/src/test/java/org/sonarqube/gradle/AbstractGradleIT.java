@@ -71,7 +71,7 @@ public abstract class AbstractGradleIT {
     }
   }
 
-  protected static Semver getGradleVersion() {
+  public static Semver getGradleVersion() {
     return gradleVersion;
   }
 

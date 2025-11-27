@@ -25,16 +25,26 @@ import org.sonarqube.gradle.AbstractGradleIT;
 
 /**
  * Enable gradle configuration cache during run.
+ * We have too much problem testing configuration cache with version gradle versions lower than 8.
+ * If you use the configuration cache, it is unlikely that you use a version of gradle lower than 8.
  */
 public class ConfigCache implements RunConfiguration {
   @Override
   public void updateProcessArgument(List<String> arguments) {
+    if (AbstractGradleIT.getGradleVersion().isLowerThan("8.0.0")) {
+      return;
+    }
+
     arguments.add("--configuration-cache");
     arguments.add("--info");
   }
 
   @Override
   public void checkOutput(AbstractGradleIT.RunResult result) {
+    if (AbstractGradleIT.getGradleVersion().isLowerThan("8.0.0")) {
+      return;
+    }
+
     String log = result.getLog();
     boolean mustContainAtLeastOne = log.contains("0 problems were found storing the configuration cache.")
       || log.contains("Configuration cache entry stored");
