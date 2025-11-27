@@ -62,6 +62,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.sonarqube.gradle.SonarUtils.InputFileType;
 import org.sonarqube.gradle.properties.SonarProperty;
 import org.sonarsource.scanner.lib.EnvironmentConfig;
@@ -84,6 +85,7 @@ public class SonarPropertyComputer {
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Project targetProject;
+  private static final String SONAR = "sonar";
 
   public SonarPropertyComputer(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project targetProject) {
     this.actionBroadcastMap = actionBroadcastMap;
@@ -186,10 +188,10 @@ public class SonarPropertyComputer {
       var sonarProps = new SonarProperties(new HashMap<>());
       actionBroadcastMap.get(project.getPath()).execute(sonarProps);
 
-      boolean sourcesOrTestsAlreadySet = Stream.of(System.getProperties(), getSonarEnvironmentVariables(project), sonarProps.getProperties())
+      boolean sourcesOrTestsAlreadySet = Stream
+        .of(getSonarSystemProperties(project), getSonarEnvironmentVariables(project), sonarProps.getProperties())
         .map(Map::keySet)
         .flatMap(Collection::stream)
-        .map(String.class::cast)
         .anyMatch(k -> SonarProperty.PROJECT_SOURCE_DIRS.endsWith(k) || SonarProperty.PROJECT_TEST_DIRS.endsWith(k));
 
       if (sourcesOrTestsAlreadySet) {
@@ -212,6 +214,22 @@ public class SonarPropertyComputer {
       // Fallback for Gradle versions < 7.5 which don't have environmentVariablesPrefixedBy
       return EnvironmentConfig.load();
     }
+  }
+
+  @VisibleForTesting
+  static Map<String, String> getSonarSystemProperties(Project project) {
+    try {
+      return project.getProviders().systemPropertiesPrefixedBy(SONAR).get();
+    } catch (NoSuchMethodError e) {
+      // Fallback for Gradle versions < 7.5 which don't have systemPropertiesPrefixedBy
+      return fallbackSystemPropertiesForOlderGradle();
+    }
+  }
+
+  private static Map<String, String> fallbackSystemPropertiesForOlderGradle() {
+    return System.getProperties().entrySet().stream()
+      .filter(entry -> entry.getKey().toString().startsWith(SONAR))
+      .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> entry.getValue().toString()));
   }
 
   private static void computeScanAllProperties(Project project, Map<String, Object> properties) {
@@ -284,7 +302,7 @@ public class SonarPropertyComputer {
     }
     if (isRootProject(project)) {
       rawProperties.putAll(getSonarEnvironmentVariables(project));
-      addSystemProperties(rawProperties);
+      rawProperties.putAll(getSonarSystemProperties(project));
     }
   }
 
@@ -343,15 +361,6 @@ public class SonarPropertyComputer {
         properties.put(SonarProperty.SOURCE_ENCODING, encoding);
       }
     });
-  }
-
-  private static void addSystemProperties(Map<String, Object> properties) {
-    for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
-      String key = entry.getKey().toString();
-      if (key.startsWith("sonar")) {
-        properties.put(key, entry.getValue());
-      }
-    }
   }
 
   private static void configureForJava(final Project project, final Map<String, Object> properties) {
@@ -527,7 +536,7 @@ public class SonarPropertyComputer {
 
     if (project.equals(targetProject)) {
       // Root project of the analysis
-      Provider<Directory> workingDir = project.getLayout().getBuildDirectory().dir("sonar");
+      Provider<Directory> workingDir = project.getLayout().getBuildDirectory().dir(SONAR);
       properties.put(SonarProperty.WORKING_DIRECTORY, workingDir.get().getAsFile());
     }
 
