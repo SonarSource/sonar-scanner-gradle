@@ -252,12 +252,11 @@ public class SonarQubePlugin implements Plugin<Project> {
         List<Task> allTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
           final String compileTaskPrefix = "compile" + capitalize(androidVariantAndExtension.getVariant().getName());
-
-          boolean unitTestCompileTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
-          boolean androidTestCompileTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
+          boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
+          boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
           // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
           // that would lead to run main compile task several times
-          if (!unitTestCompileTaskDepAdded && !androidTestCompileTaskDepAdded) {
+          if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
             addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
           }
 
