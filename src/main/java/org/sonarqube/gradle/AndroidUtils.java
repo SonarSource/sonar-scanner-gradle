@@ -69,8 +69,6 @@ import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 import static org.sonarqube.gradle.SonarQubePlugin.getConfiguredAndroidVariant;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
-import static org.sonarqube.gradle.SonarUtils.exists;
-import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
 
 /**
  * Only access this class when running on an Android application
@@ -201,7 +199,6 @@ class AndroidUtils {
     List<File> value = directories.stream()
       .filter(Provider::isPresent)
       .map(d -> d.get().getAsFile())
-      .filter(file -> file.isDirectory() && file.list().length > 0)
       .collect(Collectors.toList());
     map.put(SonarProperty.JUNIT_REPORT_PATHS, value);
   }
@@ -336,10 +333,7 @@ class AndroidUtils {
       ArrayList::new,
       ArrayList::addAll,
       ArrayList::addAll);
-    List<File> sourcesOrTests = nonEmptyOrNull(srcDirs.stream().filter(File::exists).collect(Collectors.toList()));
-    if (sourcesOrTests != null) {
-      appendSourcesProp(properties, sourcesOrTests, isTest);
-    }
+    appendSourcesProp(properties, srcDirs, isTest);
 
     JavaCompile javaCompile = getJavaCompiler(variant);
     if (javaCompile == null) {

@@ -30,6 +30,7 @@ import com.android.builder.model.ApiVersion;
 import com.android.builder.model.BuildType;
 import com.android.builder.model.SourceProvider;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -127,7 +128,7 @@ class AndroidUtilsTest {
     SourceProvider javaSource = mock(SourceProvider.class);
     File file = mock(File.class);
     when(file.exists()).thenReturn(true);
-    when(file.getAbsolutePath()).thenReturn("src/main/java/manifest.xml");
+    when(file.toPath()).thenReturn(Path.of("src/main/java/manifest.xml"));
     when(javaSource.getManifestFile()).thenReturn(file);
     when(baseVariant.getSourceSets()).thenReturn(List.of(javaSource));
 
