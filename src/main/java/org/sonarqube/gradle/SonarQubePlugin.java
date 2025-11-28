@@ -108,6 +108,8 @@ public class SonarQubePlugin implements Plugin<Project> {
    */
   private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
     List<File> resolverFiles = new ArrayList<>();
+    var androidTasks = getAndroidTasks(topLevelProject);
+
     topLevelProject.getAllprojects().forEach(target ->
       target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
         Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
@@ -137,6 +139,9 @@ public class SonarQubePlugin implements Plugin<Project> {
         localSonarResolver.mkdirs();
         task.setOutputDirectory(localSonarResolver);
         resolverFiles.add(task.getOutputFile());
+        // Android uses JetifyTransform to translate and ensure compatibility for specific deprecated libraries.
+        // Therefore, we must wait for this transform to complete before collecting the classpath.
+        task.mustRunAfter(androidTasks);
       })
     );
     return resolverFiles;
