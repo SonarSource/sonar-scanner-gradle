@@ -216,8 +216,10 @@ public class SonarUtils {
   static List<File> filterOutSubFiles(Iterable<File> files) {
     return StreamSupport.stream(files.spliterator(), false)
       .filter(file -> {
+        var current = file.toPath().toAbsolutePath();
         for (File other : files) {
-          if (!file.equals(other) && file.getAbsolutePath().startsWith(other.getAbsolutePath())) {
+          var otherPath = other.toPath().toAbsolutePath();
+          if (!current.equals(otherPath) && current.startsWith(otherPath)) {
             return false;
           }
         }
