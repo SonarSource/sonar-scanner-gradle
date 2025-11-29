@@ -146,6 +146,9 @@ val bomArtifact = artifacts.add("archives", bomFile.get().asFile) {
 publishing {
     publications {
         create<MavenPublication>("pluginMaven") {
+            artifact(bomArtifact)
+        }
+        withType<MavenPublication>().configureEach {
             pom {
                 name.set(projectTitle)
                 description.set(project.description)
@@ -171,7 +174,6 @@ publishing {
                     }
                 }
             }
-            artifact(bomArtifact)
         }
     }
 }
