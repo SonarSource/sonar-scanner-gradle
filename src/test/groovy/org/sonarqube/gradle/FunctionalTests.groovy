@@ -658,13 +658,13 @@ class FunctionalTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(projectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonar', '-Dsonar.host.url=http://localhost:0')
+                .withArguments('sonar', '-Dsonar.host.url=http://localhost:0', '--info')
                 .withPluginClasspath()
                 .buildAndFail()
 
         then:
         assert result.task(":sonar").getOutcome() == TaskOutcome.FAILED
-        assert result.getOutput().contains("Failed to query server version: Invalid URL port: \"0\"")
+        assert result.getOutput().contains("Failed to query server version: Call to URL [http://localhost:0/api/v2/analysis/version] failed")
     }
 
     def "keep default sonar.region"() {
