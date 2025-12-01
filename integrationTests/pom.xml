@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.sonarsource.scanner.gradle</groupId>
   <artifactId>it-gradle</artifactId>
-  <version>7.1-SNAPSHOT</version>
+  <version>7.1.1-SNAPSHOT</version>
   <name>Gradle Plugin :: Integration Tests</name>
   <inceptionYear>2015</inceptionYear>
 
