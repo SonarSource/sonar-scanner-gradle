@@ -4,8 +4,6 @@
 env:
   ### Shared variables
   ARTIFACTORY_URL: VAULT[development/kv/data/repox data.url]
-  ARTIFACTORY_PRIVATE_USERNAME: vault-${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader
-  ARTIFACTORY_PRIVATE_PASSWORD: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader access_token]
   ARTIFACTORY_DEPLOY_USERNAME: vault-${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-qa-deployer
   ARTIFACTORY_DEPLOY_PASSWORD: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-qa-deployer access_token]
   ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader access_token]
@@ -168,8 +166,6 @@ validate_external_contributor_build_task:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
   script: |
     unset ARTIFACTORY_URL && \
-    unset ARTIFACTORY_PRIVATE_USERNAME && \
-    unset ARTIFACTORY_PRIVATE_PASSWORD && \
     unset ARTIFACTORY_ACCESS_TOKEN && \
     ./gradlew --refresh-dependencies clean assemble testClasses
   on_failure:
