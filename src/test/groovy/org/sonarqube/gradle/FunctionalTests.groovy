@@ -658,13 +658,13 @@ class FunctionalTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(projectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonar', '-Dsonar.host.url=http://localhost:0')
+                .withArguments('sonar', '-Dsonar.host.url=http://localhost:0', '--info')
                 .withPluginClasspath()
                 .buildAndFail()
 
         then:
         assert result.task(":sonar").getOutcome() == TaskOutcome.FAILED
-        assert result.getOutput().contains("Failed to query server version: Invalid URL port: \"0\"")
+        assert result.getOutput().contains("Failed to query server version: Call to URL [http://localhost:0/api/v2/analysis/version] failed")
     }
 
     def "keep default sonar.region"() {
@@ -803,9 +803,11 @@ class FunctionalTests extends Specification {
 
 
     when:
+    // Note that this test uses the current Gradle version instead of the one defined in gradleVersion.
+    // This is because there seem to be a bug with older versions of Gradle TestKit when dealing with multi-module projects.
+    // Older versions need to be tested using end-to-end tests (in the `integrationTests` module).
     def result = GradleRunner.create()
       .withProjectDir(multiModuleProjectDir.toFile())
-      .withGradleVersion(gradleVersion)
       .forwardOutput()
       .withArguments('clean', 'build', 'sonar',  '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
       .withPluginClasspath()
