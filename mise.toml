@@ -1,4 +1,4 @@
 [tools]
-java = "17"
+java = ["17", "11"]
 maven = "3.9"
 gradle = "9"
