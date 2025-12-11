@@ -147,14 +147,13 @@ public class SonarQubePlugin implements Plugin<Project> {
     return resolverFiles;
   }
 
-  @Nullable
   private static FileCollection querySourceSet(Project project, String sourceSetName) {
     var sourceSets = SonarUtils.getSourceSets(project);
     if (sourceSets == null) {
-      return null;
+      return project.files();
     }
     var set = sourceSets.findByName(sourceSetName);
-    return set == null ? null : set.getCompileClasspath();
+    return set == null ? project.files() : set.getCompileClasspath();
   }
 
   private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
