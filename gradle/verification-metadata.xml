@@ -3094,6 +3094,11 @@
             <sha256 value="4756ba7cfd52ae0e4ce3d38240926dcfb93fac11f73c541a3ab230915a6dd262" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-download-cache" version="4.0.1.1587">
+         <artifact name="sonar-scanner-download-cache-4.0.1.1587.jar">
+            <sha256 value="d64cc2cee46c48fffac89ee68a9be3c93484b00b01c721d11cb709aa59a01c01" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="3.1.1.261">
          <artifact name="sonar-scanner-java-library-3.1.1.261.jar">
             <sha256 value="adb2ffbf5542b2560e23193675fecc88d90995fcc533b0851cada3e226bd68e6" origin="Verified"/>
@@ -3142,6 +3147,11 @@
             <sha256 value="4b07568c0c61dbb06a3d9e9bf2b758bb14ee16fa62e6fbbdcd10deb1b8960f51" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="4.0.1.1587">
+         <artifact name="sonar-scanner-java-library-4.0.1.1587.jar">
+            <sha256 value="218b882440a8d0dd11687aadbcf4f9b0a327d12111832000a395a2f496e8e90a" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="3.1.1.261">
          <artifact name="sonar-scanner-java-library-batch-interface-3.1.1.261.jar">
             <sha256 value="2b3b32eb982ba0ea72aded29338fe182132fb4c657256ebba23a526aa40b58ff" origin="Verified"/>
@@ -3188,6 +3198,11 @@
          </artifact>
          <artifact name="sonar-scanner-java-library-batch-interface-4.0.0.1577.pom">
             <sha256 value="09dedb480da05310223717ca746dedf9aeaf37610182fe4382b8015e81bdbe3f" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="4.0.1.1587">
+         <artifact name="sonar-scanner-java-library-batch-interface-4.0.1.1587.jar">
+            <sha256 value="096426e2198cdad65014390ba4ec7b9c802e7d2747108da6905bc857637dd3a4" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-parent" version="3.1.1.261">
