@@ -72,7 +72,7 @@ if (project.version.toString().endsWith("-SNAPSHOT") && buildNumber != null) {
 }
 
 val junitVersion = "5.10.2"
-val sonarScannerJavaLibraryVersion = "4.0.0.1577"
+val sonarScannerJavaLibraryVersion = "4.0.1.1587"
 val archunitVersion = "1.2.1"
 
 dependencies {
