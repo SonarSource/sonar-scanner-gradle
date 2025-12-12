@@ -20,6 +20,7 @@
 package org.sonarqube.gradle;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,7 +45,8 @@ public class JavaCompilerUtils {
     if (javaCompileTaskCollection.isEmpty()) {
       return Optional.empty();
     }
-    List<JavaCompilerConfiguration> jdkHomesUsedByCompileTasks = javaCompileTaskCollection.stream()
+    List<JavaCompile> javaCompileTaskList = new ArrayList<>(javaCompileTaskCollection);
+    List<JavaCompilerConfiguration> jdkHomesUsedByCompileTasks = javaCompileTaskList.stream()
       .map(JavaCompilerUtils::extractConfiguration)
       .collect(Collectors.toList());
 
