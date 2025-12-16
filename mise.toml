@@ -2,3 +2,7 @@
 java = ["17", "11"]
 maven = "3.9"
 gradle = "9"
+
+[alias.java.versions]
+"11" = "corretto-11"
+"17" = "corretto-17"
