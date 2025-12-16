@@ -850,5 +850,85 @@ class FunctionalTests extends Specification {
   private Path projectDir(String project) {
     return Path.of(this.class.getResource("/projects/"+project).toURI());
   }
+
+  // some analyzer accept and expand path containing wildcards, they must not be removed
+  def "path containing wildcards are not removed"() {
+    given:
+    var sonarSourcesProperty = "property 'sonar.sources', '$mainSources'"
+    var sonarTestsProperty = "property 'sonar.tests', '$testSource'"
+    var sonarJavaJdkHomeProperty = "property 'sonar.java.jdkHome', '$javaJdkHome'"
+    var sonarJavaBinariesProperty = "property 'sonar.java.binaries', '$javaBinaries'"
+    var sonarJavaLibrariesProperty = "property 'sonar.java.libraries', '$javaLibraries'"
+    var sonarJavaTestBinariesProperty = "property 'sonar.java.test.binaries', '$javaTestBinaries'"
+    var sonarJavaTestLibrariesProperty = "property 'sonar.java.test.libraries', '$javaTestLibraries'"
+    var sonarLibrariesProperty = "property 'sonar.libraries', '$libraries'"
+    var sonarGroovyBinariesProperty = "property 'sonar.groovy.binaries', '$groovyBinaries'"
+    var sonarKotlinGradleProjectRootProperty = "property 'sonar.kotlin.gradle.project.root', '$kotlinGradleProjectRoot'"
+    var sonarJunitReportPathsProperty = "property 'sonar.junit.reportPaths', '$junitReportPaths'"
+    var sonarJunitReportsPathProperty = "property 'sonar.junit.reportsPath', '$junitReportsPath'"
+    var sonarSurefireReportsPathProperty = "property 'sonar.surefire.reportsPath', '$surefireReportsPath'"
+    var sonarJacocoXmlReportPathsProperty = "property 'sonar.coverage.jacoco.xmlReportPaths', '$jacocoXmlReportPaths'"
+    var sonarAndroidLintReportPathsProperty = "property 'sonar.android.lint.reportPaths', '$androidLintReportPaths'"
+    settingsFile << "rootProject.name = 'java-task-toolchains'"
+    buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+        
+        sonar {
+            properties {
+                $sonarSourcesProperty
+                $sonarTestsProperty
+                $sonarJavaJdkHomeProperty
+                $sonarJavaBinariesProperty
+                $sonarJavaLibrariesProperty
+                $sonarJavaTestBinariesProperty
+                $sonarJavaTestLibrariesProperty
+                $sonarLibrariesProperty
+                $sonarGroovyBinariesProperty
+                $sonarKotlinGradleProjectRootProperty
+                $sonarJunitReportPathsProperty
+                $sonarJunitReportsPathProperty
+                $sonarSurefireReportsPathProperty
+                $sonarJacocoXmlReportPathsProperty
+                $sonarAndroidLintReportPathsProperty
+            }
+        }
+        """
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .forwardOutput()
+      .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), "--stacktrace")
+      .withPluginClasspath()
+      .build()
+
+    then:
+    result.task(":sonar").outcome == SUCCESS
+
+    def props = new Properties()
+    props.load(outFile.newDataInputStream())
+    props."sonar.java.jdkHome" == javaJdkHome
+    props."sonar.java.binaries" == javaBinaries
+    props."sonar.java.libraries" == javaLibraries
+    props."sonar.java.test.binaries" == javaTestBinaries
+    props."sonar.java.test.libraries" == javaTestLibraries
+    props."sonar.libraries" == libraries
+    props."sonar.groovy.binaries" == groovyBinaries
+    props."sonar.kotlin.gradle.project.root" == kotlinGradleProjectRoot
+    props."sonar.junit.reportPaths" == junitReportPaths
+    props."sonar.junit.reportsPath" == junitReportsPath
+    props."sonar.surefire.reportsPath" == surefireReportsPath
+    props."sonar.coverage.jacoco.xmlReportPaths" == jacocoXmlReportPaths
+    props."sonar.android.lint.reportPaths" == androidLintReportPaths
+
+    where:
+    // first test path that do not exists
+    // second test wildcard values and invalid values
+    mainSources | testSource  | javaJdkHome | javaBinaries | javaLibraries | javaTestBinaries | javaTestLibraries | libraries | groovyBinaries | kotlinGradleProjectRoot | junitReportPaths | junitReportsPath | surefireReportsPath | jacocoXmlReportPaths | androidLintReportPaths
+    "source/*/" | "**/tests"  | "jdkH?/"    | "*?.*.*/"    | "*?.*.*/"     | "*?.*.*/,**/?"   | "*?.*.*/"         | "*?.*.*/" | "*?.*.*/"      | "*?.*.*/"               | "*?.*.*/"        | "*?.*.*/"        | "*?.*.*/"           | "*?.*.*/"            | "*?.*.*/"
+  }
 }
 
