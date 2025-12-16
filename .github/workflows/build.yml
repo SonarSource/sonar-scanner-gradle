@@ -74,6 +74,8 @@ jobs:
           ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
 
   qa:
+    needs:
+      - build
     strategy:
       fail-fast: false
       matrix:
@@ -95,12 +97,12 @@ jobs:
     name: >
       QA Gradle ${{ matrix.item.gradle_version }}
       ${{ matrix.item.android_gradle_version && format(' Android {0}', matrix.item.android_gradle_version) || '' }}
-    needs:
-      - build
     runs-on: 'github-ubuntu-latest-m'
     permissions:
       id-token: write
       contents: write
+    env:
+      BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: ./.github/actions/qa
@@ -108,35 +110,16 @@ jobs:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
 
-  qa-windows:
-    name: QA Windows
-    needs:
-      # Note, that QA Windows runs the binary built on Linux, so we do not need to depend on build-windows.
-      - build
-    runs-on: 'github-windows-latest-m'
-    permissions:
-      id-token: write
-      contents: write
-    steps:
-      # Windows needs this.
-      - name: Configure Long Paths
-        run: git config --global core.longpaths true
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: ./.github/actions/qa
-        with:
-          gradle-version: *latest-gradle-version
-          android-gradle-version: 'NOT_AVAILABLE'
-
   qa-java11:
     name: QA Java 11
-    # needs:
-    #   - build
+    needs:
+      - build
     runs-on: 'github-ubuntu-latest-m'
     permissions:
       id-token: write
       contents: write
     env:
-      BUILD_NUMBER: 7496
+      BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
@@ -148,3 +131,24 @@ jobs:
         with:
           gradle-version: "7.5.1"
           android-gradle-version: "7.1.0"
+
+  qa-windows:
+    name: QA Windows
+    needs:
+      # Note, that QA Windows runs the binary built on Linux, so we do not need to depend on build-windows.
+      - build
+    runs-on: 'github-windows-latest-m'
+    permissions:
+      id-token: write
+      contents: write
+    env:
+      BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
+    steps:
+      # Windows needs this.
+      - name: Configure Long Paths
+        run: git config --global core.longpaths true
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: ./.github/actions/qa
+        with:
+          gradle-version: *latest-gradle-version
+          android-gradle-version: 'NOT_AVAILABLE'
