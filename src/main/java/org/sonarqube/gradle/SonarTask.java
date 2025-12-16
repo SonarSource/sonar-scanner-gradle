@@ -399,7 +399,7 @@ public class SonarTask extends ConventionTask {
   private static String filterPaths(String value, Predicate<Path> filter) {
     // some of the analyzer accept and expand path containing wildcards
     // we must not filter them
-    Set<String> wildcardsToken = Set.of("*", "?");
+    Set<String> wildcardsToken = Set.of("*", "?", "${");
     return Arrays.stream(value.split(","))
       .filter(p -> wildcardsToken.stream().anyMatch(p::contains) || filter.test(Path.of(p)))
       .collect(Collectors.joining(","));
