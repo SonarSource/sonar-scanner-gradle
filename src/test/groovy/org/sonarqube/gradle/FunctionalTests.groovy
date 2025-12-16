@@ -880,7 +880,6 @@ class FunctionalTests extends Specification {
             properties {
                 $sonarSourcesProperty
                 $sonarTestsProperty
-                $sonarWorkingDirectoryProperty
                 $sonarJavaJdkHomeProperty
                 $sonarJavaBinariesProperty
                 $sonarJavaLibrariesProperty
