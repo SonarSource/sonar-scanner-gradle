@@ -856,7 +856,6 @@ class FunctionalTests extends Specification {
     given:
     var sonarSourcesProperty = "property 'sonar.sources', '$mainSources'"
     var sonarTestsProperty = "property 'sonar.tests', '$testSource'"
-    var sonarWorkingDirectoryProperty = "property 'sonar.working.directory', '$workingDirectory'"
     var sonarJavaJdkHomeProperty = "property 'sonar.java.jdkHome', '$javaJdkHome'"
     var sonarJavaBinariesProperty = "property 'sonar.java.binaries', '$javaBinaries'"
     var sonarJavaLibrariesProperty = "property 'sonar.java.libraries', '$javaLibraries'"
@@ -912,7 +911,6 @@ class FunctionalTests extends Specification {
 
     def props = new Properties()
     props.load(outFile.newDataInputStream())
-    //props."sonar.working.directory" == workingDirectory
     props."sonar.java.jdkHome" == javaJdkHome
     props."sonar.java.binaries" == javaBinaries
     props."sonar.java.libraries" == javaLibraries
@@ -930,8 +928,8 @@ class FunctionalTests extends Specification {
     where:
     // first test path that do not exists
     // second test wildcard values and invalid values
-    mainSources | testSource | workingDirectory | javaJdkHome | javaBinaries | javaLibraries | javaTestBinaries | javaTestLibraries | libraries | groovyBinaries | kotlinGradleProjectRoot | junitReportPaths | junitReportsPath | surefireReportsPath | jacocoXmlReportPaths | androidLintReportPaths
-    "source/*/" | "**/tests" | "*?.*.*/"        | "jdkH?/"    | "*?.*.*/"    | "*?.*.*/"     | "*?.*.*/,**/?"   | "*?.*.*/"         | "*?.*.*/" | "*?.*.*/"      | "*?.*.*/"               | "*?.*.*/"        | "*?.*.*/"        | "*?.*.*/"           | "*?.*.*/"            | "*?.*.*/"
+    mainSources | testSource  | javaJdkHome | javaBinaries | javaLibraries | javaTestBinaries | javaTestLibraries | libraries | groovyBinaries | kotlinGradleProjectRoot | junitReportPaths | junitReportsPath | surefireReportsPath | jacocoXmlReportPaths | androidLintReportPaths
+    "source/*/" | "**/tests"  | "jdkH?/"    | "*?.*.*/"    | "*?.*.*/"     | "*?.*.*/,**/?"   | "*?.*.*/"         | "*?.*.*/" | "*?.*.*/"      | "*?.*.*/"               | "*?.*.*/"        | "*?.*.*/"        | "*?.*.*/"           | "*?.*.*/"            | "*?.*.*/"
   }
 }
 
