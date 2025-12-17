@@ -14,7 +14,7 @@
   <inceptionYear>2015</inceptionYear>
 
   <properties>
-    <!-- Default version when running ITs on dev machines. Value overridden in .cirrus.yml -->
+    <!-- Default version when running ITs on dev machines. Value overridden in CI -->
     <gradle.version>7.5.1</gradle.version>
     <androidGradle.version>7.1.0</androidGradle.version>
     <jdk.min.version>11</jdk.min.version>

@@ -116,9 +116,9 @@ public abstract class AbstractGradleIT {
     replacementMap.put("${parentBaseDir}", Paths.get(absoluteProjectBaseDir).getParent().toString());
     replacementMap.put("${currentWorkingDir}", System.getProperty("user.dir"));
     replacementMap.put("${HOME}", System.getProperty("user.home"));
-    String cirrusWorkingDir = System.getenv("CIRRUS_WORKING_DIR");
-    if (cirrusWorkingDir != null) {
-      replacementMap.put("${HOME}", cirrusWorkingDir.replace('/', File.separatorChar));
+    String gitHubWorkingDir = System.getenv("GITHUB_WORKING_DIR");
+    if (gitHubWorkingDir != null) {
+      replacementMap.put("${HOME}", gitHubWorkingDir.replace('/', File.separatorChar));
     }
     Pattern dependenciesInGradleCache = Pattern.compile("(?<=,|^)[^,]+/.gradle/caches/modules-\\d+/files-[0-9.]+/" +
       "(?<groupId>[^/,]++)/(?<artifactId>[^/,]++)/(?<version>[^/,]++)/[0-9a-f]{40}/\\k<artifactId>-\\k<version>\\.jar(?=,|$)");
