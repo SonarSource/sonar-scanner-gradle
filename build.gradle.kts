@@ -29,7 +29,7 @@ val githubUrl = "https://github.com/SonarSource/sonar-scanner-gradle"
 // Only configure "signing" plugin if build's artifacts need to be published to artifactory or Gradle Plugin Portal
 // and the branch is "master" or "branch-*" (we don't want to sign PRs)
 val doArtifactsRequireSignature: () -> Boolean = {
-    val branch = System.getenv()["CIRRUS_BRANCH"] ?: ""
+    val branch = System.getenv()["GITHUB_REF_NAME"] ?: ""
 
     val isSafeBranchOrSimulation = (branch == "master")
         || branch.matches("branch-[\\d.]+".toRegex())

@@ -1,0 +1,173 @@
+---
+name: sonar-release
+# This workflow is triggered when publishing a new github release or you can trigger it manually to simulate a release
+# yamllint disable-line rule:truthy
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+jobs:
+  prepare_release:
+    name: Prepare Release
+    runs-on: github-ubuntu-latest-s
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+        BUILD_NUMBER: ${{ steps.from_tag.outputs.BUILD_NUMBER || steps.from_master.outputs.BUILD_NUMBER }}
+    steps:
+      - name: Get build number from release tag
+        if: github.event_name == 'release'
+        id: from_tag
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          CI_BUILD_NUMBER="${VERSION##*.}"
+          echo "BUILD_NUMBER=${CI_BUILD_NUMBER}"
+          echo "BUILD_NUMBER=${CI_BUILD_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Set build number for manual trigger
+        if: github.event_name == 'workflow_dispatch'
+        id: from_master
+        run: |
+          VERSION=$(./script/latest-repox-master-builds-plugin-version.sh)
+          CI_BUILD_NUMBER="${VERSION##*.}"
+          echo "BUILD_NUMBER=${CI_BUILD_NUMBER}"
+          echo "BUILD_NUMBER=${CI_BUILD_NUMBER}" >> $GITHUB_OUTPUT
+
+  # Manual triggers will simulate the release without actually performing it
+  simulate-release:
+    name: Simulate Release
+    if: github.event_name == 'workflow_dispatch'
+    needs:
+      - prepare_release
+    runs-on: github-ubuntu-latest-s
+    permissions:
+      id-token: write
+      contents: write
+    env:
+      BUILD_NUMBER: ${{ needs.prepare_release.outputs.BUILD_NUMBER }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup Mise
+        uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+        with:
+          version: 2025.7.12
+
+      - name: Cache Gradle packages
+        uses: SonarSource/gh-action_cache
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrappers
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Simulate release
+        run: |
+          ./.github/scripts/set-version-from-build-number.sh
+          echo "Simulating release for build number ${BUILD_NUMBER}"
+          
+          ./gradlew \
+            --info \
+            --stacktrace \
+            --console plain \
+            -DbuildNumber="${BUILD_NUMBER}" \
+            -Dsimulate-publish=true \
+            downloadMavenArtifactsAndPublishToGradlePluginPortal
+          
+          ./gradlew \
+          --info \
+          --stacktrace \
+          --console plain \
+          -DbuildNumber="${BUILD_NUMBER}" \
+          -Dvalidate-publish=true \
+          downloadMavenArtifactsAndPublishToGradlePluginPortal
+
+  release:
+    name: Release
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: github-ubuntu-latest-s
+    needs:
+      - prepare_release
+    permissions:
+      id-token: write
+      contents: write
+    env:
+      BUILD_NUMBER: ${{ needs.prepare_release.outputs.BUILD_NUMBER }}
+      REPO_NAME: ${{ github.repository.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup Mise (and JFrog CLI)
+        uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+        with:
+          version: 2025.7.12
+          tool_versions: |
+            jfrog-cli 2.77.0
+
+      - name: Cache Gradle packages
+        uses: SonarSource/gh-action_cache
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrappers
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Get secrets from Vault
+        id: vault-secrets
+        uses: SonarSource/vault-action-wrapper@v3
+        with:
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
+            development/kv/data/repox url | ARTIFACTORY_URL;
+            development/kv/data/sign data.key | SIGNING_KEY;
+            development/kv/data/sign data.passphrase | SIGNING_PASSWORD;
+            development/kv/data/sign data.key_id | SIGNING_KEY_ID;
+            development/kv/data/gradle/publish data.key | PUBLISH_KEY;
+            development/kv/data/gradle/publish data.secret | PUBLISH_SECRET;
+
+      - name: Set version from build number
+        run: |
+          ./.github/scripts/set-version-from-build-number.sh
+          echo "Release for build number ${BUILD_NUMBER}"
+          cat gradle.properties
+
+      - name: Release
+        env:
+          ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
+          ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+        run: |
+          jfrog rt bpr \
+            --url "${ARTIFACTORY_URL}" \
+            --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
+            --status released \
+            "${REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-releases
+
+      - name: Publish to Gradle Plugin Portal
+        env:
+          ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
+          ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+          SIGNING_KEY: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_PASSWORD }}
+          SIGNING_KEY_ID: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY_ID }}
+          PUBLISH_KEY: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_KEY }}
+          PUBLISH_SECRET: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_SECRET }}
+        run: |
+          ./gradlew \
+            --info \
+            --stacktrace \
+            --console plain \
+            -DbuildNumber="${BUILD_NUMBER}" \
+            -PsigningKey="${SIGNING_KEY}" \
+            -PsigningPassword="${SIGNING_PASSWORD}" \
+            -PsigningKeyId="${SIGNING_KEY_ID}" \
+            -Pgradle.publish.key="${PUBLISH_KEY}" \
+            -Pgradle.publish.secret="${PUBLISH_SECRET}" \
+            downloadMavenArtifactsAndPublishToGradlePluginPortal
