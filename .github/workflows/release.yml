@@ -59,7 +59,7 @@ jobs:
           version: 2025.7.12
 
       - name: Cache Gradle packages
-        uses: SonarSource/gh-action_cache
+        uses: SonarSource/gh-action_cache@v1
         with:
           path: |
             ~/.gradle/caches
@@ -112,7 +112,7 @@ jobs:
             jfrog-cli 2.77.0
 
       - name: Cache Gradle packages
-        uses: SonarSource/gh-action_cache
+        uses: SonarSource/gh-action_cache@v1
         with:
           path: |
             ~/.gradle/caches
