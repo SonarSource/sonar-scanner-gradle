@@ -69,7 +69,7 @@ jobs:
 
       - name: Simulate release
         run: |
-          ./.github/scripts/set-version-from-build-number.sh
+          source ./.github/scripts/set-version-from-build-number.sh
           echo "Simulating release for build number ${BUILD_NUMBER}"
           
           ./gradlew \
@@ -135,7 +135,7 @@ jobs:
 
       - name: Set version from build number
         run: |
-          ./.github/scripts/set-version-from-build-number.sh
+          source ./.github/scripts/set-version-from-build-number.sh
           echo "Release for build number ${BUILD_NUMBER}"
           cat gradle.properties
 

@@ -37,7 +37,7 @@ runs:
         ANDROID_GRADLE_VERSION: ${{ inputs.android-gradle-version }}
       shell: bash
       run: |
-        ./.github/scripts/set-version-from-build-number.sh
+        source ./.github/scripts/set-version-from-build-number.sh
         mvn -f property-dump-plugin/pom.xml --batch-mode install
         cd integrationTests
         mvn --errors --batch-mode --no-transfer-progress org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion="${NEW_VERSION}" -DgenerateBackupPoms=false
