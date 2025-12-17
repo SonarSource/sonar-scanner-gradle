@@ -111,13 +111,24 @@ jobs:
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
 
   qa-java11:
-    name: QA Java 11
     needs:
       - build
     runs-on: 'github-ubuntu-latest-m'
     permissions:
       id-token: write
       contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        item:
+          - gradle_version: "7.5.1"
+            android_gradle_version: "7.1.0"
+          - gradle_version: "6.8.3"
+            android_gradle_version: "4.2.0"
+          - gradle_version: "5.6.4"
+            android_gradle_version: "3.5.4"
+    name: >
+      QA Java 11 ${{ matrix.item.gradle_version }} Android ${{ matrix.item.android_gradle_version }}
     env:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
@@ -129,8 +140,8 @@ jobs:
         run: mise use java@11
       - uses: ./.github/actions/qa
         with:
-          gradle-version: "7.5.1"
-          android-gradle-version: "7.1.0"
+          gradle-version: ${{ matrix.item.gradle_version }}
+          android-gradle-version: ${{ matrix.item.android_gradle_version }}
 
   qa-windows:
     name: QA Windows
