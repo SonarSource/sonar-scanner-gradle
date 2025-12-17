@@ -74,6 +74,7 @@ jobs:
           ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
 
   qa:
+    if: ${{ needs.build.outputs.deployed }}
     needs:
       - build
     strategy:
@@ -111,6 +112,7 @@ jobs:
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
 
   qa-java11:
+    if: ${{ needs.build.outputs.deployed }}
     needs:
       - build
     runs-on: 'github-ubuntu-latest-m'
@@ -145,6 +147,7 @@ jobs:
 
   qa-windows:
     name: QA Windows
+    if: ${{ needs.build.outputs.deployed }}
     needs:
       # Note, that QA Windows runs the binary built on Linux, so we do not need to depend on build-windows.
       - build
@@ -163,3 +166,23 @@ jobs:
         with:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
+
+  promote:
+    needs:
+      - build
+      - build-windows
+      - qa
+      - qa-java11
+      - qa-windows
+    if: ${{ needs.build.outputs.deployed }}
+    runs-on: github-ubuntu-latest-s  # Public repo uses custom GitHub-hosted runners
+    name: Promote
+    permissions:
+      id-token: write
+      contents: write
+    env:
+      BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
+    steps:
+      - uses: SonarSource/ci-github-actions/promote@v1
+        with:
+          promote-pull-request: true
