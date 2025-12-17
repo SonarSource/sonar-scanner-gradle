@@ -27,9 +27,9 @@ jobs:
       deployed: ${{ steps.build-gradle.outputs.deployed }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
-          version: 2025.7.12
+          version: 2025.12.10
       - name: Install Property Dump Plugin
         run: |
           mvn -f property-dump-plugin/pom.xml -B install
@@ -66,9 +66,9 @@ jobs:
       - name: Configure Long Paths
         run: git config --global core.longpaths true
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
-          version: 2025.7.12
+          version: 2025.12.10
       - name: Build
         run: |
           ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
@@ -135,9 +135,9 @@ jobs:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
-          version: 2025.7.12
+          version: 2025.12.10
       - name: Set Java 11
         run: mise use java@11
       - uses: ./.github/actions/qa

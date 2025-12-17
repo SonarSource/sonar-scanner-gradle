@@ -10,9 +10,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+    - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
       with:
-        version: 2025.7.12
+        version: 2025.12.10
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3
