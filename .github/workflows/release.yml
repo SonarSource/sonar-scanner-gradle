@@ -32,7 +32,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         id: from_master
         run: |
-          VERSION=$(./script/latest-repox-master-builds-plugin-version.sh)
+          VERSION=$(./.github/scripts/latest-repox-master-builds-plugin-version.sh)
           CI_BUILD_NUMBER="${VERSION##*.}"
           echo "BUILD_NUMBER=${CI_BUILD_NUMBER}"
           echo "BUILD_NUMBER=${CI_BUILD_NUMBER}" >> $GITHUB_OUTPUT
