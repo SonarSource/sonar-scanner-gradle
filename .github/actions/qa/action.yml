@@ -10,9 +10,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+    - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
       with:
-        version: 2025.7.12
+        version: 2025.12.10
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3
@@ -37,8 +37,7 @@ runs:
         ANDROID_GRADLE_VERSION: ${{ inputs.android-gradle-version }}
       shell: bash
       run: |
-        # TODO: Move the script or create a step when we remove Cirrus.
-        source "./cirrus/set-version-from-build-number.sh"
+        source ./.github/scripts/set-version-from-build-number.sh
         mvn -f property-dump-plugin/pom.xml --batch-mode install
         cd integrationTests
         mvn --errors --batch-mode --no-transfer-progress org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion="${NEW_VERSION}" -DgenerateBackupPoms=false

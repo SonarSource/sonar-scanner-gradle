@@ -27,9 +27,9 @@ jobs:
       deployed: ${{ steps.build-gradle.outputs.deployed }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
-          version: 2025.7.12
+          version: 2025.12.10
       - name: Install Property Dump Plugin
         run: |
           mvn -f property-dump-plugin/pom.xml -B install
@@ -66,14 +66,15 @@ jobs:
       - name: Configure Long Paths
         run: git config --global core.longpaths true
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
-          version: 2025.7.12
+          version: 2025.12.10
       - name: Build
         run: |
           ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
 
   qa:
+    if: ${{ needs.build.outputs.deployed }}
     needs:
       - build
     strategy:
@@ -111,6 +112,7 @@ jobs:
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
 
   qa-java11:
+    if: ${{ needs.build.outputs.deployed }}
     needs:
       - build
     runs-on: 'github-ubuntu-latest-m'
@@ -133,9 +135,9 @@ jobs:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
-          version: 2025.7.12
+          version: 2025.12.10
       - name: Set Java 11
         run: mise use java@11
       - uses: ./.github/actions/qa
@@ -145,6 +147,7 @@ jobs:
 
   qa-windows:
     name: QA Windows
+    if: ${{ needs.build.outputs.deployed }}
     needs:
       # Note, that QA Windows runs the binary built on Linux, so we do not need to depend on build-windows.
       - build
@@ -163,3 +166,23 @@ jobs:
         with:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
+
+  promote:
+    needs:
+      - build
+      - build-windows
+      - qa
+      - qa-java11
+      - qa-windows
+    if: ${{ needs.build.outputs.deployed }}
+    runs-on: github-ubuntu-latest-s  # Public repo uses custom GitHub-hosted runners
+    name: Promote
+    permissions:
+      id-token: write
+      contents: write
+    env:
+      BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
+    steps:
+      - uses: SonarSource/ci-github-actions/promote@v1
+        with:
+          promote-pull-request: true
