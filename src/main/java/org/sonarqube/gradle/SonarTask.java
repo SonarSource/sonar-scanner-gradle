@@ -25,17 +25,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -76,7 +69,6 @@ import static org.sonarqube.gradle.properties.SonarProperty.VERBOSE;
 public class SonarTask extends ConventionTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
-  private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
 
   private LogOutput logOutput = new DefaultLogOutput();
 
@@ -161,7 +153,6 @@ public class SonarTask extends ConventionTask {
     }
 
     mapProperties = resolveJavaLibraries(mapProperties);
-    filterPathProperties(mapProperties);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -313,117 +304,6 @@ public class SonarTask extends ConventionTask {
       resolveSonarJavaTestLibraries(resolvedProperties, testLibraries, result);
     } catch (IOException e) {
       LOGGER.warn("Could not read from resolver file {}", resolverFile, e);
-    }
-  }
-
-  /**
-   * Post-process the sonar properties to prepare them for analysis.
-   * You should not filter properties inside Provider, as you do not have any guarantees about when they will be executed.
-   * It could be that files haven't been generated yet.
-   * <p>
-   * Remove file and directories that are not present on the file system.
-   */
-  static void filterPathProperties(Map<String, String> properties) {
-    Set<String> sourcePropNames = Set.of(
-      SonarProperty.PROJECT_SOURCE_DIRS,
-      SonarProperty.PROJECT_TEST_DIRS,
-      SonarProperty.JAVA_BINARIES,
-      SonarProperty.JAVA_LIBRARIES,
-      SonarProperty.JAVA_TEST_BINARIES,
-      SonarProperty.JAVA_TEST_LIBRARIES,
-      SonarProperty.LIBRARIES,
-      SonarProperty.GROOVY_BINARIES,
-      SonarProperty.BINARIES);
-
-    List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
-
-
-    // filter non-existing paths and remove empty source properties
-    for (PropertyInfo prop : sourcesProperties) {
-      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists);
-        // empty assignments for `sonar.sources` and `sonar.tests` are required,
-        // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
-        // This can eventually lead to a double indexing issue in the scanner-engine.
-        if (filtered.isEmpty() && !SonarProperty.PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
-          && !SonarProperty.PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
-          return null;
-        }
-
-        return filtered;
-      });
-    }
-
-
-    Set<String> junitReportNames = Set.of(
-      SonarProperty.JUNIT_REPORT_PATHS,
-      SonarProperty.SUREFIRE_REPORTS_PATH,
-      SonarProperty.JUNIT_REPORTS_PATH
-    );
-    List<PropertyInfo> junitReportProperties = parsePropertiesWithNames(properties, junitReportNames);
-
-    // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
-    for (PropertyInfo prop : junitReportProperties) {
-      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, SonarTask::containJunitReport);
-        return filtered.isEmpty() ? null : filtered;
-      });
-    }
-
-    // remove xml report if directory do not exist
-    List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
-    for (PropertyInfo prop : xmlReportProperties) {
-      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists);
-        return filtered.isEmpty() ? null : filtered;
-      });
-    }
-  }
-
-  private static List<PropertyInfo> parsePropertiesWithNames(Map<String, String> properties, Set<String> sonarNames) {
-    List<PropertyInfo> parsedProperties = new ArrayList<>();
-    for (String propName : properties.keySet()) {
-      var parsed = SonarProperty.parse(propName);
-      parsed
-        .filter(p -> sonarNames.contains(p.getProperty()))
-        .ifPresent(property -> parsedProperties.add(new PropertyInfo(property, propName)));
-    }
-    return parsedProperties;
-  }
-
-  /**
-   * @param value  a comma-delimited list of paths
-   * @param filter predicated to filter the paths
-   * @return filtered comma-delimited list of paths
-   */
-  private static String filterPaths(String value, Predicate<Path> filter) {
-    // some of the analyzer accept and expand path containing wildcards
-    // we must not filter them
-    Set<String> wildcardsToken = Set.of("*", "?", "${");
-    return Arrays.stream(value.split(","))
-      .filter(p -> wildcardsToken.stream().anyMatch(p::contains) || filter.test(Path.of(p)))
-      .collect(Collectors.joining(","));
-  }
-
-  /**
-   * A simple data holder class that associates a {@link SonarProperty} with its full property name.
-   */
-  private static class PropertyInfo {
-    final SonarProperty property;
-    final String fullName;
-
-    public PropertyInfo(SonarProperty property, String fullName) {
-      this.property = property;
-      this.fullName = fullName;
-    }
-  }
-
-  private static boolean containJunitReport(Path p) {
-    var children = p.toFile().list();
-    if (children != null) {
-      return Arrays.stream(children).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches());
-    } else {
-      return false;
     }
   }
 
