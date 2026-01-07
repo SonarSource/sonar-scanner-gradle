@@ -71,6 +71,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.computeReportPaths;
+import static org.sonarqube.gradle.SonarUtils.exists;
 import static org.sonarqube.gradle.SonarUtils.findProjectBaseDir;
 import static org.sonarqube.gradle.SonarUtils.getSourceSets;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
@@ -476,8 +477,10 @@ public class SonarPropertyComputer {
   }
 
   private static @Nullable Collection<File> getJavaSourceFiles(SourceSet sourceSet) {
-    List<File> sourceDirectories = new ArrayList<>(sourceSet.getAllJava().getSrcDirs());
-
+    List<File> sourceDirectories = sourceSet.getAllJava().getSrcDirs()
+            .stream()
+            .filter(File::exists)
+            .collect(Collectors.toList());
     return nonEmptyOrNull(sourceDirectories);
   }
 
@@ -562,15 +565,19 @@ public class SonarPropertyComputer {
       .collect(Collectors.toList());
 
     var settingsFile = Path.of(project.getProjectDir().getAbsolutePath(), "settings.gradle.kts").toFile();
-    buildScripts.add(settingsFile);
-    SonarUtils.appendSourcesProp(properties, buildScripts, false);
+    if (settingsFile.exists()) {
+      buildScripts.add(settingsFile);
+    }
+    if (!buildScripts.isEmpty()) {
+      SonarUtils.appendSourcesProp(properties, buildScripts, false);
+    }
   }
 
   private static void addGithubFolder(Project project, Map<String, Object> properties) {
     File githubFolder = project.getProjectDir().toPath().resolve(".github").toFile();
-    // Note that we don't check that .github exists or is a directory, because this is executed in configuration phase
-    // and the folder could be created later. The task removes non-existing paths later.
-    SonarUtils.appendSourcesProp(properties, List.of(githubFolder), false);
+    if (githubFolder.exists() && githubFolder.isDirectory()) {
+      SonarUtils.appendSourcesProp(properties, List.of(githubFolder), false);
+    }
   }
 
   private String computeProjectKey() {

@@ -183,7 +183,7 @@ class SonarQubePluginTest extends Specification {
     def properties = parentSonarTask().properties.get()
 
     then:
-    relativize(parentSonarTask().project, "sonar.sources") == ".github\nsettings.gradle.kts"
+    properties["sonar.sources"] == ""
     properties["sonar.projectName"] == "parent"
     properties["sonar.projectDescription"] == "description"
     properties["sonar.projectVersion"] == "1.3"
@@ -319,7 +319,7 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    relativize(project, "sonar.sources") == ".github\nsettings.gradle.kts\nsrc"
+    properties["sonar.sources"] == new File(project.projectDir, "src") as String
     properties["sonar.tests"] == new File(project.projectDir, "test") as String
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.java.test.binaries"].contains(new File(project.buildDir, "test-out") as String)
@@ -377,12 +377,7 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    relativize(project, "sonar.sources") == ".github\nsettings.gradle.kts\nsrc"
-    def expectedGroovyTestDirs = [
-      new File(project.projectDir, "src/test/java") as String,
-      new File(project.projectDir, "test") as String,
-    ] as Set
-    (properties["sonar.tests"].split(",") as Set) == expectedGroovyTestDirs
+    properties["sonar.sources"] == new File(project.projectDir, "src") as String
     properties["sonar.java.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.groovy.binaries"].contains(new File(project.buildDir, "out") as String)
     properties["sonar.java.test.binaries"].contains(new File(project.buildDir, "test-out") as String)
@@ -479,30 +474,28 @@ class SonarQubePluginTest extends Specification {
     !properties.containsKey("sonar.groovy.jacoco.reportPath")
   }
 
-  def "includes default java directories even when empty"() {
+  def "only adds existing directories"() {
     parentProject.pluginManager.apply(JavaPlugin)
 
     when:
     def properties = parentSonarTask().properties.get()
 
     then:
-    relativize(parentSonarTask().project, "sonar.sources") == ".github\nsettings.gradle.kts\nsrc/main/java"
-    properties["sonar.tests"] == new File(parentProject.projectDir, "src/test/java") as String
-    properties["sonar.surefire.reportsPath"] == new File(parentProject.buildDir, "test-results/test") as String
-    properties["sonar.junit.reportsPath"] == new File(parentProject.buildDir, "test-results/test") as String
+    properties["sonar.tests"].isEmpty()
+    !properties.containsKey("sonar.surefire.reportsPath")
+    !properties.containsKey("sonar.junit.reportsPath")
   }
 
-  def "prefills sonar source and test directories for java subprojects"() {
+  def "adds empty 'sonar.sources' property if no sources exist (because Sonar Runner 2.0 always expects this property to be set)"() {
     childProject2.pluginManager.apply(JavaPlugin)
 
     when:
     def properties = parentSonarTask().properties.get()
 
     then:
-    relativize(parentSonarTask().project, "sonar.sources") == ".github\nsettings.gradle.kts"
+    properties["sonar.sources"] == ""
     properties[":parent:child.sonar.sources"] == ""
-    properties[":parent:child2.sonar.sources"] == new File(childProject2.projectDir, "src/main/java") as String
-    properties[":parent:child2.sonar.tests"] == new File(childProject2.projectDir, "src/test/java") as String
+    properties[":parent:child2.sonar.sources"] == ""
     properties[":parent:child.:parent:child:leaf.sonar.sources"] == ""
   }
 
@@ -758,8 +751,6 @@ class SonarQubePluginTest extends Specification {
 
     then:
     relativize(project, "sonar.sources") == """
-      .github
-      settings.gradle.kts
       src/jsMain/kotlin/Sample.js
       src/jvmMain/java/me/user/application/Sample.java
       src/jvmMain/kotlin/me.user.application/Sample.kt
@@ -792,8 +783,6 @@ class SonarQubePluginTest extends Specification {
 
     then:
     relativize(project, "sonar.sources") == """
-      .github
-      settings.gradle.kts
       src/jsMain/kotlin/Sample.js
       src/jvmMain/java/me/user/application/Sample.java
       src/jvmMain/kotlin/me.user.application/Sample.kt
@@ -918,15 +907,13 @@ class SonarQubePluginTest extends Specification {
 
     then:
     relativize(parent, "sonar.sources") == """
-      .github
       build.gradle.kts
       module1/build.gradle.kts
       module2/build.gradle.kts
       settings.gradle.kts
-      src/main/java
       """.stripIndent().trim()
 
-    relativize(parent, "sonar.tests") == "src/test/java"
+    relativize(parent, "sonar.tests") == ""
     relativize(parent, ":module1.sonar.sources") == ""
     relativize(parent, ":module2.sonar.sources") == ""
   }
@@ -958,12 +945,10 @@ class SonarQubePluginTest extends Specification {
 
     then:
     mainSources == """
-      .github
       build.gradle.kts
-      settings.gradle.kts
       src/main/java
       """.stripIndent().trim()
-    testSources == "src/test/java"
+    testSources == ""
   }
 
   def "scan all detects scripts only within non skipped submodules"() {
@@ -1013,7 +998,6 @@ class SonarQubePluginTest extends Specification {
 
     then:
     mainSources == """
-      .github
       .hidden/.hidden-file.txt
       .hidden/file.txt
       .hidden/folder/.hidden-nested-file.txt
@@ -1026,13 +1010,11 @@ class SonarQubePluginTest extends Specification {
       module1/scriptM1.sh
       module1/src/main/resources/applicationM1.properties
       settings.gradle.kts
-      src/main/java
       """.stripIndent().trim()
 
     testSources == """
       .hidden/folder/test-config.config
       module1/src/main/resources/applicationM1-test.properties
-      src/test/java
       """.stripIndent().trim()
 
     module1Sources == "module1/src/main/java"
@@ -1087,7 +1069,6 @@ class SonarQubePluginTest extends Specification {
 
     then:
     mainSources == """
-      .github
       .hidden/.hidden-file.txt
       .hidden/file.txt
       .hidden/folder/.hidden-nested-file.txt
@@ -1105,13 +1086,11 @@ class SonarQubePluginTest extends Specification {
       module2/submodule/build.gradle.kts
       module2/submodule/scriptM2S.sh
       settings.gradle.kts
-      src/main/java
       """.stripIndent().trim()
 
     testSources == """
       .hidden/folder/test-config.config
       module1/src/main/resources/applicationM1-test.properties
-      src/test/java
       """.stripIndent().trim()
     module1Sources == "module1/src/main/java"
     module2Sources == "module2/src/main/java"
@@ -1132,7 +1111,7 @@ class SonarQubePluginTest extends Specification {
     def properties = project.tasks.sonar.properties.get()
 
     then:
-    relativize(project, "sonar.sources") == ".github\nsettings.gradle.kts\nsrc"
+    properties["sonar.sources"] == (new File(project.projectDir, "src") as String) + "," + (new File(project.projectDir, ".github") as String)
   }
 
   def ".github folder is not added if the user overrides sonar.sources"() {
