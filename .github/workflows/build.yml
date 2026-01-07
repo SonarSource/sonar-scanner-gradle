@@ -166,6 +166,7 @@ jobs:
         with:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
+          java-version: '21'
 
   promote:
     needs:
