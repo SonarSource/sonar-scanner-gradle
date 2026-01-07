@@ -6,6 +6,8 @@ inputs:
     required: true
   android-gradle-version:
     required: true
+  java-version:
+    required: false
 
 runs:
   using: "composite"
@@ -13,6 +15,10 @@ runs:
     - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
       with:
         version: 2025.12.10
+    - name: Set Java Version
+      if: ${{ inputs.java-version != '' }}
+      shell: bash
+      run: mise use java@${{ inputs.java-version }}
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3

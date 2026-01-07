@@ -106,10 +106,14 @@ jobs:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
+        with:
+          version: 2025.12.10
       - uses: ./.github/actions/qa
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
+          java-version: '21'
 
   qa-java11:
     if: ${{ needs.build.outputs.deployed }}
@@ -135,15 +139,11 @@ jobs:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
-        with:
-          version: 2025.12.10
-      - name: Set Java 11
-        run: mise use java@11
       - uses: ./.github/actions/qa
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version }}
+          java-version: '11'
 
   qa-windows:
     name: QA Windows
