@@ -52,6 +52,7 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.slf4j.LoggerFactory;
 import org.sonarqube.gradle.properties.SonarProperty;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
@@ -77,6 +78,7 @@ public class SonarTask extends ConventionTask {
 
   private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
   private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
+  private static final org.slf4j.Logger log = LoggerFactory.getLogger(SonarTask.class);
 
   private LogOutput logOutput = new DefaultLogOutput();
 
@@ -400,9 +402,13 @@ public class SonarTask extends ConventionTask {
     // some of the analyzer accept and expand path containing wildcards
     // we must not filter them
     Set<String> wildcardsToken = Set.of("*", "?", "${");
-    return Arrays.stream(value.split(","))
+    var result = Arrays.stream(value.split(","))
       .filter(p -> wildcardsToken.stream().anyMatch(p::contains) || filter.test(Path.of(p)))
       .collect(Collectors.joining(","));
+    if (!result.equals(value)) {
+      LOGGER.warn("Not filtering paths from '{}' to '{}'", value, result);
+    }
+    return value;
   }
 
   /**
