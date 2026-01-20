@@ -684,7 +684,7 @@ class FunctionalTests extends Specification {
           .withEnvironment(Map.of())
           .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
-          .build();
+          .build()
 
         then:
         def props = new Properties()
@@ -710,7 +710,7 @@ class FunctionalTests extends Specification {
           .withEnvironment(Map.of())
           .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '-Dsonar.region=us')
           .withPluginClasspath()
-          .build();
+          .build()
 
         then:
         def props = new Properties()
@@ -737,7 +737,7 @@ class FunctionalTests extends Specification {
           .withEnvironment(Map.of())
           .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '-Dsonar.region=invalid')
           .withPluginClasspath()
-          .buildAndFail();
+          .buildAndFail()
 
         then:
         assert result.task(":sonar").getOutcome() == TaskOutcome.FAILED
@@ -798,7 +798,7 @@ class FunctionalTests extends Specification {
     def multiModuleProjectDir = projectDir("gradle-multimodule")
     // skip jacoco execution due to lock conflict on "build/jacoco/test.exec" when executing on windows
     if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
-      configureJacocoGradleTestkitPlugin(multiModuleProjectDir);
+      configureJacocoGradleTestkitPlugin(multiModuleProjectDir)
     }
 
 
@@ -848,7 +848,7 @@ class FunctionalTests extends Specification {
    }
 
   private Path projectDir(String project) {
-    return Path.of(this.class.getResource("/projects/"+project).toURI());
+    return Path.of(this.class.getResource("/projects/"+project).toURI())
   }
 
   // some analyzer accept and expand path containing wildcards, they must not be removed
