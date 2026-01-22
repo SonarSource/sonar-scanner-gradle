@@ -21,6 +21,7 @@ package org.sonarqube.gradle
 
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -33,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class FunctionalTests extends Specification {
-    String gradleVersion = "7.6.2"
+    String gradleVersion = "8.14.2"
 
     @TempDir
     Path projectDir
@@ -144,8 +145,9 @@ class FunctionalTests extends Specification {
         new File(props."sonar.java.jdkHome").exists()
         "${props."sonar.java.jdkHome"}${File.separator}bin${File.separator}java -version".execute()
           .err.text.contains("\"1.8.")
-        props."sonar.java.source" == '8'
-        props."sonar.java.target" == '8'
+        def expectedJavaVersion = isGradle7OrLower(gradleVersion) ? '8' : '1.8'
+        props."sonar.java.source" == expectedJavaVersion
+        props."sonar.java.target" == expectedJavaVersion
     }
 
     def "set java release version"() {
@@ -204,8 +206,9 @@ class FunctionalTests extends Specification {
         then:
         def props = new Properties()
         props.load(outFile.newDataInputStream())
-        props."sonar.java.source" == '10'
-        props."sonar.java.target" == '10'
+        def expectedJavaVersion = isGradle7OrLower(gradleVersion) ? '10' : '21'
+        props."sonar.java.source" == expectedJavaVersion
+        props."sonar.java.target" == expectedJavaVersion
     }
 
     def "warn if using deprecated sonarqube task"() {
@@ -263,8 +266,10 @@ class FunctionalTests extends Specification {
         new File(props."sonar.java.jdkHome").exists()
         "${props."sonar.java.jdkHome"}${File.separator}bin${File.separator}java -version".execute()
           .err.text.contains("\"1.8.")
-        props."sonar.java.source" == '8'
-        props."sonar.java.target" == '8'
+
+        def expectedJavaVersion = isGradle7OrLower(gradleVersion) ? '8' : '1.8'
+        props."sonar.java.source" == expectedJavaVersion
+        props."sonar.java.target" == expectedJavaVersion
     }
 
     def "log execution context"() {
@@ -929,6 +934,11 @@ class FunctionalTests extends Specification {
     // second test wildcard values and invalid values
     mainSources | testSource  | javaJdkHome | javaBinaries | javaLibraries | javaTestBinaries | javaTestLibraries | libraries | groovyBinaries | kotlinGradleProjectRoot | junitReportPaths | junitReportsPath | surefireReportsPath | jacocoXmlReportPaths | androidLintReportPaths
     "source/*/" | "**/tests"  | "jdkH?/"    | "*?.*.*/"    | "*?.*.*/"     | "*?.*.*/,**/?"   | "*?.*.*/"         | "*?.*.*/" | "*?.*.*/"      | "*?.*.*/"               | "*?.*.*/"        | "*?.*.*/"        | "*?.*.*/"           | "*?.*.*/"            | "*?.*.*/"
+  }
+
+  def boolean isGradle7OrLower(String version) {
+      def major = version.substring(0, version.indexOf('.')).toInteger()
+      return major <= 7
   }
 }
 
