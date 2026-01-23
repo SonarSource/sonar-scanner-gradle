@@ -2319,6 +2319,14 @@
             <sha256 value="6d535f94efb663bdb682c9f27a50335394688009642ba7a9677504bc1be4129b" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.jacoco" name="org.jacoco.agent" version="0.8.14">
+         <artifact name="org.jacoco.agent-0.8.14-runtime.jar">
+            <sha256 value="3fb76eea65f81bd9415202bab34b6571728841dff1ab8e6bbe81adc2e299face" origin="Verified"/>
+         </artifact>
+         <artifact name="org.jacoco.agent-0.8.14.jar">
+            <sha256 value="20be9853385bdfc65a5929643412d09243d14514304b89ba23a265158cc8792b" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.jacoco" name="org.jacoco.agent" version="0.8.7">
          <artifact name="org.jacoco.agent-0.8.7-runtime.jar">
             <sha256 value="d931125fc3f9c8e5ee36b94269134a03b3b88f94d93e775f2d57ac608b766145" origin="Verified"/>
@@ -2328,6 +2336,11 @@
          </artifact>
          <artifact name="org.jacoco.agent-0.8.7.pom">
             <sha256 value="e7b2cdd2df3a6bc239a231b1775be09e50b748e9c388579fb3ea4f990357722f" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="org.jacoco" name="org.jacoco.ant" version="0.8.14">
+         <artifact name="org.jacoco.ant-0.8.14.jar">
+            <sha256 value="9fff68954d5de3aad2bf838eaf886ed67d2c22a2d6c6f095548bade8c45caeae" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jacoco" name="org.jacoco.ant" version="0.8.7">
@@ -2343,12 +2356,22 @@
             <sha256 value="83408107930e1683a9b7647da7ab75eb83d80fa470c1641b79b5aecbbef1b783" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.jacoco" name="org.jacoco.core" version="0.8.14">
+         <artifact name="org.jacoco.core-0.8.14.jar">
+            <sha256 value="28abbf0eea5a08e4f24097f2fbac663ca17c341c25c3a04d90d6cd325943c995" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.jacoco" name="org.jacoco.core" version="0.8.7">
          <artifact name="org.jacoco.core-0.8.7.jar">
             <sha256 value="ad7739b5fb5969aa1a8aead3d74ed54dc82ed012f1f10f336bd1b96e71c1a13c" origin="Verified"/>
          </artifact>
          <artifact name="org.jacoco.core-0.8.7.pom">
             <sha256 value="6832c751d8cd6071af646fde63baa13bdd183693fd60f7757f68536e5f867825" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="org.jacoco" name="org.jacoco.report" version="0.8.14">
+         <artifact name="org.jacoco.report-0.8.14.jar">
+            <sha256 value="a3e2026060ab8b8d5c650706406234bb4c033dfd5376afeb8b1666e8ed27c453" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jacoco" name="org.jacoco.report" version="0.8.7">
@@ -2925,6 +2948,11 @@
             <sha256 value="dfb12a1b224bf01be1fd604020466f894241bcb645dcce395edd8cd6f8a50df4" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.ow2.asm" name="asm" version="9.9">
+         <artifact name="asm-9.9.jar">
+            <sha256 value="03d99a74ad1ee5c71334ef67437f4ef4fe3488caa7c96d8645abc73c8e2017d4" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.ow2.asm" name="asm-analysis" version="9.1">
          <artifact name="asm-analysis-9.1.jar">
             <sha256 value="81a88041b1b8beda5a8a99646098046c48709538270c49def68abff25ac3be34" origin="Verified"/>
@@ -2957,6 +2985,11 @@
             <sha256 value="02824e839f2a2f0e72959fdd30b4897240f05afc43de42d7ba0b18437601c070" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.ow2.asm" name="asm-commons" version="9.9">
+         <artifact name="asm-commons-9.9.jar">
+            <sha256 value="db2f6f26150bbe7c126606b4a1151836bcc22a1e05a423b3585698bece995ff8" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.ow2.asm" name="asm-tree" version="9.1">
          <artifact name="asm-tree-9.1.jar">
             <sha256 value="fd00afa49e9595d7646205b09cecb4a776a8ff0ba06f2d59b8f7bf9c704b4a73" origin="Verified"/>
@@ -2971,6 +3004,11 @@
          </artifact>
          <artifact name="asm-tree-9.2.pom">
             <sha256 value="f61f3ebea5520ddf19f452b03c426c7231bdd8a81d7ac28765cb5271225ac378" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="org.ow2.asm" name="asm-tree" version="9.9">
+         <artifact name="asm-tree-9.9.jar">
+            <sha256 value="42178f3775c9c63f9e5e1446747d29b4eca4d91bd6e75e5c43cfa372a47d38c6" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.ow2.asm" name="asm-util" version="9.2">
