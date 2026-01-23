@@ -107,6 +107,36 @@ jobs:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
 
+  qa-java17:
+    if: ${{ needs.build.outputs.deployed }}
+    needs:
+      - build
+    runs-on: 'github-ubuntu-latest-m'
+    permissions:
+      id-token: write
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        item:
+          - gradle_version: "8.0"
+          - gradle_version: "7.6.4"
+    name: >
+      QA J17 - Gradle ${{ matrix.item.gradle_version }} Android ${{ matrix.item.android_gradle_version }}
+    env:
+      BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
+        with:
+          version: 2025.12.10
+      - name: Set Java 17
+        run: mise use java@17
+      - uses: ./.github/actions/qa
+        with:
+          gradle-version: ${{ matrix.item.gradle_version }}
+          android-gradle-version: ${{ matrix.item.android_gradle_version }}
+
   qa-java11:
     if: ${{ needs.build.outputs.deployed }}
     needs:
