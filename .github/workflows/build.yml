@@ -120,9 +120,9 @@ jobs:
       matrix:
         item:
           - gradle_version: "8.0"
-            android-gradle-version: 'NOT_AVAILABLE'
+            android-gradle-version: "8.0.2"
           - gradle_version: "7.6"
-            android-gradle-version: 'NOT_AVAILABLE'
+            android-gradle-version: "7.4.2"
     name: >
       QA J17 - Gradle ${{ matrix.item.gradle_version }} Android ${{ matrix.item.android_gradle_version }}
     env:
