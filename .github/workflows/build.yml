@@ -120,7 +120,7 @@ jobs:
       matrix:
         item:
           - gradle_version: "8.0"
-          - gradle_version: "7.6.4"
+          - gradle_version: "7.6"
     name: >
       QA J17 - Gradle ${{ matrix.item.gradle_version }} Android ${{ matrix.item.android_gradle_version }}
     env:
