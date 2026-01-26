@@ -198,10 +198,8 @@ jobs:
   promote:
     needs:
       - build
-      - build-windows
       - qa
       - qa-java11
-      - qa-windows
     if: ${{ needs.build.outputs.deployed }}
     runs-on: github-ubuntu-latest-s  # Public repo uses custom GitHub-hosted runners
     name: Promote
