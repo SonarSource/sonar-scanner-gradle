@@ -51,7 +51,7 @@ public class BootstrapTest extends AbstractGradleIT {
       ORCHESTRATOR = null;
     } else {
       ORCHESTRATOR = OrchestratorRule.builderEnv()
-        .setSonarVersion("LATEST_RELEASE")
+        .setSonarVersion(System.getProperty("sonar.runtimeVersion", "LATEST_RELEASE"))
         .useDefaultAdminCredentialsForBuilds(true)
         .addPlugin(MavenLocation.of("org.sonarsource.java", "sonar-java-plugin", "LATEST_RELEASE"))
         .addPlugin(FileLocation.of("../property-dump-plugin/target/property-dump-plugin-1-SNAPSHOT.jar"))
