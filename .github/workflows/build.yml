@@ -110,6 +110,7 @@ jobs:
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
+          sonar-runtime-version: "LATEST_RELEASE[25.11]"
 
   qa-java11:
     if: ${{ needs.build.outputs.deployed }}
@@ -166,6 +167,7 @@ jobs:
         with:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
+          sonar-runtime-version: "LATEST_RELEASE[25.11]"
 
   promote:
     needs:
