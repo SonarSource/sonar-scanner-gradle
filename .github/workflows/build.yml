@@ -14,6 +14,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  USE_DEVELOCITY: true
+  DEVELOCITY_URL: https://develocity-public.sonar.build/
+
 jobs:
   build:
     # Build takes over 30 minutes on "s" and around 5 minutes on "m".
@@ -51,6 +55,8 @@ jobs:
           artifactory-reader-role: private-reader    # Override default public-reader
           artifactory-deployer-role: qa-deployer     # Override default public-deployer
           gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   build-windows:
     name: Build Windows
