@@ -8,6 +8,12 @@ inputs:
     required: true
   sonar-runtime-version:
     required: false
+  develocity-url:
+    required: false
+    default: ""
+  use-develocity:
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -22,14 +28,18 @@ runs:
         secrets: |
           development/github/token/licenses-ro token | GITHUB_TOKEN;
           development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
+          ${{ inputs.use-develocity == 'true' && 'development/kv/data/develocity token | DEVELOCITY_TOKEN;' || '' }}
     - name: Configure Maven
       uses: SonarSource/ci-github-actions/config-maven@v1
+      env:
+        GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
+        USE_DEVELOCITY: ${{ inputs.use-develocity }}
+        DEVELOCITY_URL: ${{ inputs.develocity-url }}
       with:
         artifactory-reader-role: private-reader
         working-directory: integrationTests
-      env:
-        GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
-        ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+        use-develocity: ${{ env.USE_DEVELOCITY }}
+        develocity-url: ${{ env.DEVELOCITY_URL }}
     - name: Run QA
       env:
         GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}

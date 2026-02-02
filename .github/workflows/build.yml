@@ -14,6 +14,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  USE_DEVELOCITY: true
+  DEVELOCITY_URL: https://develocity-public.sonar.build/
+
 jobs:
   build:
     # Build takes over 30 minutes on "s" and around 5 minutes on "m".
@@ -51,6 +55,8 @@ jobs:
           artifactory-reader-role: private-reader    # Override default public-reader
           artifactory-deployer-role: qa-deployer     # Override default public-deployer
           gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   build-windows:
     name: Build Windows
@@ -69,7 +75,15 @@ jobs:
       - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
           version: 2025.12.10
+      - name: Get Vault secrets
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@v3
+        with:
+          secrets: |
+            development/kv/data/develocity token | DEVELOCITY_TOKEN;
       - name: Build
+        env:
+          DEVELOCITY_ACCESS_KEY: develocity-public.sonar.build=${{ fromJSON(steps.secrets.outputs.vault).DEVELOCITY_TOKEN }}
         run: |
           ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
 
@@ -112,6 +126,8 @@ jobs:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
           sonar-runtime-version: "LATEST_RELEASE[25.11]"
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   qa-java11:
     if: ${{ needs.build.outputs.deployed }}
@@ -146,6 +162,8 @@ jobs:
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version }}
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   qa-windows:
     name: QA Windows
@@ -169,6 +187,8 @@ jobs:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
           sonar-runtime-version: "LATEST_RELEASE[25.11]"
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   promote:
     needs:
