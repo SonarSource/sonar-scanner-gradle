@@ -113,17 +113,10 @@ jobs:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Configure Gradle
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
-        with:
-          develocity-injection-enabled: false
-          cache-disabled: true
-          develocity-plugin-version: '4.0'
-          validate-wrappers: false
       - uses: ./.github/actions/qa
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
-          android-gradle-version: ${{ matrix.item.android-gradle-version || 'NOT_AVAILABLE' }}
+          android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
           sonar-runtime-version: "LATEST_RELEASE[25.11]"
 
   qa-java11:
@@ -155,13 +148,6 @@ jobs:
           version: 2025.12.10
       - name: Set Java 11
         run: mise use java@11
-      - name: Configure Gradle
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
-        with:
-          develocity-injection-enabled: false
-          cache-disabled: true
-          develocity-plugin-version: '4.0'
-          validate-wrappers: false
       - uses: ./.github/actions/qa
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
@@ -184,13 +170,6 @@ jobs:
       - name: Configure Long Paths
         run: git config --global core.longpaths true
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Configure Gradle
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
-        with:
-          develocity-injection-enabled: false
-          cache-disabled: true
-          develocity-plugin-version: '4.0'
-          validate-wrappers: false
       - uses: ./.github/actions/qa
         with:
           gradle-version: *latest-gradle-version
