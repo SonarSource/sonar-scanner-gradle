@@ -81,6 +81,7 @@ public class SonarTask extends ConventionTask {
   private LogOutput logOutput = new DefaultLogOutput();
 
   private Provider<Map<String, String>> properties;
+  private Provider<Set<String>> userDefinedKeys;
   private Provider<Directory> buildSonar;
 
   private static class DefaultLogOutput implements LogOutput {
@@ -161,7 +162,8 @@ public class SonarTask extends ConventionTask {
     }
 
     mapProperties = resolveJavaLibraries(mapProperties);
-    filterPathProperties(mapProperties);
+    Set<String> userDefined = userDefinedKeys.get();
+    filterPathProperties(mapProperties, userDefined);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -322,8 +324,11 @@ public class SonarTask extends ConventionTask {
    * It could be that files haven't been generated yet.
    * <p>
    * Remove file and directories that are not present on the file system.
+   * <p>
+   * Note: User-defined properties (those explicitly set via sonarqube {} DSL or system/env properties) are not filtered,
+   * as users may legitimately reference paths that don't exist yet or use wildcards/placeholders.
    */
-  static void filterPathProperties(Map<String, String> properties) {
+  static void filterPathProperties(Map<String, String> properties, Set<String> userDefinedKeys) {
     Set<String> sourcePropNames = Set.of(
       SonarProperty.PROJECT_SOURCE_DIRS,
       SonarProperty.PROJECT_TEST_DIRS,
@@ -338,8 +343,13 @@ public class SonarTask extends ConventionTask {
     List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
 
 
-    // filter non-existing paths and remove empty source properties
+    // Filter non-existing paths and remove empty source properties.
     for (PropertyInfo prop : sourcesProperties) {
+      // Skip filtering for user-defined properties.
+      if (userDefinedKeys.contains(prop.fullName)) {
+        continue;
+      }
+
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, Files::exists);
         // empty assignments for `sonar.sources` and `sonar.tests` are required,
@@ -550,8 +560,9 @@ public class SonarTask extends ConventionTask {
   }
 
 
-  void setProperties(Provider<Map<String, String>> properties) {
+  void setProperties(Provider<Map<String, String>> properties, Provider<Set<String>> userDefinedKeys) {
     this.properties = properties;
+    this.userDefinedKeys = userDefinedKeys;
   }
 
   /**

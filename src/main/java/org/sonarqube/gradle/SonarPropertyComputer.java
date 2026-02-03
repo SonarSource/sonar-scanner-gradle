@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -92,10 +93,11 @@ public class SonarPropertyComputer {
     this.targetProject = targetProject;
   }
 
-  public Map<String, Object> computeSonarProperties() {
+  ComputedProperties computeSonarProperties() {
     Map<String, Object> properties = new LinkedHashMap<>();
+    Set<String> userDefinedKeys = new LinkedHashSet<>();
 
-    computeSonarProperties(targetProject, properties);
+    computeSonarProperties(targetProject, properties, userDefinedKeys);
 
     properties.computeIfPresent(SonarProperty.PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(properties));
 
@@ -103,18 +105,18 @@ public class SonarPropertyComputer {
       properties.put(SonarProperty.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getRootProject().getProjectDir().getAbsolutePath());
     }
 
-    return properties;
+    return new ComputedProperties(properties, userDefinedKeys);
   }
 
-  private void computeSonarProperties(Project project, Map<String, Object> properties) {
-    computeDefaultProperties(project, properties, "");
+  private void computeSonarProperties(Project project, Map<String, Object> properties, Set<String> userDefinedKeys) {
+    computeDefaultProperties(project, properties, "", userDefinedKeys);
 
     if (shouldApplyScanAll(project, properties)) {
       computeScanAllProperties(project, properties);
     }
   }
 
-  private void computeDefaultProperties(Project project, Map<String, Object> properties, String prefix) {
+  private void computeDefaultProperties(Project project, Map<String, Object> properties, String prefix, Set<String> userDefinedKeys) {
     if (SonarQubePlugin.isSkipped(project)) {
       return;
     }
@@ -131,7 +133,7 @@ public class SonarPropertyComputer {
       addKotlinBuildScriptsToSources(project, rawProperties);
     }
 
-    overrideWithUserDefinedProperties(project, rawProperties);
+    overrideWithUserDefinedProperties(project, rawProperties, userDefinedKeys);
 
     // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
     // This can eventually lead to a double indexing issue in the scanner-engine.
@@ -170,7 +172,7 @@ public class SonarPropertyComputer {
       String moduleId = childProject.getPath();
       moduleIds.add(moduleId);
       String modulePrefix = toPrefix + moduleId;
-      computeDefaultProperties(childProject, properties, modulePrefix);
+      computeDefaultProperties(childProject, properties, modulePrefix, userDefinedKeys);
     }
 
     properties.put(convertKey(SonarProperty.MODULES, prefix), String.join(",", moduleIds));
@@ -295,14 +297,21 @@ public class SonarPropertyComputer {
     properties.put(sourcePropertyToUpdate, SonarUtils.joinAsCsv(mergedSources));
   }
 
-  private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties) {
+  private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties, Set<String> userDefinedKeys) {
     ActionBroadcast<SonarProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
     if (actionBroadcast != null) {
+      Set<String> defaultProperties = Set.copyOf(rawProperties.keySet());
       evaluateSonarPropertiesBlocks(actionBroadcast, rawProperties);
+      rawProperties.keySet().stream().filter(p -> !defaultProperties.contains(p)).forEach(userDefinedKeys::add);
     }
     if (isRootProject(project)) {
-      rawProperties.putAll(getSonarEnvironmentVariables(project));
-      rawProperties.putAll(getSonarSystemProperties(project));
+      Map<String, String> envVars = getSonarEnvironmentVariables(project);
+      rawProperties.putAll(envVars);
+      userDefinedKeys.addAll(envVars.keySet());
+
+      Map<String, String> sysProps = getSonarSystemProperties(project);
+      rawProperties.putAll(sysProps);
+      userDefinedKeys.addAll(sysProps.keySet());
     }
   }
 

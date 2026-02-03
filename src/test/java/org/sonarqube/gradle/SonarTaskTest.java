@@ -24,8 +24,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -208,5 +210,55 @@ class SonarTaskTest {
     assertThat(result)
       .containsEntry("sonar.java.libraries", lib1.toAbsolutePath() + "," + lib2.toAbsolutePath())
       .containsEntry("sonar.java.test.libraries", testLib1.toAbsolutePath().toString());
+  }
+
+  @Test
+  void filterPathProperties_filters_non_existing_paths_for_gradle_computed_properties(@TempDir File tempDir) throws IOException {
+    Map<String, String> properties = new HashMap<>();
+    File existingFile = new File(tempDir, "existing.java");
+    existingFile.createNewFile();
+    File nonExistingFile = new File(tempDir, "non-existing.java");
+
+    properties.put("sonar.sources", existingFile.getAbsolutePath() + "," + nonExistingFile.getAbsolutePath());
+    Set<String> userDefinedKeys = new HashSet<>();
+
+    SonarTask.filterPathProperties(properties, userDefinedKeys);
+
+    assertThat(properties).containsEntry("sonar.sources", existingFile.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_does_not_filter_user_defined_properties(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+    File nonExistingFile = new File(tempDir, "non-existing.java");
+    String sourcePaths = nonExistingFile.getAbsolutePath() + ",src/**/*.java,${project.dir}/other";
+
+    properties.put("sonar.sources", sourcePaths);
+    Set<String> userDefinedKeys = new HashSet<>();
+    userDefinedKeys.add("sonar.sources");
+
+    SonarTask.filterPathProperties(properties, userDefinedKeys);
+
+    assertThat(properties).containsEntry("sonar.sources", sourcePaths);
+  }
+
+  @Test
+  void filterPathProperties_handles_mixed_properties(@TempDir File tempDir) throws IOException {
+    Map<String, String> properties = new HashMap<>();
+    File existingFile = new File(tempDir, "existing.java");
+    existingFile.createNewFile();
+    File nonExistingFile = new File(tempDir, "non-existing.java");
+
+    // Mix of auto-computed and user-defined properties
+    properties.put("sonar.sources", existingFile.getAbsolutePath() + "," + nonExistingFile.getAbsolutePath());
+    properties.put("sonar.tests", "/user/defined/path/that/does/not/exist");
+    Set<String> userDefinedKeys = new HashSet<>();
+    userDefinedKeys.add("sonar.tests");
+
+    SonarTask.filterPathProperties(properties, userDefinedKeys);
+
+    assertThat(properties)
+      .containsEntry("sonar.sources", existingFile.getAbsolutePath())
+      .containsEntry("sonar.tests", "/user/defined/path/that/does/not/exist");
   }
 }
