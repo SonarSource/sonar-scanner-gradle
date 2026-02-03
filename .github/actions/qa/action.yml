@@ -8,12 +8,6 @@ inputs:
     required: true
   sonar-runtime-version:
     required: false
-  use-develocity:
-    required: false
-    default: 'false'
-  develocity-url:
-    required: false
-    default: ''
 
 runs:
   using: "composite"
@@ -21,13 +15,6 @@ runs:
     - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
       with:
         version: 2025.12.10
-    - name: Configure Gradle
-      uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a24d4d50e1 # v4.4.4
-      with:
-        develocity-injection-enabled: false
-        cache-disabled: true
-        develocity-plugin-version: '4.0'
-        validate-wrappers: false
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3
