@@ -307,11 +307,8 @@ public class SonarPropertyComputer {
     }
 
     if (isRootProject(project)) {
-      Map<String, String> envVars = getSonarEnvironmentVariables(project);
-      userDefinedProperties.putAll(envVars);
-
-      Map<String, String> sysProps = getSonarSystemProperties(project);
-      userDefinedProperties.putAll(sysProps);
+      userDefinedProperties.putAll(getSonarEnvironmentVariables(project));
+      userDefinedProperties.putAll(getSonarSystemProperties(project));
     }
 
     return userDefinedProperties;
