@@ -23,17 +23,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Holds computed SonarQube properties along with a set of keys that users explicitly defined
- * (via sonarqube {} DSL, system properties, or environment variables).
+ * Holds computed Sonar properties along with the set of keys for properties that users explicitly defined (via the sonar {} DSL, system properties, or environment variables).
  * <p>
- * This distinction is important because user-defined properties should not be filtered for non-existing paths,
- * as users may legitimately reference paths that don't exist yet or use wildcards/placeholders.
+ * The distinction is important because user-defined properties should not be filtered for non-existing paths, as users may legitimately reference paths that don't exist yet or
+ * use wildcards/placeholders.
  */
-class ComputedProperties {
-  final Map<String, Object> properties;
-  final Set<String> userDefinedKeys;
+public class ComputedProperties {
+  public final Map<String, Object> properties;
+  public final Set<String> userDefinedKeys;
 
-  ComputedProperties(Map<String, Object> properties, Set<String> userDefinedKeys) {
+  public ComputedProperties(Map<String, Object> properties, Set<String> userDefinedKeys) {
     this.properties = properties;
     this.userDefinedKeys = userDefinedKeys;
   }

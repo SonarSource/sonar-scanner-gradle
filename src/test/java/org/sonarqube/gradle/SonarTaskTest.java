@@ -249,7 +249,6 @@ class SonarTaskTest {
     existingFile.createNewFile();
     File nonExistingFile = new File(tempDir, "non-existing.java");
 
-    // Mix of auto-computed and user-defined properties
     properties.put("sonar.sources", existingFile.getAbsolutePath() + "," + nonExistingFile.getAbsolutePath());
     properties.put("sonar.tests", "/user/defined/path/that/does/not/exist");
     Set<String> userDefinedKeys = new HashSet<>();

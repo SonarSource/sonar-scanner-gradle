@@ -162,8 +162,7 @@ public class SonarTask extends ConventionTask {
     }
 
     mapProperties = resolveJavaLibraries(mapProperties);
-    Set<String> userDefined = userDefinedKeys.get();
-    filterPathProperties(mapProperties, userDefined);
+    filterPathProperties(mapProperties, this.userDefinedKeys.get());
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -342,14 +341,8 @@ public class SonarTask extends ConventionTask {
 
     List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
 
-
     // Filter non-existing paths and remove empty source properties.
-    for (PropertyInfo prop : sourcesProperties) {
-      // Skip filtering for user-defined properties.
-      if (userDefinedKeys.contains(prop.fullName)) {
-        continue;
-      }
-
+    for (PropertyInfo prop : ignoreUserDefinedProperties(sourcesProperties, userDefinedKeys)) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, Files::exists);
         // empty assignments for `sonar.sources` and `sonar.tests` are required,
@@ -373,7 +366,7 @@ public class SonarTask extends ConventionTask {
     List<PropertyInfo> junitReportProperties = parsePropertiesWithNames(properties, junitReportNames);
 
     // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
-    for (PropertyInfo prop : junitReportProperties) {
+    for (PropertyInfo prop : ignoreUserDefinedProperties(junitReportProperties, userDefinedKeys)) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, SonarTask::containJunitReport);
         return filtered.isEmpty() ? null : filtered;
@@ -382,7 +375,7 @@ public class SonarTask extends ConventionTask {
 
     // remove xml report if directory do not exist
     List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
-    for (PropertyInfo prop : xmlReportProperties) {
+    for (PropertyInfo prop : ignoreUserDefinedProperties(xmlReportProperties, userDefinedKeys)) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, Files::exists);
         return filtered.isEmpty() ? null : filtered;
@@ -399,6 +392,12 @@ public class SonarTask extends ConventionTask {
         .ifPresent(property -> parsedProperties.add(new PropertyInfo(property, propName)));
     }
     return parsedProperties;
+  }
+
+  private static List<PropertyInfo> ignoreUserDefinedProperties(List<PropertyInfo> properties, Set<String> userDefinedKeys) {
+    return properties.stream()
+      .filter(p -> !userDefinedKeys.contains(p.fullName))
+      .collect(Collectors.toList());
   }
 
   /**
