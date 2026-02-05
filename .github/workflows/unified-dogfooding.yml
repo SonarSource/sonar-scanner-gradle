@@ -17,6 +17,9 @@ jobs:
       - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
           version: 2025.12.10
+      - name: Install Property Dump Plugin
+        run: |
+          mvn -f property-dump-plugin/pom.xml -B install
       - name: Configure Gradle
         uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
         with:
@@ -31,6 +34,7 @@ jobs:
           artifactory-reader-role: private-reader
           artifactory-deployer-role: qa-deployer
           deploy-pull-request: false
+          gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
       - name: Run IRIS Analysis
         uses: SonarSource/unified-dogfooding-actions/run-iris@v1
         with:
