@@ -40,7 +40,7 @@ jobs:
         with:
           primary_project_key: org.sonarsource.scanner.gradle:sonarqube-gradle-plugin
           primary_platform: "Next"
-          shadow1_project_key: "SonarSource_sonar-scanner-gradle"
+          shadow1_project_key: org.sonarsource.scanner.gradle:sonarqube-gradle-plugin
           shadow1_platform: "SQC-EU"
-          shadow2_project_key: "SonarSource_sonar-scanner-gradle"
+          shadow2_project_key: org.sonarsource.scanner.gradle:sonarqube-gradle-plugin
           shadow2_platform: "SQC-US"
