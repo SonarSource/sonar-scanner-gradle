@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -92,33 +93,34 @@ public class SonarPropertyComputer {
     this.targetProject = targetProject;
   }
 
-  public Map<String, Object> computeSonarProperties() {
-    Map<String, Object> properties = new LinkedHashMap<>();
+  public ComputedProperties computeSonarProperties() {
+    ComputedProperties computedProperties = new ComputedProperties(new LinkedHashMap<>(), new LinkedHashSet<>());
 
-    computeSonarProperties(targetProject, properties);
+    computeSonarProperties(targetProject, computedProperties);
 
-    properties.computeIfPresent(SonarProperty.PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(properties));
+    computedProperties.properties.computeIfPresent(SonarProperty.PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(computedProperties.properties));
 
     if (SonarQubePlugin.notSkipped(targetProject)) {
-      properties.put(SonarProperty.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getRootProject().getProjectDir().getAbsolutePath());
+      computedProperties.properties.put(SonarProperty.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getRootProject().getProjectDir().getAbsolutePath());
     }
 
-    return properties;
+    return computedProperties;
   }
 
-  private void computeSonarProperties(Project project, Map<String, Object> properties) {
-    computeDefaultProperties(project, properties, "");
+  private void computeSonarProperties(Project project, ComputedProperties computedProperties) {
+    computeDefaultProperties(project, computedProperties, "");
 
-    if (shouldApplyScanAll(project, properties)) {
-      computeScanAllProperties(project, properties);
+    if (shouldApplyScanAll(project, computedProperties.properties)) {
+      computeScanAllProperties(project, computedProperties.properties);
     }
   }
 
-  private void computeDefaultProperties(Project project, Map<String, Object> properties, String prefix) {
+  private void computeDefaultProperties(Project project, ComputedProperties computedProperties, String prefix) {
     if (SonarQubePlugin.isSkipped(project)) {
       return;
     }
     Map<String, Object> rawProperties = new LinkedHashMap<>();
+    Set<String> userDefinedKeys = new LinkedHashSet<>();
 
     addGradleDefaults(project, rawProperties);
 
@@ -131,7 +133,7 @@ public class SonarPropertyComputer {
       addKotlinBuildScriptsToSources(project, rawProperties);
     }
 
-    overrideWithUserDefinedProperties(project, rawProperties);
+    overrideWithUserDefinedProperties(project, rawProperties, userDefinedKeys);
 
     // These empty assignments are required because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
     // This can eventually lead to a double indexing issue in the scanner-engine.
@@ -141,11 +143,14 @@ public class SonarPropertyComputer {
     if (project.equals(targetProject)) {
       rawProperties.putIfAbsent(SonarProperty.PROJECT_KEY, computeProjectKey());
     } else {
-      String projectKey = (String) properties.get(SonarProperty.PROJECT_KEY);
+      String projectKey = (String) computedProperties.properties.get(SonarProperty.PROJECT_KEY);
       rawProperties.putIfAbsent(SonarProperty.MODULE_KEY, projectKey + project.getPath());
     }
 
-    convertProperties(rawProperties, prefix, properties);
+    convertProperties(rawProperties, prefix, computedProperties.properties);
+    userDefinedKeys.stream()
+      .map(k -> convertKey(k, prefix))
+      .forEach(computedProperties.userDefinedKeys::add);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
       .filter(SonarQubePlugin::notSkipped)
@@ -170,10 +175,10 @@ public class SonarPropertyComputer {
       String moduleId = childProject.getPath();
       moduleIds.add(moduleId);
       String modulePrefix = toPrefix + moduleId;
-      computeDefaultProperties(childProject, properties, modulePrefix);
+      computeDefaultProperties(childProject, computedProperties, modulePrefix);
     }
 
-    properties.put(convertKey(SonarProperty.MODULES, prefix), String.join(",", moduleIds));
+    computedProperties.properties.put(convertKey(SonarProperty.MODULES, prefix), String.join(",", moduleIds));
   }
 
   private boolean shouldApplyScanAll(Project project, Map<String, Object> properties) {
@@ -295,14 +300,27 @@ public class SonarPropertyComputer {
     properties.put(sourcePropertyToUpdate, SonarUtils.joinAsCsv(mergedSources));
   }
 
-  private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties) {
+  private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties, Set<String> userDefinedKeys) {
     ActionBroadcast<SonarProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
     if (actionBroadcast != null) {
+      Map<String, Object> defaultProperties = new LinkedHashMap<>(rawProperties);
       evaluateSonarPropertiesBlocks(actionBroadcast, rawProperties);
+      for (Map.Entry<String, Object> entry : rawProperties.entrySet()) {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+        if (!defaultProperties.containsKey(key) || value != null && !defaultProperties.get(key).equals(value)) {
+          userDefinedKeys.add(key);
+        }
+      }
     }
     if (isRootProject(project)) {
-      rawProperties.putAll(getSonarEnvironmentVariables(project));
-      rawProperties.putAll(getSonarSystemProperties(project));
+      Map<String, String> environmentProperties = getSonarEnvironmentVariables(project);
+      rawProperties.putAll(environmentProperties);
+      userDefinedKeys.addAll(environmentProperties.keySet());
+
+      Map<String, String> systemProperties = getSonarSystemProperties(project);
+      rawProperties.putAll(systemProperties);
+      userDefinedKeys.addAll(systemProperties.keySet());
     }
   }
 

@@ -81,6 +81,7 @@ public class SonarTask extends ConventionTask {
   private LogOutput logOutput = new DefaultLogOutput();
 
   private Provider<Map<String, String>> properties;
+  private Provider<Set<String>> userDefinedKeys;
   private Provider<Directory> buildSonar;
 
   private static class DefaultLogOutput implements LogOutput {
@@ -161,7 +162,7 @@ public class SonarTask extends ConventionTask {
     }
 
     mapProperties = resolveJavaLibraries(mapProperties);
-    filterPathProperties(mapProperties);
+    filterPathProperties(mapProperties, this.userDefinedKeys.get());
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -322,8 +323,11 @@ public class SonarTask extends ConventionTask {
    * It could be that files haven't been generated yet.
    * <p>
    * Remove file and directories that are not present on the file system.
+   * <p>
+   * Note: User-defined properties (those explicitly set via sonarqube {} DSL or system/env properties) are not filtered,
+   * as users may legitimately reference paths that don't exist yet or use wildcards/placeholders.
    */
-  static void filterPathProperties(Map<String, String> properties) {
+  static void filterPathProperties(Map<String, String> properties, Set<String> userDefinedKeys) {
     Set<String> sourcePropNames = Set.of(
       SonarProperty.PROJECT_SOURCE_DIRS,
       SonarProperty.PROJECT_TEST_DIRS,
@@ -337,9 +341,8 @@ public class SonarTask extends ConventionTask {
 
     List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
 
-
     // filter non-existing paths and remove empty source properties
-    for (PropertyInfo prop : sourcesProperties) {
+    for (PropertyInfo prop : ignoreUserDefinedProperties(sourcesProperties, userDefinedKeys)) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, Files::exists);
         // empty assignments for `sonar.sources` and `sonar.tests` are required,
@@ -363,7 +366,7 @@ public class SonarTask extends ConventionTask {
     List<PropertyInfo> junitReportProperties = parsePropertiesWithNames(properties, junitReportNames);
 
     // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
-    for (PropertyInfo prop : junitReportProperties) {
+    for (PropertyInfo prop : ignoreUserDefinedProperties(junitReportProperties, userDefinedKeys)) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, SonarTask::containJunitReport);
         return filtered.isEmpty() ? null : filtered;
@@ -372,7 +375,7 @@ public class SonarTask extends ConventionTask {
 
     // remove xml report if directory do not exist
     List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
-    for (PropertyInfo prop : xmlReportProperties) {
+    for (PropertyInfo prop : ignoreUserDefinedProperties(xmlReportProperties, userDefinedKeys)) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, Files::exists);
         return filtered.isEmpty() ? null : filtered;
@@ -389,6 +392,12 @@ public class SonarTask extends ConventionTask {
         .ifPresent(property -> parsedProperties.add(new PropertyInfo(property, propName)));
     }
     return parsedProperties;
+  }
+
+  private static List<PropertyInfo> ignoreUserDefinedProperties(List<PropertyInfo> properties, Set<String> userDefinedKeys) {
+    return properties.stream()
+      .filter(p -> !userDefinedKeys.contains(p.fullName))
+      .collect(Collectors.toList());
   }
 
   /**
@@ -550,8 +559,9 @@ public class SonarTask extends ConventionTask {
   }
 
 
-  void setProperties(Provider<Map<String, String>> properties) {
+  void setProperties(Provider<Map<String, String>> properties, Provider<Set<String>> userDefinedKeys) {
     this.properties = properties;
+    this.userDefinedKeys = userDefinedKeys;
   }
 
   /**
