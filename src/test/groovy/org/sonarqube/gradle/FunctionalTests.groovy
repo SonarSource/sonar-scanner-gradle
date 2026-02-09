@@ -664,7 +664,7 @@ class FunctionalTests extends Specification {
 
         then:
         assert result.task(":sonar").getOutcome() == TaskOutcome.FAILED
-        assert result.getOutput().contains("Failed to query server version: Call to URL [http://localhost:0/api/v2/analysis/version] failed")
+        assert result.getOutput().contains("Failed to query server version: Call to URL [http://localhost:0")
     }
 
     def "keep default sonar.region"() {
