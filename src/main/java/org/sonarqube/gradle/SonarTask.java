@@ -342,9 +342,9 @@ public class SonarTask extends ConventionTask {
     List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
 
     // filter non-existing paths and remove empty source properties
-    for (PropertyInfo prop : ignoreUserDefinedProperties(sourcesProperties, userDefinedKeys)) {
+    for (PropertyInfo prop : sourcesProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists);
+        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
         // empty assignments for `sonar.sources` and `sonar.tests` are required,
         // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
         // This can eventually lead to a double indexing issue in the scanner-engine.
@@ -366,18 +366,18 @@ public class SonarTask extends ConventionTask {
     List<PropertyInfo> junitReportProperties = parsePropertiesWithNames(properties, junitReportNames);
 
     // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
-    for (PropertyInfo prop : ignoreUserDefinedProperties(junitReportProperties, userDefinedKeys)) {
+    for (PropertyInfo prop : junitReportProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, SonarTask::containJunitReport);
+        var filtered = filterPaths(commaList, SonarTask::containJunitReport, userDefinedKeys.contains(k));
         return filtered.isEmpty() ? null : filtered;
       });
     }
 
     // remove xml report if directory do not exist
     List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
-    for (PropertyInfo prop : ignoreUserDefinedProperties(xmlReportProperties, userDefinedKeys)) {
+    for (PropertyInfo prop : xmlReportProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists);
+        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
         return filtered.isEmpty() ? null : filtered;
       });
     }
@@ -394,24 +394,29 @@ public class SonarTask extends ConventionTask {
     return parsedProperties;
   }
 
-  private static List<PropertyInfo> ignoreUserDefinedProperties(List<PropertyInfo> properties, Set<String> userDefinedKeys) {
-    return properties.stream()
-      .filter(p -> !userDefinedKeys.contains(p.fullName))
-      .collect(Collectors.toList());
-  }
-
   /**
-   * @param value  a comma-delimited list of paths
-   * @param filter predicated to filter the paths
+   * @param value       a comma-delimited list of paths
+   * @param filter      predicated to filter the paths
+   * @param userDefined whether the property is user-defined
    * @return filtered comma-delimited list of paths
    */
-  private static String filterPaths(String value, Predicate<Path> filter) {
-    // some of the analyzer accept and expand path containing wildcards
-    // we must not filter them
-    Set<String> wildcardsToken = Set.of("*", "?", "${");
+  private static String filterPaths(String value, Predicate<Path> filter, boolean userDefined) {
     return Arrays.stream(value.split(","))
-      .filter(p -> wildcardsToken.stream().anyMatch(p::contains) || filter.test(Path.of(p)))
+      .filter(p -> filterPath(p, filter, userDefined))
       .collect(Collectors.joining(","));
+  }
+
+  private static boolean filterPath(String value, Predicate<Path> filter, boolean userDefined) {
+    // We shouldn't filter paths containing wildcards.
+    Set<String> wildcardsToken = Set.of("*", "?", "${");
+    if (wildcardsToken.stream().anyMatch(value::contains)) {
+      return true;
+    }
+    // Paths ending with '.github' or 'settings.gradle.kts' are added by default by the sonar property computer and should be filtered.
+    if (!userDefined || value.endsWith(".github") || value.endsWith("settings.gradle.kts")) {
+      return filter.test(Path.of(value));
+    }
+    return true;
   }
 
   /**

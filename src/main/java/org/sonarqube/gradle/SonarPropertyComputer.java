@@ -308,7 +308,7 @@ public class SonarPropertyComputer {
       for (Map.Entry<String, Object> entry : rawProperties.entrySet()) {
         String key = entry.getKey();
         Object value = entry.getValue();
-        if (!defaultProperties.containsKey(key) || value != null && !defaultProperties.get(key).equals(value)) {
+        if (!defaultProperties.containsKey(key) || (value != null && !defaultProperties.get(key).equals(value))) {
           userDefinedKeys.add(key);
         }
       }
