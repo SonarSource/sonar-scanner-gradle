@@ -28,13 +28,25 @@ jobs:
           cache-disabled: true
           develocity-plugin-version: '4.0'
           validate-wrappers: false
-      - uses: SonarSource/ci-github-actions/build-gradle@v1
+      - name: Build and analyze
+        uses: SonarSource/ci-github-actions/build-gradle@v1
         with:
           run-shadow-scans: true
           artifactory-reader-role: private-reader
           artifactory-deployer-role: qa-deployer
           deploy-pull-request: false
           gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            build/test-results/**/*.xml
+            build/reports/tests/**/*
+            integrationTests/target/surefire-reports/**/*.xml
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Run IRIS Analysis
         uses: SonarSource/unified-dogfooding-actions/run-iris@v1
         with:

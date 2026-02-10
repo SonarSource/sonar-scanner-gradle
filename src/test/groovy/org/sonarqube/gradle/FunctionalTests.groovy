@@ -658,7 +658,7 @@ class FunctionalTests extends Specification {
         def result = GradleRunner.create()
                 .withProjectDir(projectDir.toFile())
                 .forwardOutput()
-                .withArguments('sonar', '-Dsonar.host.url=http://localhost:1000000', '--info')
+                .withArguments('sonar', '-Dsonar.host.url=http://localhost:0', '--info')
                 .withPluginClasspath()
                 .buildAndFail()
 
