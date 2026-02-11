@@ -149,8 +149,6 @@ public class GradleTest extends AbstractGradleIT {
 
   @Test
   public void testUserDefinedProperties() throws Exception {
-    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
-
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-user-properties", emptyMap(), new DefaultRunConfiguration(), "compileJava", "compileTestJava");
 
     assertThat(props.getProperty("sonar.sources").split(",")).containsOnly("src/main/java");
