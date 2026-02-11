@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -165,16 +166,21 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
-    Provider<Map<String, String>> conventionProvider = project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties())
-      .map(m -> m.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue())));
+    Provider<ComputedProperties> computedPropertiesProvider = project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties());
+    Provider<Map<String, String>> conventionProvider = computedPropertiesProvider.map(computed ->
+      computed.properties.entrySet()
+        .stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()))
+    );
+    Provider<Set<String>> userDefinedKeysProvider = computedPropertiesProvider.map(computed -> computed.userDefinedKeys);
 
     if (isGradleVersionGreaterOrEqualTo("6.1")) {
       MapProperty<String, String> mapProperty = project.getObjects().mapProperty(String.class, String.class);
       mapProperty.convention(conventionProvider);
       mapProperty.finalizeValueOnRead();
-      sonarTask.setProperties(mapProperty);
+      sonarTask.setProperties(mapProperty, userDefinedKeysProvider);
     } else {
-      sonarTask.setProperties(conventionProvider);
+      sonarTask.setProperties(conventionProvider, userDefinedKeysProvider);
     }
 
     sonarTask.mustRunAfter(getJavaCompileTasks(project));
