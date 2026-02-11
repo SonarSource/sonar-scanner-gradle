@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -208,5 +209,161 @@ class SonarTaskTest {
     assertThat(result)
       .containsEntry("sonar.java.libraries", lib1.toAbsolutePath() + "," + lib2.toAbsolutePath())
       .containsEntry("sonar.java.test.libraries", testLib1.toAbsolutePath().toString());
+  }
+
+  @Test
+  void filterPathProperties_removes_non_existing_source_paths(@TempDir File tempDir) {
+    File existingSources = new File(tempDir, "src/main/java");
+    existingSources.mkdirs();
+    File nonExistingSources = new File(tempDir, "src/main/kotlin");
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.sources", existingSources.getAbsolutePath() + "," + nonExistingSources.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of());
+
+    assertThat(properties).containsEntry("sonar.sources", existingSources.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_preserves_user_defined_non_existing_paths(@TempDir File tempDir) {
+    File nonExistingSources = new File(tempDir, "custom/source");
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.sources", nonExistingSources.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of("sonar.sources"));
+
+    assertThat(properties).containsEntry("sonar.sources", nonExistingSources.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_preserves_wildcards_in_properties() {
+    String reportPaths = "**/*.xml,reports/*.xml,${projectDir}/*.xml";
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.coverage.jacoco.xmlReportPaths", reportPaths);
+
+    SonarTask.filterPathProperties(properties, Set.of());
+
+    assertThat(properties).containsEntry("sonar.coverage.jacoco.xmlReportPaths", reportPaths);
+  }
+
+  @Test
+  void filterPathProperties_filters_github_from_sources_even_if_user_defined(@TempDir File tempDir) {
+    File githubFolder = new File(tempDir, ".github");
+    File normalSources = new File(tempDir, "src");
+    normalSources.mkdir();
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.sources", normalSources.getAbsolutePath() + "," + githubFolder.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of("sonar.sources"));
+
+    assertThat(properties).containsEntry("sonar.sources", normalSources.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_filters_settings_gradle_kts_even_if_user_defined(@TempDir File tempDir) {
+    File settingsFile = new File(tempDir, "settings.gradle.kts");
+    File normalSources = new File(tempDir, "src");
+    normalSources.mkdir();
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.sources", normalSources.getAbsolutePath() + "," + settingsFile.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of("sonar.sources"));
+
+    assertThat(properties).containsEntry("sonar.sources", normalSources.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_preserves_jacoco_xml_report_paths_when_files_exist(@TempDir File tempDir) throws IOException {
+    File reportFile = new File(tempDir, "jacoco.xml");
+    reportFile.createNewFile();
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.coverage.jacoco.xmlReportPaths", reportFile.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of());
+
+    assertThat(properties).containsEntry("sonar.coverage.jacoco.xmlReportPaths", reportFile.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_removes_jacoco_xml_report_paths_when_files_dont_exist(@TempDir File tempDir) {
+    File nonExistingReport = new File(tempDir, "jacoco.xml");
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.coverage.jacoco.xmlReportPaths", nonExistingReport.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of());
+
+    assertThat(properties).doesNotContainKey("sonar.coverage.jacoco.xmlReportPaths");
+  }
+
+  @Test
+  void filterPathProperties_handles_submodule_properties(@TempDir File tempDir) {
+    File existingSources = new File(tempDir, "module/src");
+    existingSources.mkdirs();
+    File nonExistingSources = new File(tempDir, "module/other");
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put(":module.sonar.sources", existingSources.getAbsolutePath() + "," + nonExistingSources.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of());
+
+    assertThat(properties).containsEntry(":module.sonar.sources", existingSources.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_keeps_user_defined_submodule_properties(@TempDir File tempDir) {
+    File nonExistingSources = new File(tempDir, "module/other");
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put(":module.sonar.sources", nonExistingSources.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of(":module.sonar.sources"));
+
+    assertThat(properties).containsEntry(":module.sonar.sources", nonExistingSources.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_filters_multiple_property_types(@TempDir File tempDir) {
+    File existingSources = new File(tempDir, "src/main/java");
+    existingSources.mkdirs();
+    File nonExistingSources = new File(tempDir, "src/main/kotlin");
+
+    File existingBinaries = new File(tempDir, "build/classes");
+    existingBinaries.mkdirs();
+    File nonExistingBinaries = new File(tempDir, "build/other");
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.sources", existingSources.getAbsolutePath() + "," + nonExistingSources.getAbsolutePath());
+    properties.put("sonar.java.binaries", existingBinaries.getAbsolutePath() + "," + nonExistingBinaries.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of());
+
+    assertThat(properties)
+      .containsEntry("sonar.sources", existingSources.getAbsolutePath())
+      .containsEntry("sonar.java.binaries", existingBinaries.getAbsolutePath());
+  }
+
+  @Test
+  void filterPathProperties_handles_mixed_user_defined_and_automatic_properties(@TempDir File tempDir) {
+    File existingAutoSources = new File(tempDir, "src/main/java");
+    existingAutoSources.mkdirs();
+    File nonExistingAutoSources = new File(tempDir, "src/main/groovy");
+    File nonExistingUserSources = new File(tempDir, "custom/source");
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.sources", existingAutoSources.getAbsolutePath() + "," + nonExistingAutoSources.getAbsolutePath());
+    properties.put("sonar.tests", nonExistingUserSources.getAbsolutePath());
+
+    SonarTask.filterPathProperties(properties, Set.of("sonar.tests"));
+
+    assertThat(properties)
+      .containsEntry("sonar.sources", existingAutoSources.getAbsolutePath())
+      .containsEntry("sonar.tests", nonExistingUserSources.getAbsolutePath());
   }
 }

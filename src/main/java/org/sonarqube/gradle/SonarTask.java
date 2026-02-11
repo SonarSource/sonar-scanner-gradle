@@ -402,7 +402,7 @@ public class SonarTask extends ConventionTask {
    * @param userDefined Whether the property was user-defined.
    * @return A filtered comma-delimited list of paths.
    */
-  static String filterPaths(String value, Predicate<Path> filter, boolean userDefined) {
+  private static String filterPaths(String value, Predicate<Path> filter, boolean userDefined) {
     return Arrays.stream(value.split(","))
       .filter(p -> isCompliantPath(p, filter, userDefined))
       .collect(Collectors.joining(","));
