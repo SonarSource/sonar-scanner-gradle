@@ -35,7 +35,7 @@ jobs:
           artifactory-reader-role: private-reader
           artifactory-deployer-role: qa-deployer
           deploy-pull-request: false
-          gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
+          gradle-args: "-Dsonar.organization=sonarsource -Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
       - name: Upload test reports on failure
         if: failure()
         uses: actions/upload-artifact@v4
