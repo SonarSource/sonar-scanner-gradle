@@ -81,6 +81,7 @@ public class SonarTask extends ConventionTask {
   private LogOutput logOutput = new DefaultLogOutput();
 
   private Provider<Map<String, String>> properties;
+  private Provider<Set<String>> userDefinedKeys;
   private Provider<Directory> buildSonar;
 
   private static class DefaultLogOutput implements LogOutput {
@@ -161,7 +162,7 @@ public class SonarTask extends ConventionTask {
     }
 
     mapProperties = resolveJavaLibraries(mapProperties);
-    filterPathProperties(mapProperties);
+    filterPathProperties(mapProperties, this.userDefinedKeys.get());
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -322,8 +323,13 @@ public class SonarTask extends ConventionTask {
    * It could be that files haven't been generated yet.
    * <p>
    * Remove file and directories that are not present on the file system.
+   * </p>
+   * <p>
+   * Note: User-defined properties (those explicitly set via sonarqube {} DSL or system/env properties) are not filtered,
+   * as users may legitimately reference paths that don't exist yet or use wildcards/placeholders.
+   * </p>
    */
-  static void filterPathProperties(Map<String, String> properties) {
+  static void filterPathProperties(Map<String, String> properties, Set<String> userDefinedKeys) {
     Set<String> sourcePropNames = Set.of(
       SonarProperty.PROJECT_SOURCE_DIRS,
       SonarProperty.PROJECT_TEST_DIRS,
@@ -337,11 +343,10 @@ public class SonarTask extends ConventionTask {
 
     List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
 
-
     // filter non-existing paths and remove empty source properties
     for (PropertyInfo prop : sourcesProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists);
+        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
         // empty assignments for `sonar.sources` and `sonar.tests` are required,
         // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
         // This can eventually lead to a double indexing issue in the scanner-engine.
@@ -365,7 +370,7 @@ public class SonarTask extends ConventionTask {
     // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
     for (PropertyInfo prop : junitReportProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, SonarTask::containJunitReport);
+        var filtered = filterPaths(commaList, SonarTask::containJunitReport, userDefinedKeys.contains(k));
         return filtered.isEmpty() ? null : filtered;
       });
     }
@@ -374,7 +379,7 @@ public class SonarTask extends ConventionTask {
     List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
     for (PropertyInfo prop : xmlReportProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists);
+        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
         return filtered.isEmpty() ? null : filtered;
       });
     }
@@ -392,17 +397,31 @@ public class SonarTask extends ConventionTask {
   }
 
   /**
-   * @param value  a comma-delimited list of paths
-   * @param filter predicated to filter the paths
-   * @return filtered comma-delimited list of paths
+   * Filter paths that weren't user-defined and don't contain wildcards.
+   *
+   * @param value       A comma-delimited list of paths.
+   * @param filter      A predicate to filter the paths.
+   * @param userDefined Whether the property was user-defined.
+   * @return A filtered comma-delimited list of paths.
    */
-  private static String filterPaths(String value, Predicate<Path> filter) {
-    // some of the analyzer accept and expand path containing wildcards
-    // we must not filter them
-    Set<String> wildcardsToken = Set.of("*", "?", "${");
+  private static String filterPaths(String value, Predicate<Path> filter, boolean userDefined) {
     return Arrays.stream(value.split(","))
-      .filter(p -> wildcardsToken.stream().anyMatch(p::contains) || filter.test(Path.of(p)))
+      .filter(p -> isCompliantPath(p, filter, userDefined))
       .collect(Collectors.joining(","));
+  }
+
+  private static boolean isCompliantPath(String value, Predicate<Path> filter, boolean userDefined) {
+    // We shouldn't filter paths containing wildcards, no matter if they were user-defined or not.
+    if (Set.of("*", "?", "${").stream().anyMatch(value::contains)) {
+      return true;
+    }
+
+    // User-defined paths shouldn't be filtered either, except if they end with '.github' or 'settings.gradle.kts', as these are added by default by the sonar property computer.
+    if (userDefined && !(value.endsWith(".github") || value.endsWith("settings.gradle.kts"))) {
+      return true;
+    }
+
+    return filter.test(Path.of(value));
   }
 
   /**
@@ -550,8 +569,9 @@ public class SonarTask extends ConventionTask {
   }
 
 
-  void setProperties(Provider<Map<String, String>> properties) {
+  void setProperties(Provider<Map<String, String>> properties, Provider<Set<String>> userDefinedKeys) {
     this.properties = properties;
+    this.userDefinedKeys = userDefinedKeys;
   }
 
   /**

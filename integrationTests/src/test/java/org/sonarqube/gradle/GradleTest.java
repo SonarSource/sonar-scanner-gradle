@@ -148,6 +148,15 @@ public class GradleTest extends AbstractGradleIT {
   }
 
   @Test
+  public void testUserDefinedProperties() throws Exception {
+    Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-user-properties", emptyMap(), new DefaultRunConfiguration(), "compileJava", "compileTestJava");
+
+    assertThat(props.getProperty("sonar.sources").split(",")).containsOnly("src/main/java");
+    assertThat(props.getProperty("sonar.tests").split(",")).containsOnly("src/test/java");
+    assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths").split(",")).containsOnly("reports/nonexisting.xml", "**/*.xml");
+  }
+
+  @Test
   public void mixJavaGroovyProject() throws Exception {
     ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo("9.0.0");
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-groovy-tests-gradle", emptyMap(), new DefaultRunConfiguration(), "build");
