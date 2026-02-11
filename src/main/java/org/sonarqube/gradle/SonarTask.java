@@ -323,9 +323,11 @@ public class SonarTask extends ConventionTask {
    * It could be that files haven't been generated yet.
    * <p>
    * Remove file and directories that are not present on the file system.
+   * </p>
    * <p>
    * Note: User-defined properties (those explicitly set via sonarqube {} DSL or system/env properties) are not filtered,
    * as users may legitimately reference paths that don't exist yet or use wildcards/placeholders.
+   * </p>
    */
   static void filterPathProperties(Map<String, String> properties, Set<String> userDefinedKeys) {
     Set<String> sourcePropNames = Set.of(

@@ -251,12 +251,12 @@ class SonarTaskTest {
 
   @Test
   void filterPathProperties_filters_github_from_sources_even_if_user_defined(@TempDir File tempDir) {
-    File githubFolder = new File(tempDir, ".github");
+    File nonExistingGithubFolder = new File(tempDir, ".github");
     File normalSources = new File(tempDir, "src");
     normalSources.mkdir();
 
     Map<String, String> properties = new HashMap<>();
-    properties.put("sonar.sources", normalSources.getAbsolutePath() + "," + githubFolder.getAbsolutePath());
+    properties.put("sonar.sources", normalSources.getAbsolutePath() + "," + nonExistingGithubFolder.getAbsolutePath());
 
     SonarTask.filterPathProperties(properties, Set.of("sonar.sources"));
 
@@ -265,12 +265,12 @@ class SonarTaskTest {
 
   @Test
   void filterPathProperties_filters_settings_gradle_kts_even_if_user_defined(@TempDir File tempDir) {
-    File settingsFile = new File(tempDir, "settings.gradle.kts");
+    File nonExistingSettingsFile = new File(tempDir, "settings.gradle.kts");
     File normalSources = new File(tempDir, "src");
     normalSources.mkdir();
 
     Map<String, String> properties = new HashMap<>();
-    properties.put("sonar.sources", normalSources.getAbsolutePath() + "," + settingsFile.getAbsolutePath());
+    properties.put("sonar.sources", normalSources.getAbsolutePath() + "," + nonExistingSettingsFile.getAbsolutePath());
 
     SonarTask.filterPathProperties(properties, Set.of("sonar.sources"));
 
@@ -354,16 +354,16 @@ class SonarTaskTest {
     File existingAutoSources = new File(tempDir, "src/main/java");
     existingAutoSources.mkdirs();
     File nonExistingAutoSources = new File(tempDir, "src/main/groovy");
-    File nonExistingUserSources = new File(tempDir, "custom/source");
+    File nonExistingUserDefinedTestSources = new File(tempDir, "custom/source");
 
     Map<String, String> properties = new HashMap<>();
     properties.put("sonar.sources", existingAutoSources.getAbsolutePath() + "," + nonExistingAutoSources.getAbsolutePath());
-    properties.put("sonar.tests", nonExistingUserSources.getAbsolutePath());
+    properties.put("sonar.tests", nonExistingUserDefinedTestSources.getAbsolutePath());
 
     SonarTask.filterPathProperties(properties, Set.of("sonar.tests"));
 
     assertThat(properties)
       .containsEntry("sonar.sources", existingAutoSources.getAbsolutePath())
-      .containsEntry("sonar.tests", nonExistingUserSources.getAbsolutePath());
+      .containsEntry("sonar.tests", nonExistingUserDefinedTestSources.getAbsolutePath());
   }
 }
