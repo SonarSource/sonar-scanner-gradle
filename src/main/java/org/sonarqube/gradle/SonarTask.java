@@ -395,28 +395,31 @@ public class SonarTask extends ConventionTask {
   }
 
   /**
-   * @param value       a comma-delimited list of paths
-   * @param filter      predicated to filter the paths
-   * @param userDefined whether the property is user-defined
-   * @return filtered comma-delimited list of paths
+   * Filter paths that weren't user-defined and don't contain wildcards.
+   *
+   * @param value       A comma-delimited list of paths.
+   * @param filter      A predicate to filter the paths.
+   * @param userDefined Whether the property was user-defined.
+   * @return A filtered comma-delimited list of paths.
    */
-  private static String filterPaths(String value, Predicate<Path> filter, boolean userDefined) {
+  static String filterPaths(String value, Predicate<Path> filter, boolean userDefined) {
     return Arrays.stream(value.split(","))
-      .filter(p -> filterPath(p, filter, userDefined))
+      .filter(p -> isCompliantPath(p, filter, userDefined))
       .collect(Collectors.joining(","));
   }
 
-  private static boolean filterPath(String value, Predicate<Path> filter, boolean userDefined) {
-    // We shouldn't filter paths containing wildcards.
-    Set<String> wildcardsToken = Set.of("*", "?", "${");
-    if (wildcardsToken.stream().anyMatch(value::contains)) {
+  private static boolean isCompliantPath(String value, Predicate<Path> filter, boolean userDefined) {
+    // We shouldn't filter paths containing wildcards, no matter if they were user-defined or not.
+    if (Set.of("*", "?", "${").stream().anyMatch(value::contains)) {
       return true;
     }
-    // Paths ending with '.github' or 'settings.gradle.kts' are added by default by the sonar property computer and should be filtered.
-    if (!userDefined || value.endsWith(".github") || value.endsWith("settings.gradle.kts")) {
-      return filter.test(Path.of(value));
+
+    // User-defined paths shouldn't be filtered either, except if they end with '.github' or 'settings.gradle.kts', as these are added by default by the sonar property computer.
+    if (userDefined && !(value.endsWith(".github") || value.endsWith("settings.gradle.kts"))) {
+      return true;
     }
-    return true;
+
+    return filter.test(Path.of(value));
   }
 
   /**

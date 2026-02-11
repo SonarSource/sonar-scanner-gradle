@@ -155,6 +155,7 @@ public class GradleTest extends AbstractGradleIT {
 
     assertThat(props.getProperty("sonar.sources").split(",")).containsOnly("src/main/java");
     assertThat(props.getProperty("sonar.tests").split(",")).containsOnly("src/test/java");
+    assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths").split(",")).containsOnly("reports/nonexisting.xml", "**/*.xml");
   }
 
   @Test

@@ -27,6 +27,7 @@ import java.util.Set;
  * <p>
  * The distinction is important because user-defined properties should not be filtered for non-existing paths, as users may legitimately reference paths that don't exist yet or
  * use wildcards/placeholders.
+ * </p>
  */
 public class ComputedProperties {
   public final Map<String, Object> properties;
