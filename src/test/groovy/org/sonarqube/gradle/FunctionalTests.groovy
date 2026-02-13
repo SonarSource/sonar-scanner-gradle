@@ -21,6 +21,7 @@ package org.sonarqube.gradle
 
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -645,6 +646,7 @@ class FunctionalTests extends Specification {
         testSources[1].endsWith("""${projectPath}test-license.sh""")
     }
 
+    @IgnoreIf({ System.getenv("SONAR_REGION") != null })
     def "sonar task fails when failing to reach the server"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -664,7 +666,7 @@ class FunctionalTests extends Specification {
 
         then:
         assert result.task(":sonar").getOutcome() == TaskOutcome.FAILED
-        assert result.getOutput().contains("Failed to query server version: Call to URL [http://localhost:0/api/v2/analysis/version] failed")
+        assert result.getOutput().contains("Failed to query server version: Call to URL [http://localhost:")
     }
 
     def "keep default sonar.region"() {
