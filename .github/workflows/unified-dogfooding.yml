@@ -1,0 +1,57 @@
+name: Unified Dogfooding scans
+on:
+  schedule:
+    - cron: '0 4 * * *' # Run the workflow every day at 04:00 UTC
+  workflow_dispatch:
+
+jobs:
+  unified-platform-dogfooding:
+    runs-on: github-ubuntu-latest-m
+    name: Unified Platform Dogfooding
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
+        with:
+          version: 2025.12.10
+      - name: Install Property Dump Plugin
+        run: |
+          mvn -f property-dump-plugin/pom.xml -B install
+      - name: Configure Gradle
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        with:
+          # Parameters matching those invoked by build-gradle
+          develocity-injection-enabled: false
+          cache-disabled: true
+          develocity-plugin-version: '4.0'
+          validate-wrappers: false
+      - name: Build and analyze
+        uses: SonarSource/ci-github-actions/build-gradle@v1
+        with:
+          run-shadow-scans: true
+          artifactory-reader-role: private-reader
+          artifactory-deployer-role: qa-deployer
+          deploy-pull-request: false
+          gradle-args: "-Dsonar.organization=sonarsource -Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            build/test-results/**/*.xml
+            build/reports/tests/**/*
+            integrationTests/target/surefire-reports/**/*.xml
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Run IRIS Analysis
+        uses: SonarSource/unified-dogfooding-actions/run-iris@v1
+        with:
+          primary_project_key: org.sonarsource.scanner.gradle:sonarqube-gradle-plugin
+          primary_platform: "Next"
+          shadow1_project_key: org.sonarsource.scanner.gradle:sonarqube-gradle-plugin
+          shadow1_platform: "SQC-EU"
+          shadow2_project_key: org.sonarsource.scanner.gradle:sonarqube-gradle-plugin
+          shadow2_platform: "SQC-US"
