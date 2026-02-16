@@ -127,11 +127,11 @@ jobs:
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
             development/kv/data/repox url | ARTIFACTORY_URL;
-            development/kv/data/sign data.key | SIGNING_KEY;
-            development/kv/data/sign data.passphrase | SIGNING_PASSWORD;
-            development/kv/data/sign data.key_id | SIGNING_KEY_ID;
-            development/kv/data/gradle/publish data.key | PUBLISH_KEY;
-            development/kv/data/gradle/publish data.secret | PUBLISH_SECRET;
+            development/kv/data/sign key | SIGNING_KEY;
+            development/kv/data/sign passphrase | SIGNING_PASSWORD;
+            development/kv/data/sign key_id | SIGNING_KEY_ID;
+            development/kv/data/gradle/publish key | PUBLISH_KEY;
+            development/kv/data/gradle/publish secret | PUBLISH_SECRET;
 
       - name: Set version from build number
         run: |
