@@ -31,23 +31,14 @@ runs:
           ${{ inputs.use-develocity == 'true' && 'development/kv/data/develocity token | DEVELOCITY_TOKEN;' || '' }}
     - name: Configure Maven
       uses: SonarSource/ci-github-actions/config-maven@v1
-      with:
-        artifactory-reader-role: private-reader
-        working-directory: integrationTests
-        use-develocity: ${{ inputs.use-develocity }}
-        develocity-url: ${{ inputs.develocity-url }}
       env:
         GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
-        ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
-    - name: Set Develocity access key
-      if: inputs.use-develocity == 'true' && inputs.develocity-url != ''
-      shell: bash
-      env:
-        DEVELOCITY_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).DEVELOCITY_TOKEN }}
+        USE_DEVELOCITY: ${{ inputs.use-develocity }}
         DEVELOCITY_URL: ${{ inputs.develocity-url }}
-      run: |
-        hostname=$(echo "$DEVELOCITY_URL" | sed 's|https\?://||;s|/.*||')
-        echo "DEVELOCITY_ACCESS_KEY=${hostname}=${DEVELOCITY_TOKEN}" >> "$GITHUB_ENV"
+      with:
+        artifactory-reader-role: private-reader
+        use-develocity: ${{ env.USE_DEVELOCITY }}
+        develocity-url: ${{ env.DEVELOCITY_URL }}
     - name: Run QA
       env:
         GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
