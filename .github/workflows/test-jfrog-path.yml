@@ -1,14 +1,47 @@
 ---
 # Test workflow to diagnose jfrog PATH issue in Release step
 # Trigger: push (for testing on unmerged PR branches)
-# Tests 4 ways to invoke jfrog after mise install
+# Tests 5 ways to invoke jfrog (mise 2.92.0, jf/jfrog aliases, and setup-jfrog-cli)
 name: Test JFrog Path
 on:
   push:
 
 jobs:
+  discover-mise-install:
+    name: "0. Discover mise install path"
+    runs-on: github-ubuntu-latest-s
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Setup Mise (and JFrog CLI 2.92.0)
+        uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
+        with:
+          version: 2025.12.10
+          tool_versions: |
+            jfrog-cli 2.92.0
+      - name: Diagnose mise install
+        run: |
+          echo "=== mise where jfrog ==="
+          mise where jfrog || true
+          echo "=== mise where jf ==="
+          mise where jf || true
+          echo "=== mise ls ==="
+          mise ls || true
+          echo "=== MISE_INSTALLS dir ==="
+          ls -la "${HOME}/.local/share/mise/installs/" 2>/dev/null || true
+          echo "=== jfrog-cli dir ==="
+          ls -la "${HOME}/.local/share/mise/installs/jfrog-cli/" 2>/dev/null || true
+          echo "=== PATH ==="
+          echo "$PATH"
+          echo "=== which jfrog / jf ==="
+          which jfrog 2>/dev/null || echo "jfrog not in PATH"
+          which jf 2>/dev/null || echo "jf not in PATH"
+
   test-1-repo-name-unfilled-direct-jfrog:
-    name: "1. REPO_NAME unfilled, direct jfrog"
+    name: "1. REPO_NAME unfilled, direct jfrog (2.92.0)"
     runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write
@@ -18,12 +51,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Setup Mise (and JFrog CLI)
+      - name: Setup Mise (and JFrog CLI 2.92.0)
         uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
           version: 2025.12.10
           tool_versions: |
-            jfrog-cli 2.77.0
+            jfrog-cli 2.92.0
       - name: Get secrets from Vault
         id: vault-secrets
         uses: SonarSource/vault-action-wrapper@v3
@@ -40,7 +73,7 @@ jobs:
           jfrog rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
 
   test-2-repo-name-filled-direct-jfrog:
-    name: "2. REPO_NAME filled, direct jfrog"
+    name: "2. REPO_NAME filled, direct jfrog (2.92.0)"
     runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write
@@ -50,12 +83,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Setup Mise (and JFrog CLI)
+      - name: Setup Mise (and JFrog CLI 2.92.0)
         uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
           version: 2025.12.10
           tool_versions: |
-            jfrog-cli 2.77.0
+            jfrog-cli 2.92.0
       - name: Get secrets from Vault
         id: vault-secrets
         uses: SonarSource/vault-action-wrapper@v3
@@ -72,7 +105,7 @@ jobs:
           jfrog rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
 
   test-3-mise-exec-repo-name-unfilled:
-    name: "3. REPO_NAME unfilled, mise exec -- jfrog"
+    name: "3. REPO_NAME unfilled, mise exec -- jfrog (2.92.0)"
     runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write
@@ -82,12 +115,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Setup Mise (and JFrog CLI)
+      - name: Setup Mise (and JFrog CLI 2.92.0)
         uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
           version: 2025.12.10
           tool_versions: |
-            jfrog-cli 2.77.0
+            jfrog-cli 2.92.0
       - name: Get secrets from Vault
         id: vault-secrets
         uses: SonarSource/vault-action-wrapper@v3
@@ -104,7 +137,7 @@ jobs:
           mise exec -- jfrog rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
 
   test-4-jfrog-full-path:
-    name: "4. Full path to jfrog binary"
+    name: "4. Full path (mise where) to jfrog (2.92.0)"
     runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write
@@ -114,12 +147,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Setup Mise (and JFrog CLI)
+      - name: Setup Mise (and JFrog CLI 2.92.0)
         uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
         with:
           version: 2025.12.10
           tool_versions: |
-            jfrog-cli 2.77.0
+            jfrog-cli 2.92.0
       - name: Get secrets from Vault
         id: vault-secrets
         uses: SonarSource/vault-action-wrapper@v3
@@ -127,11 +160,49 @@ jobs:
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
             development/kv/data/repox url | ARTIFACTORY_URL;
-      - name: Test jfrog rt ping (full path)
+      - name: Test jfrog rt ping (full path from mise where)
         env:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
           ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
         run: |
-          JFROG_BIN="${HOME}/.local/share/mise/installs/jfrog-cli/2.77.0/bin/jfrog"
+          JFROG_BIN=$(mise where jfrog 2>/dev/null || mise where jf 2>/dev/null || echo "")
+          if [ -z "$JFROG_BIN" ]; then
+            echo "mise where failed, trying standard path for 2.92.0"
+            JFROG_BIN="${HOME}/.local/share/mise/installs/jfrog-cli/2.92.0/bin/jfrog"
+            [ ! -f "$JFROG_BIN" ] && JFROG_BIN="${HOME}/.local/share/mise/installs/jfrog-cli/2.92.0/bin/jf"
+          fi
           echo "Using: $JFROG_BIN"
           "$JFROG_BIN" rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
+
+  test-5-setup-jfrog-cli-action:
+    name: "5. jfrog/setup-jfrog-cli action v4 (2.92.0)"
+    runs-on: github-ubuntu-latest-s
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      REPO_NAME: ${{ github.repository.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Get secrets from Vault
+        id: vault-secrets
+        uses: SonarSource/vault-action-wrapper@v3
+        with:
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
+            development/kv/data/repox url | ARTIFACTORY_URL;
+      - name: Setup JFrog CLI (official action)
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: "2.92.0"
+        env:
+          JF_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
+          JF_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+      - name: Test jf rt ping (setup-jfrog-cli)
+        env:
+          ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
+          ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+        run: |
+          echo "REPO_NAME='${REPO_NAME}'"
+          jf rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
