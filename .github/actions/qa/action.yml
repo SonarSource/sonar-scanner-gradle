@@ -29,6 +29,9 @@ runs:
           development/github/token/licenses-ro token | GITHUB_TOKEN;
           development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
           ${{ inputs.use-develocity == 'true' && 'development/kv/data/develocity token | DEVELOCITY_TOKEN;' || '' }}
+    - name: Change directory
+      shell: bash
+      run: cd integrationTests
     - name: Configure Maven
       uses: SonarSource/ci-github-actions/config-maven@v1
       env:
@@ -49,8 +52,7 @@ runs:
         SONAR_RUNTIME_VERSION: ${{ inputs.sonar-runtime-version }}
       shell: bash
       run: |
-        source ./.github/scripts/set-version-from-build-number.sh
+        source ../.github/scripts/set-version-from-build-number.sh
         mvn -f property-dump-plugin/pom.xml --batch-mode install
-        cd integrationTests
         mvn --errors --batch-mode --no-transfer-progress org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion="${NEW_VERSION}" -DgenerateBackupPoms=false
         mvn --errors --batch-mode --no-transfer-progress clean verify -Dgradle.version="${GRADLE_VERSION}" -DandroidGradle.version="${ANDROID_GRADLE_VERSION}" -Dsonar.runtimeVersion="${SONAR_RUNTIME_VERSION}"
