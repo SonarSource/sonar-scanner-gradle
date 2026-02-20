@@ -99,7 +99,7 @@ jobs:
       contents: write
     env:
       BUILD_NUMBER: ${{ needs.prepare_release.outputs.BUILD_NUMBER }}
-      REPO_NAME: ${{ github.repository.name }}
+      REPO_NAME: ${{ github.event.repository.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -109,7 +109,7 @@ jobs:
         with:
           version: 2025.12.10
           tool_versions: |
-            jfrog-cli 2.77.0
+            jfrog-cli 2.92.0
 
       - name: Cache Gradle packages
         uses: SonarSource/gh-action_cache@v1
@@ -144,7 +144,7 @@ jobs:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
           ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
         run: |
-          jfrog rt bpr \
+          jf rt bpr \
             --url "${ARTIFACTORY_URL}" \
             --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
             --status released \

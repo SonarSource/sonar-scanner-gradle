@@ -1,7 +1,6 @@
 ---
-# Test workflow to diagnose jfrog PATH issue in Release step
-# Trigger: push (for testing on unmerged PR branches)
-# Tests 5 ways to invoke jfrog (mise 2.92.0, jf/jfrog aliases, and setup-jfrog-cli)
+# Test workflow for PREQ-4210: mise installs JFrog CLI as `jf`, not `jfrog`.
+# Fix: use `jf` instead of `jfrog` in commands (e.g. `jf rt bpr`).
 name: Test JFrog Path
 on:
   push:
@@ -40,8 +39,8 @@ jobs:
           which jfrog 2>/dev/null || echo "jfrog not in PATH"
           which jf 2>/dev/null || echo "jf not in PATH"
 
-  test-1-repo-name-unfilled-direct-jfrog:
-    name: "1. REPO_NAME unfilled, direct jfrog (2.92.0)"
+  test-1-repo-name-unfilled-direct-jf:
+    name: "1. REPO_NAME unfilled, direct jf (2.92.0)"
     runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write
@@ -64,16 +63,16 @@ jobs:
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
             development/kv/data/repox url | ARTIFACTORY_URL;
-      - name: Test jfrog rt ping (REPO_NAME unfilled, direct call)
+      - name: Test jf rt ping (REPO_NAME unfilled, direct call)
         env:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
           ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
         run: |
           echo "REPO_NAME='${REPO_NAME}'"
-          jfrog rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
+          jf rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
 
-  test-2-repo-name-filled-direct-jfrog:
-    name: "2. REPO_NAME filled, direct jfrog (2.92.0)"
+  test-2-repo-name-filled-direct-jf:
+    name: "2. REPO_NAME filled, direct jf (2.92.0)"
     runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write
@@ -96,16 +95,16 @@ jobs:
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
             development/kv/data/repox url | ARTIFACTORY_URL;
-      - name: Test jfrog rt ping (REPO_NAME filled, direct call)
+      - name: Test jf rt ping (REPO_NAME filled, direct call)
         env:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
           ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
         run: |
           echo "REPO_NAME='${REPO_NAME}'"
-          jfrog rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
+          jf rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
 
   test-3-mise-exec-repo-name-unfilled:
-    name: "3. REPO_NAME unfilled, mise exec -- jfrog (2.92.0)"
+    name: "3. REPO_NAME unfilled, mise exec -- jf (2.92.0)"
     runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write
@@ -128,13 +127,13 @@ jobs:
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
             development/kv/data/repox url | ARTIFACTORY_URL;
-      - name: Test jfrog rt ping (mise exec, REPO_NAME unfilled)
+      - name: Test jf rt ping (mise exec, REPO_NAME unfilled)
         env:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
           ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
         run: |
           echo "REPO_NAME='${REPO_NAME}'"
-          mise exec -- jfrog rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
+          mise exec -- jf rt ping --url "${ARTIFACTORY_URL}" --access-token "${ARTIFACTORY_ACCESS_TOKEN}"
 
   test-4-jfrog-full-path:
     name: "4. Full path (mise where) to jfrog (2.92.0)"
