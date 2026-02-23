@@ -8,13 +8,19 @@ inputs:
     required: true
   sonar-runtime-version:
     required: false
+  develocity-url:
+    required: false
+    default: ""
+  use-develocity:
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
   steps:
-    - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
+    - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
       with:
-        version: 2025.12.10
+        version: 2025.7.12
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3
@@ -27,9 +33,8 @@ runs:
       with:
         artifactory-reader-role: private-reader
         working-directory: integrationTests
-      env:
-        GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
-        ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+        use-develocity: ${{ inputs.use-develocity }}
+        develocity-url: ${{ inputs.develocity-url }}
     - name: Run QA
       env:
         GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}

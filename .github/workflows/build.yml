@@ -14,6 +14,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  USE_DEVELOCITY: true
+  DEVELOCITY_URL: https://develocity-public.sonar.build/
+
 jobs:
   build:
     # Build takes over 30 minutes on "s" and around 5 minutes on "m".
@@ -51,6 +55,8 @@ jobs:
           artifactory-reader-role: private-reader    # Override default public-reader
           artifactory-deployer-role: qa-deployer     # Override default public-deployer
           gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   build-windows:
     name: Build Windows
@@ -66,12 +72,25 @@ jobs:
       - name: Configure Long Paths
         run: git config --global core.longpaths true
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
+      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
         with:
-          version: 2025.12.10
-      - name: Build
-        run: |
-          ./gradlew --no-daemon --info --stacktrace --console plain build -DbuildNumber="$BUILD_NUMBER"
+          version: 2025.7.12
+      - name: Configure Gradle
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        with:
+          develocity-injection-enabled: false
+          cache-disabled: true
+          develocity-plugin-version: '4.0'
+          validate-wrappers: false
+      - uses: SonarSource/ci-github-actions/build-gradle@v1
+        id: build-step
+        with:
+          deploy-pull-request: true
+          artifactory-reader-role: private-reader    # Override for public repo using private access
+          artifactory-deployer-role: qa-deployer     # Override for public repo using private access
+          gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   qa:
     if: ${{ needs.build.outputs.deployed }}
@@ -112,6 +131,8 @@ jobs:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
           sonar-runtime-version: "LATEST_RELEASE[25.11]"
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   qa-java11:
     if: ${{ needs.build.outputs.deployed }}
@@ -146,6 +167,8 @@ jobs:
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version }}
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   qa-windows:
     name: QA Windows
@@ -169,6 +192,8 @@ jobs:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
           sonar-runtime-version: "LATEST_RELEASE[25.11]"
+          use-develocity: ${{ env.USE_DEVELOCITY }}
+          develocity-url: ${{ env.DEVELOCITY_URL }}
 
   promote:
     needs:
