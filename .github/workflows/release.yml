@@ -125,7 +125,7 @@ jobs:
         uses: SonarSource/vault-action-wrapper@v3
         with:
           secrets: |
-            development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter access_token | ARTIFACTORY_ACCESS_TOKEN;
             development/kv/data/repox url | ARTIFACTORY_URL;
             development/kv/data/sign key | SIGNING_KEY;
             development/kv/data/sign passphrase | SIGNING_PASSWORD;
