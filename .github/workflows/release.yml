@@ -125,7 +125,8 @@ jobs:
         uses: SonarSource/vault-action-wrapper@v3
         with:
           secrets: |
-            development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter access_token | ARTIFACTORY_ACCESS_TOKEN;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_READER_TOKEN;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter access_token | ARTIFACTORY_PROMOTER_TOKEN;
             development/kv/data/repox url | ARTIFACTORY_URL;
             development/kv/data/sign key | SIGNING_KEY;
             development/kv/data/sign passphrase | SIGNING_PASSWORD;
@@ -142,18 +143,18 @@ jobs:
       - name: Release
         env:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
-          ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+          ARTIFACTORY_PROMOTER_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_PROMOTER_TOKEN }}
         run: |
           jf rt bpr \
             --url "${ARTIFACTORY_URL}" \
-            --access-token "${ARTIFACTORY_ACCESS_TOKEN}" \
+            --access-token "${ARTIFACTORY_PROMOTER_TOKEN}" \
             --status released \
             "${REPO_NAME}" "${BUILD_NUMBER}" sonarsource-public-releases
 
       - name: Publish to Gradle Plugin Portal
         env:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
-          ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
+          ARTIFACTORY_PRIVATE_PASSWORD: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_READER_TOKEN }}
           SIGNING_KEY: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_PASSWORD }}
           SIGNING_KEY_ID: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY_ID }}
