@@ -85,7 +85,8 @@ jobs:
       - uses: SonarSource/ci-github-actions/build-gradle@v1
         id: build-step
         with:
-          deploy-pull-request: true
+          deploy-pull-request: false
+          sonar-platform: 'none'
           artifactory-reader-role: private-reader    # Override for public repo using private access
           artifactory-deployer-role: qa-deployer     # Override for public repo using private access
           gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
