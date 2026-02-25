@@ -155,9 +155,9 @@ jobs:
         env:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
           ARTIFACTORY_PRIVATE_PASSWORD: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_READER_TOKEN }}
-          SIGNING_KEY: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY }}
-          SIGNING_PASSWORD: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_PASSWORD }}
-          SIGNING_KEY_ID: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingKeyId: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY_ID }}
           PUBLISH_KEY: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_KEY }}
           PUBLISH_SECRET: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_SECRET }}
         run: |
@@ -166,9 +166,6 @@ jobs:
             --stacktrace \
             --console plain \
             -DbuildNumber="${BUILD_NUMBER}" \
-            -PsigningKey="${SIGNING_KEY}" \
-            -PsigningPassword="${SIGNING_PASSWORD}" \
-            -PsigningKeyId="${SIGNING_KEY_ID}" \
             -Pgradle.publish.key="${PUBLISH_KEY}" \
             -Pgradle.publish.secret="${PUBLISH_SECRET}" \
             downloadMavenArtifactsAndPublishToGradlePluginPortal
