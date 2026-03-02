@@ -17,6 +17,8 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
 
@@ -70,6 +72,7 @@ public abstract class DownloadMavenArtifactsAndPublishToGradlePluginPortal exten
   @TaskAction
   public void executeTask() throws InterruptedException {
     downloadRequiredArtifactsInBuildFolder();
+    registerDownloadedSignatureArtifactsOnPublication();
     validatePublishContent();
     if (simulatePublication) {
       try (var localGradlePortal = new SimpleGradlePluginPortalServer()) {
@@ -123,6 +126,56 @@ public abstract class DownloadMavenArtifactsAndPublishToGradlePluginPortal exten
   }
 
   /**
+   * Register the downloaded .asc signature files on the pluginMaven publication so that the
+   * plugin-publish plugin's collectArtifacts() sees them and validation passes.
+   */
+  private void registerDownloadedSignatureArtifactsOnPublication() {
+    File rootDir = getProject().getRootDir();
+    Path pluginMavenDir = Path.of("build", "publications", "pluginMaven");
+    Path libsDir = Path.of("build", "libs");
+
+    File pomAsc = rootDir.toPath().resolve(pluginMavenDir).resolve("pom-default.xml.asc").toFile();
+    File jarAsc = rootDir.toPath().resolve(libsDir).resolve(artifactId + "-" + version + ".jar.asc").toFile();
+    File sourcesJarAsc = rootDir.toPath().resolve(libsDir).resolve(artifactId + "-" + version + "-sources.jar.asc").toFile();
+    File javadocJarAsc = rootDir.toPath().resolve(libsDir).resolve(artifactId + "-" + version + "-javadoc.jar.asc").toFile();
+    File moduleAsc = rootDir.toPath().resolve(pluginMavenDir).resolve("module.json.asc").toFile();
+
+    if (!pomAsc.isFile() || !jarAsc.isFile() || !sourcesJarAsc.isFile() || !javadocJarAsc.isFile() || !moduleAsc.isFile()) {
+      throw new GradleException(
+        "Signature files missing under build/ after download. Ensure .asc files exist in the release repository. "
+            + "pom.asc=" + pomAsc.isFile() + " jar.asc=" + jarAsc.isFile()
+            + " sources.asc=" + sourcesJarAsc.isFile() + " javadoc.asc=" + javadocJarAsc.isFile()
+            + " module.asc=" + moduleAsc.isFile());
+    }
+
+    PublishingExtension publishing = getProject().getExtensions().getByType(PublishingExtension.class);
+    MavenPublication publication = publishing.getPublications().withType(MavenPublication.class).getByName("pluginMaven");
+
+    publication.artifact(pomAsc, artifact -> {
+      artifact.setExtension("asc");
+      artifact.setClassifier(null);
+    });
+    publication.artifact(jarAsc, artifact -> {
+      artifact.setExtension("asc");
+      artifact.setClassifier(null);
+    });
+    publication.artifact(sourcesJarAsc, artifact -> {
+      artifact.setExtension("asc");
+      artifact.setClassifier("sources");
+    });
+    publication.artifact(javadocJarAsc, artifact -> {
+      artifact.setExtension("asc");
+      artifact.setClassifier("javadoc");
+    });
+    publication.artifact(moduleAsc, artifact -> {
+      artifact.setExtension("asc");
+      artifact.setClassifier(null);
+    });
+
+    LOGGER.info("Registered downloaded signature artifacts on publication pluginMaven");
+  }
+
+  /**
    * Validate that minimum publish content contains: pom, jar, sources, javadoc, module and their signatures.
    */
   private void validatePublishContent() {
@@ -156,6 +209,11 @@ public abstract class DownloadMavenArtifactsAndPublishToGradlePluginPortal exten
       throw new GradleException("Failed to download content from '" + artifactUrl + "'. Error: " + e.getMessage(), e);
     }
     if (response.statusCode() != 200) {
+      if (response.statusCode() == 404 && artifactUrl.contains(".asc")) {
+        throw new GradleException(
+          "Signature file missing in release repository: '" + artifactUrl + "'. "
+              + "Ensure .asc files are promoted to the release repository (e.g. sonarsource-public-releases).");
+      }
       throw new GradleException("Failed to download content from '" + artifactUrl + "'. HTTP status: " + response.statusCode());
     }
     byte[] content = response.body();
