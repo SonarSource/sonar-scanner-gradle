@@ -17,6 +17,8 @@ plugins {
     id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
     id("org.cyclonedx.bom") version "1.5.0"
     signing
+
+    id("org.sonarsource.cloud-native.license-file-generator")
 }
 
 apply(plugin = "com.gradle.plugin-publish")

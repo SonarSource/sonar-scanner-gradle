@@ -1,0 +1,3 @@
+[submodule "build-logic/common"]
+	path = build-logic/common
+	url = https://github.com/SonarSource/cloud-native-gradle-modules
