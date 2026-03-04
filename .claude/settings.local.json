@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh api:*)",
+      "WebSearch",
+      "Bash(git checkout:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(findstr:*)",
+      "Bash(Select-String -Pattern \"develocity|build scan|Publishing|Set Develocity|error|Error\" -SimpleMatch)",
+      "Bash(Select-Object -First 50)",
+      "Bash(.gradlew.bat wrapper --gradle-version 9.3.1)",
+      "Bash(cmd /c \"gradlew.bat wrapper --gradle-version 9.3.1\")",
+      "Bash(cmd /c \"gradlew.bat generateLicenseResources --write-verification-metadata sha256 2>&1\")",
+      "Bash(./gradlew generateLicenseResources:*)"
+    ]
+  }
+}
