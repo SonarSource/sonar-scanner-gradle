@@ -21,6 +21,10 @@ plugins {
     id("org.sonarsource.cloud-native.license-file-generator")
 }
 
+extensions.configure<org.sonarsource.cloudnative.gradle.LicenseGenerationConfig> {
+    projectLicenseFile.set(rootProject.file("LICENSE.txt"))
+}
+
 apply(plugin = "com.gradle.plugin-publish")
 
 val projectTitle: String by project
