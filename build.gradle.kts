@@ -251,7 +251,10 @@ signing {
     setRequired {
       doArtifactsRequireSignature()
     }
-    sign(publishing.publications)
+}
+
+afterEvaluate {
+    signing.sign(publishing.publications)
 }
 
 tasks.withType<Sign> {
