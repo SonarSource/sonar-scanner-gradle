@@ -121,6 +121,7 @@ license {
     strictCheck = true
     exclude("**/*-version.txt")
     exclude("**/projects/*")
+    exclude("**/licenses/**")
 }
 
 jacoco {
