@@ -152,23 +152,23 @@ public abstract class DownloadMavenArtifactsAndPublishToGradlePluginPortal exten
     MavenPublication publication = publishing.getPublications().withType(MavenPublication.class).getByName("pluginMaven");
 
     publication.artifact(pomAsc, artifact -> {
-      artifact.setExtension("asc");
+      artifact.setExtension("pom.asc");
       artifact.setClassifier(null);
     });
     publication.artifact(jarAsc, artifact -> {
-      artifact.setExtension("asc");
+      artifact.setExtension("jar.asc");
       artifact.setClassifier(null);
     });
     publication.artifact(sourcesJarAsc, artifact -> {
-      artifact.setExtension("asc");
+      artifact.setExtension("jar.asc");
       artifact.setClassifier("sources");
     });
     publication.artifact(javadocJarAsc, artifact -> {
-      artifact.setExtension("asc");
+      artifact.setExtension("jar.asc");
       artifact.setClassifier("javadoc");
     });
     publication.artifact(moduleAsc, artifact -> {
-      artifact.setExtension("asc");
+      artifact.setExtension("module.asc");
       artifact.setClassifier(null);
     });
 
