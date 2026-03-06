@@ -23,6 +23,7 @@ package org.sonarqube.gradle
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.JavaVersion
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.GroovyPlugin
@@ -221,10 +222,10 @@ class SonarQubePluginTest extends Specification {
   def "compute source and target properties for 'java' projects"() {
     parentProject.pluginManager.apply(JavaPlugin)
     childProject.pluginManager.apply(JavaPlugin)
-    parentProject.sourceCompatibility = 1.5
-    parentProject.targetCompatibility = 1.6
-    childProject.sourceCompatibility = 1.6
-    childProject.targetCompatibility = 1.8
+    parentProject.extensions.getByType(JavaPluginExtension).sourceCompatibility = JavaVersion.VERSION_1_5
+    parentProject.extensions.getByType(JavaPluginExtension).targetCompatibility = JavaVersion.VERSION_1_6
+    childProject.extensions.getByType(JavaPluginExtension).sourceCompatibility = JavaVersion.VERSION_1_6
+    childProject.extensions.getByType(JavaPluginExtension).targetCompatibility = JavaVersion.VERSION_1_8
 
     when:
     def properties = parentSonarTask().properties.get()
@@ -276,10 +277,10 @@ class SonarQubePluginTest extends Specification {
   def "compute source and target properties for 'groovy' projects"() {
     parentProject.pluginManager.apply(GroovyPlugin)
     childProject.pluginManager.apply(GroovyPlugin)
-    parentProject.sourceCompatibility = 1.5
-    parentProject.targetCompatibility = 1.6
-    childProject.sourceCompatibility = 1.6
-    childProject.targetCompatibility = 1.8
+    parentProject.extensions.getByType(JavaPluginExtension).sourceCompatibility = JavaVersion.VERSION_1_5
+    parentProject.extensions.getByType(JavaPluginExtension).targetCompatibility = JavaVersion.VERSION_1_6
+    childProject.extensions.getByType(JavaPluginExtension).sourceCompatibility = JavaVersion.VERSION_1_6
+    childProject.extensions.getByType(JavaPluginExtension).targetCompatibility = JavaVersion.VERSION_1_8
 
     when:
     def properties = parentSonarTask().properties.get()
