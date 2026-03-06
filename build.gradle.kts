@@ -253,9 +253,7 @@ signing {
     }
 }
 
-afterEvaluate {
-    signing.sign(publishing.publications)
-}
+signing.sign(publishing.publications)
 
 tasks.withType<Sign> {
     onlyIf {
