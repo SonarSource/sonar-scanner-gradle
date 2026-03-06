@@ -20,7 +20,6 @@
 package org.sonarqube.gradle
 
 import groovy.json.JsonSlurper
-import org.gradle.internal.impldep.org.junit.Assume
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.params.ParameterizedTest
