@@ -1,7 +1,7 @@
 [tools]
 java = ["17", "11"]
 maven = "3.9"
-gradle = "9"
+gradle = "9.3.1"
 
 [alias.java.versions]
 "11" = "corretto-11"

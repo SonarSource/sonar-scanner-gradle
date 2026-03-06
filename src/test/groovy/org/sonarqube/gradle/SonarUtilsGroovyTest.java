@@ -25,8 +25,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
-import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils;
 import org.gradle.util.GradleVersion;
 import org.junit.jupiter.api.Test;
 import org.sonarqube.gradle.SonarUtils.InputFileType;
@@ -39,31 +37,32 @@ import static org.sonarqube.gradle.SonarUtils.findProjectFileType;
 import static org.sonarqube.gradle.SonarUtils.isCompatibleWithJavaPluginExtension;
 
 class SonarUtilsGroovyTest {
+  private static final boolean IS_WINDOWS = System.getProperty("os.name", "").toLowerCase().contains("win");
 
   @Test
   void get_project_base_dir() {
-    Map<String, Object> properties = ImmutableMap.of(
+    Map<String, Object> properties = Map.of(
       "sonar.projectBaseDir", "/project/build",
       "m1.sonar.projectBaseDir", "/project/m1",
       "m1.m2.sonar.projectBaseDir", "/project/m1/m2"
     );
     assertEquals(Paths.get("/project").toAbsolutePath().toString(), SonarUtils.findProjectBaseDir(properties));
 
-    properties = ImmutableMap.of(
+    properties = Map.of(
       "sonar.projectBaseDir", "/build",
       "m1.sonar.projectBaseDir", "/m1",
       "m1.m2.sonar.projectBaseDir", "/m1/m2"
     );
     assertEquals(Paths.get("/").toAbsolutePath().toString(), SonarUtils.findProjectBaseDir(properties));
 
-    properties = ImmutableMap.of(
+    properties = Map.of(
       "sonar.projectBaseDir", "/project/",
       "m1.sonar.projectBaseDir", "/project/m1",
       "m1.m2.sonar.projectBaseDir", "/project/m1/m2"
     );
     assertEquals(Paths.get("/project").toAbsolutePath().toString(), SonarUtils.findProjectBaseDir(properties));
 
-    properties = ImmutableMap.of(
+    properties = Map.of(
       "sonar.projectBaseDir", "/project/build",
       "m1.sonar.projectBaseDir", "/m1",
       "m1.m2.sonar.projectBaseDir", "/m2"
@@ -74,9 +73,9 @@ class SonarUtilsGroovyTest {
 
   @Test
   void get_project_base_dir_with_different_roots() {
-    assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    assumeTrue(IS_WINDOWS);
 
-    Map<String, Object> properties = ImmutableMap.of(
+    Map<String, Object> properties = Map.of(
       "sonar.projectBaseDir", "C:\\project\\build",
       "m1.sonar.projectBaseDir", "E:\\project\\m1"
     );
