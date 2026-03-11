@@ -1,0 +1,48 @@
+name: Sonar Update Center Release
+
+# Adds a new section to https://github.com/SonarSource/sonar-update-center-properties/blob/master/scannergradle.properties.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New release version, e.g., '5.5.0.6356'"
+        required: true
+        type: string
+      description:
+        description: "A single sentence describing the highlights of the release"
+        required: true
+        type: string
+      changelog-url:
+        description: "Link to the list of changes, e.g., https://sonarsource.atlassian.net/issues?jql=project%20%3D%20SCANGRADLE%20AND%20fixversion%20%3D%207.2.2"
+        required: true
+        type: string
+      download-url:
+        description: "Link to the download page, e.g., https://plugins.gradle.org/plugin/org.sonarqube/7.2.2.6593"
+        required: true
+        type: string
+
+jobs:
+  update-center-release:
+    runs-on: github-ubuntu-latest-s
+    name: Sonar Update Center Release
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+    steps:
+
+      - name: Sonar Update Center Release
+        id: sonar-update-center-release
+        uses: SonarSource/release-github-actions/sonar-update-center-release@v1
+        with:
+          file: "scannergradle.properties"
+          version: "${{ inputs.version }}"
+          description: "${{ inputs.description }}"
+          changelog-url: "${{ inputs.changelog-url }}"
+          download-url: "${{ inputs.download-url }}"
+
+      - name: Summary
+        run: |
+          echo "## Sonar Update Center Release" >> $GITHUB_STEP_SUMMARY
+          echo "Pull Request: ${{ steps.sonar-update-center-release.outputs.pull-request-url }}" >> $GITHUB_STEP_SUMMARY
