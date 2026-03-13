@@ -151,6 +151,10 @@ public class GradleTest extends AbstractGradleIT {
   public void testUserDefinedProperties() throws Exception {
     Properties props = runGradlewSonarSimulationModeWithEnv("/java-gradle-user-properties", emptyMap(), new DefaultRunConfiguration(), "compileJava", "compileTestJava");
 
+    assertThat(props.getProperty("sonar.projectName")).isEqualTo("Simple Java Gradle Project");
+    assertThat(props.getProperty("sonar.projectKey")).isEqualTo("org.codehaus.sonar:example-java-gradle");
+    assertThat(props.getProperty("sonar.projectDescription")).isEqualTo("A simple Java Gradle project to test the proper handling of user defined properties");
+    assertThat(props.getProperty("sonar.projectVersion")).isEqualTo("0.1-SNAPSHOT");
     assertThat(props.getProperty("sonar.sources").split(",")).containsOnly("src/main/java");
     assertThat(props.getProperty("sonar.tests").split(",")).containsOnly("src/test/java");
     assertThat(props.getProperty("sonar.coverage.jacoco.xmlReportPaths").split(",")).containsOnly("reports/nonexisting.xml", "**/*.xml");
