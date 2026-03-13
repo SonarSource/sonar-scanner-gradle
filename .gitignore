@@ -38,3 +38,5 @@ comma,quote"lib.jar
 
 #----Specific file generated during tests
 file-access.properties
+
+integrationTests/.mvn/.develocity/

@@ -14,6 +14,7 @@ sonar {
     properties {
         property "sonar.projectName", "Simple Java Gradle Project"
         property "sonar.projectKey", "org.codehaus.sonar:example-java-gradle"
+        property "sonar.projectDescription", "A simple Java Gradle project"
 
         property "sonar.sources", "src/main/java"
         property "sonar.tests", "src/test/java"
