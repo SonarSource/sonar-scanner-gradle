@@ -23,8 +23,8 @@ package org.sonarqube.gradle
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.JavaVersion
 import org.gradle.api.file.SourceDirectorySet
-import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
@@ -32,8 +32,6 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.initialization.GradlePropertiesController
-import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -62,7 +60,6 @@ class SonarQubePluginTest extends Specification {
     parentProject.repositories {
       mavenCentral()
     }
-    (parentProject as ProjectInternal).services.get(GradlePropertiesController.class).loadGradlePropertiesFrom(parentProject.rootDir, false)
 
     rootProject.allprojects {
       group = "group"
@@ -225,10 +222,10 @@ class SonarQubePluginTest extends Specification {
   def "compute source and target properties for 'java' projects"() {
     parentProject.pluginManager.apply(JavaPlugin)
     childProject.pluginManager.apply(JavaPlugin)
-    parentProject.sourceCompatibility = 1.5
-    parentProject.targetCompatibility = 1.6
-    childProject.sourceCompatibility = 1.6
-    childProject.targetCompatibility = 1.8
+    parentProject.extensions.getByType(JavaPluginExtension).sourceCompatibility = JavaVersion.VERSION_1_5
+    parentProject.extensions.getByType(JavaPluginExtension).targetCompatibility = JavaVersion.VERSION_1_6
+    childProject.extensions.getByType(JavaPluginExtension).sourceCompatibility = JavaVersion.VERSION_1_6
+    childProject.extensions.getByType(JavaPluginExtension).targetCompatibility = JavaVersion.VERSION_1_8
 
     when:
     def properties = parentSonarTask().properties.get()
@@ -280,10 +277,10 @@ class SonarQubePluginTest extends Specification {
   def "compute source and target properties for 'groovy' projects"() {
     parentProject.pluginManager.apply(GroovyPlugin)
     childProject.pluginManager.apply(GroovyPlugin)
-    parentProject.sourceCompatibility = 1.5
-    parentProject.targetCompatibility = 1.6
-    childProject.sourceCompatibility = 1.6
-    childProject.targetCompatibility = 1.8
+    parentProject.extensions.getByType(JavaPluginExtension).sourceCompatibility = JavaVersion.VERSION_1_5
+    parentProject.extensions.getByType(JavaPluginExtension).targetCompatibility = JavaVersion.VERSION_1_6
+    childProject.extensions.getByType(JavaPluginExtension).sourceCompatibility = JavaVersion.VERSION_1_6
+    childProject.extensions.getByType(JavaPluginExtension).targetCompatibility = JavaVersion.VERSION_1_8
 
     when:
     def properties = parentSonarTask().properties.get()
@@ -399,7 +396,7 @@ class SonarQubePluginTest extends Specification {
   }
 
   def "properties with list of file path should be escaped correctly"() {
-    Assumptions.assumeFalse(SystemUtils.IS_OS_WINDOWS)
+    Assumptions.assumeFalse(System.getProperty("os.name", "").toLowerCase().contains("win"))
     def rootProject = ProjectBuilder.builder().withName("root").build()
     def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/java-escaped-project")).build()
 
