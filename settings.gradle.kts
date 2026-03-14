@@ -25,6 +25,7 @@ pluginManagement {
         gradlePluginPortal()
         google()
     }
+    includeBuild("build-logic/common")
 }
 
 dependencyResolutionManagement {

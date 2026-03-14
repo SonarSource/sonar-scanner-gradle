@@ -17,6 +17,12 @@ plugins {
     id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
     id("org.cyclonedx.bom") version "1.5.0"
     signing
+
+    id("org.sonarsource.cloud-native.license-file-generator")
+}
+
+extensions.configure<org.sonarsource.cloudnative.gradle.LicenseGenerationConfig> {
+    projectLicenseFile.set(rootProject.file("LICENSE.txt"))
 }
 
 apply(plugin = "com.gradle.plugin-publish")
@@ -115,6 +121,7 @@ license {
     strictCheck = true
     exclude("**/*-version.txt")
     exclude("**/projects/*")
+    exclude("**/licenses/**")
 }
 
 jacoco {
@@ -244,8 +251,9 @@ signing {
     setRequired {
       doArtifactsRequireSignature()
     }
-    sign(publishing.publications)
 }
+
+signing.sign(publishing.publications)
 
 tasks.withType<Sign> {
     onlyIf {
