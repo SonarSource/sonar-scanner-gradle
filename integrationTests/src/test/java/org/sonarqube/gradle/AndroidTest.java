@@ -41,6 +41,7 @@ import static org.junit.Assume.assumeTrue;
 
 public class AndroidTest extends AbstractGradleIT {
   private static final Semver VERSION_8_3_0 = new Semver("8.3.0", Semver.SemverType.STRICT);
+  private static final Semver VERSION_9_0_0 = new Semver("9.0.0", Semver.SemverType.STRICT);
 
   @BeforeClass
   public static void beforeAll() {
@@ -49,9 +50,21 @@ public class AndroidTest extends AbstractGradleIT {
     assumeTrue(getAndroidGradleVersion().isGreaterThan("7.0.0"));
   }
 
+  /**
+   * Returns the expected default variant name.
+   * AGP < 9 uses declaration order (demoMinApi23Debug first),
+   * AGP 9+ uses alphabetical order (demoMinApi18Debug first).
+   */
+  private static String getExpectedDefaultVariant() {
+    return getAndroidGradleVersion().isGreaterThanOrEqualTo(VERSION_9_0_0)
+      ? "demoMinApi18Debug" : "demoMinApi23Debug";
+  }
+
   @Test
   public void testUsingDefaultVariant() throws Exception {
-    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-default-variant", emptyMap(), new DefaultRunConfiguration(), "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac");
+    String variant = getExpectedDefaultVariant();
+    String capitalizedVariant = variant.substring(0, 1).toUpperCase() + variant.substring(1);
+    Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle-default-variant", emptyMap(), new DefaultRunConfiguration(), "test", "compile" + capitalizedVariant + "AndroidTestJavaWithJavac");
 
     Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
 
@@ -65,35 +78,34 @@ public class AndroidTest extends AbstractGradleIT {
 
     if (getAndroidGradleVersion().isGreaterThanOrEqualTo(VERSION_8_3_0)) {
       assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
-        .isEqualTo(baseDir.resolve("build/intermediates/javac/demoMinApi23Debug/compileDemoMinApi23DebugJavaWithJavac/classes"));
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/" + variant + "/compile" + capitalizedVariant + "JavaWithJavac/classes"));
     } else {
       assertThat(Paths.get(props.getProperty("sonar.java.binaries")))
-        .isEqualTo(baseDir.resolve("build/intermediates/javac/demoMinApi23Debug/classes"));
+        .isEqualTo(baseDir.resolve("build/intermediates/javac/" + variant + "/classes"));
     }
 
-    // For Android Gradle Plugin version 8 and greater, the debugAndroidTest artifacts are no longer present in the same folder
     if (getAndroidGradleVersion().isGreaterThanOrEqualTo(VERSION_8_3_0)) {
       assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
         .containsOnly(
-          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/compileDemoMinApi23DebugUnitTestJavaWithJavac/classes")
+          baseDir.resolve("build/intermediates/javac/" + variant + "UnitTest/compile" + capitalizedVariant + "UnitTestJavaWithJavac/classes")
         );
     } else if (getAndroidGradleVersion().isGreaterThanOrEqualTo("8.0.0")) {
       assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
         .containsOnly(
-          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/classes")
+          baseDir.resolve("build/intermediates/javac/" + variant + "UnitTest/classes")
         );
     } else {
       assertThat(stream(props.getProperty("sonar.java.test.binaries").split(",")).map(Paths::get))
         .containsOnly(
-          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugUnitTest/classes"),
-          baseDir.resolve("build/intermediates/javac/demoMinApi23DebugAndroidTest/classes")
+          baseDir.resolve("build/intermediates/javac/" + variant + "UnitTest/classes"),
+          baseDir.resolve("build/intermediates/javac/" + variant + "AndroidTest/classes")
         );
     }
 
     assertThat(props.getProperty("sonar.java.libraries")).contains("android.jar", "joda-time-2.7.jar");
     assertThat(props.getProperty("sonar.java.libraries")).doesNotContain("junit-4.12.jar");
     assertThat(props.getProperty("sonar.java.test.libraries")).contains("junit-4.12.jar");
-    assertThat(props.getProperty("sonar.junit.reportPaths")).contains(baseDir.resolve("build/test-results/testDemoMinApi23DebugUnitTest").toString());
+    assertThat(props.getProperty("sonar.junit.reportPaths")).contains(baseDir.resolve("build/test-results/test" + capitalizedVariant + "UnitTest").toString());
     assertThat(props.getProperty("sonar.android.detected")).contains("true");
 
     assertThat(props.getProperty("sonar.android.minsdkversion.min")).contains("21");
