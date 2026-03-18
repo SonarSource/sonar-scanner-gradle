@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle;
 
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -100,6 +101,10 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
         configureTask(task, project, actionBroadcastMap);
       });
+
+      AndroidUtils.withVariants(project, variants -> {
+        LOGGER.info("Variants: " + variants.stream().map(v -> v.getName()).collect(Collectors.joining(", ")));
+      });
     }
   }
 
@@ -129,8 +134,8 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setTestCompileClasspath(test);
 
         if (isAndroidProject(target)) {
-          task.setMainLibraries(target.provider(() -> AndroidUtils.findMainLibraries(target)));
-          task.setTestLibraries(target.provider(() -> AndroidUtils.findTestLibraries(target)));
+          task.setMainLibraries(target.provider(() -> LegacyAndroidUtils.findMainLibraries(target)));
+          task.setTestLibraries(target.provider(() -> LegacyAndroidUtils.findTestLibraries(target)));
         } else {
           task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
           task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
@@ -252,7 +257,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && notSkipped(p))
       .map(p -> {
-        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
+        LegacyAndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
 
         List<Task> allTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
