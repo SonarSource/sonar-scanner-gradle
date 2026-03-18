@@ -54,7 +54,7 @@ Developer documentation
 -----------------------
 
 ### Building the project
-To build the plugin and run the tests, you will need Java 11.
+To build the plugin and run the tests, you will need Java 17.
 ```bash
 ./gradlew clean build
 ```
