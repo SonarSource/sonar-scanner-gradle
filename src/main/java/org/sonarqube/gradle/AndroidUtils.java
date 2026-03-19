@@ -19,6 +19,9 @@
  */
 package org.sonarqube.gradle;
 
+import com.android.build.api.dsl.ApplicationExtension;
+import com.android.build.api.dsl.DynamicFeatureExtension;
+import com.android.build.api.dsl.LibraryExtension;
 import com.android.build.api.variant.ApplicationAndroidComponentsExtension;
 import com.android.build.api.variant.DynamicFeatureAndroidComponentsExtension;
 import com.android.build.api.variant.LibraryAndroidComponentsExtension;
@@ -30,15 +33,30 @@ import com.android.build.gradle.LibraryPlugin;
 import com.android.build.gradle.TestPlugin;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.gradle.api.Project;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
+import org.gradle.api.plugins.PluginCollection;
 
 public class AndroidUtils {
+
+  private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
 
   private AndroidUtils() {
   }
 
-  public static void withVariants(Project project, Consumer<List<Variant>> consumer) {
+  public static void withVariant(Project project, @Nullable String variantName, Consumer<Variant> consumer) {
+    withVariants(project, variants -> {
+      Variant variant = findVariant(variants, variantName, getTestBuildType(project));
+      consumer.accept(variant);
+    });
+  }
+
+  static void withVariants(Project project, Consumer<List<Variant>> consumer) {
     var variants = new ArrayList<Variant>();
 
     if (!project.getPlugins().withType(AppPlugin.class).isEmpty()) {
@@ -64,6 +82,53 @@ public class AndroidUtils {
     }
 
     project.afterEvaluate(p -> consumer.accept(variants));
+  }
+
+  @Nullable
+  private static Variant findVariant(List<Variant> candidates, @Nullable String variantName, @Nullable String testBuildType) {
+    if (candidates.isEmpty()) {
+      return null;
+    }
+
+    if (variantName == null) {
+      // Take the first test variant when there is no provided variant name, or any variant if there is no test variant.
+      Optional<Variant> firstDebug = candidates.stream().filter(v -> testBuildType != null && testBuildType.equals(v.getName())).findFirst();
+      Variant result = firstDebug.orElse(candidates.get(0));
+      LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.getName());
+      return result;
+    }
+
+    Optional<Variant> result = candidates.stream().filter(v -> variantName.equals(v.getName())).findFirst();
+    if (result.isPresent()) {
+      return result.get();
+    } else {
+      throw new IllegalArgumentException(
+        "Unable to find variant '"
+          + variantName
+          + "' to use for SonarQube analysis. Candidates are: "
+          + candidates.stream().map(Variant::getName).collect(Collectors.joining(", "))
+      );
+    }
+  }
+
+  @Nullable
+  private static String getTestBuildType(Project project) {
+    PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
+    if (!appPlugins.isEmpty()) {
+      ApplicationExtension androidExtension = project.getExtensions().getByType(ApplicationExtension.class);
+      return androidExtension.getTestBuildType();
+    }
+    PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
+    if (!libPlugins.isEmpty()) {
+      LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
+      return androidExtension.getTestBuildType();
+    }
+    PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
+    if (!dynamicFeaturePlugins.isEmpty()) {
+      DynamicFeatureExtension androidExtension = project.getExtensions().getByType(DynamicFeatureExtension.class);
+      return androidExtension.getTestBuildType();
+    }
+    return null;
   }
 
 }

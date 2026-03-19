@@ -19,7 +19,7 @@
  */
 package org.sonarqube.gradle;
 
-import com.android.build.api.variant.ApplicationAndroidComponentsExtension;
+import com.android.build.api.variant.Variant;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,7 +75,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   @Override
   public void apply(Project project) {
-    // don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to resolve recursively the configuration of all
+    // Don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to recursively resolve the configuration of all
     // the projects, failing if a project has a sonarqube configuration since the extension wasn't added to it yet.
     if (project.getExtensions().findByName(SonarExtension.SONAR_EXTENSION_NAME) == null) {
       Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap = new HashMap<>();
@@ -83,38 +83,41 @@ public class SonarQubePlugin implements Plugin<Project> {
       addExtensions(project, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME, actionBroadcastMap);
       LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
 
-      List<File> resolverFiles = registerAndConfigureResolverTasks(project);
-
-      TaskContainer tasks = project.getTasks();
-      tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
-        task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
-        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        task.setResolverFiles(resolverFiles);
-        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
-        configureTask(task, project, actionBroadcastMap);
-      });
-
-      tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
-        task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
-        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        task.setResolverFiles(resolverFiles);
-        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
-        configureTask(task, project, actionBroadcastMap);
-      });
-
-      AndroidUtils.withVariants(project, variants -> {
-        LOGGER.info("Variants: " + variants.stream().map(v -> v.getName()).collect(Collectors.joining(", ")));
+      AndroidUtils.withVariant(project, getConfiguredAndroidVariant(project), variant -> {
+        registerProject(project, variant, actionBroadcastMap);
       });
     }
   }
 
+  private static void registerProject(Project project, @Nullable Variant variant, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
+    var androidTasks = getAndroidTasks(project, variant);
+
+    List<File> resolverFiles = registerAndConfigureResolverTasks(project, androidTasks);
+
+    TaskContainer tasks = project.getTasks();
+    tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
+      task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
+      task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+      task.setResolverFiles(resolverFiles);
+      task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
+      configureTask(task, project, actionBroadcastMap, androidTasks);
+    });
+
+    tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
+      task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
+      task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+      task.setResolverFiles(resolverFiles);
+      task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
+      configureTask(task, project, actionBroadcastMap, androidTasks);
+    });
+  }
+
   /**
    * Register and configure a resolver task per (sub-)project.
-   * As the tasks are configured, we capture list of output files where the resolved properties will be written.
+   * As the tasks are configured, we capture the list of output files where the resolved properties will be written.
    */
-  private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
+  private static List<File> registerAndConfigureResolverTasks(Project topLevelProject, Callable<Iterable<? extends Task>> androidTasks) {
     List<File> resolverFiles = new ArrayList<>();
-    var androidTasks = getAndroidTasks(topLevelProject);
 
     topLevelProject.getAllprojects().forEach(target ->
       target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
@@ -170,7 +173,12 @@ public class SonarQubePlugin implements Plugin<Project> {
     });
   }
 
-  private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
+  private static void configureTask(
+    SonarTask sonarTask,
+    Project project,
+    Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap,
+    Callable<Iterable<? extends Task>> androidTasks
+  ) {
     Provider<ComputedProperties> computedPropertiesProvider = project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties());
     Provider<Map<String, String>> conventionProvider = computedPropertiesProvider.map(computed ->
       computed.properties.entrySet()
@@ -189,7 +197,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
 
     sonarTask.mustRunAfter(getJavaCompileTasks(project));
-    sonarTask.mustRunAfter(getAndroidTasks(project));
+    sonarTask.mustRunAfter(androidTasks);
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
     sonarTask.dependsOn(getClassPathResolverTask(project));
@@ -250,18 +258,15 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   /**
-   * must run after compile to have access to class files
-   * must run after test to have access to test reports
+   * Must run after compilation to have access to class files, and after tests to have access to test reports.
    */
-  private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
+  private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project, @Nullable Variant variant) {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && notSkipped(p))
       .map(p -> {
-        LegacyAndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
-
         List<Task> allTasks = new ArrayList<>();
-        if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
-          final String compileTaskPrefix = "compile" + capitalize(androidVariantAndExtension.getVariant().getName());
+        if (variant != null) {
+          final String compileTaskPrefix = "compile" + capitalize(variant.getName());
           boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
           boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
           // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
@@ -270,7 +275,7 @@ public class SonarQubePlugin implements Plugin<Project> {
             addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
           }
 
-          final String testTaskPrefix = "test" + capitalize(androidVariantAndExtension.getVariant().getName());
+          final String testTaskPrefix = "test" + capitalize(variant.getName());
           addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
         }
         return allTasks;
