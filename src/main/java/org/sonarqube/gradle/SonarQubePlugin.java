@@ -20,8 +20,10 @@
 package org.sonarqube.gradle;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -59,6 +62,13 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 public class SonarQubePlugin implements Plugin<Project> {
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
+  private static final String[] ANDROID_PLUGIN_IDS = {
+    "com.android.application",
+    "com.android.library",
+    "com.android.test",
+    "com.android.dynamic-feature"
+  };
+
   private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
     return actionBroadcastMap.computeIfAbsent(project.getPath(), s -> new ActionBroadcast<>());
   }
@@ -81,6 +91,9 @@ public class SonarQubePlugin implements Plugin<Project> {
       addExtensions(project, SonarExtension.SONAR_EXTENSION_NAME, actionBroadcastMap);
       addExtensions(project, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME, actionBroadcastMap);
       LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
+
+      // Register AndroidConfigCollectorTask per Android subproject (AGP 9+ support)
+      registerAndroidConfigCollectorTasks(project);
 
       List<File> resolverFiles = registerAndConfigureResolverTasks(project);
 
@@ -143,6 +156,9 @@ public class SonarQubePlugin implements Plugin<Project> {
         // Android uses JetifyTransform to translate and ensure compatibility for specific deprecated libraries.
         // Therefore, we must wait for this transform to complete before collecting the classpath.
         task.mustRunAfter(androidTasks);
+
+        // Resolver depends on collector so variant data is available when resolving libraries
+        task.dependsOn(getAndroidConfigCollectorTasks(topLevelProject));
       })
     );
     return resolverFiles;
@@ -187,6 +203,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarTask.mustRunAfter(getAndroidTasks(project));
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
+    sonarTask.dependsOn(getAndroidConfigCollectorTasks(project));
     sonarTask.dependsOn(getClassPathResolverTask(project));
   }
 
@@ -222,6 +239,13 @@ public class SonarQubePlugin implements Plugin<Project> {
       .collect(Collectors.toList());
   }
 
+  private static Callable<Iterable<? extends Task>> getAndroidConfigCollectorTasks(Project project) {
+    return () -> project.getAllprojects().stream()
+      .filter(p -> p.getTasks().getNames().contains(AndroidConfigCollectorTask.TASK_NAME))
+      .map(p -> p.getTasks().getByName(AndroidConfigCollectorTask.TASK_NAME))
+      .collect(Collectors.toList());
+  }
+
   static boolean notSkipped(Project p) {
     return !isSkipped(p);
   }
@@ -252,11 +276,11 @@ public class SonarQubePlugin implements Plugin<Project> {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && notSkipped(p))
       .map(p -> {
-        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
+        String variantName = AndroidUtils.getSelectedVariantName(p, getConfiguredAndroidVariant(p));
 
         List<Task> allTasks = new ArrayList<>();
-        if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
-          final String compileTaskPrefix = "compile" + capitalize(androidVariantAndExtension.getVariant().getName());
+        if (variantName != null) {
+          final String compileTaskPrefix = "compile" + capitalize(variantName);
           boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
           boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
           // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
@@ -265,12 +289,230 @@ public class SonarQubePlugin implements Plugin<Project> {
             addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
           }
 
-          final String testTaskPrefix = "test" + capitalize(androidVariantAndExtension.getVariant().getName());
+          final String testTaskPrefix = "test" + capitalize(variantName);
           addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
         }
         return allTasks;
       })
       .flatMap(List::stream)
       .collect(Collectors.toList());
+  }
+
+  // ------------------------------------------------------------------
+  //  AndroidConfigCollectorTask registration + onVariants wiring
+  // ------------------------------------------------------------------
+
+  /**
+   * For every (sub-)project, listen for Android plugin application via {@code plugins.withId()}.
+   * When an Android plugin is applied, register an {@link AndroidConfigCollectorTask} and wire
+   * {@code onVariants} callbacks so variant metadata flows into the task during configuration.
+   */
+  private static void registerAndroidConfigCollectorTasks(Project topLevelProject) {
+    topLevelProject.getAllprojects().forEach(target -> {
+      for (String pluginId : ANDROID_PLUGIN_IDS) {
+        target.getPlugins().withId(pluginId, plugin -> {
+          if (target.getTasks().getNames().contains(AndroidConfigCollectorTask.TASK_NAME)) {
+            return; // already registered
+          }
+          // Must use create() (eager) instead of register() (lazy) because onVariants
+          // callbacks must be registered during the configuration phase.
+          AndroidConfigCollectorTask task = target.getTasks().create(
+            AndroidConfigCollectorTask.TASK_NAME, AndroidConfigCollectorTask.class);
+          task.setDescription(AndroidConfigCollectorTask.TASK_DESCRIPTION);
+          task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+
+          // Store reference so AndroidUtils can access in-memory data during config phase
+          target.getExtensions().getExtraProperties().set(AndroidUtils.EXTRA_PROP_COLLECTOR_TASK, task);
+
+          File outputDir = new File(target.getLayout().getBuildDirectory().getAsFile().get(), "sonar-android-config");
+          outputDir.mkdirs();
+          task.setOutputDirectory(outputDir);
+
+          // Wire testBuildType from the "android" extension via reflection
+          wireTestBuildType(target, task);
+
+          // Wire defaultConfig + productFlavors minSdk via reflection
+          wireMinSdksFromExtension(target, task);
+
+          // Wire boot classpath as a lazy Provider (resolved at execution time)
+          wireBootClasspath(target, task);
+
+          // Wire onVariants callback — must happen eagerly during configuration phase
+          wireOnVariantsCallback(target, task);
+        });
+      }
+    });
+  }
+
+  /**
+   * Wraps {@code android.getBootClasspath()} in a lazy Provider so it is only resolved at execution time
+   * (when the SDK is guaranteed to be available). The reflection is needed because {@code getBootClasspath()}
+   * lives on {@code BaseExtension} (removed in AGP 9) with no replacement in the public API.
+   */
+  @SuppressWarnings("unchecked")
+  private static void wireBootClasspath(Project target, AndroidConfigCollectorTask task) {
+    Object androidExt = target.getExtensions().findByName("android");
+    if (androidExt == null) {
+      return;
+    }
+    Provider<List<File>> provider = target.provider(() -> {
+      try {
+        Method m = androidExt.getClass().getMethod("getBootClasspath");
+        List<File> result = (List<File>) m.invoke(androidExt);
+        return result != null ? result : Collections.emptyList();
+      } catch (Exception e) {
+        LOGGER.debug("Unable to resolve boot classpath: {}", e.getMessage());
+        return Collections.emptyList();
+      }
+    });
+    task.setBootClasspathProvider(provider);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void wireTestBuildType(Project target, AndroidConfigCollectorTask task) {
+    Object androidExt = target.getExtensions().findByName("android");
+    if (androidExt == null) {
+      return;
+    }
+    try {
+      Method getTestBuildType = androidExt.getClass().getMethod("getTestBuildType");
+      task.setTestBuildType((String) getTestBuildType.invoke(androidExt));
+    } catch (Exception e) {
+      LOGGER.debug("Unable to get testBuildType: {}", e.getMessage());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void wireMinSdksFromExtension(Project target, AndroidConfigCollectorTask task) {
+    Object androidExt = target.getExtensions().findByName("android");
+    if (androidExt == null) {
+      return;
+    }
+    // defaultConfig.minSdk
+    try {
+      Method getDefaultConfig = androidExt.getClass().getMethod("getDefaultConfig");
+      Object defaultConfig = getDefaultConfig.invoke(androidExt);
+      Method getMinSdk = defaultConfig.getClass().getMethod("getMinSdk");
+      Object minSdk = getMinSdk.invoke(defaultConfig);
+      if (minSdk instanceof Integer) {
+        task.addMinSdk((Integer) minSdk);
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Unable to get defaultConfig minSdk: {}", e.getMessage());
+    }
+    // productFlavors[*].minSdk
+    try {
+      Method getProductFlavors = androidExt.getClass().getMethod("getProductFlavors");
+      Iterable<?> flavors = (Iterable<?>) getProductFlavors.invoke(androidExt);
+      for (Object flavor : flavors) {
+        try {
+          Method getMinSdk = flavor.getClass().getMethod("getMinSdk");
+          Object minSdk = getMinSdk.invoke(flavor);
+          if (minSdk instanceof Integer) {
+            task.addMinSdk((Integer) minSdk);
+          }
+        } catch (Exception ignored) {
+          // individual flavor may not expose minSdk
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Unable to get productFlavors minSdk: {}", e.getMessage());
+    }
+  }
+
+  /**
+   * Calls {@code androidComponents.onVariants(selector.all(), callback)} via reflection
+   * so that this class has zero compile-time AGP dependencies.
+   */
+  @SuppressWarnings("unchecked")
+  private static void wireOnVariantsCallback(Project target, AndroidConfigCollectorTask task) {
+    Object androidComponents = target.getExtensions().findByName("androidComponents");
+    if (androidComponents == null) {
+      return;
+    }
+    try {
+      Method selectorMethod = androidComponents.getClass().getMethod("selector");
+      Object selector = selectorMethod.invoke(androidComponents);
+      Method allMethod = selector.getClass().getMethod("all");
+      Object allSelector = allMethod.invoke(selector);
+
+      Method onVariantsMethod = null;
+      for (Method m : androidComponents.getClass().getMethods()) {
+        if ("onVariants".equals(m.getName()) && m.getParameterCount() == 2
+          && m.getParameterTypes()[1].equals(Action.class)) {
+          onVariantsMethod = m;
+          break;
+        }
+      }
+
+      if (onVariantsMethod != null) {
+        Action<Object> callback = variant -> {
+          try {
+            String name = (String) variant.getClass().getMethod("getName").invoke(variant);
+            String buildType = null;
+            try {
+              buildType = (String) variant.getClass().getMethod("getBuildType").invoke(variant);
+            } catch (Exception ignored) {
+            }
+            Integer minSdk = null;
+            try {
+              Object minSdkObj = variant.getClass().getMethod("getMinSdk").invoke(variant);
+              if (minSdkObj != null) {
+                minSdk = (int) minSdkObj.getClass().getMethod("getApiLevel").invoke(minSdkObj);
+              }
+            } catch (Exception ignored) {
+            }
+            task.addVariant(name, buildType, minSdk);
+
+            // Capture source directory providers (java, res, assets, etc.)
+            wireVariantSourceProviders(variant, name, task);
+          } catch (Exception e) {
+            LOGGER.debug("Unable to extract variant data: {}", e.getMessage());
+          }
+        };
+        onVariantsMethod.invoke(androidComponents, allSelector, callback);
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Unable to register onVariants callback: {}", e.getMessage());
+    }
+  }
+
+  /**
+   * Captures source directory providers from {@code variant.getSources()} via reflection.
+   * <p>
+   * Source types fall into two categories:
+   * <ul>
+   *   <li>{@code SourceDirectories} (java, aidl, …) — {@code getAll()} returns {@code Provider<List<Directory>>}</li>
+   *   <li>{@code LayeredSourceDirectories} (res, assets, …) — {@code getAll()} returns {@code Provider<List<List<Directory>>>}</li>
+   * </ul>
+   * Both are stored as raw {@code Provider<?>} and flattened in the collector task at execution time.
+   */
+  private static void wireVariantSourceProviders(Object variant, String variantName, AndroidConfigCollectorTask task) {
+    try {
+      Object sources = variant.getClass().getMethod("getSources").invoke(variant);
+      // Source types whose getAll() can be safely resolved at execution time.
+      // getRes() and getManifests() are excluded because their providers depend on tasks
+      // (e.g. generateDebugResValues) that may not have run yet. Res and manifest dirs
+      // are added convention-based in AndroidUtils instead.
+      String[] sourceGetters = {"getJava", "getKotlin", "getResources", "getAidl"};
+      for (String getter : sourceGetters) {
+        try {
+          Object sourceDir = sources.getClass().getMethod(getter).invoke(sources);
+          if (sourceDir != null) {
+            Method getAllMethod = sourceDir.getClass().getMethod("getAll");
+            Provider<?> provider = (Provider<?>) getAllMethod.invoke(sourceDir);
+            if (provider != null) {
+              task.addVariantSourceProvider(variantName, provider);
+            }
+          }
+        } catch (NoSuchMethodException ignored) {
+          // Source type may not exist in this AGP version
+        } catch (Exception e) {
+          LOGGER.debug("Unable to capture {} source provider for variant '{}': {}", getter, variantName, e.getMessage());
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.debug("Unable to capture source providers for variant '{}': {}", variantName, e.getMessage());
+    }
   }
 }

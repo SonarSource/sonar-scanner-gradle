@@ -19,328 +19,253 @@
  */
 package org.sonarqube.gradle;
 
-import com.android.build.gradle.AppExtension;
-import com.android.build.gradle.AppPlugin;
-import com.android.build.gradle.BaseExtension;
-import com.android.build.gradle.DynamicFeaturePlugin;
-import com.android.build.gradle.LibraryExtension;
-import com.android.build.gradle.LibraryPlugin;
-import com.android.build.gradle.TestExtension;
-import com.android.build.gradle.TestPlugin;
-import com.android.build.gradle.api.ApkVariant;
-import com.android.build.gradle.api.BaseVariant;
-import com.android.build.gradle.api.TestVariant;
-import com.android.build.gradle.api.UnitTestVariant;
-import com.android.build.gradle.internal.api.TestedVariant;
-import com.android.build.gradle.internal.dsl.ProductFlavor;
-import com.android.build.gradle.internal.lint.AndroidLintTask;
-import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
-import com.android.build.gradle.tasks.factory.AndroidUnitTest;
-import com.android.builder.model.ApiVersion;
-import com.android.builder.model.SourceProvider;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
-import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.plugins.PluginCollection;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.compile.JavaCompile;
-import org.gradle.util.GradleVersion;
 import org.sonarqube.gradle.properties.SonarProperty;
 
-import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
-import static org.sonarqube.gradle.SonarQubePlugin.getConfiguredAndroidVariant;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
 
 /**
- * Only access this class when running on an Android application
+ * Android utilities for SonarQube analysis.
+ * <p>
+ * This class has <b>zero</b> old-API imports ({@code BaseVariant}, {@code AppExtension}, &hellip;).
+ * It reads the output of {@link AndroidConfigCollectorTask} (which collects variant metadata via
+ * {@code onVariants} callbacks during configuration) and derives source dirs, binaries, and
+ * classpath from compile tasks by name convention at execution time.
  */
 class AndroidUtils {
   private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
-  private static final String SONAR_ANDROID_LINT_REPORT_PATHS_PROP = SonarProperty.ANDROID_LINT_REPORT_PATHS;
 
   private AndroidUtils() {
   }
 
+  // no hasLegacyApi() — we use try/catch around legacy calls instead
+
+  // ------------------------------------------------------------------
+  //  Public entry-points (called from SonarPropertyComputer / SonarQubePlugin)
+  // ------------------------------------------------------------------
+
   static void configureForAndroid(Project project, @Nullable String userConfiguredBuildVariantName, final Map<String, Object> properties) {
-    AndroidVariantAndExtension android = findVariantAndExtension(project, userConfiguredBuildVariantName);
-    if (android != null && android.getVariant() != null) {
-      configureForAndroid(project, android, properties);
-    } else {
+    Optional<AndroidVariantData> opt = readCollectorOutput(project);
+    if (!hasUsableCollectorData(opt)) {
+      // Collector task produced no usable data (e.g. old AGP where getSources() doesn't exist).
+      // Try legacy code path which uses BaseVariant/BaseExtension directly.
+      try {
+        AndroidUtilsLegacy.configureForAndroid(project, userConfiguredBuildVariantName, properties);
+      } catch (Exception | NoClassDefFoundError e) {
+        LOGGER.warn("No Android variant data found for '{}'. No android specific configuration will be done", project.getName());
+      }
+      return;
+    }
+    AndroidVariantData data = opt.get();
+
+    String selectedVariant = selectVariantName(data, userConfiguredBuildVariantName);
+    if (selectedVariant == null) {
       LOGGER.warn("No variant found for '{}'. No android specific configuration will be done", project.getName());
+      return;
+    }
+
+    boolean isVariantProvidedByUser = selectedVariant.equals(userConfiguredBuildVariantName);
+
+    properties.put(AndroidProperties.ANDROID_DETECTED, true);
+
+    // minSdk
+    populateMinSdkProperties(data, selectedVariant, isVariantProvidedByUser, properties);
+
+    boolean isTestPlugin = project.getPlugins().hasPlugin("com.android.test");
+
+    // Main variant sources + binaries
+    populateSourcesAndBinariesFromTasks(project, data, selectedVariant, isTestPlugin, properties);
+
+    if (!isTestPlugin) {
+      // Test variant sources + binaries
+      populateTestSourcesAndBinariesFromTasks(project, data, selectedVariant, properties);
+    }
+
+    // Test reports
+    configureTestReports(project, selectedVariant, properties);
+
+    // Lint reports
+    configureLintReports(project, selectedVariant, properties);
+  }
+
+  @Nullable
+  static String getSelectedVariantName(Project project, @Nullable String configuredVariant) {
+    Optional<AndroidVariantData> opt = readCollectorOutput(project);
+    if (hasUsableCollectorData(opt)) {
+      return selectVariantName(opt.get(), configuredVariant);
+    }
+    try {
+      return AndroidUtilsLegacy.getSelectedVariantName(project, configuredVariant);
+    } catch (Exception | NoClassDefFoundError e) {
+      return null;
     }
   }
 
-  static Version getAndroidPluginVersion() {
-    return Version.of(ANDROID_GRADLE_PLUGIN_VERSION);
+  public static FileCollection findMainLibraries(Project project) {
+    Optional<AndroidVariantData> opt = readCollectorOutput(project);
+    if (hasUsableCollectorData(opt)) {
+      return findMainLibrariesModern(project, opt.get());
+    }
+    try {
+      return AndroidUtilsLegacy.findMainLibraries(project);
+    } catch (Exception | NoClassDefFoundError e) {
+      return project.files();
+    }
+  }
+
+  public static FileCollection findTestLibraries(Project project) {
+    Optional<AndroidVariantData> opt = readCollectorOutput(project);
+    if (hasUsableCollectorData(opt)) {
+      return findTestLibrariesModern(project, opt.get());
+    }
+    try {
+      return AndroidUtilsLegacy.findTestLibraries(project);
+    } catch (Exception | NoClassDefFoundError e) {
+      return project.files();
+    }
+  }
+
+  private static FileCollection findMainLibrariesModern(Project project, AndroidVariantData data) {
+    String selectedVariant = selectVariantName(data, SonarQubePlugin.getConfiguredAndroidVariant(project));
+    if (selectedVariant == null) {
+      return project.files();
+    }
+    FileCollection bootClasspath = getBootClasspath(project);
+    JavaCompile javaCompile = findJavaCompileTask(project, "compile" + SonarUtils.capitalize(selectedVariant) + "JavaWithJavac");
+    if (javaCompile != null) {
+      return bootClasspath.plus(javaCompile.getClasspath());
+    }
+    return bootClasspath;
+  }
+
+  private static FileCollection findTestLibrariesModern(Project project, AndroidVariantData data) {
+    String selectedVariant = selectVariantName(data, SonarQubePlugin.getConfiguredAndroidVariant(project));
+    if (selectedVariant == null) {
+      return project.files();
+    }
+    String cap = SonarUtils.capitalize(selectedVariant);
+    FileCollection bootClasspath = getBootClasspath(project);
+    FileCollection result = project.files();
+
+    JavaCompile unitTest = findJavaCompileTask(project, "compile" + cap + "UnitTestJavaWithJavac");
+    if (unitTest != null) {
+      result = result.plus(bootClasspath).plus(unitTest.getClasspath());
+    }
+    JavaCompile androidTest = findJavaCompileTask(project, "compile" + cap + "AndroidTestJavaWithJavac");
+    if (androidTest != null) {
+      result = result.plus(bootClasspath).plus(androidTest.getClasspath());
+    }
+    return result.isEmpty() ? bootClasspath : result;
   }
 
   /**
-   * Get the variants used for testing for a given variant.
+   * Returns true if the collector produced usable data: variants were found AND source dirs were captured.
+   * On older AGP (e.g. 7.1) onVariants works but variant.getSources() doesn't exist, so we get
+   * variants with empty source dirs — that's not usable, fall back to legacy.
    */
-  public static List<BaseVariant> getTestVariants(BaseVariant variant) {
-    if (variant instanceof TestedVariant) {
-      TestedVariant testedVariant = (TestedVariant) variant;
-      return Stream.of(
-          // Local tests
-          testedVariant.getUnitTestVariant(),
-          // Instrumentation tests
-          testedVariant.getTestVariant())
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-
+  private static boolean hasUsableCollectorData(Optional<AndroidVariantData> opt) {
+    if (opt.isEmpty() || opt.get().variantNames.isEmpty()) {
+      return false;
     }
-    return Collections.emptyList();
+    AndroidVariantData data = opt.get();
+    if (data.variantSourceDirs == null || data.variantSourceDirs.isEmpty()) {
+      return false;
+    }
+    // Check that at least one variant has non-empty source dirs
+    return data.variantSourceDirs.values().stream().anyMatch(dirs -> dirs != null && !dirs.isEmpty());
   }
 
-  private static void configureForAndroid(Project project, AndroidVariantAndExtension android, Map<String, Object> properties) {
-    BaseVariant variant = android.getVariant();
+  // ------------------------------------------------------------------
+  //  Read AndroidConfigCollectorTask output
+  // ------------------------------------------------------------------
 
-    populateSonarQubeAndroidProperties(android, properties);
+  static final String EXTRA_PROP_COLLECTOR_TASK = "sonar.android.collectorTask";
 
-    configureTestReports(project, variant, properties);
-    configureLintReports(project, variant, properties);
-    if (project.getPlugins().hasPlugin("com.android.test")) {
-      // Instrumentation tests only
-      populateSonarQubeProps(properties, variant, true);
-      return;
+  private static Optional<AndroidVariantData> readCollectorOutput(Project project) {
+    // First try to get the collector task directly (available when task was eagerly created in same build)
+    if (project.getExtensions().getExtraProperties().has(EXTRA_PROP_COLLECTOR_TASK)) {
+      AndroidConfigCollectorTask task = (AndroidConfigCollectorTask) project.getExtensions().getExtraProperties().get(EXTRA_PROP_COLLECTOR_TASK);
+      // Build the data snapshot from the task's in-memory state (no file I/O needed)
+      return task.buildVariantData();
     }
-    populateSonarQubeProps(properties, variant, false);
-    getTestVariants(variant)
-      .forEach(testVariant -> populateSonarQubeProps(properties, testVariant, true));
-  }
-
-  private static void populateSonarQubeAndroidProperties(AndroidVariantAndExtension android, Map<String, Object> properties) {
-    properties.put(AndroidProperties.ANDROID_DETECTED, true);
-
-    if (!isMinSdkSupported()) {
-      return;
-    }
-
-    if (android.isVariantProvidedByUser()) {
-      ApiVersion minSdkVersion = android.getVariant().getMergedFlavor().getMinSdkVersion();
-      if (minSdkVersion != null) {
-        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdkVersion.getApiLevel());
-        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdkVersion.getApiLevel());
-      }
-    } else {
-      Set<Integer> minSdks = Stream.concat(android.getExtension().getProductFlavors().stream().map(ProductFlavor::getMinSdk),
-          Stream.of(android.getExtension().getDefaultConfig().getMinSdk()))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
-      if (!minSdks.isEmpty()) {
-        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, Collections.min(minSdks));
-        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, Collections.max(minSdks));
-      }
-    }
-  }
-
-  private static void configureTestReports(Project project, BaseVariant variant, Map<String, Object> map) {
-    if (!(variant instanceof TestedVariant)) {
-      return;
-    }
-    if (getAndroidPluginVersion().compareTo(Version.of("3.3")) < 0 || GradleVersion.current().compareTo(GradleVersion.version("6.0")) < 0) {
-      // API to get task variant name is not available
-      return;
-    }
-
-    List<DirectoryProperty> directories = new LinkedList<>();
-
-    // junit tests
-    UnitTestVariant unitTestVariant = ((TestedVariant) variant).getUnitTestVariant();
-    if (unitTestVariant != null) {
-      directories.addAll(project.getTasks().withType(AndroidUnitTest.class).stream()
-        .filter(task -> unitTestVariant.getName().equals(task.getVariantName()))
-        .map(task -> task.getReports().getJunitXml().getOutputLocation())
-        .collect(Collectors.toList()));
-    }
-
-    // instrumentation tests
-    TestVariant testVariant = ((TestedVariant) variant).getTestVariant();
-    if (testVariant != null) {
-
-      Function<DeviceProviderInstrumentTestTask, DirectoryProperty> testTaskToDirectoryProperty;
-      if (getAndroidPluginVersion().compareTo(Version.of("4.2")) < 0) {
-        // SONARGRADL-101 a File is returned instead of a DirectoryProperty
-        testTaskToDirectoryProperty = AndroidUtils::getReportsDirBeforeGradle42;
-      } else {
-        testTaskToDirectoryProperty = DeviceProviderInstrumentTestTask::getReportsDir;
-      }
-
-      project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
-        .filter(t -> testVariant.getName().equals(t.getVariantName()))
-        .map(testTaskToDirectoryProperty)
-        .filter(DirectoryProperty::isPresent)
-        .forEach(directories::add);
-    }
-
-    if (directories.isEmpty()) {
-      return;
-    }
-
-    List<File> value = directories.stream()
-      .filter(Provider::isPresent)
-      .map(d -> d.get().getAsFile())
-      .collect(Collectors.toList());
-    map.put(SonarProperty.JUNIT_REPORT_PATHS, value);
-  }
-
-  private static DirectoryProperty getReportsDirBeforeGradle42(DeviceProviderInstrumentTestTask testTask) {
-    try {
-      Method getReportsDir = testTask.getClass().getMethod("getReportsDir");
-      File dir = (File) getReportsDir.invoke(testTask);
-      return testTask.getProject().getObjects().directoryProperty().fileValue(dir);
-    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-      throw new IllegalStateException("Unable to get tests directory", e);
-    }
-  }
-
-  private static void configureLintReports(Project project, BaseVariant variant, Map<String, Object> properties) {
-    if (getAndroidPluginVersion().compareTo(Version.of("7.0")) >= 0) {
-      project.getTasks().withType(AndroidLintTask.class).stream()
-        .filter(a -> a.getXmlReportOutputFile().isPresent())
-        .filter(a -> a.getVariantName().equals(variant.getName()))
-        .map(a -> a.getXmlReportOutputFile().get().getAsFile())
-        .findFirst()
-        .ifPresent(output -> properties.put(SONAR_ANDROID_LINT_REPORT_PATHS_PROP, output));
-    }
+    // Fall back to reading from file (e.g. config cache reuse where task wasn't recreated)
+    File outputDir = new File(project.getLayout().getBuildDirectory().getAsFile().get(), "sonar-android-config");
+    File outputFile = new File(outputDir, "android-config.json");
+    return AndroidConfigCollectorTask.read(outputFile);
   }
 
   @Nullable
-  private static List<File> getBootClasspath(Project project) {
-    PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
-    if (!appPlugins.isEmpty()) {
-      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      return androidExtension.getBootClasspath();
-    }
-    PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
-    if (!libPlugins.isEmpty()) {
-      LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      return androidExtension.getBootClasspath();
-    }
-    PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
-    if (!testPlugins.isEmpty()) {
-      TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
-      return androidExtension.getBootClasspath();
-    }
-    PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
-    if (!dynamicFeaturePlugins.isEmpty()) {
-      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      return androidExtension.getBootClasspath();
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String getTestBuildType(Project project) {
-    PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
-    if (!appPlugins.isEmpty()) {
-      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      return androidExtension.getTestBuildType();
-    }
-    PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
-    if (!libPlugins.isEmpty()) {
-      LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      return androidExtension.getTestBuildType();
-    }
-    PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
-    if (!dynamicFeaturePlugins.isEmpty()) {
-      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      return androidExtension.getTestBuildType();
-    }
-    return null;
-  }
-
-  @Nullable
-  static AndroidVariantAndExtension findVariantAndExtension(Project project, @Nullable String userConfiguredBuildVariantName) {
-    String testBuildType = getTestBuildType(project);
-    PluginCollection<AppPlugin> appPlugins = project.getPlugins().withType(AppPlugin.class);
-    if (!appPlugins.isEmpty()) {
-      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
-      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
-    }
-    PluginCollection<LibraryPlugin> libPlugins = project.getPlugins().withType(LibraryPlugin.class);
-    if (!libPlugins.isEmpty()) {
-      LibraryExtension androidExtension = project.getExtensions().getByType(LibraryExtension.class);
-      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getLibraryVariants()), testBuildType, userConfiguredBuildVariantName);
-      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
-    }
-    PluginCollection<TestPlugin> testPlugins = project.getPlugins().withType(TestPlugin.class);
-    if (!testPlugins.isEmpty()) {
-      TestExtension androidExtension = project.getExtensions().getByType(TestExtension.class);
-      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
-      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
-
-    }
-    PluginCollection<DynamicFeaturePlugin> dynamicFeaturePlugins = project.getPlugins().withType(DynamicFeaturePlugin.class);
-    if (!dynamicFeaturePlugins.isEmpty()) {
-      AppExtension androidExtension = project.getExtensions().getByType(AppExtension.class);
-      BaseVariant variant = findVariant(new ArrayList<>(androidExtension.getApplicationVariants()), testBuildType, userConfiguredBuildVariantName);
-      return new AndroidVariantAndExtension(androidExtension, variant, userConfiguredBuildVariantName);
-    }
-    return null;
-  }
-
-  private static Optional<AndroidVariantAndExtension> findVariantAndExtension(Project project) {
-    return Optional.ofNullable(AndroidUtils.findVariantAndExtension(project, getConfiguredAndroidVariant(project)));
-  }
-
-  @Nullable
-  private static BaseVariant findVariant(List<BaseVariant> candidates, @Nullable String testBuildType, @Nullable String userConfiguredBuildVariantName) {
-    if (candidates.isEmpty()) {
+  private static String selectVariantName(AndroidVariantData data, @Nullable String userConfiguredVariant) {
+    if (data.variantNames.isEmpty()) {
       return null;
     }
-    if (userConfiguredBuildVariantName == null) {
-      // Take first "test" buildType when there is no provided variant name
-      // Release variant may be obfuscated using proguard. Also unit tests and coverage reports are usually collected in debug mode.
-      Optional<BaseVariant> firstDebug = candidates.stream().filter(v -> testBuildType != null && testBuildType.equals(v.getBuildType().getName())).findFirst();
-      // No debug variant? Then use first variant whatever is the type
-      BaseVariant result = firstDebug.orElse(candidates.get(0));
-      LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.getName());
-      return result;
+    if (userConfiguredVariant != null) {
+      if (data.variantNames.contains(userConfiguredVariant)) {
+        return userConfiguredVariant;
+      }
+      throw new IllegalArgumentException("Unable to find variant '" + userConfiguredVariant +
+        "' to use for SonarQube analysis. Candidates are: " + String.join(", ", data.variantNames));
+    }
+    // Prefer test build type variant (usually "debug")
+    if (data.testBuildType != null) {
+      for (String name : data.variantNames) {
+        String buildType = data.variantBuildTypes.get(name);
+        if (data.testBuildType.equals(buildType)) {
+          LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", name);
+          return name;
+        }
+      }
+    }
+    String first = data.variantNames.get(0);
+    LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", first);
+    return first;
+  }
+
+  // ------------------------------------------------------------------
+  //  Populate properties from compile tasks
+  // ------------------------------------------------------------------
+
+  private static void populateMinSdkProperties(AndroidVariantData data, String selectedVariant,
+    boolean isVariantProvidedByUser, Map<String, Object> properties) {
+    if (isVariantProvidedByUser) {
+      Integer minSdk = data.variantMinSdks.get(selectedVariant);
+      if (minSdk != null) {
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdk);
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdk);
+      }
     } else {
-      Optional<BaseVariant> result = candidates.stream().filter(v -> userConfiguredBuildVariantName.equals(v.getName())).findFirst();
-      if (result.isPresent()) {
-        return result.get();
-      } else {
-        throw new IllegalArgumentException("Unable to find variant '" + userConfiguredBuildVariantName +
-          "' to use for SonarQube analysis. Candidates are: " + candidates.stream().map(BaseVariant::getName).collect(Collectors.joining(", ")));
+      if (!data.allMinSdks.isEmpty()) {
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, Collections.min(data.allMinSdks));
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, Collections.max(data.allMinSdks));
       }
     }
   }
 
-  private static void populateSonarQubeProps(Map<String, Object> properties, BaseVariant variant, boolean isTest) {
-    List<File> srcDirs = variant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
-      ArrayList::new,
-      ArrayList::addAll,
-      ArrayList::addAll);
-    appendSourcesProp(properties, srcDirs, isTest);
+  private static void populateSourcesAndBinariesFromTasks(Project project, AndroidVariantData data, String variantName,
+    boolean isTest, Map<String, Object> properties) {
+    String capitalizedVariant = SonarUtils.capitalize(variantName);
+    String compileTaskName = "compile" + capitalizedVariant + "JavaWithJavac";
 
-    JavaCompile javaCompile = getJavaCompiler(variant);
+    JavaCompile javaCompile = findJavaCompileTask(project, compileTaskName);
     if (javaCompile == null) {
-      LOGGER.warn("Unable to find Java compiler on variant '{}'. Is Jack toolchain used? SonarQube analysis will be less accurate without bytecode.", variant.getName());
+      LOGGER.warn("Unable to find Java compile task '{}' for variant '{}'. SonarQube analysis will be less accurate without bytecode.",
+        compileTaskName, variantName);
     } else {
       SonarUtils.populateJdkProperties(properties, JavaCompilerUtils.extractConfiguration(javaCompile));
-      JavaCompilerUtils.extractConfiguration(javaCompile);
     }
 
     Collection<File> destinationDirs = (javaCompile != null)
@@ -351,103 +276,148 @@ class AndroidUtils {
       appendProps(properties, SonarProperty.JAVA_TEST_BINARIES, destinationDirs);
     } else {
       appendProps(properties, SonarProperty.JAVA_BINARIES, destinationDirs);
-      // Populate deprecated properties for backward compatibility
       appendProps(properties, SonarProperty.BINARIES, destinationDirs);
+    }
+
+    // Source dirs from collected variant data
+    List<File> srcDirs = getSourceDirsFromData(data, variantName);
+    if (!srcDirs.isEmpty()) {
+      appendSourcesProp(properties, srcDirs, isTest);
+    }
+  }
+
+  private static void populateTestSourcesAndBinariesFromTasks(Project project, AndroidVariantData data, String variantName, Map<String, Object> properties) {
+    String capitalizedVariant = SonarUtils.capitalize(variantName);
+
+    // Unit test variant
+    JavaCompile unitTestCompile = findJavaCompileTask(project, "compile" + capitalizedVariant + "UnitTestJavaWithJavac");
+    if (unitTestCompile != null) {
+      appendProps(properties, SonarProperty.JAVA_TEST_BINARIES,
+        Collections.singleton(unitTestCompile.getDestinationDirectory().getAsFile().get()));
+    }
+    // Test source dirs by convention (test variants aren't in onVariants data)
+    List<File> unitTestSrcDirs = getTestSourceDirs(project, "test");
+    if (!unitTestSrcDirs.isEmpty()) {
+      appendSourcesProp(properties, unitTestSrcDirs, true);
+    }
+
+    // Android test (instrumented) variant
+    JavaCompile androidTestCompile = findJavaCompileTask(project, "compile" + capitalizedVariant + "AndroidTestJavaWithJavac");
+    if (androidTestCompile != null) {
+      appendProps(properties, SonarProperty.JAVA_TEST_BINARIES,
+        Collections.singleton(androidTestCompile.getDestinationDirectory().getAsFile().get()));
+    }
+    List<File> androidTestSrcDirs = getTestSourceDirs(project, "androidTest");
+    if (!androidTestSrcDirs.isEmpty()) {
+      appendSourcesProp(properties, androidTestSrcDirs, true);
     }
   }
 
   /**
-   * Get the libraries FileCollection for an Android variant without resolving it.
-   * This allows the FileCollection to be attached as a task input and resolved later at execution time.
+   * Extract source directories from a JavaCompile task's source set.
+   * Returns the source directories (not individual files), plus sibling res/manifest dirs.
    */
-  static FileCollection getLibrariesFileCollection(Project project, BaseVariant variant) {
-    // Get boot classpath
-    List<File> bootClassPath = getBootClasspath(project);
-    FileCollection bootClassPathFiles = bootClassPath != null ? project.files(bootClassPath) : project.files();
-
-    // Get variant libraries
-    if (variant instanceof ApkVariant) {
-      ApkVariant apkVariant = (ApkVariant) variant;
-      FileCollection compileClasspath = apkVariant.getCompileClasspath(null);
-      if (compileClasspath != null) {
-        return bootClassPathFiles.plus(compileClasspath);
-      }
+  /**
+   * Get test source directories from the variant data or by convention.
+   * Test variants (UnitTest, AndroidTest) are NOT collected by onVariants.
+   * We look them up by convention from the project directory.
+   */
+  private static List<File> getTestSourceDirs(Project project, String testSourceSetName) {
+    File projectDir = project.getProjectDir();
+    List<File> result = new ArrayList<>();
+    // Standard test source set: src/test/java, src/test/resources
+    File javaDir = new File(projectDir, "src/" + testSourceSetName + "/java");
+    if (javaDir.isDirectory()) {
+      result.add(javaDir);
     }
-
-    // For non-ApkVariant or if we couldn't get libraries, try getJavaCompiler
-    JavaCompile javaCompile = getJavaCompiler(variant);
-    if (javaCompile != null) {
-      return bootClassPathFiles.plus(javaCompile.getClasspath());
+    File kotlinDir = new File(projectDir, "src/" + testSourceSetName + "/kotlin");
+    if (kotlinDir.isDirectory()) {
+      result.add(kotlinDir);
     }
-
-    return bootClassPathFiles;
+    File resourcesDir = new File(projectDir, "src/" + testSourceSetName + "/resources");
+    if (resourcesDir.isDirectory()) {
+      result.add(resourcesDir);
+    }
+    File manifest = new File(projectDir, "src/" + testSourceSetName + "/AndroidManifest.xml");
+    if (manifest.isFile()) {
+      result.add(manifest);
+    }
+    return result;
   }
 
-  private static boolean isMinSdkSupported() {
-    // Retrieving minSdk was introduced in Android Gradle plugin 4.1+. 4.1+ runs only with Gradle 6.5+
-    return GradleVersion.current().compareTo(GradleVersion.version("6.5")) >= 0;
+  private static List<File> getSourceDirsFromData(AndroidVariantData data, String variantName) {
+    if (data.variantSourceDirs == null) {
+      return Collections.emptyList();
+    }
+    List<String> paths = data.variantSourceDirs.get(variantName);
+    if (paths == null || paths.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<File> result = new ArrayList<>();
+    for (String path : paths) {
+      File dir = new File(path);
+      result.add(dir);
+      // For each java/kotlin source dir, also add sibling res dir and AndroidManifest.xml.
+      // e.g. src/main/java -> also add src/main/res and src/main/AndroidManifest.xml
+      File parent = dir.getParentFile();
+      if (parent != null && (dir.getName().equals("java") || dir.getName().equals("kotlin"))) {
+        File resDir = new File(parent, "res");
+        if (resDir.isDirectory() && !result.contains(resDir)) {
+          result.add(resDir);
+        }
+        File manifest = new File(parent, "AndroidManifest.xml");
+        if (manifest.isFile() && !result.contains(manifest)) {
+          result.add(manifest);
+        }
+      }
+    }
+    return result;
+  }
+
+  private static void configureTestReports(Project project, String variantName, Map<String, Object> properties) {
+    String capitalizedVariant = SonarUtils.capitalize(variantName);
+    File testResultsDir = new File(project.getLayout().getBuildDirectory().getAsFile().get(),
+      "test-results/test" + capitalizedVariant + "UnitTest");
+    // Always set the path — existence isn't guaranteed during config phase (tests may not have run yet)
+    List<File> dirs = new ArrayList<>();
+    dirs.add(testResultsDir);
+    properties.put(SonarProperty.JUNIT_REPORT_PATHS, dirs);
+  }
+
+  private static void configureLintReports(Project project, String variantName, Map<String, Object> properties) {
+    File lintReport = new File(project.getLayout().getBuildDirectory().getAsFile().get(),
+      "reports/lint-results-" + variantName + ".xml");
+    if (lintReport.exists()) {
+      properties.put(SonarProperty.ANDROID_LINT_REPORT_PATHS, lintReport);
+    }
   }
 
   @Nullable
-  private static JavaCompile getJavaCompiler(BaseVariant variant) {
-    return variant.getJavaCompileProvider().getOrNull();
+  private static JavaCompile findJavaCompileTask(Project project, String taskName) {
+    try {
+      Object task = project.getTasks().getByName(taskName);
+      if (task instanceof JavaCompile) {
+        return (JavaCompile) task;
+      }
+    } catch (Exception e) {
+      // Task not found
+    }
+    return null;
   }
 
-  private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
-    List<File> srcDirs = new ArrayList<>();
-    srcDirs.add(sourceSet.getManifestFile());
-    srcDirs.addAll(sourceSet.getCDirectories());
-    srcDirs.addAll(sourceSet.getAidlDirectories());
-    srcDirs.addAll(sourceSet.getAssetsDirectories());
-    srcDirs.addAll(sourceSet.getCppDirectories());
-    srcDirs.addAll(sourceSet.getJavaDirectories());
-    srcDirs.addAll(sourceSet.getRenderscriptDirectories());
-    srcDirs.addAll(sourceSet.getResDirectories());
-    srcDirs.addAll(sourceSet.getResourcesDirectories());
-    return srcDirs;
-  }
+  // ------------------------------------------------------------------
+  //  Boot classpath from collector output
+  // ------------------------------------------------------------------
 
-  static class AndroidVariantAndExtension {
-
-    private final BaseExtension extension;
-    private final BaseVariant variant;
-    private final boolean variantProvidedByUser;
-
-    AndroidVariantAndExtension(BaseExtension baseExtension, @Nullable BaseVariant baseVariant, @Nullable String userConfiguredVariantName) {
-      this.extension = baseExtension;
-      this.variant = baseVariant;
-      this.variantProvidedByUser = variant != null && variant.getName().equals(userConfiguredVariantName);
-    }
-
-    BaseExtension getExtension() {
-      return extension;
-    }
-
-    BaseVariant getVariant() {
-      return variant;
-    }
-
-    boolean isVariantProvidedByUser() {
-      return variantProvidedByUser;
-    }
-  }
-
-  public static FileCollection findMainLibraries(Project project) {
-    return findVariantAndExtension(project)
-      .map(AndroidVariantAndExtension::getVariant)
-      .map(variant -> AndroidUtils.getLibrariesFileCollection(project, variant))
+  private static FileCollection getBootClasspath(Project project) {
+    return readCollectorOutput(project)
+      .map(data -> {
+        if (data.bootClasspath != null && !data.bootClasspath.isEmpty()) {
+          List<File> files = data.bootClasspath.stream().map(File::new).collect(Collectors.toList());
+          return project.files(files);
+        }
+        return project.files();
+      })
       .orElse(project.files());
-  }
-
-  public static FileCollection findTestLibraries(Project project) {
-    var variantAndExtension = findVariantAndExtension(project);
-    if (variantAndExtension.isEmpty()) {
-      return project.files();
-    }
-    var testVariants = getTestVariants(variantAndExtension.get().getVariant());
-    return testVariants.stream()
-      .map(testVariant -> AndroidUtils.getLibrariesFileCollection(project, testVariant))
-      .filter(Objects::nonNull)
-      .reduce(project.files(), FileCollection::plus);
   }
 }
