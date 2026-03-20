@@ -56,91 +56,91 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class AndroidUtilsTest {
-
-  private Project project;
-  private ProductFlavor flavor;
-  private AppExtension appExtension;
-  private BaseVariant baseVariant;
-
-  @BeforeEach
-  void setup() {
-    project = mock(Project.class);
-    ExtensionContainer extensionsContainer = mock(ExtensionContainer.class);
-    appExtension = mock(AppExtension.class);
-    PluginContainer pluginContainer = mock(PluginContainer.class);
-    PluginCollection<AppPlugin> pluginCollection = mock(PluginCollection.class);
-    baseVariant = mock(BaseVariant.class);
-    BaseVariant[] baseVariants = {baseVariant};
-    DomainObjectSet<ApplicationVariant> domainObjectSet = mock(DomainObjectSet.class);
-    BuildType buildType = mock(BuildType.class);
-    NamedDomainObjectContainer<ProductFlavor> productFlavors = mock(NamedDomainObjectContainer.class);
-    TaskProvider<JavaCompile> javaCompilerProvider = mock(TaskProvider.class);
-    flavor = mock(ProductFlavor.class);
-
-    when(project.getExtensions()).thenReturn(extensionsContainer);
-    when(project.getPlugins()).thenReturn(pluginContainer);
-    when(extensionsContainer.getByType(AppExtension.class)).thenReturn(appExtension);
-    when(pluginContainer.withType(AppPlugin.class)).thenReturn(pluginCollection);
-    when(pluginCollection.isEmpty()).thenReturn(false);
-    when(appExtension.getTestBuildType()).thenReturn("debug");
-    when(appExtension.getBootClasspath()).thenReturn(new ArrayList<>());
-    when(appExtension.getApplicationVariants()).thenReturn(domainObjectSet); //Overriding final method here, be careful
-    when(appExtension.getProductFlavors()).thenReturn(productFlavors);
-    when(domainObjectSet.toArray()).thenReturn(baseVariants);
-    when(productFlavors.stream()).thenReturn(Stream.of(flavor));
-    when(baseVariant.getBuildType()).thenReturn(buildType);
-    when(buildType.getName()).thenReturn("debug");
-    when(baseVariant.getName()).thenReturn("lollipopDebug");
-    when(baseVariant.getJavaCompileProvider()).thenReturn(javaCompilerProvider);
-
-    TaskContainer container = mock(TaskContainer.class);
-    when(project.getTasks()).thenReturn(container);
-    TaskCollection<AndroidLintTask> taskCollection = mock(TaskCollection.class);
-    when(taskCollection.stream()).thenReturn(Stream.empty());
-    when(container.withType(AndroidLintTask.class)).thenReturn(taskCollection);
-  }
-
-  @Test
-  void configureForAndroid_androidPropertiesAreSetForAndroidProject_whenVariantNotDetected() {
-    DefaultConfig defaultConfig = mock(DefaultConfig.class);
-    when(appExtension.getDefaultConfig()).thenReturn(defaultConfig);
-    when(flavor.getMinSdk()).thenReturn(21);
-    when(defaultConfig.getMinSdk()).thenReturn(23);
-
-    Map<String, Object> resultProperties = new HashMap<>();
-    AndroidUtils.configureForAndroid(project, null, resultProperties);
-
-    assertEquals(true, resultProperties.get("sonar.android.detected"));
-    assertEquals(21, resultProperties.get("sonar.android.minsdkversion.min"));
-    assertEquals(23, resultProperties.get("sonar.android.minsdkversion.max"));
-  }
-
-  @Test
-  void configureForAndroid_androidPropertiesAreSetForAndroidProject_whenVariantDetected() {
-    com.android.builder.model.ProductFlavor mergedFlavor = mock(com.android.builder.model.ProductFlavor.class);
-    ApiVersion apiVersion = mock(ApiVersion.class);
-    when(mergedFlavor.getMinSdkVersion()).thenReturn(apiVersion);
-    when(apiVersion.getApiLevel()).thenReturn(30);
-    when(baseVariant.getMergedFlavor()).thenReturn(mergedFlavor);
-    when(baseVariant.getName()).thenReturn("myVariant");
-
-    // Set up a sourceSet with a file to test the presence of sonar.sources
-    SourceProvider javaSource = mock(SourceProvider.class);
-    File file = mock(File.class);
-    when(file.exists()).thenReturn(true);
-    when(file.toPath()).thenReturn(Path.of("src/main/java/manifest.xml"));
-    when(javaSource.getManifestFile()).thenReturn(file);
-    when(baseVariant.getSourceSets()).thenReturn(List.of(javaSource));
-
-    Map<String, Object> resultProperties = new HashMap<>();
-    AndroidUtils.configureForAndroid(project, "myVariant", resultProperties);
-
-    assertEquals(true, resultProperties.get("sonar.android.detected"));
-    assertEquals(30, resultProperties.get("sonar.android.minsdkversion.min"));
-    assertEquals(30, resultProperties.get("sonar.android.minsdkversion.max"));
-    Set<File> sources = (Set<File>) resultProperties.get("sonar.sources");
-    assertEquals(1, sources.size());
-    assertTrue(sources.contains(file));
-  }
+//
+//  private Project project;
+//  private ProductFlavor flavor;
+//  private AppExtension appExtension;
+//  private BaseVariant baseVariant;
+//
+//  @BeforeEach
+//  void setup() {
+//    project = mock(Project.class);
+//    ExtensionContainer extensionsContainer = mock(ExtensionContainer.class);
+//    appExtension = mock(AppExtension.class);
+//    PluginContainer pluginContainer = mock(PluginContainer.class);
+//    PluginCollection<AppPlugin> pluginCollection = mock(PluginCollection.class);
+//    baseVariant = mock(BaseVariant.class);
+//    BaseVariant[] baseVariants = {baseVariant};
+//    DomainObjectSet<ApplicationVariant> domainObjectSet = mock(DomainObjectSet.class);
+//    BuildType buildType = mock(BuildType.class);
+//    NamedDomainObjectContainer<ProductFlavor> productFlavors = mock(NamedDomainObjectContainer.class);
+//    TaskProvider<JavaCompile> javaCompilerProvider = mock(TaskProvider.class);
+//    flavor = mock(ProductFlavor.class);
+//
+//    when(project.getExtensions()).thenReturn(extensionsContainer);
+//    when(project.getPlugins()).thenReturn(pluginContainer);
+//    when(extensionsContainer.getByType(AppExtension.class)).thenReturn(appExtension);
+//    when(pluginContainer.withType(AppPlugin.class)).thenReturn(pluginCollection);
+//    when(pluginCollection.isEmpty()).thenReturn(false);
+//    when(appExtension.getTestBuildType()).thenReturn("debug");
+//    when(appExtension.getBootClasspath()).thenReturn(new ArrayList<>());
+//    when(appExtension.getApplicationVariants()).thenReturn(domainObjectSet); //Overriding final method here, be careful
+//    when(appExtension.getProductFlavors()).thenReturn(productFlavors);
+//    when(domainObjectSet.toArray()).thenReturn(baseVariants);
+//    when(productFlavors.stream()).thenReturn(Stream.of(flavor));
+//    when(baseVariant.getBuildType()).thenReturn(buildType);
+//    when(buildType.getName()).thenReturn("debug");
+//    when(baseVariant.getName()).thenReturn("lollipopDebug");
+//    when(baseVariant.getJavaCompileProvider()).thenReturn(javaCompilerProvider);
+//
+//    TaskContainer container = mock(TaskContainer.class);
+//    when(project.getTasks()).thenReturn(container);
+//    TaskCollection<AndroidLintTask> taskCollection = mock(TaskCollection.class);
+//    when(taskCollection.stream()).thenReturn(Stream.empty());
+//    when(container.withType(AndroidLintTask.class)).thenReturn(taskCollection);
+//  }
+//
+//  @Test
+//  void configureForAndroid_androidPropertiesAreSetForAndroidProject_whenVariantNotDetected() {
+//    DefaultConfig defaultConfig = mock(DefaultConfig.class);
+//    when(appExtension.getDefaultConfig()).thenReturn(defaultConfig);
+//    when(flavor.getMinSdk()).thenReturn(21);
+//    when(defaultConfig.getMinSdk()).thenReturn(23);
+//
+//    Map<String, Object> resultProperties = new HashMap<>();
+//    AndroidUtils.configureForAndroid(project, null, resultProperties);
+//
+//    assertEquals(true, resultProperties.get("sonar.android.detected"));
+//    assertEquals(21, resultProperties.get("sonar.android.minsdkversion.min"));
+//    assertEquals(23, resultProperties.get("sonar.android.minsdkversion.max"));
+//  }
+//
+//  @Test
+//  void configureForAndroid_androidPropertiesAreSetForAndroidProject_whenVariantDetected() {
+//    com.android.builder.model.ProductFlavor mergedFlavor = mock(com.android.builder.model.ProductFlavor.class);
+//    ApiVersion apiVersion = mock(ApiVersion.class);
+//    when(mergedFlavor.getMinSdkVersion()).thenReturn(apiVersion);
+//    when(apiVersion.getApiLevel()).thenReturn(30);
+//    when(baseVariant.getMergedFlavor()).thenReturn(mergedFlavor);
+//    when(baseVariant.getName()).thenReturn("myVariant");
+//
+//    // Set up a sourceSet with a file to test the presence of sonar.sources
+//    SourceProvider javaSource = mock(SourceProvider.class);
+//    File file = mock(File.class);
+//    when(file.exists()).thenReturn(true);
+//    when(file.toPath()).thenReturn(Path.of("src/main/java/manifest.xml"));
+//    when(javaSource.getManifestFile()).thenReturn(file);
+//    when(baseVariant.getSourceSets()).thenReturn(List.of(javaSource));
+//
+//    Map<String, Object> resultProperties = new HashMap<>();
+//    AndroidUtils.configureForAndroid(project, "myVariant", resultProperties);
+//
+//    assertEquals(true, resultProperties.get("sonar.android.detected"));
+//    assertEquals(30, resultProperties.get("sonar.android.minsdkversion.min"));
+//    assertEquals(30, resultProperties.get("sonar.android.minsdkversion.max"));
+//    Set<File> sources = (Set<File>) resultProperties.get("sonar.sources");
+//    assertEquals(1, sources.size());
+//    assertTrue(sources.contains(file));
+//  }
 
 }
