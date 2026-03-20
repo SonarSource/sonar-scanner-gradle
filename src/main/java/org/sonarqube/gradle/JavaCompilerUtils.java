@@ -42,10 +42,10 @@ public class JavaCompilerUtils {
 
   public static Optional<JavaCompilerConfiguration> extractJavaCompilerConfigurationFromCompileTasks(Project project) {
     TaskCollection<JavaCompile> javaCompileTaskCollection = project.getTasks().withType(JavaCompile.class);
-    if (javaCompileTaskCollection.isEmpty()) {
+    List<JavaCompile> javaCompileTaskList = new ArrayList<>(javaCompileTaskCollection);
+    if (javaCompileTaskList.isEmpty()) {
       return Optional.empty();
     }
-    List<JavaCompile> javaCompileTaskList = new ArrayList<>(javaCompileTaskCollection);
     List<JavaCompilerConfiguration> jdkHomesUsedByCompileTasks = javaCompileTaskList.stream()
       .map(JavaCompilerUtils::extractConfiguration)
       .collect(Collectors.toList());
