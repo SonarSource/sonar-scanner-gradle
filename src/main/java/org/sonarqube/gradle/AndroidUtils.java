@@ -196,13 +196,13 @@ class AndroidUtils {
   static final String EXTRA_PROP_COLLECTOR_TASK = "sonar.android.collectorTask";
 
   private static Optional<AndroidVariantData> readCollectorOutput(Project project) {
-    // First try to get the shared collector directly (populated eagerly during config)
+    // First try to get the collector task directly (available when task was eagerly created in same build)
     if (project.getExtensions().getExtraProperties().has(EXTRA_PROP_COLLECTOR_TASK)) {
-      AndroidConfigCollectorTask.SharedCollector collector =
-        (AndroidConfigCollectorTask.SharedCollector) project.getExtensions().getExtraProperties().get(EXTRA_PROP_COLLECTOR_TASK);
-      return collector.buildVariantData();
+      AndroidConfigCollectorTask task = (AndroidConfigCollectorTask) project.getExtensions().getExtraProperties().get(EXTRA_PROP_COLLECTOR_TASK);
+      // Build the data snapshot from the task's in-memory state (no file I/O needed)
+      return task.buildVariantData();
     }
-    // Fall back to reading from file (e.g. config cache reuse where collector wasn't recreated)
+    // Fall back to reading from file (e.g. config cache reuse where task wasn't recreated)
     File outputDir = new File(project.getLayout().getBuildDirectory().getAsFile().get(), "sonar-android-config");
     File outputFile = new File(outputDir, "android-config.json");
     return AndroidConfigCollectorTask.read(outputFile);
