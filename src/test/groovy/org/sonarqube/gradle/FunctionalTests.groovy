@@ -32,6 +32,7 @@ import java.nio.file.StandardCopyOption
 import static java.util.Objects.nonNull
 import static org.assertj.core.api.Assertions.assertThat
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
+import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 
 class FunctionalTests extends Specification {
     String gradleVersion = "7.6.2"
@@ -791,7 +792,7 @@ class FunctionalTests extends Specification {
           .build()
 
         then:
-        assert result.task(":clean").getOutcome() == SUCCESS
+        assert result.task(":clean").getOutcome() == UP_TO_DATE
         assert result.task(":sonar").getOutcome() == SUCCESS
     }
 

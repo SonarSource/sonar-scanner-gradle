@@ -74,7 +74,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   @Override
   public void apply(Project project) {
-    // don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to resolve recursively the configuration of all
+    // Don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to recursively resolve the configuration of all
     // the projects, failing if a project has a sonarqube configuration since the extension wasn't added to it yet.
     if (project.getExtensions().findByName(SonarExtension.SONAR_EXTENSION_NAME) == null) {
       Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap = new HashMap<>();
@@ -105,7 +105,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   /**
    * Register and configure a resolver task per (sub-)project.
-   * As the tasks are configured, we capture list of output files where the resolved properties will be written.
+   * As the tasks are configured, we capture the list of output files where the resolved properties will be written.
    */
   private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
     List<File> resolverFiles = new ArrayList<>();
@@ -137,7 +137,6 @@ public class SonarQubePlugin implements Plugin<Project> {
         }
         DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
-        localSonarResolver.mkdirs();
         task.setOutputDirectory(localSonarResolver);
         resolverFiles.add(task.getOutputFile());
         // Android uses JetifyTransform to translate and ensure compatibility for specific deprecated libraries.
@@ -245,8 +244,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   /**
-   * must run after compile to have access to class files
-   * must run after test to have access to test reports
+   * Must run after compilation to have access to class files, and after test to have access to test reports.
    */
   private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
     return () -> project.getAllprojects().stream()
@@ -259,8 +257,8 @@ public class SonarQubePlugin implements Plugin<Project> {
           final String compileTaskPrefix = "compile" + capitalize(androidVariantAndExtension.getVariant().getName());
           boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
           boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
-          // unit test compile and android test compile tasks already depends on main code compile so don't add a useless dependency
-          // that would lead to run main compile task several times
+          // Unit test compilation and android test compilation tasks already depend on main code compilation, so we don't add a useless dependency
+          // that would lead to run the main compilation task several times.
           if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
             addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
           }
