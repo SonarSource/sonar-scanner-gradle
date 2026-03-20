@@ -48,10 +48,9 @@ import org.gradle.api.tasks.TaskAction;
 /**
  * Gradle task that collects Android variant metadata during execution and writes it to a JSON file.
  * <p>
- * During the <strong>configuration phase</strong>, {@code onVariants} callbacks populate this task
- * via {@link #addVariant} and {@link #addVariantSourceProvider}.
- * During the <strong>execution phase</strong>, the task resolves all lazy providers and serialises
- * an {@link AndroidVariantData} snapshot.
+ * Variant data is collected eagerly during configuration into a {@link SharedCollector} (via
+ * {@code onVariants} callbacks). The task itself is registered lazily; at execution time it resolves
+ * lazy providers (source dirs, boot classpath) and serialises an {@link AndroidVariantData} snapshot.
  */
 public abstract class AndroidConfigCollectorTask extends DefaultTask {
   public static final String TASK_NAME = "sonarCollectAndroidConfig";
@@ -60,21 +59,14 @@ public abstract class AndroidConfigCollectorTask extends DefaultTask {
   private static final Logger LOGGER = Logger.getLogger(AndroidConfigCollectorTask.class.getName());
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-  // ---- mutable collectors filled during configuration ----
-  private final List<String> variantNames = new ArrayList<>();
-  private final Map<String, String> variantBuildTypes = new LinkedHashMap<>();
-  private final Map<String, Integer> variantMinSdks = new LinkedHashMap<>();
+  @Nullable
+  private SharedCollector sharedCollector;
   private final List<Integer> allMinSdks = new ArrayList<>();
   @Nullable
   private String testBuildType;
-  private File outputDirectory;
-
-  /** Lazy source-dir providers per variant, resolved at execution time. */
-  private final Map<String, List<Provider<?>>> variantSourceProviders = new LinkedHashMap<>();
-
-  /** Lazy boot classpath provider, set during config, resolved at execution time. */
   @Nullable
   private Provider<List<File>> bootClasspathProvider;
+  private File outputDirectory;
 
   @Inject
   public AndroidConfigCollectorTask() {
@@ -82,28 +74,10 @@ public abstract class AndroidConfigCollectorTask extends DefaultTask {
     this.getOutputs().upToDateWhen(task -> false);
   }
 
-  // ---- configuration-phase API ----
+  // ---- configuration-phase API (called from task registration lambda) ----
 
-  public void addVariant(String name, @Nullable String buildType, @Nullable Integer minSdk) {
-    variantNames.add(name);
-    if (buildType != null) {
-      variantBuildTypes.put(name, buildType);
-    }
-    if (minSdk != null) {
-      variantMinSdks.put(name, minSdk);
-      if (!allMinSdks.contains(minSdk)) {
-        allMinSdks.add(minSdk);
-      }
-    }
-  }
-
-  /**
-   * Add a lazy source directory provider for a variant.
-   * The provider may return {@code List<Directory>} (flat — e.g. java, aidl) or
-   * {@code List<List<Directory>>} (layered — e.g. res, assets). Both are handled at execution time.
-   */
-  public void addVariantSourceProvider(String variantName, Provider<?> provider) {
-    variantSourceProviders.computeIfAbsent(variantName, k -> new ArrayList<>()).add(provider);
+  public void setSharedCollector(SharedCollector collector) {
+    this.sharedCollector = collector;
   }
 
   public void addMinSdk(int minSdk) {
@@ -128,28 +102,7 @@ public abstract class AndroidConfigCollectorTask extends DefaultTask {
 
   @Input
   public List<String> getVariantNames() {
-    return variantNames;
-  }
-
-  @Internal
-  public Map<String, String> getVariantBuildTypes() {
-    return variantBuildTypes;
-  }
-
-  @Internal
-  public Map<String, Integer> getVariantMinSdks() {
-    return variantMinSdks;
-  }
-
-  @Internal
-  public List<Integer> getAllMinSdks() {
-    return allMinSdks;
-  }
-
-  @Internal
-  @Nullable
-  public String getTestBuildType() {
-    return testBuildType;
+    return sharedCollector != null ? sharedCollector.variantNames : List.of();
   }
 
   @OutputFile
@@ -161,23 +114,28 @@ public abstract class AndroidConfigCollectorTask extends DefaultTask {
 
   @TaskAction
   void run() throws IOException {
-    if (variantNames.isEmpty()) {
+    if (sharedCollector == null || sharedCollector.variantNames.isEmpty()) {
       LOGGER.info("No Android variants collected – skipping.");
       Files.deleteIfExists(getOutputFile().toPath());
       return;
     }
 
-    // Resolve source directory providers
-    Map<String, List<String>> resolvedSourceDirs = resolveSourceDirs();
-
-    // Resolve boot classpath
+    Map<String, List<String>> resolvedSourceDirs = sharedCollector.resolveSourceDirs();
     List<String> bootClasspath = resolveBootClasspath();
 
+    // Merge allMinSdks from shared collector (per-variant) and from task (DSL-level)
+    List<Integer> mergedMinSdks = new ArrayList<>(sharedCollector.allMinSdks);
+    for (Integer sdk : allMinSdks) {
+      if (!mergedMinSdks.contains(sdk)) {
+        mergedMinSdks.add(sdk);
+      }
+    }
+
     AndroidVariantData data = new AndroidVariantData(
-      new ArrayList<>(variantNames),
-      new LinkedHashMap<>(variantBuildTypes),
-      new LinkedHashMap<>(variantMinSdks),
-      new ArrayList<>(allMinSdks),
+      new ArrayList<>(sharedCollector.variantNames),
+      new LinkedHashMap<>(sharedCollector.variantBuildTypes),
+      new LinkedHashMap<>(sharedCollector.variantMinSdks),
+      mergedMinSdks,
       testBuildType,
       resolvedSourceDirs,
       bootClasspath
@@ -188,46 +146,7 @@ public abstract class AndroidConfigCollectorTask extends DefaultTask {
     }
 
     if (LOGGER.isLoggable(Level.INFO)) {
-      LOGGER.info("Wrote Android config for " + variantNames.size() + " variant(s) to " + getOutputFile());
-    }
-  }
-
-  private Map<String, List<String>> resolveSourceDirs() {
-    Map<String, List<String>> result = new LinkedHashMap<>();
-    for (Map.Entry<String, List<Provider<?>>> entry : variantSourceProviders.entrySet()) {
-      List<String> dirs = new ArrayList<>();
-      for (Provider<?> provider : entry.getValue()) {
-        try {
-          Object value = provider.getOrNull();
-          if (value != null) {
-            collectDirectoryPaths(value, dirs);
-          }
-        } catch (Exception e) {
-          LOGGER.fine("Could not resolve source provider for variant " + entry.getKey() + ": " + e.getMessage());
-        }
-      }
-      result.put(entry.getKey(), dirs);
-    }
-    return result;
-  }
-
-  /**
-   * Recursively extract Directory paths from the resolved provider value.
-   * Handles:
-   * - {@code List<Directory>} (flat, from SourceDirectories.getAll())
-   * - {@code List<List<Directory>>} (layered, from LayeredSourceDirectories.getAll())
-   * - Single {@code Directory}
-   */
-  private static void collectDirectoryPaths(Object value, List<String> paths) {
-    if (value instanceof Directory) {
-      String path = ((Directory) value).getAsFile().getAbsolutePath();
-      if (!paths.contains(path)) {
-        paths.add(path);
-      }
-    } else if (value instanceof Iterable) {
-      for (Object item : (Iterable<?>) value) {
-        collectDirectoryPaths(item, paths);
-      }
+      LOGGER.info("Wrote Android config for " + sharedCollector.variantNames.size() + " variant(s) to " + getOutputFile());
     }
   }
 
@@ -244,27 +163,6 @@ public abstract class AndroidConfigCollectorTask extends DefaultTask {
       .collect(Collectors.toList());
   }
 
-  // ---- in-memory access (used during same build, before task execution) ----
-
-  /**
-   * Build variant data from in-memory state. Resolves source directory and boot classpath providers
-   * eagerly. Safe to call during execution phase or late configuration.
-   */
-  public Optional<AndroidVariantData> buildVariantData() {
-    if (variantNames.isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(new AndroidVariantData(
-      new ArrayList<>(variantNames),
-      new LinkedHashMap<>(variantBuildTypes),
-      new LinkedHashMap<>(variantMinSdks),
-      new ArrayList<>(allMinSdks),
-      testBuildType,
-      resolveSourceDirs(),
-      resolveBootClasspath()
-    ));
-  }
-
   // ---- reading back from file ----
 
   public static Optional<AndroidVariantData> read(File input) {
@@ -276,6 +174,89 @@ public abstract class AndroidConfigCollectorTask extends DefaultTask {
     } catch (IOException e) {
       LOGGER.warning("Could not read Android config from " + input + ": " + e.getMessage());
       return Optional.empty();
+    }
+  }
+
+  // ---- Shared mutable state populated eagerly during config, before task is realized ----
+
+  /**
+   * Holds variant metadata collected by {@code onVariants} callbacks during configuration phase.
+   * This object is created eagerly (before task registration) so that {@code onVariants} can
+   * populate it. It is also stored in project extra properties so {@link AndroidUtils} can
+   * access the data in-memory without waiting for the task to execute and write a file.
+   */
+  public static class SharedCollector {
+    final List<String> variantNames = new ArrayList<>();
+    final Map<String, String> variantBuildTypes = new LinkedHashMap<>();
+    final Map<String, Integer> variantMinSdks = new LinkedHashMap<>();
+    final List<Integer> allMinSdks = new ArrayList<>();
+    private final Map<String, List<Provider<?>>> variantSourceProviders = new LinkedHashMap<>();
+
+    public void addVariant(String name, @Nullable String buildType, @Nullable Integer minSdk) {
+      variantNames.add(name);
+      if (buildType != null) {
+        variantBuildTypes.put(name, buildType);
+      }
+      if (minSdk != null) {
+        variantMinSdks.put(name, minSdk);
+        if (!allMinSdks.contains(minSdk)) {
+          allMinSdks.add(minSdk);
+        }
+      }
+    }
+
+    public void addVariantSourceProvider(String variantName, Provider<?> provider) {
+      variantSourceProviders.computeIfAbsent(variantName, k -> new ArrayList<>()).add(provider);
+    }
+
+    /**
+     * Build an {@link AndroidVariantData} snapshot, resolving source dir providers eagerly.
+     */
+    public Optional<AndroidVariantData> buildVariantData() {
+      if (variantNames.isEmpty()) {
+        return Optional.empty();
+      }
+      return Optional.of(new AndroidVariantData(
+        new ArrayList<>(variantNames),
+        new LinkedHashMap<>(variantBuildTypes),
+        new LinkedHashMap<>(variantMinSdks),
+        new ArrayList<>(allMinSdks),
+        null, // testBuildType not available here (read later from DSL)
+        resolveSourceDirs(),
+        new ArrayList<>() // boot classpath not available here (resolved in task)
+      ));
+    }
+
+    Map<String, List<String>> resolveSourceDirs() {
+      Map<String, List<String>> result = new LinkedHashMap<>();
+      for (Map.Entry<String, List<Provider<?>>> entry : variantSourceProviders.entrySet()) {
+        List<String> dirs = new ArrayList<>();
+        for (Provider<?> provider : entry.getValue()) {
+          try {
+            Object value = provider.getOrNull();
+            if (value != null) {
+              collectDirectoryPaths(value, dirs);
+            }
+          } catch (Exception e) {
+            LOGGER.fine("Could not resolve source provider for variant " + entry.getKey() + ": " + e.getMessage());
+          }
+        }
+        result.put(entry.getKey(), dirs);
+      }
+      return result;
+    }
+
+    private static void collectDirectoryPaths(Object value, List<String> paths) {
+      if (value instanceof Directory) {
+        String path = ((Directory) value).getAsFile().getAbsolutePath();
+        if (!paths.contains(path)) {
+          paths.add(path);
+        }
+      } else if (value instanceof Iterable) {
+        for (Object item : (Iterable<?>) value) {
+          collectDirectoryPaths(item, paths);
+        }
+      }
     }
   }
 }
