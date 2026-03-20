@@ -53,7 +53,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   @Inject
   public SonarResolverTask() {
     super();
-    // some input are annotated with internal, thus grade cannot correctly compute if the task is up to date or not
+    // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
     this.getOutputs().upToDateWhen(task -> false);
   }
 
@@ -173,6 +173,7 @@ public abstract class SonarResolverTask extends DefaultTask {
       testLibrariesFilenames
     );
 
+    outputDirectory.mkdirs();
     ResolutionSerializer.write(
       getOutputFile(),
       projectProperties
