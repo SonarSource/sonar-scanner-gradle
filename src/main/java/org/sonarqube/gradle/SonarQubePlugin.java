@@ -45,6 +45,7 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
@@ -111,38 +112,49 @@ public class SonarQubePlugin implements Plugin<Project> {
     List<File> resolverFiles = new ArrayList<>();
     var androidTasks = getAndroidTasks(topLevelProject);
 
-    topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
-        Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
+    topLevelProject.getAllprojects().forEach(target -> {
+        TaskProvider<SonarResolverTask> sonarResolverTaskProvider = target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
+          Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
 
-        task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
-        task.setSkipProject(skipProject);
-        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        if (target == topLevelProject) {
-          task.setTopLevelProject(true);
-        }
-        task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
+          task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
+          task.setSkipProject(skipProject);
+          task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+          if (target == topLevelProject) {
+            task.setTopLevelProject(true);
+          }
+          task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
 
-        Provider<FileCollection> compile = target.provider(() -> querySourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME));
-        Provider<FileCollection> test = target.provider(() -> querySourceSet(target, SourceSet.TEST_SOURCE_SET_NAME));
-        task.setCompileClasspath(compile);
-        task.setTestCompileClasspath(test);
+          Provider<FileCollection> compile = target.provider(() -> querySourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME));
+          Provider<FileCollection> test = target.provider(() -> querySourceSet(target, SourceSet.TEST_SOURCE_SET_NAME));
+          task.setCompileClasspath(compile);
+          task.setTestCompileClasspath(test);
+
+          if (isAndroidProject(target)) {
+            task.setMainLibraries(target.provider(() -> AndroidUtils.findMainLibraries(target)));
+            task.setTestLibraries(target.provider(() -> AndroidUtils.findTestLibraries(target)));
+          } else {
+            task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
+            task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
+          }
+          DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
+          File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
+          task.setOutputDirectory(localSonarResolver);
+          resolverFiles.add(task.getOutputFile());
+          // Android uses JetifyTransform to translate and ensure compatibility for specific deprecated libraries.
+          // Therefore, we must wait for this transform to complete before collecting the classpath.
+          task.mustRunAfter(androidTasks);
+        });
 
         if (isAndroidProject(target)) {
-          task.setMainLibraries(target.provider(() -> AndroidUtils.findMainLibraries(target)));
-          task.setTestLibraries(target.provider(() -> AndroidUtils.findTestLibraries(target)));
-        } else {
-          task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
-          task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
+          LOGGER.info("Registering AndroidResolverTask for {}", target.getName());
+          AndroidResolverTask androidResolverTask = target.getTasks().register(AndroidResolverTask.TASK_NAME, AndroidResolverTask.class, task -> {
+            task.setDescription(AndroidResolverTask.TASK_DESCRIPTION);
+            task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+          }).get();
+          androidResolverTask.registerVariants(target);
+          sonarResolverTaskProvider.get().dependsOn(androidResolverTask);
         }
-        DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
-        File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
-        task.setOutputDirectory(localSonarResolver);
-        resolverFiles.add(task.getOutputFile());
-        // Android uses JetifyTransform to translate and ensure compatibility for specific deprecated libraries.
-        // Therefore, we must wait for this transform to complete before collecting the classpath.
-        task.mustRunAfter(androidTasks);
-      })
+      }
     );
     return resolverFiles;
   }
