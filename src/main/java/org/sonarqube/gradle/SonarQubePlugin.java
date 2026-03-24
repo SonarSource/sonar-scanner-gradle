@@ -113,7 +113,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     var androidTasks = getAndroidTasks(topLevelProject);
 
     topLevelProject.getAllprojects().forEach(target -> {
-        TaskProvider<SonarResolverTask> sonarResolverTaskProvider = target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
+        TaskProvider<SonarResolverTask> sonarResolverTaskTaskProvider = target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
           Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
 
           task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
@@ -129,13 +129,8 @@ public class SonarQubePlugin implements Plugin<Project> {
           task.setCompileClasspath(compile);
           task.setTestCompileClasspath(test);
 
-          if (isAndroidProject(target)) {
-            task.setMainLibraries(target.provider(() -> AndroidUtils.findMainLibraries(target)));
-            task.setTestLibraries(target.provider(() -> AndroidUtils.findTestLibraries(target)));
-          } else {
-            task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
-            task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
-          }
+          task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
+          task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
           DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
           File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
           task.setOutputDirectory(localSonarResolver);
@@ -146,13 +141,16 @@ public class SonarQubePlugin implements Plugin<Project> {
         });
 
         if (isAndroidProject(target)) {
-          LOGGER.info("Registering AndroidResolverTask for {}", target.getName());
           AndroidResolverTask androidResolverTask = target.getTasks().register(AndroidResolverTask.TASK_NAME, AndroidResolverTask.class, task -> {
             task.setDescription(AndroidResolverTask.TASK_DESCRIPTION);
             task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+            AndroidUtils.configureForProject(task, target);
           }).get();
-          androidResolverTask.registerVariants(target);
-          sonarResolverTaskProvider.get().dependsOn(androidResolverTask);
+          sonarResolverTaskTaskProvider.configure(task -> {
+            task.setMainLibraries(androidResolverTask.getMainLibraries());
+            task.setTestLibraries(androidResolverTask.getTestLibraries());
+          });
+          sonarResolverTaskTaskProvider.get().dependsOn(androidResolverTask);
         }
       }
     );
@@ -241,7 +239,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return getSonarExtensions(p).stream().anyMatch(SonarExtension::isSkipProject);
   }
 
-  private static List<SonarExtension> getSonarExtensions(Project p) {
+  static List<SonarExtension> getSonarExtensions(Project p) {
     return Stream.of(SonarExtension.SONAR_EXTENSION_NAME, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME)
       .map(name -> (SonarExtension) p.getExtensions().getByName(name))
       .collect(Collectors.toList());
@@ -262,7 +260,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && notSkipped(p))
       .map(p -> {
-        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
+        LegacyAndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
 
         List<Task> allTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {

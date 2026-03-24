@@ -19,56 +19,92 @@
  */
 package org.sonarqube.gradle;
 
-import com.android.build.api.variant.ApplicationAndroidComponentsExtension;
-import com.android.build.api.variant.DynamicFeatureAndroidComponentsExtension;
-import com.android.build.api.variant.LibraryAndroidComponentsExtension;
-import com.android.build.api.variant.TestAndroidComponentsExtension;
 import com.android.build.api.variant.Variant;
-import com.android.build.gradle.AppPlugin;
-import com.android.build.gradle.DynamicFeaturePlugin;
-import com.android.build.gradle.LibraryPlugin;
-import com.android.build.gradle.TestPlugin;
+import java.io.File;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 
 public class AndroidResolverTask extends DefaultTask {
 
   public static final String TASK_NAME = "androidResolver";
   public static final String TASK_DESCRIPTION = "Resolves and serializes properties and classpath information for the analysis of Android projects.";
-  private static final Logger LOGGER = Logging.getLogger(AndroidResolverTask.class.getName());
+  private static final Logger LOGGER = Logging.getLogger(AndroidResolverTask.class);
 
-  public final Set<Variant> variants = new LinkedHashSet<>();
+  private Provider<List<RegularFile>> bootClassPath;
+  private String configuredAndroidVariant = null;
+  private final Set<Variant> variants = new LinkedHashSet<>();
+
+  private Provider<FileCollection> mainLibraries;
+  private Provider<FileCollection> testLibraries;
 
   @Inject
   public AndroidResolverTask() {
     super();
+    // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
+    this.getOutputs().upToDateWhen(task -> false);
+  }
+
+  @Internal
+  public Provider<List<RegularFile>> getBootClassPath() {
+    return bootClassPath;
+  }
+
+  public void setBootClassPath(Provider<List<RegularFile>> bootClassPath) {
+    this.bootClassPath = bootClassPath;
+  }
+
+  @Nullable
+  @Internal
+  public String getConfiguredAndroidVariant() {
+    return configuredAndroidVariant;
+  }
+
+  public void setConfiguredAndroidVariant(@Nullable String configuredAndroidVariant) {
+    this.configuredAndroidVariant = configuredAndroidVariant;
+  }
+
+  @Internal
+  public Set<Variant> getVariants() {
+    return variants;
+  }
+
+  @Input
+  public Provider<FileCollection> getMainLibraries() {
+    return mainLibraries;
+  }
+
+  public void setMainLibraries(Provider<FileCollection> mainLibraries) {
+    this.mainLibraries = mainLibraries;
+  }
+
+  @Input
+  public Provider<FileCollection> getTestLibraries() {
+    return testLibraries;
+  }
+
+  public void setTestLibraries(Provider<FileCollection> testLibraries) {
+    this.testLibraries = testLibraries;
   }
 
   @TaskAction
   public void run() {
+    LOGGER.info("Boot classpath: {}", bootClassPath.get().stream().map(RegularFile::getAsFile).map(File::getName).collect(java.util.stream.Collectors.toList()));
+    LOGGER.info("Main libraries: {}", mainLibraries.get().getFiles().stream().map(File::getName).collect(java.util.stream.Collectors.toList()));
+    LOGGER.info("Test libraries: {}", testLibraries.get().getFiles().stream().map(File::getName).collect(java.util.stream.Collectors.toList()));
+    LOGGER.info("Configured Android variant: {}", configuredAndroidVariant);
     LOGGER.info("Found variants: {}", variants.stream().map(Variant::getName).collect(java.util.stream.Collectors.toList()));
-  }
-
-  public void registerVariants(Project project) {
-    if (!project.getPlugins().withType(AppPlugin.class).isEmpty()) {
-      ApplicationAndroidComponentsExtension androidExtension = project.getExtensions().getByType(ApplicationAndroidComponentsExtension.class);
-      androidExtension.onVariants(androidExtension.selector().all(), variants::add);
-    } else if (!project.getPlugins().withType(LibraryPlugin.class).isEmpty()) {
-      LibraryAndroidComponentsExtension androidExtension = project.getExtensions().getByType(LibraryAndroidComponentsExtension.class);
-      androidExtension.onVariants(androidExtension.selector().all(), variants::add);
-    } else if (!project.getPlugins().withType(TestPlugin.class).isEmpty()) {
-      TestAndroidComponentsExtension androidExtension = project.getExtensions().getByType(TestAndroidComponentsExtension.class);
-      androidExtension.onVariants(androidExtension.selector().all(), variants::add);
-    } else if (!project.getPlugins().withType(DynamicFeaturePlugin.class).isEmpty()) {
-      DynamicFeatureAndroidComponentsExtension androidExtension = project.getExtensions().getByType(DynamicFeatureAndroidComponentsExtension.class);
-      androidExtension.onVariants(androidExtension.selector().all(), variants::add);
-    }
   }
 
 }

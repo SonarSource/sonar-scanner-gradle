@@ -57,7 +57,6 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.getOutputs().upToDateWhen(task -> false);
   }
 
-
   @Input
   public String getProjectName() {
     return projectName;
