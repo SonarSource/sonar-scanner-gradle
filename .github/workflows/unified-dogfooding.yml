@@ -4,6 +4,9 @@ on:
     - cron: '0 4 * * *' # Run the workflow every day at 04:00 UTC
   workflow_dispatch:
 
+env:
+  CACHE_BACKEND: s3
+
 jobs:
   unified-platform-dogfooding:
     runs-on: github-ubuntu-latest-m

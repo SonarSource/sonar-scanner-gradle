@@ -8,6 +8,9 @@ on:
       - published
   workflow_dispatch:
 
+env:
+  CACHE_BACKEND: s3
+
 jobs:
   prepare_release:
     name: Prepare Release

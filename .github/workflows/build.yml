@@ -17,6 +17,7 @@ concurrency:
 env:
   USE_DEVELOCITY: true
   DEVELOCITY_URL: https://develocity-public.sonar.build/
+  CACHE_BACKEND: s3
 
 jobs:
   build:
