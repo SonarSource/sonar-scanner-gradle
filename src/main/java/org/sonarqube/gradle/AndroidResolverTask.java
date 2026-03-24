@@ -21,20 +21,22 @@ package org.sonarqube.gradle;
 
 import com.android.build.api.variant.Variant;
 import java.io.File;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.compile.JavaCompile;
 
 public class AndroidResolverTask extends DefaultTask {
 
@@ -42,7 +44,8 @@ public class AndroidResolverTask extends DefaultTask {
   public static final String TASK_DESCRIPTION = "Resolves and serializes properties and classpath information for the analysis of Android projects.";
   private static final Logger LOGGER = Logging.getLogger(AndroidResolverTask.class);
 
-  private Provider<List<RegularFile>> bootClassPath;
+  private Provider<FileCollection> bootClassPath;
+  private String testBuildType = null;
   private String configuredAndroidVariant = null;
   private final Set<Variant> variants = new LinkedHashSet<>();
 
@@ -57,11 +60,11 @@ public class AndroidResolverTask extends DefaultTask {
   }
 
   @Internal
-  public Provider<List<RegularFile>> getBootClassPath() {
+  public Provider<FileCollection> getBootClassPath() {
     return bootClassPath;
   }
 
-  public void setBootClassPath(Provider<List<RegularFile>> bootClassPath) {
+  public void setBootClassPath(Provider<FileCollection> bootClassPath) {
     this.bootClassPath = bootClassPath;
   }
 
@@ -100,11 +103,42 @@ public class AndroidResolverTask extends DefaultTask {
 
   @TaskAction
   public void run() {
-    LOGGER.info("Boot classpath: {}", bootClassPath.get().stream().map(RegularFile::getAsFile).map(File::getName).collect(java.util.stream.Collectors.toList()));
+    LOGGER.info("Boot classpath: {}", bootClassPath.get().getFiles().stream().map(File::getName).collect(java.util.stream.Collectors.toList()));
     LOGGER.info("Main libraries: {}", mainLibraries.get().getFiles().stream().map(File::getName).collect(java.util.stream.Collectors.toList()));
     LOGGER.info("Test libraries: {}", testLibraries.get().getFiles().stream().map(File::getName).collect(java.util.stream.Collectors.toList()));
     LOGGER.info("Configured Android variant: {}", configuredAndroidVariant);
     LOGGER.info("Found variants: {}", variants.stream().map(Variant::getName).collect(java.util.stream.Collectors.toList()));
+    LOGGER.info("Variant: {}", getVariant().getName());
+  }
+
+  @Nullable
+  private Variant getVariant() {
+    if (variants.isEmpty()) {
+      return null;
+    }
+
+    if (configuredAndroidVariant == null) {
+      // Take the first "test" buildType when there is no provided variant name.
+      // Release variant may be obfuscated using proguard. Unit tests and coverage reports are also usually collected in debug mode.
+      Optional<Variant> firstDebug = variants.stream().filter(v -> testBuildType != null && testBuildType.equals(v.getBuildType())).findFirst();
+      Variant result = firstDebug.orElse(variants.iterator().next());
+      LOGGER.info("No variant name specified to be used by SonarQube. Default to '{}'", result.getName());
+      return result;
+    }
+
+    Optional<Variant> variant = variants.stream()
+      .filter(v -> configuredAndroidVariant.equals(v.getName()))
+      .findFirst();
+    if (variant.isPresent()) {
+      return variant.get();
+    } else {
+      throw new IllegalArgumentException(
+        "Unable to find variant '"
+          + configuredAndroidVariant
+          + "' to use for SonarQube analysis. Candidates are: "
+          + variants.stream().map(Variant::getName).collect(java.util.stream.Collectors.joining(", "))
+      );
+    }
   }
 
 }

@@ -31,11 +31,28 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 
-import static org.sonarqube.gradle.SonarQubePlugin.getSonarExtensions;
+import static org.sonarqube.gradle.SonarUtils.getSonarExtensions;
 
 public class AndroidUtils {
 
   private AndroidUtils() {
+  }
+
+  public static boolean isAndroidProject(Project project) {
+    return project.getPlugins().hasPlugin("com.android.application")
+      || project.getPlugins().hasPlugin("com.android.library")
+      || project.getPlugins().hasPlugin("com.android.test")
+      || project.getPlugins().hasPlugin("com.android.feature")
+      || project.getPlugins().hasPlugin("com.android.dynamic-feature");
+  }
+
+  @Nullable
+  public static String getConfiguredVariantName(Project project) {
+    return getSonarExtensions(project)
+      .stream()
+      .map(SonarExtension::getAndroidVariant)
+      .filter(Objects::nonNull)
+      .findFirst().orElse(null);
   }
 
   public static void configureForProject(AndroidResolverTask androidResolverTask, Project project) {
@@ -48,29 +65,22 @@ public class AndroidUtils {
     if (!project.getPlugins().withType(AppPlugin.class).isEmpty()) {
       ApplicationAndroidComponentsExtension androidExtension = project.getExtensions().getByType(ApplicationAndroidComponentsExtension.class);
       androidExtension.onVariants(androidExtension.selector().all(), androidResolverTask.getVariants()::add);
-      androidResolverTask.setBootClassPath(androidExtension.getSdkComponents().getBootClasspath());
+      androidResolverTask.setBootClassPath(androidExtension.getSdkComponents().getBootClasspath().map(project::files));
     } else if (!project.getPlugins().withType(LibraryPlugin.class).isEmpty()) {
       LibraryAndroidComponentsExtension androidExtension = project.getExtensions().getByType(LibraryAndroidComponentsExtension.class);
       androidExtension.onVariants(androidExtension.selector().all(), androidResolverTask.getVariants()::add);
-      androidResolverTask.setBootClassPath(androidExtension.getSdkComponents().getBootClasspath());
+      androidResolverTask.setBootClassPath(androidExtension.getSdkComponents().getBootClasspath().map(project::files));
     } else if (!project.getPlugins().withType(TestPlugin.class).isEmpty()) {
       TestAndroidComponentsExtension androidExtension = project.getExtensions().getByType(TestAndroidComponentsExtension.class);
       androidExtension.onVariants(androidExtension.selector().all(), androidResolverTask.getVariants()::add);
-      androidResolverTask.setBootClassPath(androidExtension.getSdkComponents().getBootClasspath());
+      androidResolverTask.setBootClassPath(androidExtension.getSdkComponents().getBootClasspath().map(project::files));
     } else if (!project.getPlugins().withType(DynamicFeaturePlugin.class).isEmpty()) {
       DynamicFeatureAndroidComponentsExtension androidExtension = project.getExtensions().getByType(DynamicFeatureAndroidComponentsExtension.class);
       androidExtension.onVariants(androidExtension.selector().all(), androidResolverTask.getVariants()::add);
-      androidResolverTask.setBootClassPath(androidExtension.getSdkComponents().getBootClasspath());
+      androidResolverTask.setBootClassPath(androidExtension.getSdkComponents().getBootClasspath().map(project::files));
+    } else {
+      androidResolverTask.setBootClassPath(project.provider(project::files));
     }
-  }
-
-  @Nullable
-  public static String getConfiguredVariantName(Project project) {
-    return getSonarExtensions(project)
-      .stream()
-      .map(SonarExtension::getAndroidVariant)
-      .filter(Objects::nonNull)
-      .findFirst().orElse(null);
   }
 
 }

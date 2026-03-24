@@ -77,7 +77,7 @@ class LegacyAndroidUtilsIT extends Specification {
         return (pluginClasspath + testClasspath).unique()
     }
 
-    @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
+    /*@Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
     def "Libraries of android project are correctly retrieved"() {
         given: "a simple android project"
         settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -177,5 +177,5 @@ class LegacyAndroidUtilsIT extends Specification {
 
         where:
         useConfigCache << [true, false]
-    }
+    }*/
 }

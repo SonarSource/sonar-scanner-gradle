@@ -69,13 +69,16 @@ import org.sonarqube.gradle.properties.SonarProperty;
 import org.sonarsource.scanner.lib.EnvironmentConfig;
 
 import static java.util.stream.Collectors.groupingBy;
+import static org.sonarqube.gradle.AndroidUtils.getConfiguredVariantName;
+import static org.sonarqube.gradle.AndroidUtils.isAndroidProject;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.computeReportPaths;
 import static org.sonarqube.gradle.SonarUtils.findProjectBaseDir;
 import static org.sonarqube.gradle.SonarUtils.getSourceSets;
-import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
+import static org.sonarqube.gradle.SonarUtils.isSkipped;
 import static org.sonarqube.gradle.SonarUtils.nonEmptyOrNull;
+import static org.sonarqube.gradle.SonarUtils.notSkipped;
 import static org.sonarqube.gradle.SonarUtils.setMainBinariesProps;
 
 public class SonarPropertyComputer {
@@ -100,7 +103,7 @@ public class SonarPropertyComputer {
 
     computedProperties.properties.computeIfPresent(SonarProperty.PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(computedProperties.properties));
 
-    if (SonarQubePlugin.notSkipped(targetProject)) {
+    if (notSkipped(targetProject)) {
       computedProperties.properties.put(SonarProperty.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getRootProject().getProjectDir().getAbsolutePath());
     }
 
@@ -116,7 +119,7 @@ public class SonarPropertyComputer {
   }
 
   private void computeDefaultProperties(Project project, ComputedProperties computedProperties, String prefix) {
-    if (SonarQubePlugin.isSkipped(project)) {
+    if (isSkipped(project)) {
       return;
     }
     Map<String, Object> rawProperties = new LinkedHashMap<>();
@@ -125,7 +128,7 @@ public class SonarPropertyComputer {
     addGradleDefaults(project, rawProperties);
 
     if (isAndroidProject(project)) {
-      LegacyAndroidUtils.configureForAndroid(project, SonarQubePlugin.getConfiguredAndroidVariant(project), rawProperties);
+      LegacyAndroidUtils.configureForAndroid(project, getConfiguredVariantName(project), rawProperties);
     }
 
     if (isRootProject(project)) {
@@ -153,11 +156,11 @@ public class SonarPropertyComputer {
       .forEach(computedProperties.userDefinedKeys::add);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
-      .filter(SonarQubePlugin::notSkipped)
+      .filter(SonarUtils::notSkipped)
       .collect(Collectors.toList());
 
     List<Project> skippedChildProjects = project.getChildProjects().values().stream()
-      .filter(SonarQubePlugin::isSkipped)
+      .filter(SonarUtils::isSkipped)
       .collect(Collectors.toList());
 
     if (!skippedChildProjects.isEmpty()) {
@@ -450,7 +453,7 @@ public class SonarPropertyComputer {
   private static void configureTestReports(Test testTask, Map<String, Object> properties) {
     File testResultsDir = getDestination(testTask.getReports().getJunitXml());
 
-    if(testResultsDir==null){
+    if (testResultsDir == null) {
       return;
     }
 
@@ -491,7 +494,7 @@ public class SonarPropertyComputer {
 
     SourceSet test = sourceSets.getAt("test");
     Collection<File> testClassDirs = getJavaOutputDirs(test);
-    appendProps(properties,  SonarProperty.JAVA_TEST_BINARIES, testClassDirs);
+    appendProps(properties, SonarProperty.JAVA_TEST_BINARIES, testClassDirs);
   }
 
   private static @Nullable Collection<File> getJavaSourceFiles(SourceSet sourceSet) {
@@ -659,7 +662,7 @@ public class SonarPropertyComputer {
   private static Stream<Project> skippedProjects(Project project) {
     Set<Project> projectsMarkedAsSkipped = project.getAllprojects()
       .stream()
-      .filter(SonarQubePlugin::isSkipped)
+      .filter(SonarUtils::isSkipped)
       .collect(Collectors.toSet());
 
     return project.getAllprojects().stream().filter(p -> hasSkippedAncestor(p, projectsMarkedAsSkipped));
