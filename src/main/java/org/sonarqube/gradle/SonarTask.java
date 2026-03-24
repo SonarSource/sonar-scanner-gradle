@@ -232,7 +232,7 @@ public class SonarTask extends ConventionTask {
 
   private List<File> resolverFiles;
 
-  @InputFiles
+  @Internal
   public List<File> getResolverFiles() {
     return resolverFiles;
   }
