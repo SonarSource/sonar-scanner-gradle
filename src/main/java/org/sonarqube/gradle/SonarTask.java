@@ -46,7 +46,6 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -232,7 +231,7 @@ public class SonarTask extends ConventionTask {
 
   private List<File> resolverFiles;
 
-  @InputFiles
+  @Internal
   public List<File> getResolverFiles() {
     return resolverFiles;
   }
