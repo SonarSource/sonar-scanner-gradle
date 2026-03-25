@@ -515,4 +515,34 @@ public class AndroidTest extends AbstractGradleIT {
       .contains("junit-4.13.2.jar", "hamcrest-core-1.3.jar")
       .doesNotContain("android.jar", "jetified-junit-", "jetified-hamcrest-core-");
   }
+
+  @Test
+  public void testHelloAgp9ProjectAnalysis() throws Exception {
+    ignoreThisTestIfGradleVersionIsLessThan("9.0.0");
+    assumeTrue(getAndroidGradleVersion().isGreaterThanOrEqualTo("9.0.0"));
+
+    Properties props = runGradlewSonarSimulationModeWithEnv("/HelloAgp9", emptyMap(), new DefaultRunConfiguration(), "--quiet", "--console=plain");
+
+    Path baseDir = Paths.get(props.getProperty("sonar.projectBaseDir"));
+
+    assertThat(props.getProperty("sonar.modules")).isEqualTo(":app");
+    assertThat(props.getProperty(":app.sonar.projectName")).isEqualTo("app");
+    assertThat(props.getProperty(":app.sonar.android.detected")).contains("true");
+
+    assertThat(stream(props.getProperty(":app.sonar.sources").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("app/src/main/java"),
+        baseDir.resolve("app/src/main/res"),
+        baseDir.resolve("app/src/main/AndroidManifest.xml"));
+
+    assertThat(stream(props.getProperty(":app.sonar.tests").split(",")).map(Paths::get))
+      .containsOnly(
+        baseDir.resolve("app/src/test/java"),
+        baseDir.resolve("app/src/androidTest/java"));
+
+    assertThat(props.getProperty(":app.sonar.java.libraries"))
+      .contains("android.jar");
+    assertThat(props.getProperty(":app.sonar.java.test.libraries"))
+      .contains("android.jar", "junit");
+  }
 }
