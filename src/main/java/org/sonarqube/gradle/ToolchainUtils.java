@@ -51,31 +51,36 @@ class ToolchainUtils {
   // https://github.com/gradle/gradle/blob/d3e4faca3df507176b67d9b3bb3ee91bf2aa070c/subprojects/language-java/src/main/java/org/gradle/api/tasks/compile/JavaCompile.java#L400
   static void configureCompatibilityOptions(JavaCompile compileTask, JavaCompilerConfiguration config) {
     final JavaInstallationMetadata toolchain = compileTask.getJavaCompiler().map(JavaCompiler::getMetadata).getOrNull();
-    if (toolchain != null) {
-      Property<Integer> release = compileTask.getOptions().getRelease();
-      if (release.isPresent()) {
-        config.setRelease(release.get().toString());
-      } else {
-        boolean isSourceOrTargetConfigured = false;
-        if (compileTask.getSourceCompatibility() != null) {
-          config.setSource(compileTask.getSourceCompatibility());
-          isSourceOrTargetConfigured = true;
-        }
-        if (compileTask.getTargetCompatibility() != null) {
-          config.setTarget(compileTask.getTargetCompatibility());
-          isSourceOrTargetConfigured = true;
-        }
-        if (!isSourceOrTargetConfigured) {
-          JavaLanguageVersion languageVersion = toolchain.getLanguageVersion();
-          if (languageVersion.canCompileOrRun(10)) {
-            config.setRelease(languageVersion.toString());
-          } else {
-            String version = languageVersion.toString();
-            config.setSource(version);
-            config.setTarget(version);
-          }
-        }
-      }
+    if (toolchain == null) {
+      return;
+    }
+
+    Integer release = compileTask.getOptions().getRelease().getOrNull();
+    if (release != null) {
+      config.setRelease(release.toString());
+      return;
+    }
+
+    boolean isSourceOrTargetConfigured = false;
+    if (compileTask.getSourceCompatibility() != null) {
+      config.setSource(compileTask.getSourceCompatibility());
+      isSourceOrTargetConfigured = true;
+    }
+    if (compileTask.getTargetCompatibility() != null) {
+      config.setTarget(compileTask.getTargetCompatibility());
+      isSourceOrTargetConfigured = true;
+    }
+    if (isSourceOrTargetConfigured) {
+      return;
+    }
+
+    JavaLanguageVersion languageVersion = toolchain.getLanguageVersion();
+    if (languageVersion.canCompileOrRun(10)) {
+      config.setRelease(languageVersion.toString());
+    } else {
+      String version = languageVersion.toString();
+      config.setSource(version);
+      config.setTarget(version);
     }
   }
 }
