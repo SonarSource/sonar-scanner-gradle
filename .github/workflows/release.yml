@@ -7,6 +7,11 @@ on:
     types:
       - published
   workflow_dispatch:
+    inputs:
+      plugin_version:
+        type: string
+        description: Full plugin version to use for the release (e.g. 7.3.0.7886, can be found at https://repox.jfrog.io/ui/native/sonarsource-public-builds/org/sonarsource/scanner/gradle/sonarqube-gradle-plugin/)
+        required: true
 
 jobs:
   prepare_release:
@@ -17,6 +22,7 @@ jobs:
       contents: read
     outputs:
         BUILD_NUMBER: ${{ steps.from_tag.outputs.BUILD_NUMBER || steps.from_master.outputs.BUILD_NUMBER }}
+        VERSION: ${{ steps.from_tag.outputs.VERSION || steps.from_master.outputs.VERSION }}
     steps:
       - name: Get build number from release tag
         if: github.event_name == 'release'
@@ -25,16 +31,20 @@ jobs:
           VERSION: ${{ github.event.release.tag_name }}
         run: |
           CI_BUILD_NUMBER="${VERSION##*.}"
+          echo "VERSION=${VERSION}"
           echo "BUILD_NUMBER=${CI_BUILD_NUMBER}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "BUILD_NUMBER=${CI_BUILD_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Set build number for manual trigger
         if: github.event_name == 'workflow_dispatch'
         id: from_master
         run: |
-          VERSION=$(./.github/scripts/latest-repox-master-builds-plugin-version.sh)
+          VERSION="${{ github.event.inputs.plugin_version }}"
           CI_BUILD_NUMBER="${VERSION##*.}"
+          echo "VERSION=${VERSION}"
           echo "BUILD_NUMBER=${CI_BUILD_NUMBER}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "BUILD_NUMBER=${CI_BUILD_NUMBER}" >> $GITHUB_OUTPUT
 
   # Manual triggers will simulate the release without actually performing it
@@ -49,6 +59,7 @@ jobs:
       contents: write
     env:
       BUILD_NUMBER: ${{ needs.prepare_release.outputs.BUILD_NUMBER }}
+      VERSION: ${{ needs.prepare_release.outputs.VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -69,8 +80,8 @@ jobs:
 
       - name: Simulate release
         run: |
-          source ./.github/scripts/set-version-from-build-number.sh
-          echo "Simulating release for build number ${BUILD_NUMBER}"
+          sed -i.bak "s/^version=.*/version=${VERSION}/" gradle.properties
+          echo "Simulating release for version ${VERSION}"
           
           ./gradlew \
             --info \
