@@ -78,7 +78,20 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
 
+      - name: Get secrets from Vault
+        id: vault-secrets
+        uses: SonarSource/vault-action-wrapper@v3
+        with:
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_READER_TOKEN;
+            development/kv/data/gradle/publish key | PUBLISH_KEY;
+            development/kv/data/gradle/publish secret | PUBLISH_SECRET;
+
       - name: Simulate release
+        env:
+          ARTIFACTORY_PRIVATE_PASSWORD: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_READER_TOKEN }}
+          PUBLISH_KEY: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_KEY }}
+          PUBLISH_SECRET: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_SECRET }}
         run: |
           sed -i.bak "s/^version=.*/version=${VERSION}/" gradle.properties
           echo "Simulating release for version ${VERSION}"
@@ -89,6 +102,8 @@ jobs:
             --console plain \
             -DbuildNumber="${BUILD_NUMBER}" \
             -Dsimulate-publish=true \
+            -Pgradle.publish.key="${PUBLISH_KEY}" \
+            -Pgradle.publish.secret="${PUBLISH_SECRET}" \
             downloadMavenArtifactsAndPublishToGradlePluginPortal
           
           ./gradlew \
@@ -97,6 +112,8 @@ jobs:
           --console plain \
           -DbuildNumber="${BUILD_NUMBER}" \
           -Dvalidate-publish=true \
+          -Pgradle.publish.key="${PUBLISH_KEY}" \
+          -Pgradle.publish.secret="${PUBLISH_SECRET}" \
           downloadMavenArtifactsAndPublishToGradlePluginPortal
 
   release:
