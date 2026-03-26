@@ -48,6 +48,7 @@ import java.util.Map;
  * <strong>Property Value Conversion:</strong>
  * Before passing properties to the Scanner, values are converted to Strings as follows:
  * <ul>
+ * <li>{@code Provider<?>} values are resolved lazily when the final Scanner properties are computed</li>
  * <li>{@code Iterable}s are recursively converted and joined into a comma-separated String</li>
  * <li>All other values are converted to Strings by calling their {@code toString()} method</li>
  * </ul>
