@@ -265,7 +265,7 @@ class FunctionalTests extends Specification {
         def props = new Properties()
         props.load(outFile.newDataInputStream())
         props."sonar.projectName" == "Project From Provider"
-        props."sonar.sources" == projectDir.resolve("src").toString()
+        Path.of(props."sonar.sources").toFile().canonicalFile.toPath() == projectDir.resolve("src").toFile().canonicalFile.toPath()
     }
 
     def "set jdkHome, source and target for 'java' projects from task toolchains"() {
