@@ -19,11 +19,16 @@
  */
 package org.sonarqube.gradle;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.vdurmont.semver4j.Semver;
 import com.vdurmont.semver4j.Semver.SemverType;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -49,6 +54,9 @@ import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 import org.sonarqube.gradle.run_configuration.RunConfiguration;
 
 public abstract class AbstractGradleIT {
+
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
   @Rule
   public TemporaryFolder temp = TemporaryFolder.builder().build();
@@ -144,6 +152,14 @@ public abstract class AbstractGradleIT {
         result.put(key, value);
       });
     return result;
+  }
+
+  protected static Map<String, String> loadExpectedMap(String resourcePath) throws IOException {
+    try (Reader reader = new InputStreamReader(
+      java.util.Objects.requireNonNull(AbstractGradleIT.class.getResourceAsStream(resourcePath)),
+      StandardCharsets.UTF_8)) {
+      return GSON.fromJson(reader, STRING_MAP_TYPE);
+    }
   }
 
   private static String replaceAllPrefixInCommaSeparatedString(String value, String oldPrefix, String newPrefix) {

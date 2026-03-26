@@ -41,6 +41,7 @@ import static org.junit.Assume.assumeTrue;
 
 public class AndroidTest extends AbstractGradleIT {
   private static final Semver VERSION_8_3_0 = new Semver("8.3.0", Semver.SemverType.STRICT);
+  private static final String GRADLE9_EXPECTED_PROPERTIES_RESOURCE = "/org/sonarqube/gradle/AndroidTest/gradle9-android-expected.json";
 
   @BeforeClass
   public static void beforeAll() {
@@ -459,29 +460,7 @@ public class AndroidTest extends AbstractGradleIT {
     Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle9", env, new DefaultRunConfiguration(), "--quiet", "--console=plain");
     Map<String, String> comparableProps = extractComparableProperties(props);
 
-    // Verify key project structure properties
-    assertThat(comparableProps)
-      .containsEntry("sonar.projectKey", "org.sonarqube:example-android-gradle-dynamic-module")
-      .containsEntry("sonar.projectName", "Simple Android Gradle Project With Dynamic Module")
-      .containsEntry("sonar.projectVersion", "unspecified")
-      .containsEntry("sonar.modules", ":app,:javalib,:mydynamicfeature")
-      .containsEntry("sonar.host.url", "https://sonarcloud.io");
-
-    // Verify :app module properties
-    assertThat(comparableProps)
-      .containsEntry(":app.sonar.android.detected", "true")
-      .containsEntry(":app.sonar.java.source", "1.8")
-      .containsEntry(":app.sonar.java.target", "1.8")
-      .containsEntry(":app.sonar.moduleKey", "org.sonarqube:example-android-gradle-dynamic-module:app")
-      .containsEntry(":app.sonar.projectName", "app");
-
-    // Verify :mydynamicfeature module properties
-    assertThat(comparableProps)
-      .containsEntry(":mydynamicfeature.sonar.android.detected", "true")
-      .containsEntry(":mydynamicfeature.sonar.java.source", "1.8")
-      .containsEntry(":mydynamicfeature.sonar.java.target", "1.8")
-      .containsEntry(":mydynamicfeature.sonar.moduleKey", "org.sonarqube:example-android-gradle-dynamic-module:mydynamicfeature")
-      .containsEntry(":mydynamicfeature.sonar.projectName", "mydynamicfeature");
+    assertThat(comparableProps).containsAllEntriesOf(loadExpectedMap(GRADLE9_EXPECTED_PROPERTIES_RESOURCE));
 
     // Verify Android libraries are resolved and present
     assertThat(comparableProps.get(":app.sonar.java.libraries"))
