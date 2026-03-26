@@ -30,6 +30,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +53,8 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 import org.sonarqube.gradle.run_configuration.RunConfiguration;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractGradleIT {
 
@@ -177,6 +180,53 @@ public abstract class AbstractGradleIT {
 
   protected static Semver getAndroidGradleVersion() {
     return androidGradleVersion;
+  }
+
+  protected static String getRequiredProperty(Properties props, String key) {
+    String value = props.getProperty(key);
+    if (value == null) {
+      throw new IllegalStateException("Missing property: " + key);
+    }
+    return value;
+  }
+
+  protected static Path getRequiredPathProperty(Properties props, String key) {
+    return normalizePath(Paths.get(getRequiredProperty(props, key)));
+  }
+
+  protected static List<Path> getPathListProperty(Properties props, String key) {
+    return Arrays.stream(getRequiredProperty(props, key).split(","))
+      .map(String::trim)
+      .filter(s -> !s.isEmpty())
+      .map(Paths::get)
+      .map(AbstractGradleIT::normalizePath)
+      .toList();
+  }
+
+  protected static void assertPathProperty(Properties props, String key, Path expected) {
+    assertThat(getRequiredPathProperty(props, key)).isEqualTo(normalizePath(expected));
+  }
+
+  protected static void assertPathListPropertyContainsOnly(Properties props, String key, Path... expectedPaths) {
+    assertThat(getPathListProperty(props, key))
+      .containsOnly(Arrays.stream(expectedPaths).map(AbstractGradleIT::normalizePath).toArray(Path[]::new));
+  }
+
+  protected static void assertPathListPropertyContainsExactlyInAnyOrder(Properties props, String key, Path... expectedPaths) {
+    assertThat(getPathListProperty(props, key))
+      .containsExactlyInAnyOrder(Arrays.stream(expectedPaths).map(AbstractGradleIT::normalizePath).toArray(Path[]::new));
+  }
+
+  protected static void assertPropertyContains(Properties props, String key, String... fragments) {
+    assertThat(getRequiredProperty(props, key)).contains(fragments);
+  }
+
+  protected static void assertPropertyDoesNotContain(Properties props, String key, String... fragments) {
+    assertThat(getRequiredProperty(props, key)).doesNotContain(fragments);
+  }
+
+  private static Path normalizePath(Path path) {
+    return path.toAbsolutePath().normalize();
   }
 
   protected Properties runGradlewSonarSimulationMode(String project) throws Exception {
