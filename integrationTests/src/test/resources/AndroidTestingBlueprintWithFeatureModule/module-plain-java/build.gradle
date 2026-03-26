@@ -1,8 +1,0 @@
-apply plugin: 'java'
-apply plugin: 'jacoco' // Apply the jacoco plugin to generate test coverage reports.
-
-dependencies {
-    // Dependencies for local unit tests
-    testImplementation 'junit:junit:' + rootProject.ext.junitVersion
-    testImplementation 'org.hamcrest:hamcrest-core:' + rootProject.ext.hamcrestVersion
-}
