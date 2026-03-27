@@ -61,7 +61,7 @@ public class SonarUtils {
    * Find test files given the path by looking for the keyword "test", for example:
    * - script/test/run.sh
    *          ^^^^
-   * But exclude not test related English words. AI was used to find the most common words.
+   * But exclude English words that are not test-related. AI was used to find the most common words.
    */
   private static final Pattern TEST_FILE_PATH_PATTERN = Pattern.compile(
     // Exclude valid English words ending with "test": attest, contest, detest, latest, protest
@@ -77,12 +77,18 @@ public class SonarUtils {
     // Utility class
   }
 
-  static boolean isAndroidProject(Project project) {
-    return project.getPlugins().hasPlugin("com.android.application")
-      || project.getPlugins().hasPlugin("com.android.library")
-      || project.getPlugins().hasPlugin("com.android.test")
-      || project.getPlugins().hasPlugin("com.android.feature")
-      || project.getPlugins().hasPlugin("com.android.dynamic-feature");
+  public static boolean isSkipped(Project project) {
+    return getSonarExtensions(project).stream().anyMatch(SonarExtension::isSkipProject);
+  }
+
+  static boolean notSkipped(Project project) {
+    return !isSkipped(project);
+  }
+
+  public static List<SonarExtension> getSonarExtensions(Project p) {
+    return Stream.of(SonarExtension.SONAR_EXTENSION_NAME, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME)
+      .map(name -> (SonarExtension) p.getExtensions().getByName(name))
+      .collect(Collectors.toList());
   }
 
   /**
@@ -331,6 +337,7 @@ public class SonarUtils {
 
   /**
    * Computes the absolute paths for the report paths extracted from the properties.
+   *
    * @return The set of absolute paths to external and coverage reports
    * @throws IllegalStateException if the property "sonar.projectBaseDir" is not defined in the properties argument
    */

@@ -25,12 +25,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -45,12 +43,13 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 
+import static org.sonarqube.gradle.AndroidUtils.isAndroidProject;
 import static org.sonarqube.gradle.SonarUtils.capitalize;
-import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 
 /**
  * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarScanner for Gradle</a>.
@@ -111,38 +110,47 @@ public class SonarQubePlugin implements Plugin<Project> {
     List<File> resolverFiles = new ArrayList<>();
     var androidTasks = getAndroidTasks(topLevelProject);
 
-    topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
-        Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
-
-        task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
-        task.setSkipProject(skipProject);
-        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        if (target == topLevelProject) {
-          task.setTopLevelProject(true);
-        }
-        task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
-
-        Provider<FileCollection> compile = target.provider(() -> querySourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME));
-        Provider<FileCollection> test = target.provider(() -> querySourceSet(target, SourceSet.TEST_SOURCE_SET_NAME));
-        task.setCompileClasspath(compile);
-        task.setTestCompileClasspath(test);
-
-        if (isAndroidProject(target)) {
-          task.setMainLibraries(target.provider(() -> AndroidUtils.findMainLibraries(target)));
-          task.setTestLibraries(target.provider(() -> AndroidUtils.findTestLibraries(target)));
-        } else {
-          task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
-          task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
-        }
+    topLevelProject.getAllprojects().forEach(target -> {
         DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
         File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
-        task.setOutputDirectory(localSonarResolver);
-        resolverFiles.add(task.getOutputFile());
-        // Android uses JetifyTransform to translate and ensure compatibility for specific deprecated libraries.
-        // Therefore, we must wait for this transform to complete before collecting the classpath.
-        task.mustRunAfter(androidTasks);
-      })
+
+        TaskProvider<SonarResolverTask> sonarResolverTaskTaskProvider = target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
+          Provider<Boolean> skipProject = target.provider(() -> SonarUtils.isSkipped(target));
+
+          task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
+          task.setSkipProject(skipProject);
+          task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+          if (target == topLevelProject) {
+            task.setTopLevelProject(true);
+          }
+          task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
+
+          task.setCompileClasspath(target.provider(() -> querySourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME)));
+          task.setTestCompileClasspath(target.provider(() -> querySourceSet(target, SourceSet.TEST_SOURCE_SET_NAME)));
+          task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
+          task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
+
+          task.setOutputDirectory(localSonarResolver);
+          resolverFiles.add(task.getOutputFile());
+
+          // Android uses JetifyTransform to translate and ensure compatibility for specific deprecated libraries.
+          // Therefore, we must wait for this transform to complete before collecting the classpath.
+          task.mustRunAfter(androidTasks);
+        });
+
+        if (isAndroidProject(target)) {
+          AndroidResolverTask androidResolverTask = target.getTasks().register(AndroidResolverTask.TASK_NAME, AndroidResolverTask.class, task -> {
+            task.setDescription(AndroidResolverTask.TASK_DESCRIPTION);
+            task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+            AndroidUtils.configureForProject(task, target);
+          }).get();
+          sonarResolverTaskTaskProvider.configure(task -> {
+            task.setMainLibraries(androidResolverTask.getMainLibraries());
+            task.setTestLibraries(androidResolverTask.getTestLibraries());
+          });
+          sonarResolverTaskTaskProvider.get().dependsOn(androidResolverTask);
+        }
+      }
     );
     return resolverFiles;
   }
@@ -195,7 +203,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getJacocoTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && notSkipped(p))
+      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && SonarUtils.notSkipped(p))
       .map(p -> p.getTasks().withType(JacocoReport.class))
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
@@ -203,14 +211,14 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getJavaTestTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && notSkipped(p))
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && SonarUtils.notSkipped(p))
       .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
       .collect(Collectors.toList());
   }
 
   private static Callable<Iterable<? extends Task>> getJavaCompileTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && notSkipped(p))
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && SonarUtils.notSkipped(p))
       .flatMap(p -> Stream.of(p.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME), p.getTasks().getByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME)))
       .collect(Collectors.toList());
   }
@@ -221,36 +229,14 @@ public class SonarQubePlugin implements Plugin<Project> {
       .collect(Collectors.toList());
   }
 
-  static boolean notSkipped(Project p) {
-    return !isSkipped(p);
-  }
-
-  static boolean isSkipped(Project p) {
-    return getSonarExtensions(p).stream().anyMatch(SonarExtension::isSkipProject);
-  }
-
-  private static List<SonarExtension> getSonarExtensions(Project p) {
-    return Stream.of(SonarExtension.SONAR_EXTENSION_NAME, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME)
-      .map(name -> (SonarExtension) p.getExtensions().getByName(name))
-      .collect(Collectors.toList());
-  }
-
-  @Nullable
-  static String getConfiguredAndroidVariant(Project p) {
-    return getSonarExtensions(p).stream()
-      .map(SonarExtension::getAndroidVariant)
-      .filter(Objects::nonNull)
-      .findFirst().orElse(null);
-  }
-
   /**
    * Must run after compilation to have access to class files, and after test to have access to test reports.
    */
   private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> isAndroidProject(p) && notSkipped(p))
+      .filter(p -> isAndroidProject(p) && SonarUtils.notSkipped(p))
       .map(p -> {
-        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
+        LegacyAndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidUtils.findVariantAndExtension(p, AndroidUtils.getConfiguredVariantName(p));
 
         List<Task> allTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
