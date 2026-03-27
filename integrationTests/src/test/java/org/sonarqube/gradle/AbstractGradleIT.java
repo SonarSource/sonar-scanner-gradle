@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ public abstract class AbstractGradleIT {
   private static final Gson PRETTY_GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
   public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
+  private static final String ANDROID_SDK_TOKEN = "${ANDROID_SDK}";
 
   @Rule
   public TemporaryFolder temp = TemporaryFolder.builder().build();
@@ -154,6 +156,7 @@ public abstract class AbstractGradleIT {
           value = replaceAllPrefixInCommaSeparatedString(value, entry.getValue(), entry.getKey());
         }
         value = value.replace('\\', '/');
+        value = normalizeAndroidSdkRoots(value);
         for (String replacementKey : replacementMap.keySet()) {
           value = replaceAllPrefixInCommaSeparatedString(value, replacementKey + "/.m2", "${M2}");
         }
@@ -165,6 +168,81 @@ public abstract class AbstractGradleIT {
         result.put(key, value);
       });
     return result;
+  }
+
+  protected static Map<String, String> expandSnapshotPlaceholders(Map<String, String> properties) {
+    Map<String, String> expanded = new LinkedHashMap<>();
+    String javaVersion = Integer.toString(getJavaVersion());
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      String value = entry.getValue();
+      if (value != null) {
+        value = value.replace("${JAVA_VERSION}", javaVersion);
+        value = value.replace("${JAVA_SOURCE}", javaVersion);
+        value = value.replace("${JAVA_TARGET}", javaVersion);
+        value = normalizeAndroidSdkRoots(value);
+      }
+      expanded.put(entry.getKey(), value);
+    }
+    return expanded;
+  }
+
+  protected static Map<String, String> canonicalizeSnapshotPlaceholders(Map<String, String> properties) {
+    Map<String, String> canonicalized = new LinkedHashMap<>();
+    String javaVersion = Integer.toString(getJavaVersion());
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      String value = entry.getValue();
+      if (value != null) {
+        value = normalizeAndroidSdkRoots(value);
+        if (isJavaVersionSnapshotProperty(entry.getKey()) && javaVersion.equals(value)) {
+          value = entry.getKey().endsWith(".source") ? "${JAVA_SOURCE}" : "${JAVA_TARGET}";
+        }
+      }
+      canonicalized.put(entry.getKey(), value);
+    }
+    return canonicalized;
+  }
+
+  private static boolean isJavaVersionSnapshotProperty(String key) {
+    return "sonar.java.source".equals(key)
+      || "sonar.java.target".equals(key)
+      || key.endsWith(".sonar.java.source")
+      || key.endsWith(".sonar.java.target");
+  }
+
+  private static String normalizeAndroidSdkRoots(String value) {
+    if (value == null || value.isEmpty()) {
+      return value;
+    }
+    return replaceKnownAndroidSdkRoots(value);
+  }
+
+  private static String replaceKnownAndroidSdkRoots(String value) {
+    for (String sdkRoot : getKnownAndroidSdkRoots()) {
+      value = replaceAllPrefixInCommaSeparatedString(value, sdkRoot, ANDROID_SDK_TOKEN);
+    }
+    return value;
+  }
+
+  private static List<String> getKnownAndroidSdkRoots() {
+    List<String> candidates = new ArrayList<>();
+    addAndroidSdkCandidate(candidates, System.getenv("ANDROID_HOME"));
+    addAndroidSdkCandidate(candidates, System.getenv("ANDROID_SDK_ROOT"));
+    addAndroidSdkCandidate(candidates, "/usr/local/lib/android/sdk");
+    addAndroidSdkCandidate(candidates, "C:/Android/Sdk");
+    addAndroidSdkCandidate(candidates, "C:\\Android\\Sdk");
+    return candidates;
+  }
+
+  private static void addAndroidSdkCandidate(List<String> candidates, @Nullable String candidate) {
+    if (candidate == null || candidate.isBlank()) {
+      return;
+    }
+    String normalized = candidate.replace('\\', '/');
+    candidates.add(normalized);
+    Path path = Paths.get(normalized);
+    if (Files.exists(path)) {
+      candidates.add(path.toAbsolutePath().normalize().toString().replace('\\', '/'));
+    }
   }
 
   protected static Map<String, String> loadExpectedMap(String resourcePath) throws IOException {
@@ -181,7 +259,7 @@ public abstract class AbstractGradleIT {
       parent.mkdirs();
     }
     try (FileWriter writer = new FileWriter(targetFile.toFile(), StandardCharsets.UTF_8)) {
-      PRETTY_GSON.toJson(new LinkedHashMap<>(properties), writer);
+      PRETTY_GSON.toJson(canonicalizeSnapshotPlaceholders(properties), writer);
     }
   }
 
