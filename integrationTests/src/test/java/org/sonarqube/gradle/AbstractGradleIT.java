@@ -64,6 +64,7 @@ public abstract class AbstractGradleIT {
   private static final Gson GSON = new Gson();
   private static final Gson PRETTY_GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   @Rule
   public TemporaryFolder temp = TemporaryFolder.builder().build();
@@ -303,20 +304,19 @@ public abstract class AbstractGradleIT {
     }
     File outputFile = temp.newFile();
     FileUtils.copyDirectory(projectBaseDir, tempProjectDir);
-    List<String> command = new ArrayList<>();
-    if (System.getProperty("os.name").startsWith("Windows")) {
-      command.addAll(Arrays.asList("cmd.exe", "/C", "gradlew.bat"));
-    } else {
-      command.add("/bin/bash");
-      command.add("gradlew");
-    }
-    command.addAll(Arrays.asList("--stacktrace", "--no-daemon", "--warning-mode", "all"));
-    runConfiguration.updateProcessArgument(command);
-    command.addAll(Arrays.asList(args));
     File exeDir = tempProjectDir;
     if (exeRelativePath != null) {
       exeDir = new File(exeDir, exeRelativePath);
     }
+    List<String> command = new ArrayList<>();
+    if (IS_WINDOWS) {
+      command.addAll(Arrays.asList("cmd.exe", "/C", new File(exeDir, "gradlew.bat").getAbsolutePath()));
+    } else {
+      command.add(new File(exeDir, "gradlew").getAbsolutePath());
+    }
+    command.addAll(Arrays.asList("--stacktrace", "--no-daemon", "--warning-mode", "all"));
+    runConfiguration.updateProcessArgument(command);
+    command.addAll(Arrays.asList(args));
     ProcessBuilder pb = new ProcessBuilder(command)
       .directory(exeDir)
       .redirectOutput(outputFile)
@@ -345,7 +345,6 @@ public abstract class AbstractGradleIT {
     if (System.getProperty("os.name").startsWith("Windows")) {
       command.addAll(Arrays.asList("cmd.exe", "/C", "gradlew.bat"));
     } else {
-      command.add("/bin/bash");
       command.add("gradlew");
     }
     return command;
