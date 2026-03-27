@@ -313,7 +313,8 @@ public abstract class AbstractGradleIT {
     if (IS_WINDOWS) {
       command.addAll(Arrays.asList("cmd.exe", "/C", new File(exeDir, "gradlew.bat").getAbsolutePath()));
     } else {
-      command.add(new File(exeDir, "gradlew").getAbsolutePath());
+      command.add("/bin/bash");
+      command.add("gradlew");
     }
     command.addAll(Arrays.asList("--stacktrace", "--no-daemon", "--warning-mode", "all"));
     runConfiguration.updateProcessArgument(command);
@@ -346,6 +347,7 @@ public abstract class AbstractGradleIT {
     if (System.getProperty("os.name").startsWith("Windows")) {
       command.addAll(Arrays.asList("cmd.exe", "/C", "gradlew.bat"));
     } else {
+      command.add("/bin/bash");
       command.add("gradlew");
     }
     return command;
