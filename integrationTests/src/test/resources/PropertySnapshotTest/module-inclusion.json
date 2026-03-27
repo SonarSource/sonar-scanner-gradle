@@ -1,6 +1,6 @@
 {
   ":toplevel1.:toplevel1:plugins.:toplevel1:plugins:leaf1.sonar.java.enablePreview": "false",
-  ":toplevel1.:toplevel1:plugins.:toplevel1:plugins:leaf1.sonar.java.jdkHome": "${HOME}/.jdks/ms-17.0.17",
+  ":toplevel1.:toplevel1:plugins.:toplevel1:plugins:leaf1.sonar.java.jdkHome": "<hidden>",
   ":toplevel1.:toplevel1:plugins.:toplevel1:plugins:leaf1.sonar.java.source": "17",
   ":toplevel1.:toplevel1:plugins.:toplevel1:plugins:leaf1.sonar.java.target": "17",
   ":toplevel1.:toplevel1:plugins.:toplevel1:plugins:leaf1.sonar.moduleKey": "com.mygroup:root_project:toplevel1:plugins:leaf1",
@@ -24,7 +24,7 @@
   ":toplevel1.sonar.sources": "",
   ":toplevel1.sonar.tests": "",
   ":toplevel2.:toplevel2:plugins.:toplevel2:plugins:leaf2.sonar.java.enablePreview": "false",
-  ":toplevel2.:toplevel2:plugins.:toplevel2:plugins:leaf2.sonar.java.jdkHome": "${HOME}/.jdks/ms-17.0.17",
+  ":toplevel2.:toplevel2:plugins.:toplevel2:plugins:leaf2.sonar.java.jdkHome": "<hidden>",
   ":toplevel2.:toplevel2:plugins.:toplevel2:plugins:leaf2.sonar.java.source": "17",
   ":toplevel2.:toplevel2:plugins.:toplevel2:plugins:leaf2.sonar.java.target": "17",
   ":toplevel2.:toplevel2:plugins.:toplevel2:plugins:leaf2.sonar.moduleKey": "com.mygroup:root_project:toplevel2:plugins:leaf2",
@@ -62,6 +62,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "",
   "sonar.tests": "",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/module-inclusion/build/sonar"
 }

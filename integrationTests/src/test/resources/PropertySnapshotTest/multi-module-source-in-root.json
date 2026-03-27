@@ -2,7 +2,7 @@
   ":moduleA.sonar.binaries": "${parentBaseDir}/multi-module-source-in-root/moduleA/build/classes/java/main",
   ":moduleA.sonar.java.binaries": "${parentBaseDir}/multi-module-source-in-root/moduleA/build/classes/java/main",
   ":moduleA.sonar.java.enablePreview": "false",
-  ":moduleA.sonar.java.jdkHome": "${HOME}/.jdks/ms-17.0.17",
+  ":moduleA.sonar.java.jdkHome": "<hidden>",
   ":moduleA.sonar.java.libraries": "${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar",
   ":moduleA.sonar.java.source": "1.8",
   ":moduleA.sonar.java.target": "1.8",
@@ -18,7 +18,7 @@
   ":moduleB.sonar.binaries": "${parentBaseDir}/multi-module-source-in-root/moduleB/build/classes/java/main",
   ":moduleB.sonar.java.binaries": "${parentBaseDir}/multi-module-source-in-root/moduleB/build/classes/java/main",
   ":moduleB.sonar.java.enablePreview": "false",
-  ":moduleB.sonar.java.jdkHome": "${HOME}/.jdks/ms-17.0.17",
+  ":moduleB.sonar.java.jdkHome": "<hidden>",
   ":moduleB.sonar.java.libraries": "${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar",
   ":moduleB.sonar.java.source": "1.8",
   ":moduleB.sonar.java.target": "1.8",
@@ -56,6 +56,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "${parentBaseDir}/multi-module-source-in-root/src/main/java",
   "sonar.tests": "${parentBaseDir}/multi-module-source-in-root/src/test/java",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/multi-module-source-in-root/build/sonar"
 }

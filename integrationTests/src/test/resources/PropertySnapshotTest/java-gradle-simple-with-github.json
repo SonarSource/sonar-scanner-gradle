@@ -23,6 +23,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "${parentBaseDir}/java-gradle-simple-with-github/src/main/java,${parentBaseDir}/java-gradle-simple-with-github/.github",
   "sonar.tests": "${parentBaseDir}/java-gradle-simple-with-github/src/test/java",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/java-gradle-simple-with-github/build/sonar"
 }

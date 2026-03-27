@@ -23,6 +23,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "${parentBaseDir}/java-gradle-custom-config/src/main/java,${parentBaseDir}/java-gradle-custom-config/src/main/foo.js",
   "sonar.tests": "${parentBaseDir}/java-gradle-custom-config/src/test/java,${parentBaseDir}/java-gradle-custom-config/src/test/fooTest.js",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/java-gradle-custom-config/build/sonar"
 }

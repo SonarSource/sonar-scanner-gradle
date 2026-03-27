@@ -26,6 +26,5 @@
   "sonar.sources": "${parentBaseDir}/gradle-9-example/src/main/java,${parentBaseDir}/gradle-9-example/build.gradle.kts,${parentBaseDir}/gradle-9-example/settings.gradle.kts",
   "sonar.surefire.reportsPath": "${parentBaseDir}/gradle-9-example/build/test-results/test",
   "sonar.tests": "${parentBaseDir}/gradle-9-example/src/test/java",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/gradle-9-example/build/sonar"
 }

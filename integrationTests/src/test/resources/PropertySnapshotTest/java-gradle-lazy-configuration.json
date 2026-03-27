@@ -20,6 +20,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "${parentBaseDir}/java-gradle-lazy-configuration/src/main/java",
   "sonar.tests": "",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/java-gradle-lazy-configuration/build/sonar"
 }

@@ -24,6 +24,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "src/main/java",
   "sonar.tests": "src/test/java",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/java-gradle-user-properties/build/sonar"
 }

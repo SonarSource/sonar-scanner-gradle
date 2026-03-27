@@ -28,6 +28,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "${parentBaseDir}/android-gradle-default-variant/src/main/AndroidManifest.xml,${parentBaseDir}/android-gradle-default-variant/src/main/java,${parentBaseDir}/android-gradle-default-variant/src/main/res",
   "sonar.tests": "${parentBaseDir}/android-gradle-default-variant/src/test/java",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/android-gradle-default-variant/build/sonar"
 }

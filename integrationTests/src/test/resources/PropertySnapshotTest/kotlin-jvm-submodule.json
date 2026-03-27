@@ -2,7 +2,7 @@
   ":submodule.sonar.binaries": "${parentBaseDir}/kotlin-jvm-submodule/submodule/build/classes/kotlin/main",
   ":submodule.sonar.java.binaries": "${parentBaseDir}/kotlin-jvm-submodule/submodule/build/classes/kotlin/main",
   ":submodule.sonar.java.enablePreview": "false",
-  ":submodule.sonar.java.jdkHome": "${HOME}/.jdks/ms-17.0.17",
+  ":submodule.sonar.java.jdkHome": "<hidden>",
   ":submodule.sonar.java.libraries": "${M2}/repository/org/jetbrains/kotlin/kotlin-stdlib/1.9.20/kotlin-stdlib-1.9.20.jar,${M2}/repository/org/jetbrains/annotations/13.0/annotations-13.0.jar",
   ":submodule.sonar.java.source": "17",
   ":submodule.sonar.java.target": "17",
@@ -29,6 +29,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "",
   "sonar.tests": "",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/kotlin-jvm-submodule/build/sonar"
 }

@@ -27,6 +27,5 @@
   "sonar.sources": "${parentBaseDir}/java-groovy-tests-gradle/src/main/groovy",
   "sonar.surefire.reportsPath": "${parentBaseDir}/java-groovy-tests-gradle/build/test-results/test",
   "sonar.tests": "${parentBaseDir}/java-groovy-tests-gradle/src/test/groovy",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/java-groovy-tests-gradle/build/sonar"
 }

@@ -113,7 +113,7 @@ public abstract class AbstractGradleIT {
     }
     Set<String> hiddenProperties = new HashSet<>(Arrays.asList(
       // different on each machine, nothing to compare
-      "sonar.java.jdkHome", "sonar.scanner.arch", "sonar.scanner.os", "sonar.scanner.opts",
+      "sonar.java.jdkHome", "sonar.scanner.arch", "sonar.scanner.os", "sonar.scanner.opts", "sonar.token",
       // path to a different temporary file for each run, e.g. junit17577551948278219342.tmp
       "sonar.scanner.internal.dumpToFile",
       // depends on the plugin and gradle version that run the test, e.g. 6.3-SNAPSHOT/Gradle 9.0.0
@@ -143,10 +143,11 @@ public abstract class AbstractGradleIT {
     Map<String, String> result = new LinkedHashMap<>();
     props.stringPropertyNames().stream()
       .sorted()
+      .filter(key -> !key.equals("sonar.token"))
       .filter(key -> !key.startsWith("sonar.scanner.") || sonarScannerPropertiesToTest.contains(key))
       .forEach(key -> {
         String value = props.getProperty(key);
-        if (hiddenProperties.contains(key)) {
+        if (hiddenProperties.contains(key) || key.endsWith(".sonar.java.jdkHome")) {
           value = "<hidden>";
         }
         for (Map.Entry<String, String> entry : replacementMap.entrySet()) {

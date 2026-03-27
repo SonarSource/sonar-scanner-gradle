@@ -2,7 +2,7 @@
   ":module.:module:submodule.sonar.binaries": "${parentBaseDir}/multi-module-with-submodules/module/submodule/build/classes/java/main",
   ":module.:module:submodule.sonar.java.binaries": "${parentBaseDir}/multi-module-with-submodules/module/submodule/build/classes/java/main",
   ":module.:module:submodule.sonar.java.enablePreview": "false",
-  ":module.:module:submodule.sonar.java.jdkHome": "${HOME}/.jdks/ms-17.0.17",
+  ":module.:module:submodule.sonar.java.jdkHome": "<hidden>",
   ":module.:module:submodule.sonar.java.libraries": "${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar",
   ":module.:module:submodule.sonar.java.source": "17",
   ":module.:module:submodule.sonar.java.target": "17",
@@ -18,7 +18,7 @@
   ":module.sonar.binaries": "${parentBaseDir}/multi-module-with-submodules/module/build/classes/java/main",
   ":module.sonar.java.binaries": "${parentBaseDir}/multi-module-with-submodules/module/build/classes/java/main",
   ":module.sonar.java.enablePreview": "false",
-  ":module.sonar.java.jdkHome": "${HOME}/.jdks/ms-17.0.17",
+  ":module.sonar.java.jdkHome": "<hidden>",
   ":module.sonar.java.libraries": "${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar",
   ":module.sonar.java.source": "17",
   ":module.sonar.java.target": "17",
@@ -57,6 +57,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "${parentBaseDir}/multi-module-with-submodules/.hiddenConfig,${parentBaseDir}/multi-module-with-submodules/.hiddenDir/file.txt,${parentBaseDir}/multi-module-with-submodules/build.gradle.kts,${parentBaseDir}/multi-module-with-submodules/gradle/wrapper/gradle-wrapper.properties,${parentBaseDir}/multi-module-with-submodules/gradlew,${parentBaseDir}/multi-module-with-submodules/gradlew.bat,${parentBaseDir}/multi-module-with-submodules/module/build.gradle.kts,${parentBaseDir}/multi-module-with-submodules/module/submodule/build.gradle.kts,${parentBaseDir}/multi-module-with-submodules/module/submodule/submoduleScript.sh,${parentBaseDir}/multi-module-with-submodules/settings.gradle.kts",
   "sonar.tests": "",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/multi-module-with-submodules/build/sonar"
 }

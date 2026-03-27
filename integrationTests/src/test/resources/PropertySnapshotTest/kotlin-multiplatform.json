@@ -18,6 +18,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "${parentBaseDir}/kotlin-multiplatform/src/commonMain/kotlin,${parentBaseDir}/kotlin-multiplatform/src/jvmMain/kotlin,${parentBaseDir}/kotlin-multiplatform/src/jvmMain/java",
   "sonar.tests": "",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/kotlin-multiplatform/build/sonar"
 }

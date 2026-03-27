@@ -6,7 +6,7 @@
   ":app.sonar.binaries": "${parentBaseDir}/multi-module-android-studio/app/build/intermediates/javac/debug/classes",
   ":app.sonar.java.binaries": "${parentBaseDir}/multi-module-android-studio/app/build/intermediates/javac/debug/classes",
   ":app.sonar.java.enablePreview": "false",
-  ":app.sonar.java.jdkHome": "${HOME}/.jdks/ms-17.0.17",
+  ":app.sonar.java.jdkHome": "<hidden>",
   ":app.sonar.java.libraries": "C:/Android/Sdk/platforms/android-30/android.jar,C:/Android/Sdk/build-tools/30.0.3/core-lambda-stubs.jar,${parentBaseDir}/multi-module-android-studio/app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/R.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/appcompat-v7-24.2.1-api.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/support-v4-24.2.1-api.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/animated-vector-drawable-24.2.1-api.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/support-vector-drawable-24.2.1-api.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/support-fragment-24.2.1-api.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/support-media-compat-24.2.1-api.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/support-core-utils-24.2.1-api.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/support-core-ui-24.2.1-api.jar,${HOME}/.gradle/caches/transforms-3/<hash>/transformed/support-compat-24.2.1-api.jar,${M2}/repository/com/android/support/support-annotations/24.2.1/support-annotations-24.2.1.jar",
   ":app.sonar.java.source": "1.8",
   ":app.sonar.java.target": "1.8",
@@ -42,6 +42,5 @@
   "sonar.scanner.os": "<hidden>",
   "sonar.sources": "",
   "sonar.tests": "",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/multi-module-android-studio/build/sonar"
 }

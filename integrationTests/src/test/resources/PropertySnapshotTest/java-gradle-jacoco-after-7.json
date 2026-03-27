@@ -27,6 +27,5 @@
   "sonar.sources": "${parentBaseDir}/java-gradle-jacoco-after-7/src/main/java",
   "sonar.surefire.reportsPath": "${parentBaseDir}/java-gradle-jacoco-after-7/build/test-results/test",
   "sonar.tests": "${parentBaseDir}/java-gradle-jacoco-after-7/src/test/java",
-  "sonar.token": "sqa_1a20f38b6cae9597dbf0058e36bb379d1ea62dc3",
   "sonar.working.directory": "${parentBaseDir}/java-gradle-jacoco-after-7/build/sonar"
 }
