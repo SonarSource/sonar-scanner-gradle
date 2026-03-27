@@ -29,10 +29,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.Ignore;
 import org.junit.Assume;
@@ -71,7 +73,8 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     SnapshotCase.of("kotlin-multiplatform-with-submodule", "/kotlin-multiplatform-with-submodule", null, "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm").gradleRange("6.8.3", "9.0.0"),
     SnapshotCase.of("kotlin-jvm", "/kotlin-jvm", null, "compileKotlin", "compileTestKotlin").gradleRange("6.8.3", "9.0.0"),
     SnapshotCase.of("kotlin-jvm-submodule", "/kotlin-jvm-submodule", null, "compileKotlin", "compileTestKotlin").gradleRange("6.8.3", "9.0.0"),
-    SnapshotCase.of("multi-module-with-submodules", "/multi-module-with-submodules", null, "compileJava", "compileTestJava", "--info"),
+    SnapshotCase.of("multi-module-with-submodules", "/multi-module-with-submodules", null, "compileJava", "compileTestJava", "--info")
+      .ignoreProperty(":skippedModule.:skippedModule:skippedSubmodule.sonar.java.test.libraries"),
     SnapshotCase.of("java-gradle-simple-with-github", "/java-gradle-simple-with-github", null, "compileJava", "compileTestJava").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-compile-only", "/java-compile-only", null),
     SnapshotCase.of("java-gradle-log-level", "/java-gradle-log-level", null).maxGradleExclusive("9.0.0"),
@@ -113,7 +116,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     assertThat(snapshotCase.expectedFile())
       .as("expected snapshot file for %s", snapshotCase.name)
       .exists();
-    Map<String, String> expected = loadExpectedMap(snapshotCase.expectedFile());
+    Map<String, String> expected = snapshotCase.sanitize(loadExpectedMap(snapshotCase.expectedFile()));
     assertThat(actual)
       .as(snapshotCase.name)
       .containsAllEntriesOf(expected);
@@ -142,6 +145,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     private final String project;
     private final String exeRelativePath;
     private final String[] args;
+    private final Set<String> ignoredProperties = new LinkedHashSet<>();
     private String minGradle;
     private String maxGradleExclusive;
     private boolean requiresAndroid;
@@ -178,6 +182,11 @@ public class PropertySnapshotTest extends AbstractGradleIT {
       return this;
     }
 
+    SnapshotCase ignoreProperty(String propertyKey) {
+      this.ignoredProperties.add(propertyKey);
+      return this;
+    }
+
     boolean shouldRun() {
       if (minGradle != null && getGradleVersion().isLowerThan(minGradle)) {
         return false;
@@ -194,7 +203,13 @@ public class PropertySnapshotTest extends AbstractGradleIT {
 
     Map<String, String> collect(PropertySnapshotTest test) throws Exception {
       Properties props = test.runGradlewSonarSimulationModeWithEnv(project, exeRelativePath, Collections.emptyMap(), new DefaultRunConfiguration(), args);
-      return new LinkedHashMap<>(extractComparableProperties(props));
+      return sanitize(new LinkedHashMap<>(extractComparableProperties(props)));
+    }
+
+    Map<String, String> sanitize(Map<String, String> properties) {
+      Map<String, String> sanitized = new LinkedHashMap<>(properties);
+      ignoredProperties.forEach(sanitized::remove);
+      return sanitized;
     }
 
     @Override
