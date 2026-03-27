@@ -33,17 +33,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import org.assertj.core.api.SoftAssertions;
+import java.util.stream.Collectors;
 import org.junit.Ignore;
+import org.junit.Assume;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+@RunWith(Parameterized.class)
 public class PropertySnapshotTest extends AbstractGradleIT {
 
   private static final Path SNAPSHOT_FILE_ROOT = resolveRepositoryRoot()
     .resolve(Paths.get("integrationTests", "src", "test", "resources", "PropertySnapshotTest"));
   private static final Gson GSON = new Gson();
-  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   private static final List<SnapshotCase> SNAPSHOT_CASES = List.of(
     SnapshotCase.of("gradle-9-example", "/gradle-9-example", null, "--console=plain", "build").minGradle("9.0.0"),
@@ -85,50 +92,48 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     SnapshotCase.of("multi-module-android-studio-lint", "/multi-module-android-studio-lint", null, "lint", "lintFullRelease").requiresAndroid()
   );
 
+  @Parameterized.Parameters(name = "{0}")
+  public static Iterable<Object[]> parameters() {
+    return SNAPSHOT_CASES.stream()
+      .map(snapshotCase -> new Object[]{snapshotCase})
+      .collect(Collectors.toList());
+  }
+
+  private final SnapshotCase snapshotCase;
+
+  public PropertySnapshotTest(SnapshotCase snapshotCase) {
+    this.snapshotCase = snapshotCase;
+  }
+
   @Test
   public void verifyExistingPropertySnapshots() throws Exception {
-    SoftAssertions softly = new SoftAssertions();
+    Assume.assumeTrue("Snapshot case should run: " + snapshotCase.name, snapshotCase.shouldRun());
 
-    for (SnapshotCase snapshotCase : SNAPSHOT_CASES) {
-      if (!snapshotCase.shouldRun()) {
-        continue;
-      }
-
-      Map<String, String> actual = snapshotCase.collect(this);
-      softly.assertThat(snapshotCase.expectedFile())
-        .as("expected snapshot file for %s", snapshotCase.name)
-        .exists();
-      Map<String, String> expected = loadExpectedMap(snapshotCase.expectedFile());
-      softly.assertThat(actual)
-        .as(snapshotCase.name)
-        .containsAllEntriesOf(expected);
-    }
-
-    softly.assertAll();
+    Map<String, String> actual = snapshotCase.collect(this);
+    assertThat(snapshotCase.expectedFile())
+      .as("expected snapshot file for %s", snapshotCase.name)
+      .exists();
+    Map<String, String> expected = loadExpectedMap(snapshotCase.expectedFile());
+    assertThat(actual)
+      .as(snapshotCase.name)
+      .containsAllEntriesOf(expected);
   }
 
   @Ignore("Run locally to regenerate all integration test property snapshots.")
   @Test
-  public void rewriteAllPropertySnapshots() throws Exception {
-    rewriteSnapshots();
+  public void rewritePropertySnapshot() throws Exception {
+    writeExpectedMap(snapshotCase.expectedFile(), snapshotCase.collect(this));
   }
 
   public static void main(String[] args) throws Exception {
-    PropertySnapshotTest test = new PropertySnapshotTest();
-    test.temp.create();
-    try {
-      test.rewriteSnapshots();
-    } finally {
-      test.temp.delete();
-    }
-  }
-
-  private void rewriteSnapshots() throws Exception {
     for (SnapshotCase snapshotCase : SNAPSHOT_CASES) {
-      if (!snapshotCase.shouldRun()) {
-        continue;
+      PropertySnapshotTest test = new PropertySnapshotTest(snapshotCase);
+      test.temp.create();
+      try {
+        test.writeExpectedMap(snapshotCase.expectedFile(), snapshotCase.collect(test));
+      } finally {
+        test.temp.delete();
       }
-      writeExpectedMap(snapshotCase.expectedFile(), snapshotCase.collect(this));
     }
   }
 
@@ -190,6 +195,11 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     Map<String, String> collect(PropertySnapshotTest test) throws Exception {
       Properties props = test.runGradlewSonarSimulationModeWithEnv(project, exeRelativePath, Collections.emptyMap(), new DefaultRunConfiguration(), args);
       return new LinkedHashMap<>(extractComparableProperties(props));
+    }
+
+    @Override
+    public String toString() {
+      return name;
     }
   }
 
