@@ -41,7 +41,7 @@ import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 public class PropertySnapshotTest extends AbstractGradleIT {
 
   private static final Path SNAPSHOT_FILE_ROOT = resolveRepositoryRoot()
-    .resolve(Paths.get("src", "test", "resources", "org", "sonarqube", "gradle", "PropertySnapshotTest"));
+    .resolve(Paths.get("integrationTests", "src", "test", "resources", "PropertySnapshotTest"));
   private static final Gson GSON = new Gson();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
