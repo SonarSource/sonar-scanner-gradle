@@ -56,7 +56,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
 
   private static final List<SnapshotCase> SNAPSHOT_CASES = List.of(
     SnapshotCase.of("gradle-9-example", "/gradle-9-example", null, "--console=plain", "build").minGradle("9.0.0"),
-    SnapshotCase.of("android-gradle9", "/android-gradle9", null, "--quiet", "--console=plain").minGradle("9.0.0").requiresAndroid(),
+    SnapshotCase.of("android-gradle9", "/android-gradle9", null, "--quiet", "--console=plain").minGradle("9.0.0").requiresAndroid().minAndroidGradle("7.0.0"),
     SnapshotCase.of("java-gradle-simple", "/java-gradle-simple", null, "compileJava", "compileTestJava").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-custom-config", "/java-gradle-custom-config", null, "compileJava", "compileTestJava").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-user-properties", "/java-gradle-user-properties", null, "compileJava", "compileTestJava"),
@@ -80,19 +80,19 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     SnapshotCase.of("java-gradle-log-level", "/java-gradle-log-level", null).maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-classpath-dependency", "/java-gradle-classpath-dependency", null),
     SnapshotCase.of("java-gradle-simple-skip-jre-prov", "/java-gradle-simple-skip-jre-prov", null).maxGradleExclusive("9.0.0"),
-    SnapshotCase.of("android-gradle-default-variant", "/android-gradle-default-variant", null, "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac").requiresAndroid(),
-    SnapshotCase.of("android-gradle-dynamic-feature", "/android-gradle-dynamic-feature", null, "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid(),
-    SnapshotCase.of("android-gradle-nondefault-variant", "/android-gradle-nondefault-variant", null, "test").requiresAndroid(),
-    SnapshotCase.of("multi-module-android-studio", "/multi-module-android-studio", null, "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid(),
+    SnapshotCase.of("android-gradle-default-variant", "/android-gradle-default-variant", null, "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
+    SnapshotCase.of("android-gradle-dynamic-feature", "/android-gradle-dynamic-feature", null, "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
+    SnapshotCase.of("android-gradle-nondefault-variant", "/android-gradle-nondefault-variant", null, "test").requiresAndroid().minAndroidGradle("7.0.0"),
+    SnapshotCase.of("multi-module-android-studio", "/multi-module-android-studio", null, "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
     SnapshotCase.of("android-testing-blueprint-with-dynamic-feature-module", "/AndroidTestingBlueprintWithDynamicFeatureModule", null,
       "assembleDebug",
       "compileFlavor1DebugUnitTestJavaWithJavac",
       "compileFlavor1DebugAndroidTestJavaWithJavac",
       "compileDebugAndroidTestJavaWithJavac",
       "compileDebugUnitTestJavaWithJavac",
-      "compileTestJava").requiresAndroid(),
-    SnapshotCase.of("android-gradle-no-debug", "/android-gradle-no-debug", null, "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac").requiresAndroid(),
-    SnapshotCase.of("multi-module-android-studio-lint", "/multi-module-android-studio-lint", null, "lint", "lintFullRelease").requiresAndroid()
+      "compileTestJava").requiresAndroid().minAndroidGradle("7.0.0"),
+    SnapshotCase.of("android-gradle-no-debug", "/android-gradle-no-debug", null, "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
+    SnapshotCase.of("multi-module-android-studio-lint", "/multi-module-android-studio-lint", null, "lint", "lintFullRelease").requiresAndroid().minAndroidGradle("7.0.0")
   );
 
   @Parameterized.Parameters(name = "{0}")
@@ -148,6 +148,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     private final Set<String> ignoredProperties = new LinkedHashSet<>();
     private String minGradle;
     private String maxGradleExclusive;
+    private String minAndroidGradle;
     private boolean requiresAndroid;
 
     private SnapshotCase(String name, String project, String exeRelativePath, String[] args) {
@@ -182,6 +183,11 @@ public class PropertySnapshotTest extends AbstractGradleIT {
       return this;
     }
 
+    SnapshotCase minAndroidGradle(String minAndroidGradle) {
+      this.minAndroidGradle = minAndroidGradle;
+      return this;
+    }
+
     SnapshotCase ignoreProperty(String propertyKey) {
       this.ignoredProperties.add(propertyKey);
       return this;
@@ -194,7 +200,13 @@ public class PropertySnapshotTest extends AbstractGradleIT {
       if (maxGradleExclusive != null && !getGradleVersion().isLowerThan(maxGradleExclusive)) {
         return false;
       }
-      return !requiresAndroid || getAndroidGradleVersion() != null;
+      if (!requiresAndroid) {
+        return true;
+      }
+      if (getAndroidGradleVersion() == null) {
+        return false;
+      }
+      return minAndroidGradle == null || getAndroidGradleVersion().isGreaterThanOrEqualTo(minAndroidGradle);
     }
 
     Path expectedFile() {
