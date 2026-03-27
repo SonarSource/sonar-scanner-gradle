@@ -32,7 +32,6 @@
   ":module.sonar.sources": "${parentBaseDir}/multi-module-with-submodules/module/src/main/java",
   ":module.sonar.tests": "",
   ":skippedModule.:skippedModule:skippedSubmodule.sonar.java.libraries": "${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar",
-  ":skippedModule.:skippedModule:skippedSubmodule.sonar.java.test.libraries": "${parentBaseDir}/multi-module-with-submodules/skippedModule/skippedSubmodule/build/classes/java/main,${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar,${M2}/repository/junit/junit/4.10/junit-4.10.jar,${M2}/repository/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar",
   ":skippedModule.:skippedModule:skippedSubmodule.sonar.libraries": "${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar",
   "sonar.gradle.scanAll": "true",
   "sonar.host.url": "https://sonarcloud.io",

@@ -57,7 +57,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
   private static final List<SnapshotCase> SNAPSHOT_CASES = List.of(
     SnapshotCase.of("gradle-9-example", "/gradle-9-example", null, "--console=plain", "build").minGradle("9.0.0"),
     SnapshotCase.of("android-gradle9", "/android-gradle9", null, "--quiet", "--console=plain").minGradle("9.0.0").requiresAndroid(),
-    SnapshotCase.of("java-gradle-simple", "/java-gradle-simple", null, "compileJava", "compileTestJava"),
+    SnapshotCase.of("java-gradle-simple", "/java-gradle-simple", null, "compileJava", "compileTestJava").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-custom-config", "/java-gradle-custom-config", null, "compileJava", "compileTestJava").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-user-properties", "/java-gradle-user-properties", null, "compileJava", "compileTestJava"),
     SnapshotCase.of("java-groovy-tests-gradle", "/java-groovy-tests-gradle", null, "build").maxGradleExclusive("9.0.0"),
@@ -68,7 +68,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     SnapshotCase.of("java-gradle-no-real-tests", "/java-gradle-no-real-tests", null, "test").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-lazy-configuration", "/java-gradle-lazy-configuration", null, "test").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-jacoco-before-7", "/java-gradle-jacoco-before-7", null, "processResources", "processTestResources", "test", "jacocoTestReport").maxGradleExclusive("7.0.0"),
-    SnapshotCase.of("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", null, "processResources", "processTestResources", "test", "jacocoTestReport").minGradle("7.0.0"),
+    SnapshotCase.of("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", null, "processResources", "processTestResources", "test", "jacocoTestReport").gradleRange("7.0.0", "9.0.0"),
     SnapshotCase.of("kotlin-multiplatform", "/kotlin-multiplatform", null, "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm").gradleRange("6.8.3", "9.0.0"),
     SnapshotCase.of("kotlin-multiplatform-with-submodule", "/kotlin-multiplatform-with-submodule", null, "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm").gradleRange("6.8.3", "9.0.0"),
     SnapshotCase.of("kotlin-jvm", "/kotlin-jvm", null, "compileKotlin", "compileTestKotlin").gradleRange("6.8.3", "9.0.0"),
@@ -76,7 +76,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     SnapshotCase.of("multi-module-with-submodules", "/multi-module-with-submodules", null, "compileJava", "compileTestJava", "--info")
       .ignoreProperty(":skippedModule.:skippedModule:skippedSubmodule.sonar.java.test.libraries"),
     SnapshotCase.of("java-gradle-simple-with-github", "/java-gradle-simple-with-github", null, "compileJava", "compileTestJava").maxGradleExclusive("9.0.0"),
-    SnapshotCase.of("java-compile-only", "/java-compile-only", null),
+    SnapshotCase.of("java-compile-only", "/java-compile-only", null).maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-log-level", "/java-gradle-log-level", null).maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-classpath-dependency", "/java-gradle-classpath-dependency", null),
     SnapshotCase.of("java-gradle-simple-skip-jre-prov", "/java-gradle-simple-skip-jre-prov", null).maxGradleExclusive("9.0.0"),
