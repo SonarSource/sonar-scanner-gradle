@@ -137,6 +137,8 @@ public abstract class AbstractGradleIT {
     }
     Pattern dependenciesInGradleCache = Pattern.compile("(?<=,|^)[^,]+/.gradle/caches/modules-\\d+/files-[0-9.]+/" +
       "(?<groupId>[^/,]++)/(?<artifactId>[^/,]++)/(?<version>[^/,]++)/[0-9a-f]{40}/\\k<artifactId>-\\k<version>\\.jar(?=,|$)");
+    Pattern gradleTransformArtifacts = Pattern.compile("(?<=,|^)(?<prefix>[^,]*/\\.gradle/caches/transforms-\\d+/)[0-9a-f]+(?<suffix>/transformed/[^,]+)(?=,|$)");
+    Pattern projectTransformArtifacts = Pattern.compile("(?<=,|^)(?<prefix>[^,]*/build/\\.transforms/)[0-9a-f]+(?<suffix>/transformed/[^,]+)(?=,|$)");
     Map<String, String> result = new LinkedHashMap<>();
     props.stringPropertyNames().stream()
       .sorted()
@@ -156,6 +158,8 @@ public abstract class AbstractGradleIT {
         value = dependenciesInGradleCache.matcher(value).replaceAll(res ->
         // Java 11 does not support res.group("groupId") this is why there is res.group(1)
         "\\${M2}/repository/" + res.group(1).replace(".", "/") + "/${artifactId}/${version}/${artifactId}-${version}.jar");
+        value = gradleTransformArtifacts.matcher(value).replaceAll("${prefix}<hash>${suffix}");
+        value = projectTransformArtifacts.matcher(value).replaceAll("${prefix}<hash>${suffix}");
         result.put(key, value);
       });
     return result;

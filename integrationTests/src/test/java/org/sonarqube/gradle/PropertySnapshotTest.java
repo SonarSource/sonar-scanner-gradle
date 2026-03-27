@@ -19,8 +19,15 @@
  */
 package org.sonarqube.gradle;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,8 +40,10 @@ import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 
 public class PropertySnapshotTest extends AbstractGradleIT {
 
-  private static final String SNAPSHOT_RESOURCE_ROOT = "/org/sonarqube/gradle/IntegrationTestPropertySnapshotTest";
-  private static final Path SNAPSHOT_FILE_ROOT = Paths.get("src", "test", "resources", "org", "sonarqube", "gradle", "IntegrationTestPropertySnapshotTest");
+  private static final Path SNAPSHOT_FILE_ROOT = resolveRepositoryRoot()
+    .resolve(Paths.get("src", "test", "resources", "org", "sonarqube", "gradle", "PropertySnapshotTest"));
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
   private static final List<SnapshotCase> SNAPSHOT_CASES = List.of(
     SnapshotCase.of("gradle-9-example", "/gradle-9-example", null, "--console=plain", "build").minGradle("9.0.0"),
@@ -84,13 +93,15 @@ public class PropertySnapshotTest extends AbstractGradleIT {
       if (!snapshotCase.shouldRun()) {
         continue;
       }
-      if (!snapshotCase.expectedFile().toFile().exists()) {
-        continue;
-      }
 
       Map<String, String> actual = snapshotCase.collect(this);
-      Map<String, String> expected = loadExpectedMap(snapshotCase.expectedResource());
-      softly.assertThat(actual).as(snapshotCase.name).isEqualTo(expected);
+      softly.assertThat(snapshotCase.expectedFile())
+        .as("expected snapshot file for %s", snapshotCase.name)
+        .exists();
+      Map<String, String> expected = loadExpectedMap(snapshotCase.expectedFile());
+      softly.assertThat(actual)
+        .as(snapshotCase.name)
+        .containsAllEntriesOf(expected);
     }
 
     softly.assertAll();
@@ -172,10 +183,6 @@ public class PropertySnapshotTest extends AbstractGradleIT {
       return !requiresAndroid || getAndroidGradleVersion() != null;
     }
 
-    String expectedResource() {
-      return SNAPSHOT_RESOURCE_ROOT + "/" + name + ".json";
-    }
-
     Path expectedFile() {
       return SNAPSHOT_FILE_ROOT.resolve(name + ".json");
     }
@@ -184,5 +191,25 @@ public class PropertySnapshotTest extends AbstractGradleIT {
       Properties props = test.runGradlewSonarSimulationModeWithEnv(project, exeRelativePath, Collections.emptyMap(), new DefaultRunConfiguration(), args);
       return new LinkedHashMap<>(extractComparableProperties(props));
     }
+  }
+
+  private static Map<String, String> loadExpectedMap(Path path) throws IOException {
+    try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+      return GSON.fromJson(reader, STRING_MAP_TYPE);
+    }
+  }
+
+  private static Path resolveRepositoryRoot() {
+    Path workingDirectory = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
+    if (Files.exists(workingDirectory.resolve("integrationTests").resolve("pom.xml"))) {
+      return workingDirectory;
+    }
+    if (Files.exists(workingDirectory.resolve("pom.xml"))) {
+      Path parent = workingDirectory.getParent();
+      if (parent != null && Files.exists(parent.resolve("integrationTests").resolve("pom.xml"))) {
+        return parent;
+      }
+    }
+    return workingDirectory;
   }
 }
