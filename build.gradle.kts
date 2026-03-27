@@ -119,7 +119,10 @@ license {
 }
 
 tasks.withType<LicenseCheck>().configureEach {
+    exclude("**/*-version.txt")
+    exclude("**/projects/*")
     exclude("**/org/sonarqube/gradle/PropertySnapshotTest/**")
+    exclude("**/org/sonarqube/gradle/sonarqube-gradle-plugin-version.txt")
 }
 
 jacoco {
