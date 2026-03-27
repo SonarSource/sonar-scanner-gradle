@@ -157,6 +157,7 @@ public abstract class AbstractGradleIT {
         }
         value = value.replace('\\', '/');
         value = normalizeAndroidSdkRoots(value);
+        value = normalizeAndroidGeneratedPaths(value);
         for (String replacementKey : replacementMap.keySet()) {
           value = replaceAllPrefixInCommaSeparatedString(value, replacementKey + "/.m2", "${M2}");
         }
@@ -182,6 +183,7 @@ public abstract class AbstractGradleIT {
           value = value.replace("${JAVA_TARGET}", actualValue);
         }
         value = normalizeAndroidSdkRoots(value);
+        value = normalizeAndroidGeneratedPaths(value);
       }
       expanded.put(entry.getKey(), value);
     }
@@ -194,6 +196,7 @@ public abstract class AbstractGradleIT {
       String value = entry.getValue();
       if (value != null) {
         value = normalizeAndroidSdkRoots(value);
+        value = normalizeAndroidGeneratedPaths(value);
         if (isJavaVersionSnapshotProperty(entry.getKey())) {
           value = entry.getKey().endsWith(".source") ? "${JAVA_SOURCE}" : "${JAVA_TARGET}";
         }
@@ -222,6 +225,35 @@ public abstract class AbstractGradleIT {
       value = replaceAllPrefixInCommaSeparatedString(value, sdkRoot, ANDROID_SDK_TOKEN);
     }
     return value;
+  }
+
+  private static String normalizeAndroidGeneratedPaths(String value) {
+    return value
+      .replace("/build-tools/34.0.0/core-lambda-stubs.jar", "/build-tools/30.0.3/core-lambda-stubs.jar")
+      .replace("/compileDebugJavaWithJavac/classes", "/classes")
+      .replace("/compileDebugUnitTestJavaWithJavac/classes", "/classes")
+      .replace("/compileDebugAndroidTestJavaWithJavac/classes", "/classes")
+      .replace("/compileReleaseJavaWithJavac/classes", "/classes")
+      .replace("/compileReleaseUnitTestJavaWithJavac/classes", "/classes")
+      .replace("/compileDemoMinApi23DebugJavaWithJavac/classes", "/classes")
+      .replace("/compileDemoMinApi23DebugUnitTestJavaWithJavac/classes", "/classes")
+      .replace("/compileDemoMinApi23DebugAndroidTestJavaWithJavac/classes", "/classes")
+      .replace("/compileFlavor1DebugJavaWithJavac/classes", "/classes")
+      .replace("/compileFlavor1DebugUnitTestJavaWithJavac/classes", "/classes")
+      .replace("/compileFlavor1DebugAndroidTestJavaWithJavac/classes", "/classes")
+      .replace("/processDebugResources/R.jar", "/R.jar")
+      .replace("/processDebugUnitTestResources/R.jar", "/R.jar")
+      .replace("/processDebugAndroidTestResources/R.jar", "/R.jar")
+      .replace("/processReleaseResources/R.jar", "/R.jar")
+      .replace("/processDemoMinApi23DebugResources/R.jar", "/R.jar")
+      .replace("/processDemoMinApi23DebugAndroidTestResources/R.jar", "/R.jar")
+      .replace("/processFlavor1DebugResources/R.jar", "/R.jar")
+      .replace("/processFlavor1DebugAndroidTestResources/R.jar", "/R.jar")
+      .replace("/generateDebugRFile/R.jar", "/R.jar")
+      .replace("/bundleDebugClassesToCompileJar/classes.jar", "/classes.jar")
+      .replace("/bundleLibCompileToJarDebug/classes.jar", "/classes.jar")
+      .replace("/bundleDemoMinApi23DebugClassesToCompileJar/classes.jar", "/classes.jar")
+      .replace("/bundleFlavor1DebugClassesToCompileJar/classes.jar", "/classes.jar");
   }
 
   private static List<String> getKnownAndroidSdkRoots() {
