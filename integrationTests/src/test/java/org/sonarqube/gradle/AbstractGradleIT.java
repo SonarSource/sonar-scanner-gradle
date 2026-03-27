@@ -20,11 +20,13 @@
 package org.sonarqube.gradle;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.vdurmont.semver4j.Semver;
 import com.vdurmont.semver4j.Semver.SemverType;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -43,6 +45,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -59,6 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractGradleIT {
 
   private static final Gson GSON = new Gson();
+  private static final Gson PRETTY_GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
 
   @Rule
@@ -165,6 +169,16 @@ public abstract class AbstractGradleIT {
     }
   }
 
+  protected static void writeExpectedMap(Path targetFile, Map<String, String> properties) throws IOException {
+    File parent = targetFile.toFile().getParentFile();
+    if (parent != null && !parent.exists()) {
+      parent.mkdirs();
+    }
+    try (FileWriter writer = new FileWriter(targetFile.toFile(), StandardCharsets.UTF_8)) {
+      PRETTY_GSON.toJson(new LinkedHashMap<>(properties), writer);
+    }
+  }
+
   private static String replaceAllPrefixInCommaSeparatedString(String value, String oldPrefix, String newPrefix) {
     String prefixAfterComma = ',' + oldPrefix;
     int index = value.lastIndexOf(prefixAfterComma);
@@ -200,7 +214,7 @@ public abstract class AbstractGradleIT {
       .filter(s -> !s.isEmpty())
       .map(Paths::get)
       .map(AbstractGradleIT::normalizePath)
-      .toList();
+      .collect(Collectors.toList());
   }
 
   protected static void assertPathProperty(Properties props, String key, Path expected) {
