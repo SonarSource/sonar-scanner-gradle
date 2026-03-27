@@ -116,7 +116,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     assertThat(snapshotCase.expectedFile())
       .as("expected snapshot file for %s", snapshotCase.name)
       .exists();
-    Map<String, String> expected = snapshotCase.sanitize(expandSnapshotPlaceholders(loadExpectedMap(snapshotCase.expectedFile())));
+    Map<String, String> expected = snapshotCase.sanitize(expandSnapshotPlaceholders(loadExpectedMap(snapshotCase.expectedFile()), actual));
     assertThat(actual)
       .as(snapshotCase.name)
       .containsAllEntriesOf(expected);

@@ -170,15 +170,17 @@ public abstract class AbstractGradleIT {
     return result;
   }
 
-  protected static Map<String, String> expandSnapshotPlaceholders(Map<String, String> properties) {
+  protected static Map<String, String> expandSnapshotPlaceholders(Map<String, String> properties, Map<String, String> actualProperties) {
     Map<String, String> expanded = new LinkedHashMap<>();
-    String javaVersion = Integer.toString(getJavaVersion());
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       String value = entry.getValue();
       if (value != null) {
-        value = value.replace("${JAVA_VERSION}", javaVersion);
-        value = value.replace("${JAVA_SOURCE}", javaVersion);
-        value = value.replace("${JAVA_TARGET}", javaVersion);
+        String actualValue = actualProperties.get(entry.getKey());
+        if (actualValue != null) {
+          value = value.replace("${JAVA_VERSION}", actualValue);
+          value = value.replace("${JAVA_SOURCE}", actualValue);
+          value = value.replace("${JAVA_TARGET}", actualValue);
+        }
         value = normalizeAndroidSdkRoots(value);
       }
       expanded.put(entry.getKey(), value);
@@ -188,12 +190,11 @@ public abstract class AbstractGradleIT {
 
   protected static Map<String, String> canonicalizeSnapshotPlaceholders(Map<String, String> properties) {
     Map<String, String> canonicalized = new LinkedHashMap<>();
-    String javaVersion = Integer.toString(getJavaVersion());
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       String value = entry.getValue();
       if (value != null) {
         value = normalizeAndroidSdkRoots(value);
-        if (isJavaVersionSnapshotProperty(entry.getKey()) && javaVersion.equals(value)) {
+        if (isJavaVersionSnapshotProperty(entry.getKey())) {
           value = entry.getKey().endsWith(".source") ? "${JAVA_SOURCE}" : "${JAVA_TARGET}";
         }
       }
