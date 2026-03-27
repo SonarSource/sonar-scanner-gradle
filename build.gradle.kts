@@ -115,6 +115,7 @@ license {
     strictCheck = true
     exclude("**/*-version.txt")
     exclude("**/projects/*")
+    exclude("src/test/resources/org/sonarqube/gradle/PropertySnapshotTest/**")
 }
 
 jacoco {
