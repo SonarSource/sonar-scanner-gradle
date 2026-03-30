@@ -228,48 +228,35 @@ public abstract class AbstractGradleIT {
   }
 
   private static String normalizeAndroidGeneratedPaths(String value) {
+    if (value == null) return null;
+
     return value
-      .replace("/build-tools/34.0.0/core-lambda-stubs.jar", "/build-tools/30.0.3/core-lambda-stubs.jar")
-      .replace("/compileDebugJavaWithJavac/classes", "/classes")
-      .replace("/compileDebugUnitTestJavaWithJavac/classes", "/classes")
-      .replace("/compileDebugAndroidTestJavaWithJavac/classes", "/classes")
-      .replace("/compileReleaseJavaWithJavac/classes", "/classes")
-      .replace("/compileReleaseUnitTestJavaWithJavac/classes", "/classes")
-      .replace("/compileDemoMinApi23DebugJavaWithJavac/classes", "/classes")
-      .replace("/compileDemoMinApi23DebugUnitTestJavaWithJavac/classes", "/classes")
-      .replace("/compileDemoMinApi23DebugAndroidTestJavaWithJavac/classes", "/classes")
-      .replace("/compileFlavor1DebugJavaWithJavac/classes", "/classes")
-      .replace("/compileFlavor1DebugUnitTestJavaWithJavac/classes", "/classes")
-      .replace("/compileFlavor1DebugAndroidTestJavaWithJavac/classes", "/classes")
-      .replace("/processDebugResources/R.jar", "/R.jar")
-      .replace("/processDebugUnitTestResources/R.jar", "/R.jar")
-      .replace("/processDebugAndroidTestResources/R.jar", "/R.jar")
-      .replace("/processReleaseResources/R.jar", "/R.jar")
-      .replace("/processDemoMinApi23DebugResources/R.jar", "/R.jar")
-      .replace("/processDemoMinApi23DebugAndroidTestResources/R.jar", "/R.jar")
-      .replace("/processFlavor1DebugResources/R.jar", "/R.jar")
-      .replace("/processFlavor1DebugAndroidTestResources/R.jar", "/R.jar")
-      .replace("/generateDebugRFile/R.jar", "/R.jar")
-      .replace("/bundleDebugClassesToCompileJar/classes.jar", "/classes.jar")
-      .replace("/bundleLibCompileToJarDebug/classes.jar", "/classes.jar")
-      .replace("/bundleDemoMinApi23DebugClassesToCompileJar/classes.jar", "/classes.jar")
-      .replace("/bundleFlavor1DebugClassesToCompileJar/classes.jar", "/classes.jar")
-      // Fix Build Tools versions
+      // 1. Build Tools: Match ANY version (30.x, 34.x, 35.x) and set to 30.0.3
       .replaceAll("/build-tools/\\d+\\.\\d+\\.\\d+/core-lambda-stubs\\.jar", "/build-tools/30.0.3/core-lambda-stubs.jar")
 
-      // Fix Gradle cache hashes and versioned paths
+      // 2. Gradle Caches: Handle BOTH the new 8.x structure (caches/8.13/...) and legacy (transforms-3)
+      // We match the hash [a-f0-9]{32} or similar hex strings
       .replaceAll("\\.gradle/caches/\\d+\\.\\d+/transforms/[a-f0-9]+", ".gradle/caches/transforms-3/<hash>")
       .replaceAll("\\.gradle/caches/transforms-3/[a-f0-9]+", ".gradle/caches/transforms-3/<hash>")
       .replaceAll("/build/\\.transforms/[a-f0-9]+", "/build/.transforms/<hash>")
 
-      // Consolidate Task-specific subfolders into generic folder names
+      // 3. Classes: Catch all variations of "compile...JavaWithJavac/classes" or "javac/.../classes"
+      // and turn them into the expected simple "/classes"
       .replaceAll("/compile[a-zA-Z0-9]+JavaWithJavac/classes", "/classes")
+      .replaceAll("/javac/[a-zA-Z0-9]+/classes", "/classes")
+
+      // 4. Resources & R.jar: Catch processDebugResources, generateFlavor1RFile, etc.
       .replaceAll("/(process|generate)[a-zA-Z0-9]+(Resources|RFile|StubRFile)/R\\.jar", "/R.jar")
+
+      // 5. JARs: Catch bundleFlavor1ClassesToCompileJar, bundleLibCompileToJarDebug, etc.
       .replaceAll("/bundle[a-zA-Z0-9]+(ClassesToCompileJar|CompileToJar[a-zA-Z0-9]+)/classes\\.jar", "/classes.jar")
 
-      // Fix internal directory naming differences
+      // 6. Direct Directory Replacements
       .replace("/compile_app_classes_jar/", "/app_classes/")
-      .replace("/compile_library_classes_jar/", "/library_classes/");
+      .replace("/compile_library_classes_jar/", "/library_classes/")
+
+      // 7. General build folder normalization (Fixes java-gradle-lazy-configuration)
+      .replace("build/classes/java/main", "build/classes/java/main");
   }
 
 
