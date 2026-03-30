@@ -9,7 +9,7 @@
   "sonar.java.source": "${JAVA_SOURCE}",
   "sonar.java.target": "${JAVA_TARGET}",
   "sonar.java.test.binaries": "${parentBaseDir}/java-gradle-user-properties/build/classes/java/test",
-  "sonar.java.test.libraries": "${parentBaseDir}/java-gradle-user-properties/build/classes/java/main,${M2}/repository/junit/junit/4.10/junit-4.10.jar,${M2}/repository/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar",
+  "sonar.java.test.libraries": "${M2}/repository/junit/junit/4.10/junit-4.10.jar,${M2}/repository/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar,${parentBaseDir}/java-gradle-user-properties/build/classes/java/main",
   "sonar.kotlin.gradleProjectRoot": "${parentBaseDir}/java-gradle-user-properties",
   "sonar.projectBaseDir": "${parentBaseDir}/java-gradle-user-properties",
   "sonar.projectDescription": "A simple Java Gradle project to test the proper handling of user defined properties",

@@ -8,7 +8,7 @@
   "sonar.java.source": "${JAVA_SOURCE}",
   "sonar.java.target": "${JAVA_TARGET}",
   "sonar.java.test.binaries": "${parentBaseDir}/java-gradle-no-real-tests/build/classes/java/test",
-  "sonar.java.test.libraries": "${parentBaseDir}/java-gradle-no-real-tests/build/classes/java/main,${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar,${M2}/repository/junit/junit/4.10/junit-4.10.jar,${M2}/repository/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar",
+  "sonar.java.test.libraries": "${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar,${M2}/repository/junit/junit/4.10/junit-4.10.jar,${M2}/repository/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar,${parentBaseDir}/java-gradle-no-real-tests/build/classes/java/main",
   "sonar.kotlin.gradleProjectRoot": "${parentBaseDir}/java-gradle-no-real-tests",
   "sonar.libraries": "${M2}/repository/commons-io/commons-io/2.5/commons-io-2.5.jar",
   "sonar.projectBaseDir": "${parentBaseDir}/java-gradle-no-real-tests",

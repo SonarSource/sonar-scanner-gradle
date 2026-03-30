@@ -6,7 +6,6 @@
   "sonar.java.jdkHome": "<hidden>",
   "sonar.java.source": "${JAVA_SOURCE}",
   "sonar.java.target": "${JAVA_TARGET}",
-  "sonar.java.test.libraries": "${parentBaseDir}/java-gradle-lazy-configuration/build/classes/java/main",
   "sonar.kotlin.gradleProjectRoot": "${parentBaseDir}/java-gradle-lazy-configuration",
   "sonar.projectBaseDir": "${parentBaseDir}/java-gradle-lazy-configuration",
   "sonar.projectKey": "org.codehaus.sonar:example-java-gradle",
