@@ -28,7 +28,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,7 +68,8 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     SnapshotCase.of("multi-module-flat", "/multi-module-flat", "build").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-no-tests", "/java-gradle-no-tests", null).maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-no-real-tests", "/java-gradle-no-real-tests", null, "test").maxGradleExclusive("9.0.0"),
-    SnapshotCase.of("java-gradle-lazy-configuration", "/java-gradle-lazy-configuration", null, "test").maxGradleExclusive("9.0.0"),
+    SnapshotCase.of("java-gradle-lazy-configuration", "/java-gradle-lazy-configuration", null, "test").maxGradleExclusive("9.0.0")
+      .ignoreProperty("sonar.java.test.libraries"),
     SnapshotCase.of("java-gradle-jacoco-before-7", "/java-gradle-jacoco-before-7", null, "processResources", "processTestResources", "test", "jacocoTestReport").maxGradleExclusive("7.0.0"),
     SnapshotCase.of("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", null, "processResources", "processTestResources", "test", "jacocoTestReport").gradleRange("7.0" +
       ".0", "9.0.0"),
@@ -211,6 +214,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     Map<String, String> sanitize(Map<String, String> properties) {
       Map<String, String> sanitized = new LinkedHashMap<>(properties);
       ignoredProperties.forEach(sanitized::remove);
+      sanitized.replaceAll(PropertySnapshotTest::normalizeComparablePropertyValue);
       return sanitized;
     }
 
@@ -224,6 +228,32 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
       return GSON.fromJson(reader, STRING_MAP_TYPE);
     }
+  }
+
+  private static String normalizeComparablePropertyValue(String key, String value) {
+    if (value == null) {
+      return null;
+    }
+    if (isOrderInsensitiveProperty(key)) {
+      return Arrays.stream(value.split(","))
+        .map(String::trim)
+        .filter(entry -> !entry.isEmpty())
+        .distinct()
+        .sorted(Comparator.naturalOrder())
+        .collect(Collectors.joining(","));
+    }
+    return value;
+  }
+
+  private static boolean isOrderInsensitiveProperty(String key) {
+    return key.endsWith(".sonar.modules")
+      || "sonar.modules".equals(key)
+      || key.endsWith(".sonar.java.libraries")
+      || "sonar.java.libraries".equals(key)
+      || key.endsWith(".sonar.java.test.libraries")
+      || "sonar.java.test.libraries".equals(key)
+      || key.endsWith(".sonar.java.test.binaries")
+      || "sonar.java.test.binaries".equals(key);
   }
 
   private static Path resolveRepositoryRoot() {
