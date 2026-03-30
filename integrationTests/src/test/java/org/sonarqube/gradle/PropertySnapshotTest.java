@@ -106,7 +106,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
 
   private final SnapshotCase snapshotCase;
 
-  PropertySnapshotTest(SnapshotCase snapshotCase) {
+  public PropertySnapshotTest(SnapshotCase snapshotCase) {
     this.snapshotCase = snapshotCase;
   }
 

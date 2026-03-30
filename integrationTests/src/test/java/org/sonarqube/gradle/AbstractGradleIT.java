@@ -253,8 +253,25 @@ public abstract class AbstractGradleIT {
       .replace("/bundleDebugClassesToCompileJar/classes.jar", "/classes.jar")
       .replace("/bundleLibCompileToJarDebug/classes.jar", "/classes.jar")
       .replace("/bundleDemoMinApi23DebugClassesToCompileJar/classes.jar", "/classes.jar")
-      .replace("/bundleFlavor1DebugClassesToCompileJar/classes.jar", "/classes.jar");
+      .replace("/bundleFlavor1DebugClassesToCompileJar/classes.jar", "/classes.jar")
+      // Fix Build Tools versions
+      .replaceAll("/build-tools/\\d+\\.\\d+\\.\\d+/core-lambda-stubs\\.jar", "/build-tools/30.0.3/core-lambda-stubs.jar")
+
+      // Fix Gradle cache hashes and versioned paths
+      .replaceAll("\\.gradle/caches/\\d+\\.\\d+/transforms/[a-f0-9]+", ".gradle/caches/transforms-3/<hash>")
+      .replaceAll("\\.gradle/caches/transforms-3/[a-f0-9]+", ".gradle/caches/transforms-3/<hash>")
+      .replaceAll("/build/\\.transforms/[a-f0-9]+", "/build/.transforms/<hash>")
+
+      // Consolidate Task-specific subfolders into generic folder names
+      .replaceAll("/compile[a-zA-Z0-9]+JavaWithJavac/classes", "/classes")
+      .replaceAll("/(process|generate)[a-zA-Z0-9]+(Resources|RFile|StubRFile)/R\\.jar", "/R.jar")
+      .replaceAll("/bundle[a-zA-Z0-9]+(ClassesToCompileJar|CompileToJar[a-zA-Z0-9]+)/classes\\.jar", "/classes.jar")
+
+      // Fix internal directory naming differences
+      .replace("/compile_app_classes_jar/", "/app_classes/")
+      .replace("/compile_library_classes_jar/", "/library_classes/");
   }
+
 
   private static List<String> getKnownAndroidSdkRoots() {
     List<String> candidates = new ArrayList<>();
