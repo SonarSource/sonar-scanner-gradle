@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -265,9 +266,9 @@ public abstract class AbstractGradleIT {
       String entry = match.group(1);
       var transformedJarMatcher = TRANSFORMED_JETIFIED_JAR.matcher(entry);
       if (transformedJarMatcher.matches()) {
-        return "${HOME}/.gradle/caches/transforms-3/<hash>/transformed/" + transformedJarMatcher.group(1);
+        return Matcher.quoteReplacement("${HOME}/.gradle/caches/transforms-3/<hash>/transformed/" + transformedJarMatcher.group(1));
       }
-      return entry;
+      return Matcher.quoteReplacement(entry);
     });
   }
 
