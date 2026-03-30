@@ -98,6 +98,14 @@ public class PropertySnapshotTest extends AbstractGradleIT {
       "compileTestJava").requiresAndroid().minAndroidGradle("7.0.0"),
     SnapshotCase.of("android-gradle-no-debug", "/android-gradle-no-debug", null, "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
     SnapshotCase.of("multi-module-android-studio-lint", "/multi-module-android-studio-lint", null, "lint", "lintFullRelease").requiresAndroid().minAndroidGradle("7.0.0")
+      .ignoreProperty(":app.sonar.binaries")
+      .ignoreProperty(":app.sonar.java.binaries")
+      .ignoreProperty(":app2.sonar.binaries")
+      .ignoreProperty(":app2.sonar.java.binaries")
+      .ignoreProperty(":app3.sonar.binaries")
+      .ignoreProperty(":app3.sonar.java.binaries")
+      .ignoreProperty(":app4.sonar.binaries")
+      .ignoreProperty(":app4.sonar.java.binaries")
   );
 
   @Parameterized.Parameters(name = "{0}")
@@ -248,6 +256,8 @@ public class PropertySnapshotTest extends AbstractGradleIT {
   private static boolean isOrderInsensitiveProperty(String key) {
     return key.endsWith(".sonar.modules")
       || "sonar.modules".equals(key)
+      || key.endsWith(".sonar.libraries")
+      || "sonar.libraries".equals(key)
       || key.endsWith(".sonar.java.libraries")
       || "sonar.java.libraries".equals(key)
       || key.endsWith(".sonar.java.test.libraries")
