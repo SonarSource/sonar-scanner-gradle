@@ -71,8 +71,8 @@ public abstract class AbstractGradleIT {
   @Rule
   public TemporaryFolder temp = TemporaryFolder.builder().build();
 
-  private static Semver gradleVersion;
-  private static Semver androidGradleVersion;
+  private static final Semver gradleVersion;
+  private static final Semver androidGradleVersion;
 
   static {
     try {
@@ -401,10 +401,6 @@ public abstract class AbstractGradleIT {
     newArgs.addAll(Arrays.asList(args));
     newArgs.add("sonar");
     return runGradlewWithEnvQuietly(project, exeRelativePath, env, runConfiguration, newArgs.toArray(new String[args.length + 1]));
-  }
-
-  protected RunResult runGradlewWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, String... args) throws Exception {
-    return runGradlewWithEnvQuietly(project, exeRelativePath, env, new DefaultRunConfiguration(), args);
   }
 
   protected RunResult runGradlewWithEnvQuietly(String project, String exeRelativePath, Map<String, String> env, RunConfiguration runConfiguration, String... args) throws Exception {

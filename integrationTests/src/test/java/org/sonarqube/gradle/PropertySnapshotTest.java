@@ -68,7 +68,8 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     SnapshotCase.of("java-gradle-no-real-tests", "/java-gradle-no-real-tests", null, "test").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-lazy-configuration", "/java-gradle-lazy-configuration", null, "test").maxGradleExclusive("9.0.0"),
     SnapshotCase.of("java-gradle-jacoco-before-7", "/java-gradle-jacoco-before-7", null, "processResources", "processTestResources", "test", "jacocoTestReport").maxGradleExclusive("7.0.0"),
-    SnapshotCase.of("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", null, "processResources", "processTestResources", "test", "jacocoTestReport").gradleRange("7.0.0", "9.0.0"),
+    SnapshotCase.of("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", null, "processResources", "processTestResources", "test", "jacocoTestReport").gradleRange("7.0" +
+      ".0", "9.0.0"),
     SnapshotCase.of("kotlin-multiplatform", "/kotlin-multiplatform", null, "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm").gradleRange("6.8.3", "9.0.0"),
     SnapshotCase.of("kotlin-multiplatform-with-submodule", "/kotlin-multiplatform-with-submodule", null, "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm").gradleRange("6.8.3", "9.0.0"),
     SnapshotCase.of("kotlin-jvm", "/kotlin-jvm", null, "compileKotlin", "compileTestKotlin").gradleRange("6.8.3", "9.0.0"),
@@ -83,7 +84,8 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     SnapshotCase.of("android-gradle-default-variant", "/android-gradle-default-variant", null, "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
     SnapshotCase.of("android-gradle-dynamic-feature", "/android-gradle-dynamic-feature", null, "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
     SnapshotCase.of("android-gradle-nondefault-variant", "/android-gradle-nondefault-variant", null, "test").requiresAndroid().minAndroidGradle("7.0.0"),
-    SnapshotCase.of("multi-module-android-studio", "/multi-module-android-studio", null, "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
+    SnapshotCase.of("multi-module-android-studio", "/multi-module-android-studio", null, "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0" +
+      ".0"),
     SnapshotCase.of("android-testing-blueprint-with-dynamic-feature-module", "/AndroidTestingBlueprintWithDynamicFeatureModule", null,
       "assembleDebug",
       "compileFlavor1DebugUnitTestJavaWithJavac",
@@ -104,7 +106,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
 
   private final SnapshotCase snapshotCase;
 
-  public PropertySnapshotTest(SnapshotCase snapshotCase) {
+  PropertySnapshotTest(SnapshotCase snapshotCase) {
     this.snapshotCase = snapshotCase;
   }
 
@@ -126,18 +128,6 @@ public class PropertySnapshotTest extends AbstractGradleIT {
   @Test
   public void rewritePropertySnapshot() throws Exception {
     writeExpectedMap(snapshotCase.expectedFile(), snapshotCase.collect(this));
-  }
-
-  public static void main(String[] args) throws Exception {
-    for (SnapshotCase snapshotCase : SNAPSHOT_CASES) {
-      PropertySnapshotTest test = new PropertySnapshotTest(snapshotCase);
-      test.temp.create();
-      try {
-        test.writeExpectedMap(snapshotCase.expectedFile(), snapshotCase.collect(test));
-      } finally {
-        test.temp.delete();
-      }
-    }
   }
 
   private static final class SnapshotCase {
