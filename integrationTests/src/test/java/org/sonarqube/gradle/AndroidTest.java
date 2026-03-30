@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.stream.Stream;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.sonarqube.gradle.support.AbstractGradleIT;
 import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 
 import static java.util.Arrays.stream;

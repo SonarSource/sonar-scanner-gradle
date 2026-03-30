@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Properties;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.sonarqube.gradle.support.AbstractGradleIT;
 import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 import org.sonarqube.gradle.run_configuration.RunConfigurationList;
 
