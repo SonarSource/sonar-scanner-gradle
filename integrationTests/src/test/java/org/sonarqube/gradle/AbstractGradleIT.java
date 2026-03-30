@@ -67,6 +67,8 @@ public abstract class AbstractGradleIT {
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
   public static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("Windows");
   private static final String ANDROID_SDK_TOKEN = "${ANDROID_SDK}";
+  private static final Pattern TRANSFORMED_JETIFIED_JAR = Pattern.compile(
+    ".*(?:/\\.gradle/caches/transforms-\\d+|/build/\\.transforms)/<hash>/transformed/(?:instrumented_)?(jetified-[^,/]+\\.jar)");
 
   @Rule
   public TemporaryFolder temp = TemporaryFolder.builder().build();
@@ -230,7 +232,7 @@ public abstract class AbstractGradleIT {
   private static String normalizeAndroidGeneratedPaths(String value) {
     if (value == null) return null;
 
-    return value
+    value = value
       // 1. Build Tools: Match ANY version (30.x, 34.x, 35.x) and set to 30.0.3
       .replaceAll("/build-tools/\\d+\\.\\d+\\.\\d+/core-lambda-stubs\\.jar", "/build-tools/30.0.3/core-lambda-stubs.jar")
 
@@ -257,6 +259,16 @@ public abstract class AbstractGradleIT {
 
       // 7. General build folder normalization (Fixes java-gradle-lazy-configuration)
       .replace("build/classes/java/main", "build/classes/java/main");
+
+    Pattern commaSeparatedTransformedJar = Pattern.compile("(?<=,|^)([^,]+)(?=,|$)");
+    return commaSeparatedTransformedJar.matcher(value).replaceAll(match -> {
+      String entry = match.group(1);
+      var transformedJarMatcher = TRANSFORMED_JETIFIED_JAR.matcher(entry);
+      if (transformedJarMatcher.matches()) {
+        return "${HOME}/.gradle/caches/transforms-3/<hash>/transformed/" + transformedJarMatcher.group(1);
+      }
+      return entry;
+    });
   }
 
 

@@ -246,11 +246,21 @@ public class PropertySnapshotTest extends AbstractGradleIT {
       return Arrays.stream(value.split(","))
         .map(String::trim)
         .filter(entry -> !entry.isEmpty())
+        .filter(entry -> !isIgnorableAndroidGeneratedEntry(entry))
+        .filter(entry -> !entry.isEmpty())
         .distinct()
         .sorted(Comparator.naturalOrder())
         .collect(Collectors.joining(","));
     }
     return value;
+  }
+
+  private static boolean isIgnorableAndroidGeneratedEntry(String entry) {
+    return entry.contains("/build/intermediates/compile_r_class_jar/")
+      || entry.contains("/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/")
+      || entry.endsWith("/build/intermediates/classes")
+      || entry.contains("/build/intermediates/app_classes/")
+      || entry.contains("/build/intermediates/runtime_app_classes_jar/");
   }
 
   private static boolean isOrderInsensitiveProperty(String key) {
