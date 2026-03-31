@@ -20,6 +20,7 @@
 package org.sonarqube.gradle.support.normalization;
 
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -65,11 +66,14 @@ public final class ComparableProperties {
   }
 
   private static Map<String, String> replacements(String projectBaseDir) {
-    return Map.of(
-      PARENT_BASE_DIR_PLACEHOLDER, Paths.get(projectBaseDir).getParent().toString(),
-      CURRENT_WORKING_DIR_PLACEHOLDER, GradleRuntime.userDir(),
-      HOME_PLACEHOLDER, GradleRuntime.comparableHome()
-    );
+    // Do not use Map.of() here: its iteration order is unspecified, and some replacement prefixes can overlap
+    // (for example ${parentBaseDir} can also be under ${HOME} on Windows CI). We use LinkedHashMap so replacements
+    // always run in the declared order, with the more specific prefix applied first, which keeps snapshot tests stable.
+    Map<String, String> replacements = new LinkedHashMap<>();
+    replacements.put(PARENT_BASE_DIR_PLACEHOLDER, Paths.get(projectBaseDir).getParent().toString());
+    replacements.put(CURRENT_WORKING_DIR_PLACEHOLDER, GradleRuntime.userDir());
+    replacements.put(HOME_PLACEHOLDER, GradleRuntime.comparableHome());
+    return replacements;
   }
 
   private static boolean isComparableKey(String key) {
