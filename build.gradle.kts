@@ -1,4 +1,5 @@
 import com.gradle.publish.DownloadMavenArtifactsAndPublishToGradlePluginPortal
+import com.hierynomus.gradle.license.tasks.LicenseCheck
 
 buildscript {
     dependencies {
@@ -115,6 +116,13 @@ license {
     strictCheck = true
     exclude("**/*-version.txt")
     exclude("**/projects/*")
+}
+
+tasks.withType<LicenseCheck>().configureEach {
+    exclude("**/*-version.txt")
+    exclude("**/projects/*")
+    exclude("**/org/sonarqube/gradle/PropertySnapshotTest/**")
+    exclude("**/org/sonarqube/gradle/sonarqube-gradle-plugin-version.txt")
 }
 
 jacoco {
