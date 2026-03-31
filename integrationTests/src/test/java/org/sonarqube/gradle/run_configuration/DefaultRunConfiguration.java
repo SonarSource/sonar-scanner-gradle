@@ -21,7 +21,6 @@ package org.sonarqube.gradle.run_configuration;
 
 
 import java.util.List;
-import org.sonarqube.gradle.AbstractGradleIT;
 
 /**
  * Apply run configuration that should be applied by default except some exception.
