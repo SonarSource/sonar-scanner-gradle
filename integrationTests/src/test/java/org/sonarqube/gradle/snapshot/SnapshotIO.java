@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.TreeMap;
 
 public final class SnapshotIO {
   private static final Gson GSON = new Gson();
@@ -68,7 +69,7 @@ public final class SnapshotIO {
     File parent = file(snapshotName).toFile().getParentFile();
     if (parent != null && !parent.exists()) parent.mkdirs();
     try (FileWriter writer = new FileWriter(file(snapshotName).toFile(), StandardCharsets.UTF_8)) {
-      PRETTY_GSON.toJson(SnapshotUtils.canonicalize(properties), writer);
+      PRETTY_GSON.toJson(new TreeMap<>(SnapshotUtils.canonicalize(properties)), writer);
     }
   }
 }
