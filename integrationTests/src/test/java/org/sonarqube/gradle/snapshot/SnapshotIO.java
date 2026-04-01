@@ -46,9 +46,18 @@ public final class SnapshotIO {
 
   private static Path repositoryRoot() {
     Path workingDirectory = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
-    if (Files.exists(workingDirectory.resolve("integrationTests").resolve("pom.xml"))) return workingDirectory;
+    if (Files.exists(workingDirectory.resolve("integrationTests").resolve("pom.xml"))) {
+      return workingDirectory;
+    }
     Path parent = workingDirectory.getParent();
-    return parent != null && Files.exists(workingDirectory.resolve("pom.xml")) && Files.exists(parent.resolve("integrationTests").resolve("pom.xml")) ? parent : workingDirectory;
+    if (
+      parent != null &&
+      Files.exists(workingDirectory.resolve("pom.xml")) &&
+      Files.exists(parent.resolve("integrationTests").resolve("pom.xml"))
+    ) {
+      return parent;
+    }
+    return workingDirectory;
   }
 
   private static Path snapshotsRoot() {

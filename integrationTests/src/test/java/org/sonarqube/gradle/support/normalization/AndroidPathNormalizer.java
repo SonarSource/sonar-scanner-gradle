@@ -51,7 +51,7 @@ public final class AndroidPathNormalizer {
   public static String normalize(String value) {
     String result = normalizeWindowsPath(value);
     result = normalizeAndroidSDK(result);
-    result = BUILD_TOOLS.matcher(result).replaceAll("/build-tools/30.0.3/core-lambda-stubs.jar");
+    result = BUILD_TOOLS.matcher(result).replaceAll("/{CORE_LAMBDA_STUBS_JAR}");
     result = VERSIONED_TRANSFORMS.matcher(result).replaceAll(".gradle/caches/transforms-3/<hash>");
     result = STABLE_TRANSFORMS.matcher(result).replaceAll(".gradle/caches/transforms-3/<hash>");
     result = PROJECT_TRANSFORMS.matcher(result).replaceAll("/build/.transforms/<hash>");

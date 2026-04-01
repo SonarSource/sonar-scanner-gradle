@@ -54,7 +54,10 @@ public abstract class AbstractGradleIT {
     Assume.assumeTrue(getGradleVersion().isLowerThan(version));
   }
 
-  protected static void ignoreThisTestIfGradleVersionIsNotBetween(String minVersionIncluded, String maxVersionExcluded) { ignoreThisTestIfGradleVersionIsLessThan(minVersionIncluded); ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo(maxVersionExcluded); }
+  protected static void ignoreThisTestIfGradleVersionIsNotBetween(String minVersionIncluded, String maxVersionExcluded) {
+    ignoreThisTestIfGradleVersionIsLessThan(minVersionIncluded);
+    ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo(maxVersionExcluded);
+  }
 
   public static Map<String, String> extractComparableProperties(Properties properties) {
     return ComparableProperties.extract(properties);
