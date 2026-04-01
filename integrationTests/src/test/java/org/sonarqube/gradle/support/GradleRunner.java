@@ -57,7 +57,8 @@ public final class GradleRunner {
     return runSonar(temp, project, subdir, env, config, allArgs).getDumpedProperties().orElseThrow(() -> new IllegalStateException("Expected dumped properties for " + project));
   }
 
-  static AbstractGradleIT.RunResult runSonarQuietly(TemporaryFolder temp, String project, @Nullable String subdir, Map<String, String> env, RunConfiguration config, String... args) throws Exception {
+  static AbstractGradleIT.RunResult runSonarQuietly(TemporaryFolder temp, String project, @Nullable String subdir, Map<String, String> env, RunConfiguration config,
+    String... args) throws Exception {
     List<String> sonarArgs = new ArrayList<>(Arrays.asList(args));
     sonarArgs.add(SONAR_TASK);
     return runQuietly(temp, project, subdir, env, config, sonarArgs.toArray(String[]::new));
@@ -79,8 +80,12 @@ public final class GradleRunner {
     return result;
   }
 
+  static List<String> gradlewCommand(String path) {
+    return GradleRuntime.isWindows() ? new ArrayList<>(List.of("cmd.exe", "/C", path)) : new ArrayList<>(List.of("/bin/bash", path));
+  }
+
   static List<String> gradlewCommand() {
-    return GradleRuntime.isWindows() ? new ArrayList<>(List.of("cmd.exe", "/C", "gradlew.bat")) : new ArrayList<>(List.of("/bin/bash", "gradlew"));
+    return gradlewCommand("gradlew");
   }
 
   static @Nullable Properties getDumpedProperties(List<String> command) {
@@ -97,7 +102,8 @@ public final class GradleRunner {
   }
 
   static List<String> command(File executionDir, RunConfiguration config, String... args) {
-    List<String> command = GradleRuntime.isWindows() ? new ArrayList<>(List.of("cmd.exe", "/C", new File(executionDir, "gradlew.bat").getAbsolutePath())) : new ArrayList<>(List.of("/bin/bash", "gradlew"));
+    String path = new File(executionDir, "gradlew.bat").getAbsolutePath();
+    List<String> command = gradlewCommand(path);
     command.addAll(BASE_ARGS);
     config.updateProcessArgument(command);
     command.addAll(Arrays.asList(args));

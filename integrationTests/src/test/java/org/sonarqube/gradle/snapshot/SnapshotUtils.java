@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.sonarqube.gradle.support.normalization.AndroidPathNormalizer;
-import org.sonarqube.gradle.support.normalization.AndroidSdkPathNormalizer;
 
 public final class SnapshotUtils {
   private static final String JAVA_VERSION_PLACEHOLDER = "${JAVA_VERSION}";
@@ -69,13 +68,15 @@ public final class SnapshotUtils {
   private static String expandValue(String value, String actualValue) {
     if (value == null) return null;
     String expanded = actualValue == null ? value : value.replace(JAVA_VERSION_PLACEHOLDER, actualValue).replace(JAVA_SOURCE_PLACEHOLDER, actualValue).replace(JAVA_TARGET_PLACEHOLDER, actualValue);
-    return AndroidPathNormalizer.normalize(AndroidSdkPathNormalizer.normalize(expanded));
+    return AndroidPathNormalizer.normalize(expanded);
   }
 
   private static String canonicalizeValue(String key, String value) {
     if (value == null) return null;
-    String canonicalized = AndroidPathNormalizer.normalize(AndroidSdkPathNormalizer.normalize(value));
-    return isJavaVersionKey(key) ? (key.endsWith(".source") ? JAVA_SOURCE_PLACEHOLDER : JAVA_TARGET_PLACEHOLDER) : canonicalized;
+    if (isJavaVersionKey(key)) {
+      return key.endsWith(".source") ? JAVA_SOURCE_PLACEHOLDER : JAVA_TARGET_PLACEHOLDER;
+    }
+    return AndroidPathNormalizer.normalize(value);
   }
 
   private static boolean isOrderInsensitive(String key) {

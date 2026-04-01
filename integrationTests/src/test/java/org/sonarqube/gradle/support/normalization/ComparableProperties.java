@@ -88,7 +88,7 @@ public final class ComparableProperties {
     String normalizedValue = value;
     normalizedValue = isHiddenKey(key) ? HIDDEN_VALUE : normalizedValue;
     normalizedValue = replacePrefixes(normalizedValue, replacements);
-    normalizedValue = AndroidPathNormalizer.normalize(AndroidSdkPathNormalizer.normalize(normalizedValue.replace('\\', '/')));
+    normalizedValue = AndroidPathNormalizer.normalize(normalizedValue);
     normalizedValue = GradleCachePathNormalizer.normalize(replaceM2(normalizedValue, replacements.keySet()));
     return normalizedValue;
   }

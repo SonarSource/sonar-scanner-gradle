@@ -54,6 +54,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     assertThat(file).as("expected snapshot file for %s", snapshotCase.name()).exists();
     Map<String, String> expected = snapshotCase.expected(SnapshotIO.load(file), actual);
     assertThat(actual).as(snapshotCase.name()).containsAllEntriesOf(expected);
+    assertThat(expected).as(snapshotCase.name() + " (no unexpected extra properties)").containsAllEntriesOf(actual);
   }
 
   @Ignore("Run locally to regenerate all integration test property snapshots.")
