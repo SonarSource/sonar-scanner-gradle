@@ -35,6 +35,23 @@ runs:
         working-directory: integrationTests
         use-develocity: ${{ inputs.use-develocity }}
         develocity-url: ${{ inputs.develocity-url }}
+    - name: Set Orchestrator Cache Variables
+      shell: bash
+      run: |
+        CACHE_MONTH=$(date +'%Y-%m')
+        echo "ORCHESTRATOR_CACHE_MONTH=$CACHE_MONTH" >> $GITHUB_ENV
+        echo "ORCHESTRATOR_HOME=${{ github.workspace }}/orchestrator" >> $GITHUB_ENV
+    - name: Cache Orchestrator
+      uses: SonarSource/gh-action_cache@v1
+      with:
+        path: ${{ env.ORCHESTRATOR_HOME }}
+        key: orchestrator-${{ env.ORCHESTRATOR_CACHE_MONTH }}-${{ github.run_id }}
+        restore-keys: orchestrator-${{ env.ORCHESTRATOR_CACHE_MONTH }}-
+    - name: Setup Orchestrator Home Directory
+      shell: bash
+      run: |
+        mkdir -p "$ORCHESTRATOR_HOME"
+        ls -lRh "$ORCHESTRATOR_HOME"
     - name: Run QA
       env:
         GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
