@@ -37,6 +37,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.sonarqube.gradle.support.AbstractGradleIT;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;

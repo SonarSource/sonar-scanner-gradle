@@ -21,7 +21,7 @@ package org.sonarqube.gradle.run_configuration;
 
 
 import java.util.List;
-import org.sonarqube.gradle.AbstractGradleIT;
+import org.sonarqube.gradle.support.AbstractGradleIT;
 
 /**
  * Configure some process arguments and check to perform on the output for an integration test.
