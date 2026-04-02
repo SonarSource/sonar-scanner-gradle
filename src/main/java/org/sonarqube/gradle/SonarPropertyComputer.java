@@ -351,6 +351,9 @@ public class SonarPropertyComputer {
     if (value == null) {
       return null;
     }
+    if (value instanceof Provider<?>) {
+      return convertValue(((Provider<?>) value).getOrNull(), escapeFilePath);
+    }
     if (value instanceof Iterable<?>) {
       String joined = StreamSupport.stream(((Iterable<Object>) value).spliterator(), false)
         .map(v -> SonarPropertyComputer.convertValue(v, true))

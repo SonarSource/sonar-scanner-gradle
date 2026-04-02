@@ -233,6 +233,41 @@ class FunctionalTests extends Specification {
         result.output.contains("Task 'sonarqube' is deprecated. Use 'sonar' instead.")
     }
 
+    def "resolve provider-backed sonar properties in a real build"() {
+        given:
+        settingsFile << "rootProject.name = 'provider-backed-properties'"
+        projectDir.resolve("src").toFile().mkdir()
+        buildFile << """
+        plugins {
+            id 'java'
+            id 'org.sonarqube'
+        }
+
+        sonar {
+            properties {
+                property "sonar.projectName", providers.provider { "Project From Provider" }
+                property "sonar.sources", providers.provider { [file("src")] }
+            }
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withGradleVersion(gradleVersion)
+          .withProjectDir(projectDir.toFile())
+          .forwardOutput()
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":sonar").outcome == SUCCESS
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props."sonar.projectName" == "Project From Provider"
+        Path.of(props."sonar.sources").toFile().canonicalFile.toPath() == projectDir.resolve("src").toFile().canonicalFile.toPath()
+    }
+
     def "set jdkHome, source and target for 'java' projects from task toolchains"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"

@@ -686,6 +686,32 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.some.key"] == "win"
   }
 
+  def "resolves provider-backed sonar property values lazily"() {
+    parentProject.sonar.properties {
+      property "sonar.login", parentProject.providers.provider { "token-from-provider" }
+      property "sonar.sources", parentProject.providers.provider { [new File(parentProject.projectDir, "src")] }
+    }
+
+    when:
+    def properties = parentSonarTask().properties.get()
+
+    then:
+    properties["sonar.login"] == "token-from-provider"
+    properties["sonar.sources"] == new File(parentProject.projectDir, "src") as String
+  }
+
+  def "omits sonar properties backed by empty providers"() {
+    parentProject.sonar.properties {
+      property "sonar.login", parentProject.providers.provider { null }
+    }
+
+    when:
+    def properties = parentSonarTask().properties.get()
+
+    then:
+    !properties.containsKey("sonar.login")
+  }
+
   def "doesn't add sonar properties for skipped child project when using old sonarqube task"() {
     childProject2.sonarqube.skipProject = true
 
