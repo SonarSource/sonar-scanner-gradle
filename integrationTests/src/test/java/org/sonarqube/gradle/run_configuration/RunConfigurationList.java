@@ -20,10 +20,10 @@
 package org.sonarqube.gradle.run_configuration;
 
 import java.util.List;
-import org.sonarqube.gradle.AbstractGradleIT;
+import org.sonarqube.gradle.support.AbstractGradleIT;
 
 public class RunConfigurationList implements RunConfiguration {
-  private List<RunConfiguration> configs;
+  private final List<RunConfiguration> configs;
 
   public RunConfigurationList(List<RunConfiguration> configs) {
     this.configs = configs;
