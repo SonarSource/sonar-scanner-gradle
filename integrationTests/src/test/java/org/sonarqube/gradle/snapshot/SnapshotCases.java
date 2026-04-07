@@ -20,7 +20,6 @@
 package org.sonarqube.gradle.snapshot;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 import org.sonarqube.gradle.support.AbstractGradleIT;
+import org.sonarqube.gradle.support.normalization.SnapshotNormalizer;
 
 public final class SnapshotCases {
   private SnapshotCases() {
@@ -43,7 +43,6 @@ public final class SnapshotCases {
     private final String name;
     private final String project;
     private final List<String> args;
-    private final Set<String> ignored = new LinkedHashSet<>();
     private String minGradle;
     private String maxGradleExclusive;
     private String minAndroidGradle;
@@ -66,11 +65,7 @@ public final class SnapshotCases {
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
       Properties p = test.runGradlewSonarSimulationModeWithEnv(project, subdir, Collections.emptyMap(), new DefaultRunConfiguration(), args.toArray(String[]::new));
-      return SnapshotUtils.sanitize(new LinkedHashMap<>(AbstractGradleIT.extractComparableProperties(p)), ignored);
-    }
-
-    public Map<String, String> expected(Map<String, String> stored, Map<String, String> actual) {
-      return SnapshotUtils.sanitize(SnapshotUtils.expand(stored, actual), ignored);
+      return SnapshotNormalizer.normalize(p);
     }
 
     public Case minGradle(String value) {
@@ -99,11 +94,6 @@ public final class SnapshotCases {
 
     public Case subdir(String subdir) {
       this.subdir = subdir;
-      return this;
-    }
-
-    public Case ignoreProperty(String key) {
-      this.ignored.add(key);
       return this;
     }
 
@@ -138,8 +128,7 @@ public final class SnapshotCases {
       c("java-gradle-no-real-tests", "/java-gradle-no-real-tests", "test")
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-lazy-configuration", "/java-gradle-lazy-configuration", "test")
-        .maxGradleExclusive("9.0.0")
-        .ignoreProperty("sonar.java.test.libraries"),
+        .maxGradleExclusive("9.0.0"),
       c("java-gradle-jacoco-before-7", "/java-gradle-jacoco-before-7", "processResources", "processTestResources", "test", "jacocoTestReport")
         .maxGradleExclusive("7.0.0"),
       c("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", "processResources", "processTestResources", "test", "jacocoTestReport")
@@ -152,8 +141,7 @@ public final class SnapshotCases {
         .gradleRange("6.8.3", "9.0.0"),
       c("kotlin-jvm-submodule", "/kotlin-jvm-submodule", "compileKotlin", "compileTestKotlin")
         .gradleRange("6.8.3", "9.0.0"),
-      c("multi-module-with-submodules", "/multi-module-with-submodules", "compileJava", "compileTestJava", "--info")
-        .ignoreProperty(":skippedModule" + ".:skippedModule:skippedSubmodule.sonar.java.test.libraries"),
+      c("multi-module-with-submodules", "/multi-module-with-submodules", "compileJava", "compileTestJava", "--info"),
       c("java-gradle-simple-with-github", "/java-gradle-simple-with-github", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
       c("java-compile-only", "/java-compile-only")
@@ -184,14 +172,7 @@ public final class SnapshotCases {
       c("multi-module-android-studio-lint", "/multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
         .minAndroidGradle("7.0.0")
-        .ignoreProperty(":app.sonar.binaries")
-        .ignoreProperty(":app.sonar.java.binaries")
-        .ignoreProperty(":app2.sonar.binaries")
-        .ignoreProperty(":app2.sonar.java.binaries")
-        .ignoreProperty(":app3.sonar.binaries")
-        .ignoreProperty(":app3.sonar.java.binaries")
-        .ignoreProperty(":app4.sonar.binaries")
-        .ignoreProperty(":app4.sonar.java.binaries"));
+    );
   }
 
   private static Case c(String name, String project, String... args) {

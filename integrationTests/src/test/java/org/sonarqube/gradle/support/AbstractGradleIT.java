@@ -27,7 +27,6 @@ import org.jspecify.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
-import org.sonarqube.gradle.support.normalization.ComparableProperties;
 import org.sonarqube.gradle.run_configuration.RunConfiguration;
 
 public abstract class AbstractGradleIT {
@@ -59,9 +58,6 @@ public abstract class AbstractGradleIT {
     ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo(maxVersionExcluded);
   }
 
-  public static Map<String, String> extractComparableProperties(Properties properties) {
-    return ComparableProperties.extract(properties);
-  }
 
   protected static @Nullable Properties getDumpedProperties(List<String> command) {
     return GradleRunner.getDumpedProperties(command);

@@ -1,0 +1,48 @@
+/*
+ * Gradle Plugin :: Integration Tests
+ * Copyright (C) 2015-2025 SonarSource SA
+ * mailto:info AT sonarsource DOT com
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+package org.sonarqube.gradle.support.normalization;
+
+import java.util.Set;
+
+public class IgnoredPropertiesNormalizer {
+  private static final String IGNORED_PROPERTY_PLACEHOLDER = "<ignored>";
+  private static final Set<String> IGNORED_KEYS = Set.of(
+    "sonar.scanner.os",
+    "sonar.token",
+    "sonar.scanner.arch",
+    "sonar.scanner.internal.dumpToFile"
+  );
+
+  private static final Set<String> IGNORED_SUFFIXES = Set.of(
+    "sonar.java.source",
+    "sonar.java.target",
+    "sonar.java.jdkHome"
+  );
+
+  private IgnoredPropertiesNormalizer() {
+    // Utility class: contains only static methods and is not intended to be instantiated.
+  }
+
+  public static String normalize(String key, String value) {
+    return IGNORED_KEYS.contains(key) || IGNORED_SUFFIXES.stream().anyMatch(key::endsWith) ?
+      IGNORED_PROPERTY_PLACEHOLDER :
+      value;
+  }
+}
