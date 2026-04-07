@@ -747,30 +747,6 @@ class FunctionalTests extends Specification {
         assert result.getOutput().contains("Invalid region 'invalid'.")
     }
 
-    // FIXME get rid of this
-    def "An artificial test runs in debug mode to increase coverage and merge SCANGRADLE-247"() {
-        given:
-        settingsFile << "rootProject.name = 'java-task-toolchains'"
-        buildFile << """
-        plugins {
-            id 'java'
-            id 'org.sonarqube'
-        }
-        """
-
-        when:
-        def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(projectDir.toFile())
-                .forwardOutput()
-                .withArguments('sonar', '--debug', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
-                .withPluginClasspath()
-                .build()
-
-        then:
-        assert result.task(":sonar").getOutcome() == TaskOutcome.SUCCESS
-    }
-
     def "clean sonar does not fail on a clean project"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"
