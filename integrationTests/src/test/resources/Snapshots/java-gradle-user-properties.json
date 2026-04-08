@@ -9,7 +9,7 @@
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
   "sonar.java.test.binaries": "${PROJECT_BASE_DIR}/build/classes/java/test",
-  "sonar.java.test.libraries": "${PROJECT_BASE_DIR}/build/classes/java/main,{GRADLE_CACHE}/files-2.1/junit/junit/4.10/{HASH}/junit-4.10.jar,{HAMCREST}",
+  "sonar.java.test.libraries": "${PROJECT_BASE_DIR}/build/classes/java/main,{HAMCREST},{M2_GRADLE_CACHE}/junit/junit/4.10/{HASH}junit-4.10.jar",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
   "sonar.projectBaseDir": "${PROJECT_BASE_DIR}",
   "sonar.projectDescription": "A simple Java Gradle project to test the proper handling of user defined properties",

@@ -31,24 +31,29 @@ import org.jspecify.annotations.Nullable;
 
 public class PathsNormalizer {
   private static final Pattern WINDOWS_DRIVE_MATCHER = Pattern.compile("(?i)(?<=^|,|\\s)[a-z]:(?=[/\\\\])");
-  private static final Pattern HASHES_MATCHER = Pattern.compile("\\b([0-9a-f]{32}|[0-9a-f]{40}|junit\\d{19,20})\\b");
+  private static final Pattern HASHES_MATCHER = Pattern.compile("\\b([0-9a-f]{32}|[0-9a-f]{40}|junit\\d{19,20})(/|\\b)");
+  private static final Pattern GRADLE_METADATA_CLEANER = Pattern.compile("files-2.1/([^/]+)/");
   private static final Pattern GRADLE_CACHE_MATCHER = Pattern.compile("(?i)[^,]*?\\.gradle/caches/[^/]+/");
   private static final Pattern M2_CACHE_MATCHER = Pattern.compile("(?i)[^,]*?\\.m2/repository/");
-  private static final Pattern HAMCREST_MATCHER = Pattern.compile(
-    "(?:\\{M2_REPOSITORY\\}|\\{GRADLE_CACHE\\})/[^,]*hamcrest[^,]*\\.jar"
-  );
+  private static final Pattern HAMCREST_MATCHER = Pattern.compile("\\{M2_GRADLE_CACHE\\}/[^,]*hamcrest[^,]*\\.jar");
   private static final String HASH_PLACEHOLDER = "{HASH}";
-  private static final String GRADLE_CACHE_PLACEHOLDER = "{GRADLE_CACHE}/";
-  private static final String M2_CACHE_PLACEHOLDER = "{M2_REPOSITORY}/";
+  private static final String M2_GRADLE_CACHE_PLACEHOLDER = "{M2_GRADLE_CACHE}/";
   private static final String HAMCREST_PLACEHOLDER = "{HAMCREST}";
-  private static final Map<Pattern, String> REGEX_REPLACEMENT = Map.of(
+  private static final Map<Pattern, String> REGEX_REPLACEMENT = linkedHashMapOf(
+    GRADLE_CACHE_MATCHER, M2_GRADLE_CACHE_PLACEHOLDER,
+    M2_CACHE_MATCHER, M2_GRADLE_CACHE_PLACEHOLDER,
+    GRADLE_METADATA_CLEANER, "$1/",
     HASHES_MATCHER, HASH_PLACEHOLDER,
-    GRADLE_CACHE_MATCHER, GRADLE_CACHE_PLACEHOLDER,
-    M2_CACHE_MATCHER, M2_CACHE_PLACEHOLDER,
     HAMCREST_MATCHER, HAMCREST_PLACEHOLDER
   );
 
-  private static final Map<String, String> PROPERTIES_REPLACEMENT = Map.of(
+  private static final Map<String, String> STRING_REPLACEMENT = linkedHashMapOf(
+    "org.junit", "org/junit",
+    "org.apiguardian", "org/apiguardian",
+    "org.opentest4j", "org/opentest4j"
+  );
+
+  private static final Map<String, String> PROPERTIES_REPLACEMENT = linkedHashMapOf(
     "sonar.projectBaseDir", "${PROJECT_BASE_DIR}"
   );
 
@@ -94,6 +99,11 @@ public class PathsNormalizer {
     for (Map.Entry<Pattern, String> entry : REGEX_REPLACEMENT.entrySet()) {
       result = entry.getKey().matcher(result).replaceAll(entry.getValue());
     }
+
+    for (Map.Entry<String, String> entry : STRING_REPLACEMENT.entrySet()) {
+      result = result.replace(entry.getKey(), entry.getValue());
+    }
+
     return result;
   }
 
@@ -122,5 +132,18 @@ public class PathsNormalizer {
     return WINDOWS_DRIVE_MATCHER
       .matcher(value).replaceAll("") // drop drive letter
       .replace("\\", "/");
+  }
+
+  private static <T, U> Map<T, U> linkedHashMapOf(T key, U value, Object... moreEntries) {
+    Map<T, U> map = new LinkedHashMap<>();
+    map.put(key, value);
+    for (int i = 0; i < moreEntries.length; i += 2) {
+      @SuppressWarnings("unchecked")
+      T k = (T) moreEntries[i];
+      @SuppressWarnings("unchecked")
+      U v = (U) moreEntries[i + 1];
+      map.put(k, v);
+    }
+    return map;
   }
 }
