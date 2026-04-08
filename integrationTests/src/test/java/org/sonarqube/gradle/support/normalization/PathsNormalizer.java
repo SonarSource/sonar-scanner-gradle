@@ -31,26 +31,29 @@ import org.jspecify.annotations.Nullable;
 
 public class PathsNormalizer {
   private static final Pattern WINDOWS_DRIVE_MATCHER = Pattern.compile("(?i)(?<=^|,|\\s)[a-z]:(?=[/\\\\])");
-  private static final Pattern HASHES_MATCHER = Pattern.compile("\\b([0-9a-f]{32}|[0-9a-f]{40}|junit\\d{19,20})(/|\\b)");
+  private static final Pattern HASHES_MATCHER = Pattern.compile("\\b([0-9a-f]{32}|[0-9a-f]{40}|junit\\d{19,20})/");
   private static final Pattern GRADLE_METADATA_CLEANER = Pattern.compile("files-2.1/([^/]+)/");
   private static final Pattern GRADLE_CACHE_MATCHER = Pattern.compile("(?i)[^,]*?\\.gradle/caches/[^/]+/");
   private static final Pattern M2_CACHE_MATCHER = Pattern.compile("(?i)[^,]*?\\.m2/repository/");
   private static final Pattern HAMCREST_MATCHER = Pattern.compile("\\{M2_GRADLE_CACHE\\}/[^,]*hamcrest[^,]*\\.jar");
-  private static final String HASH_PLACEHOLDER = "{HASH}";
+  private static final String HASH_PLACEHOLDER = "";
+  private static final String GRADLE_METADATA_PLACEHOLDER = "$1/";
   private static final String M2_GRADLE_CACHE_PLACEHOLDER = "{M2_GRADLE_CACHE}/";
   private static final String HAMCREST_PLACEHOLDER = "{HAMCREST}";
   private static final Map<Pattern, String> REGEX_REPLACEMENT = linkedHashMapOf(
     GRADLE_CACHE_MATCHER, M2_GRADLE_CACHE_PLACEHOLDER,
     M2_CACHE_MATCHER, M2_GRADLE_CACHE_PLACEHOLDER,
-    GRADLE_METADATA_CLEANER, "$1/",
+    GRADLE_METADATA_CLEANER, GRADLE_METADATA_PLACEHOLDER,
     HASHES_MATCHER, HASH_PLACEHOLDER,
     HAMCREST_MATCHER, HAMCREST_PLACEHOLDER
   );
 
   private static final Map<String, String> STRING_REPLACEMENT = linkedHashMapOf(
     "org.junit", "org/junit",
+    "org.junit.", "org/junit/",
     "org.apiguardian", "org/apiguardian",
-    "org.opentest4j", "org/opentest4j"
+    "org.opentest4j", "org/opentest4j",
+    "junit-jupiter-api", "junit-platform-commons"
   );
 
   private static final Map<String, String> PROPERTIES_REPLACEMENT = linkedHashMapOf(
