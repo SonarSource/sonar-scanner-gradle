@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import org.sonarqube.gradle.support.normalization.SnapshotNormalizer;
 
@@ -76,13 +77,13 @@ public final class SnapshotIO {
     }
   }
 
-  public static void write(String snapshotName, Map<String, String> properties) throws IOException {
+  public static void write(String snapshotName, Map<String, String> properties, Set<String> excludedProperties) throws IOException {
     File parent = file(snapshotName).toFile().getParentFile();
     if (!parent.exists() && !parent.mkdirs()) {
       throw new IOException("Failed to create directories for snapshot file: " + parent);
     }
     try (FileWriter writer = new FileWriter(file(snapshotName).toFile(), StandardCharsets.UTF_8)) {
-      PRETTY_GSON.toJson(new TreeMap<>(SnapshotNormalizer.normalize(properties)), writer);
+      PRETTY_GSON.toJson(new TreeMap<>(SnapshotNormalizer.normalize(properties, excludedProperties)), writer);
     }
   }
 }

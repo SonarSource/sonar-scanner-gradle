@@ -48,26 +48,26 @@ public final class SnapshotNormalizer {
     // Utility class: contains only static methods and is not intended to be instantiated.
   }
 
-  public static Map<String, String> normalize(Properties properties) {
+  public static Map<String, String> normalize(Properties properties, Set<String> excludedProperties) {
     Map<String, String> propertiesMap = new LinkedHashMap<>();
     properties.forEach((key, value) -> propertiesMap.put(key.toString(), value.toString()));
-    return normalize(propertiesMap);
+    return normalize(propertiesMap, excludedProperties);
   }
 
-  public static Map<String, String> normalize(Map<String, String> snapshot) {
+  public static Map<String, String> normalize(Map<String, String> snapshot, Set<String> excludedProperties) {
     Map<String, String> normalized = new LinkedHashMap<>();
     PathsNormalizer.normalize(snapshot).entrySet().stream()
       .sorted(Map.Entry.comparingByKey())
       .forEach(entry ->
-        normalizeEntry(entry.getKey(), entry.getValue()).ifPresent(result ->
+        normalizeEntry(entry.getKey(), entry.getValue(), excludedProperties).ifPresent(result ->
           normalized.put(entry.getKey(), result)
         )
       );
     return normalized;
   }
 
-  private static Optional<String> normalizeEntry(String key, String value) {
-    return IgnoredPropertiesNormalizer.normalize(key, value).map(result ->
+  private static Optional<String> normalizeEntry(String key, String value, Set<String> excludedProperties) {
+    return IgnoredPropertiesNormalizer.normalize(key, value, excludedProperties).map(result ->
       reorderIfNeeded(key, result)
     );
   }

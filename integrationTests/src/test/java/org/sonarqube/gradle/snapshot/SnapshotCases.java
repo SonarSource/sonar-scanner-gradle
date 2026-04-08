@@ -48,6 +48,7 @@ public final class SnapshotCases {
     private String minAndroidGradle;
     private String subdir;
     private boolean requiresAndroid;
+    private final Set<String> excludedProperties = new LinkedHashSet<>();
 
     private Case(String name, String project, String... args) {
       this.name = name;
@@ -65,7 +66,7 @@ public final class SnapshotCases {
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
       Properties p = test.runGradlewSonarSimulationModeWithEnv(project, subdir, Collections.emptyMap(), new DefaultRunConfiguration(), args.toArray(String[]::new));
-      return SnapshotNormalizer.normalize(p);
+      return SnapshotNormalizer.normalize(p, excludedProperties());
     }
 
     public Case minGradle(String value) {
@@ -95,6 +96,15 @@ public final class SnapshotCases {
     public Case subdir(String subdir) {
       this.subdir = subdir;
       return this;
+    }
+
+    public Case excludeProperty(String property) {
+      this.excludedProperties.add(property);
+      return this;
+    }
+
+    public Set<String> excludedProperties() {
+      return excludedProperties;
     }
 
     @Override
@@ -128,7 +138,8 @@ public final class SnapshotCases {
       c("java-gradle-no-real-tests", "/java-gradle-no-real-tests", "test")
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-lazy-configuration", "/java-gradle-lazy-configuration", "test")
-        .maxGradleExclusive("9.0.0"),
+        .maxGradleExclusive("9.0.0")
+        .excludeProperty("sonar.java.test.libraries"),
       c("java-gradle-jacoco-before-7", "/java-gradle-jacoco-before-7", "processResources", "processTestResources", "test", "jacocoTestReport")
         .maxGradleExclusive("7.0.0"),
       c("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", "processResources", "processTestResources", "test", "jacocoTestReport")
@@ -141,7 +152,10 @@ public final class SnapshotCases {
         .gradleRange("6.8.3", "9.0.0"),
       c("kotlin-jvm-submodule", "/kotlin-jvm-submodule", "compileKotlin", "compileTestKotlin")
         .gradleRange("6.8.3", "9.0.0"),
-      c("multi-module-with-submodules", "/multi-module-with-submodules", "compileJava", "compileTestJava", "--info"),
+      c("multi-module-with-submodules", "/multi-module-with-submodules", "compileJava", "compileTestJava", "--info")
+        .excludeProperty(":skippedModule.:skippedModule:skippedSubmodule.sonar.java.test.libraries")
+        .excludeProperty("sonar.java.test.libraries")
+        .excludeProperty(":module.:module:submodule.sonar.binaries"),
       c("java-gradle-simple-with-github", "/java-gradle-simple-with-github", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
       c("java-compile-only", "/java-compile-only")

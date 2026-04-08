@@ -1,12 +1,10 @@
 {
-  ":submodule.sonar.binaries": "${PROJECT_BASE_DIR}/submodule/build/classes/kotlin/main",
-  ":submodule.sonar.java.binaries": "${PROJECT_BASE_DIR}/submodule/build/classes/kotlin/main",
   ":submodule.sonar.java.enablePreview": "false",
   ":submodule.sonar.java.jdkHome": "<ignored>",
   ":submodule.sonar.java.libraries": "{M2_GRADLE_CACHE}/org.jetbrains.kotlin/kotlin-stdlib/1.9.20/kotlin-stdlib-1.9.20.jar,{M2_GRADLE_CACHE}/org.jetbrains/annotations/13.0/annotations-13.0.jar",
   ":submodule.sonar.java.source": "<ignored>",
   ":submodule.sonar.java.target": "<ignored>",
-  ":submodule.sonar.java.test.libraries": "${PROJECT_BASE_DIR}/submodule/build/classes/kotlin/main,{M2_GRADLE_CACHE}/org.jetbrains.kotlin/kotlin-stdlib/1.9.20/kotlin-stdlib-1.9.20.jar,{M2_GRADLE_CACHE}/org.jetbrains/annotations/13.0/annotations-13.0.jar",
+  ":submodule.sonar.java.test.libraries": "<ignored>",
   ":submodule.sonar.libraries": "{M2_GRADLE_CACHE}/org.jetbrains.kotlin/kotlin-stdlib/1.9.20/kotlin-stdlib-1.9.20.jar,{M2_GRADLE_CACHE}/org.jetbrains/annotations/13.0/annotations-13.0.jar",
   ":submodule.sonar.moduleKey": "kotlin-jvm-submodule:submodule",
   ":submodule.sonar.projectBaseDir": "${PROJECT_BASE_DIR}/submodule",

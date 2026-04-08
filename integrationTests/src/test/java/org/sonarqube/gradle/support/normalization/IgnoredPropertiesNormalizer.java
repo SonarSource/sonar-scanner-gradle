@@ -29,6 +29,11 @@ public class IgnoredPropertiesNormalizer {
     "sonar.token"
   );
 
+  private static final Set<String> IGNORED_SUFFIXES = Set.of(
+    "sonar.binaries",
+    "sonar.java.binaries"
+  );
+
   private static final Set<String> VALUE_INSENSITIVE_KEYS = Set.of(
     "sonar.scanner.os",
     "sonar.scanner.arch",
@@ -39,15 +44,17 @@ public class IgnoredPropertiesNormalizer {
   private static final Set<String> VALUE_INSENSITIVE_SUFFIXES = Set.of(
     "sonar.java.source",
     "sonar.java.target",
-    "sonar.java.jdkHome"
+    "sonar.java.jdkHome",
+    "sonar.java.test.libraries",
+    "sonar.java.test.binaries"
   );
 
   private IgnoredPropertiesNormalizer() {
     // Utility class: contains only static methods and is not intended to be instantiated.
   }
 
-  public static Optional<String> normalize(String key, String value) {
-    if (IGNORED_KEYS.contains(key)) {
+  public static Optional<String> normalize(String key, String value, Set<String> excludedProperties) {
+    if (IGNORED_KEYS.contains(key) || excludedProperties.contains(key) || IGNORED_SUFFIXES.stream().anyMatch(key::endsWith)) {
       return Optional.empty();
     }
     if (VALUE_INSENSITIVE_KEYS.contains(key) || VALUE_INSENSITIVE_SUFFIXES.stream().anyMatch(key::endsWith)) {

@@ -36,24 +36,51 @@ public class PathsNormalizer {
   private static final Pattern GRADLE_CACHE_MATCHER = Pattern.compile("(?i)[^,]*?\\.gradle/caches/[^/]+/");
   private static final Pattern M2_CACHE_MATCHER = Pattern.compile("(?i)[^,]*?\\.m2/repository/");
   private static final Pattern HAMCREST_MATCHER = Pattern.compile("\\{M2_GRADLE_CACHE\\}/[^,]*hamcrest[^,]*\\.jar");
+  private static final Pattern BUILDTOOL_MATCHER = Pattern.compile("\\{ANDROID_SDK\\}/build-tools/\\d+\\.\\d+\\.\\d+");
+  private static final Pattern JETIFIED_MATCHER = Pattern.compile("[^,\"]*?\\/transformed\\/jetified-[^,\"]*?\\.jar\\s?,?");
   private static final String HASH_PLACEHOLDER = "";
   private static final String GRADLE_METADATA_PLACEHOLDER = "$1/";
   private static final String M2_GRADLE_CACHE_PLACEHOLDER = "{M2_GRADLE_CACHE}/";
   private static final String HAMCREST_PLACEHOLDER = "{HAMCREST}";
+  private static final String BUILDTOOL_PLACEHOLDER = "{BUILDTOOL}";
   private static final Map<Pattern, String> REGEX_REPLACEMENT = linkedHashMapOf(
     GRADLE_CACHE_MATCHER, M2_GRADLE_CACHE_PLACEHOLDER,
     M2_CACHE_MATCHER, M2_GRADLE_CACHE_PLACEHOLDER,
     GRADLE_METADATA_CLEANER, GRADLE_METADATA_PLACEHOLDER,
     HASHES_MATCHER, HASH_PLACEHOLDER,
-    HAMCREST_MATCHER, HAMCREST_PLACEHOLDER
+    HAMCREST_MATCHER, HAMCREST_PLACEHOLDER,
+    BUILDTOOL_MATCHER, BUILDTOOL_PLACEHOLDER,
+    JETIFIED_MATCHER, ""
   );
 
   private static final Map<String, String> STRING_REPLACEMENT = linkedHashMapOf(
-    "org.junit", "org/junit",
     "org.junit.", "org/junit/",
+    "org.junit", "org/junit",
     "org.apiguardian", "org/apiguardian",
     "org.opentest4j", "org/opentest4j",
-    "junit-jupiter-api", "junit-platform-commons"
+    "junit-jupiter-api", "junit-platform-commons",
+    "compileDebugJavaWithJavac/", "",
+    "compileDemoMinApi23DebugUnitTestJavaWithJavac/", "",
+    "compileDemoMinApi23DebugJavaWithJavac/", "",
+    "processDemoMinApi23DebugResources/", "",
+    "processFullMinApi23ReleaseResources/", "",
+    "processDebugResources/", "",
+    "transforms/", "",
+    "compile_app_classes_jar/", "app_classes/",
+    "bundleDebugClassesToCompileJar/", "",
+    "compileFullMinApi23ReleaseJavaWithJavac/", "",
+    "compileFlavor1DebugJavaWithJavac/", "",
+    "processFlavor1DebugResources/", "",
+    "bundleLibCompileToJarDebug/", "",
+    "compileReleaseJavaWithJavac/", "",
+    "generateDebugRFile/", "",
+    "bundleFlavor1DebugClassesToCompileJar/", "",
+    "processReleaseResources/", "",
+    "${PROJECT_BASE_DIR}/app4/build/intermediates/compile_r_class_jar/fullRelease/R.jar,", "",
+    "${PROJECT_BASE_DIR}/module-plain-java/build/.transformed/jetified-module-plain-java.jar,", "",
+    "${PROJECT_BASE_DIR}/app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/R.jar,", "",
+    "${PROJECT_BASE_DIR}/app4/build/intermediates/compile_r_class_jar/fullRelease/generateFullReleaseRFile/R.jar,", "",
+    "${PROJECT_BASE_DIR}/app2/build/intermediates/compile_r_class_jar/debug/R.jar,", ""
   );
 
   private static final Map<String, String> PROPERTIES_REPLACEMENT = linkedHashMapOf(
