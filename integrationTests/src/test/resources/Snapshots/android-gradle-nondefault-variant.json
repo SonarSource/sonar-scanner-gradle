@@ -10,7 +10,7 @@
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
   "sonar.java.test.binaries": "${PROJECT_BASE_DIR}/build/intermediates/javac/fullMinApi23ReleaseUnitTest/classes",
-  "sonar.java.test.libraries": "${ANDROID_SDK}/build-tools/30.0.3/core-lambda-stubs.jar,${ANDROID_SDK}/platforms/android-30/android.jar,${PROJECT_BASE_DIR}/build/intermediates/app_classes/fullMinApi23Release/classes.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/fullMinApi23Release/R.jar,${PROJECT_BASE_DIR}/build/intermediates/javac/fullMinApi23Release/classes,{GRADLE_CACHE}/files-2.1/joda-time/joda-time/2.7/{HASH}/joda-time-2.7.jar,{GRADLE_CACHE}/files-2.1/junit/junit/4.12/{HASH}/junit-4.12.jar,{GRADLE_CACHE}/files-2.1/org.hamcrest/hamcrest-core/1.3/{HASH}/hamcrest-core-1.3.jar",
+  "sonar.java.test.libraries": "${ANDROID_SDK}/build-tools/30.0.3/core-lambda-stubs.jar,${ANDROID_SDK}/platforms/android-30/android.jar,${PROJECT_BASE_DIR}/build/intermediates/app_classes/fullMinApi23Release/classes.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/fullMinApi23Release/R.jar,${PROJECT_BASE_DIR}/build/intermediates/javac/fullMinApi23Release/classes,{GRADLE_CACHE}/files-2.1/joda-time/joda-time/2.7/{HASH}/joda-time-2.7.jar,{GRADLE_CACHE}/files-2.1/junit/junit/4.12/{HASH}/junit-4.12.jar,{HAMCREST}",
   "sonar.junit.reportPaths": "${PROJECT_BASE_DIR}/build/test-results/testFullMinApi23ReleaseUnitTest",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
   "sonar.libraries": "${ANDROID_SDK}/build-tools/30.0.3/core-lambda-stubs.jar,${ANDROID_SDK}/platforms/android-30/android.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/fullMinApi23Release/R.jar,{GRADLE_CACHE}/files-2.1/joda-time/joda-time/2.7/{HASH}/joda-time-2.7.jar",
@@ -20,13 +20,12 @@
   "sonar.projectVersion": "unspecified",
   "sonar.scanner.apiBaseUrl": "https://api.sonarcloud.io",
   "sonar.scanner.app": "ScannerGradle",
-  "sonar.scanner.appVersion": "7.3-SNAPSHOT/Gradle 7.5.1",
+  "sonar.scanner.appVersion": "<ignored>",
   "sonar.scanner.arch": "<ignored>",
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
   "sonar.sources": "${PROJECT_BASE_DIR}/src/main/AndroidManifest.xml,${PROJECT_BASE_DIR}/src/main/java,${PROJECT_BASE_DIR}/src/main/res",
   "sonar.tests": "${PROJECT_BASE_DIR}/src/test/java",
-  "sonar.token": "<ignored>",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

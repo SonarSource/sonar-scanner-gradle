@@ -34,13 +34,18 @@ public class PathsNormalizer {
   private static final Pattern HASHES_MATCHER = Pattern.compile("\\b([0-9a-f]{32}|[0-9a-f]{40}|junit\\d{19,20})\\b");
   private static final Pattern GRADLE_CACHE_MATCHER = Pattern.compile("(?i)[^,]*?\\.gradle/caches/[^/]+/");
   private static final Pattern M2_CACHE_MATCHER = Pattern.compile("(?i)[^,]*?\\.m2/repository/");
+  private static final Pattern HAMCREST_MATCHER = Pattern.compile(
+    "(?:\\{M2_REPOSITORY\\}|\\{GRADLE_CACHE\\})/[^,]*hamcrest[^,]*\\.jar"
+  );
   private static final String HASH_PLACEHOLDER = "{HASH}";
   private static final String GRADLE_CACHE_PLACEHOLDER = "{GRADLE_CACHE}/";
   private static final String M2_CACHE_PLACEHOLDER = "{M2_REPOSITORY}/";
+  private static final String HAMCREST_PLACEHOLDER = "{HAMCREST}";
   private static final Map<Pattern, String> REGEX_REPLACEMENT = Map.of(
     HASHES_MATCHER, HASH_PLACEHOLDER,
     GRADLE_CACHE_MATCHER, GRADLE_CACHE_PLACEHOLDER,
-    M2_CACHE_MATCHER, M2_CACHE_PLACEHOLDER
+    M2_CACHE_MATCHER, M2_CACHE_PLACEHOLDER,
+    HAMCREST_MATCHER, HAMCREST_PLACEHOLDER
   );
 
   private static final Map<String, String> PROPERTIES_REPLACEMENT = Map.of(

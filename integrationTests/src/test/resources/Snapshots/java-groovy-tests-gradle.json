@@ -9,7 +9,7 @@
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
   "sonar.java.test.binaries": "${PROJECT_BASE_DIR}/build/classes/groovy/test",
-  "sonar.java.test.libraries": "${PROJECT_BASE_DIR}/build/classes/groovy/main,${PROJECT_BASE_DIR}/build/resources/main,{GRADLE_CACHE}/files-2.1/junit/junit/4.12/{HASH}/junit-4.12.jar,{GRADLE_CACHE}/files-2.1/org.codehaus.groovy/groovy-all/2.4.3/{HASH}/groovy-all-2.4.3.jar,{GRADLE_CACHE}/files-2.1/org.hamcrest/hamcrest-core/1.3/{HASH}/hamcrest-core-1.3.jar,{GRADLE_CACHE}/files-2.1/org.spockframework/spock-core/1.0-groovy-2.4/{HASH}/spock-core-1.0-groovy-2.4.jar",
+  "sonar.java.test.libraries": "${PROJECT_BASE_DIR}/build/classes/groovy/main,${PROJECT_BASE_DIR}/build/resources/main,{GRADLE_CACHE}/files-2.1/junit/junit/4.12/{HASH}/junit-4.12.jar,{GRADLE_CACHE}/files-2.1/org.codehaus.groovy/groovy-all/2.4.3/{HASH}/groovy-all-2.4.3.jar,{GRADLE_CACHE}/files-2.1/org.spockframework/spock-core/1.0-groovy-2.4/{HASH}/spock-core-1.0-groovy-2.4.jar,{HAMCREST}",
   "sonar.junit.reportPaths": "${PROJECT_BASE_DIR}/build/test-results/test",
   "sonar.junit.reportsPath": "${PROJECT_BASE_DIR}/build/test-results/test",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
@@ -20,7 +20,7 @@
   "sonar.projectVersion": "unspecified",
   "sonar.scanner.apiBaseUrl": "https://api.sonarcloud.io",
   "sonar.scanner.app": "ScannerGradle",
-  "sonar.scanner.appVersion": "7.3-SNAPSHOT/Gradle 7.5.1",
+  "sonar.scanner.appVersion": "<ignored>",
   "sonar.scanner.arch": "<ignored>",
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
@@ -28,6 +28,5 @@
   "sonar.sources": "${PROJECT_BASE_DIR}/src/main/groovy",
   "sonar.surefire.reportsPath": "${PROJECT_BASE_DIR}/build/test-results/test",
   "sonar.tests": "${PROJECT_BASE_DIR}/src/test/groovy",
-  "sonar.token": "<ignored>",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

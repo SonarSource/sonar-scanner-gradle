@@ -23,13 +23,12 @@
   "sonar.projectVersion": "unspecified",
   "sonar.scanner.apiBaseUrl": "https://api.sonarcloud.io",
   "sonar.scanner.app": "ScannerGradle",
-  "sonar.scanner.appVersion": "7.3-SNAPSHOT/Gradle 7.5.1",
+  "sonar.scanner.appVersion": "<ignored>",
   "sonar.scanner.arch": "<ignored>",
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
   "sonar.sources": "",
   "sonar.tests": "",
-  "sonar.token": "<ignored>",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

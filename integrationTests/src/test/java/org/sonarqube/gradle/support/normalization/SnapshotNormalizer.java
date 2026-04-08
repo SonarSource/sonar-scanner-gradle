@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,14 +58,18 @@ public final class SnapshotNormalizer {
     Map<String, String> normalized = new LinkedHashMap<>();
     PathsNormalizer.normalize(snapshot).entrySet().stream()
       .sorted(Map.Entry.comparingByKey())
-      .forEach(entry -> normalized.put(entry.getKey(), normalizeEntry(entry.getKey(), entry.getValue())));
+      .forEach(entry ->
+        normalizeEntry(entry.getKey(), entry.getValue()).ifPresent(result ->
+          normalized.put(entry.getKey(), result)
+        )
+      );
     return normalized;
   }
 
-  private static String normalizeEntry(String key, String value) {
-    String result = IgnoredPropertiesNormalizer.normalize(key, value);
-    result = reorderIfNeeded(key, result);
-    return result;
+  private static Optional<String> normalizeEntry(String key, String value) {
+    return IgnoredPropertiesNormalizer.normalize(key, value).map(result ->
+      reorderIfNeeded(key, result)
+    );
   }
 
   private static String reorderIfNeeded(String key, String value) {
