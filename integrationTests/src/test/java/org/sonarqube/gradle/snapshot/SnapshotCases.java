@@ -182,7 +182,7 @@ public final class SnapshotCases {
         .minAndroidGradle("7.0.0"),
       c("android-gradle-no-debug", "/android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7" + ".0.0"),
+        .minAndroidGradle("7.0.0"),
       c("multi-module-android-studio-lint", "/multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
         .minAndroidGradle("7.0.0")

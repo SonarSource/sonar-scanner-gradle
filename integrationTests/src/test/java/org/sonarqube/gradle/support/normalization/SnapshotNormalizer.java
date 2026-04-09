@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class SnapshotNormalizer {
-  private static final Set<String> ORDER_INSENSITIVE_KEYS = Set.of(
+  private static final List<String> ORDER_INSENSITIVE_KEYS = List.of(
     "sonar.modules",
     "sonar.libraries",
     "sonar.java.libraries",

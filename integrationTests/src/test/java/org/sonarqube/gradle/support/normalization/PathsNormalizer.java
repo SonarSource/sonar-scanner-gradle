@@ -159,14 +159,14 @@ public class PathsNormalizer {
       .replace("\\", "/");
   }
 
-  private static <T, U> Map<T, U> linkedHashMapOf(T key, U value, Object... moreEntries) {
-    Map<T, U> map = new LinkedHashMap<>();
+  private static <K, V> Map<K, V> linkedHashMapOf(K key, V value, Object... moreEntries) {
+    Map<K, V> map = new LinkedHashMap<>();
     map.put(key, value);
     for (int i = 0; i < moreEntries.length; i += 2) {
       @SuppressWarnings("unchecked")
-      T k = (T) moreEntries[i];
+      K k = (K) moreEntries[i];
       @SuppressWarnings("unchecked")
-      U v = (U) moreEntries[i + 1];
+      V v = (V) moreEntries[i + 1];
       map.put(k, v);
     }
     return map;

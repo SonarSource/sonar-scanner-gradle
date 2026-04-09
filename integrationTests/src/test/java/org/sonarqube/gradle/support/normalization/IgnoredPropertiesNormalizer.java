@@ -19,24 +19,25 @@
  */
 package org.sonarqube.gradle.support.normalization;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 public class IgnoredPropertiesNormalizer {
   private static final String IGNORED_PROPERTY_PLACEHOLDER = "<ignored>";
 
-  private static final Set<String> IGNORED_KEYS = Set.of(
+  private static final List<String> IGNORED_KEYS = List.of(
     "sonar.token"
   );
 
-  private static final Set<String> VALUE_INSENSITIVE_KEYS = Set.of(
+  private static final List<String> VALUE_INSENSITIVE_KEYS = List.of(
     "sonar.scanner.os",
     "sonar.scanner.arch",
     "sonar.scanner.internal.dumpToFile",
     "sonar.scanner.appVersion"
   );
 
-  private static final Set<String> VALUE_INSENSITIVE_SUFFIXES = Set.of(
+  private static final List<String> VALUE_INSENSITIVE_SUFFIXES = List.of(
     "sonar.java.source",
     "sonar.java.target",
     "sonar.java.jdkHome",
