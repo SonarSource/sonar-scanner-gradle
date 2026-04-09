@@ -190,6 +190,10 @@ public final class SnapshotCases {
         .excludeProperty(":app3.sonar.libraries")
         .excludeProperty(":app4.sonar.java.libraries")
         .excludeProperty(":app4.sonar.libraries")
+        .excludeProperty(":app.sonar.libraries")
+        .excludeProperty(":app.sonar.java.libraries")
+        .excludeProperty(":app2.sonar.libraries")
+        .excludeProperty(":app2.sonar.java.libraries")
     );
   }
 
