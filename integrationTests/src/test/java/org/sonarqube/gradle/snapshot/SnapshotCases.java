@@ -186,6 +186,10 @@ public final class SnapshotCases {
       c("multi-module-android-studio-lint", "/multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
         .minAndroidGradle("7.0.0")
+        .excludeProperty(":app3.sonar.java.libraries")
+        .excludeProperty(":app3.sonar.libraries")
+        .excludeProperty(":app4.sonar.java.libraries")
+        .excludeProperty(":app4.sonar.libraries")
     );
   }
 

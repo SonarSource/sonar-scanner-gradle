@@ -1,5 +1,7 @@
 {
+  "sonar.binaries": "${PROJECT_BASE_DIR}/build/classes/java/main",
   "sonar.host.url": "https://sonarcloud.io",
+  "sonar.java.binaries": "${PROJECT_BASE_DIR}/build/classes/java/main,${PROJECT_BASE_DIR}/build/extraBinaries",
   "sonar.java.enablePreview": "false",
   "sonar.java.jdkHome": "<ignored>",
   "sonar.java.libraries": "{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar",

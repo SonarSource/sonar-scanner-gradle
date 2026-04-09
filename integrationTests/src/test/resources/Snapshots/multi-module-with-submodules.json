@@ -1,4 +1,5 @@
 {
+  ":module.:module:submodule.sonar.java.binaries": "${PROJECT_BASE_DIR}/module/submodule/build/classes/java/main",
   ":module.:module:submodule.sonar.java.enablePreview": "false",
   ":module.:module:submodule.sonar.java.jdkHome": "<ignored>",
   ":module.:module:submodule.sonar.java.libraries": "{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar",
@@ -13,6 +14,8 @@
   ":module.:module:submodule.sonar.projectVersion": "0.1-SNAPSHOT",
   ":module.:module:submodule.sonar.sources": "${PROJECT_BASE_DIR}/module/submodule/src/main/java",
   ":module.:module:submodule.sonar.tests": "${PROJECT_BASE_DIR}/module/submodule/src/test/java",
+  ":module.sonar.binaries": "${PROJECT_BASE_DIR}/module/build/classes/java/main",
+  ":module.sonar.java.binaries": "${PROJECT_BASE_DIR}/module/build/classes/java/main",
   ":module.sonar.java.enablePreview": "false",
   ":module.sonar.java.jdkHome": "<ignored>",
   ":module.sonar.java.libraries": "{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar",

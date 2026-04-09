@@ -1,7 +1,9 @@
 {
   "sonar.android.detected": "true",
   "sonar.androidLint.reportPaths": "${PROJECT_BASE_DIR}/build/reports/lint-results-release.xml",
+  "sonar.binaries": "${PROJECT_BASE_DIR}/build/intermediates/javac/release/classes",
   "sonar.host.url": "https://sonarcloud.io",
+  "sonar.java.binaries": "${PROJECT_BASE_DIR}/build/intermediates/javac/release/classes",
   "sonar.java.enablePreview": "false",
   "sonar.java.jdkHome": "<ignored>",
   "sonar.java.libraries": "${ANDROID_SDK}/platforms/android-30/android.jar,${BUILDTOOL}/core-lambda-stubs.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/release/R.jar,{M2_GRADLE_CACHE}/joda-time/joda-time/2.7/joda-time-2.7.jar",

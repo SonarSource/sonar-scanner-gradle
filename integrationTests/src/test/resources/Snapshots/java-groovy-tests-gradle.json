@@ -1,6 +1,8 @@
 {
+  "sonar.binaries": "${PROJECT_BASE_DIR}/build/classes/groovy/main",
   "sonar.groovy.binaries": "${PROJECT_BASE_DIR}/build/classes/groovy/main",
   "sonar.host.url": "https://sonarcloud.io",
+  "sonar.java.binaries": "${PROJECT_BASE_DIR}/build/classes/groovy/main",
   "sonar.java.enablePreview": "false",
   "sonar.java.jdkHome": "<ignored>",
   "sonar.java.libraries": "{M2_GRADLE_CACHE}/org.codehaus.groovy/groovy-all/2.4.3/groovy-all-2.4.3.jar",

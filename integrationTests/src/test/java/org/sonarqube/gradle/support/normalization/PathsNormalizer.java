@@ -75,12 +75,7 @@ public class PathsNormalizer {
     "compileReleaseJavaWithJavac/", "",
     "generateDebugRFile/", "",
     "bundleFlavor1DebugClassesToCompileJar/", "",
-    "processReleaseResources/", "",
-    "${PROJECT_BASE_DIR}/app4/build/intermediates/compile_r_class_jar/fullRelease/R.jar,", "",
-    "${PROJECT_BASE_DIR}/module-plain-java/build/.transformed/jetified-module-plain-java.jar,", "",
-    "${PROJECT_BASE_DIR}/app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/R.jar,", "",
-    "${PROJECT_BASE_DIR}/app4/build/intermediates/compile_r_class_jar/fullRelease/generateFullReleaseRFile/R.jar,", "",
-    "${PROJECT_BASE_DIR}/app2/build/intermediates/compile_r_class_jar/debug/R.jar,", ""
+    "processReleaseResources/", ""
   );
 
   private static final Map<String, String> PROPERTIES_REPLACEMENT = linkedHashMapOf(

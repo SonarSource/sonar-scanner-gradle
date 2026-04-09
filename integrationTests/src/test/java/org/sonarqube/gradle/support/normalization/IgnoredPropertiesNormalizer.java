@@ -29,11 +29,6 @@ public class IgnoredPropertiesNormalizer {
     "sonar.token"
   );
 
-  private static final Set<String> IGNORED_SUFFIXES = Set.of(
-    "sonar.binaries",
-    "sonar.java.binaries"
-  );
-
   private static final Set<String> VALUE_INSENSITIVE_KEYS = Set.of(
     "sonar.scanner.os",
     "sonar.scanner.arch",
@@ -54,7 +49,7 @@ public class IgnoredPropertiesNormalizer {
   }
 
   public static Optional<String> normalize(String key, String value, Set<String> excludedProperties) {
-    if (IGNORED_KEYS.contains(key) || excludedProperties.contains(key) || IGNORED_SUFFIXES.stream().anyMatch(key::endsWith)) {
+    if (IGNORED_KEYS.contains(key) || excludedProperties.contains(key)) {
       return Optional.empty();
     }
     if (VALUE_INSENSITIVE_KEYS.contains(key) || VALUE_INSENSITIVE_SUFFIXES.stream().anyMatch(key::endsWith)) {

@@ -1,5 +1,7 @@
 {
+  "sonar.binaries": "${PROJECT_BASE_DIR}/build/classes/java/main",
   "sonar.host.url": "https://sonarcloud.io",
+  "sonar.java.binaries": "${PROJECT_BASE_DIR}/build/classes/java/main",
   "sonar.java.enablePreview": "false",
   "sonar.java.jdkHome": "<ignored>",
   "sonar.java.source": "<ignored>",
