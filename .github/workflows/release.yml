@@ -39,8 +39,10 @@ jobs:
       - name: Set build number for manual trigger
         if: github.event_name == 'workflow_dispatch'
         id: from_master
+        env:
+          RAW_VERSION: ${{ github.event.inputs.plugin_version }}
         run: |
-          VERSION="${{ github.event.inputs.plugin_version }}"
+          VERSION="${RAW_VERSION}"
           CI_BUILD_NUMBER="${VERSION##*.}"
           echo "VERSION=${VERSION}"
           echo "BUILD_NUMBER=${CI_BUILD_NUMBER}"
