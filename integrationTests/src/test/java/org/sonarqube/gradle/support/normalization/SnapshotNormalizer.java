@@ -32,16 +32,12 @@ public final class SnapshotNormalizer {
   private static final List<String> ORDER_INSENSITIVE_KEYS = List.of(
     "sonar.modules",
     "sonar.libraries",
-    "sonar.java.libraries",
-    "sonar.java.test.libraries",
-    "sonar.java.test.binaries"
+    "sonar.java.libraries"
   );
   private static final List<String> ORDER_INSENSITIVE_SUFFIXES = List.of(
     ".sonar.modules",
     ".sonar.libraries",
-    ".sonar.java.libraries",
-    ".sonar.java.test.libraries",
-    ".sonar.java.test.binaries"
+    ".sonar.java.libraries"
   );
 
   private SnapshotNormalizer() {

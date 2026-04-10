@@ -61,6 +61,6 @@ public class PropertySnapshotTest extends AbstractGradleIT {
   @Test
   public void rewritePropertySnapshot() throws Exception {
     var actual = snapshotCase.collect(this);
-    SnapshotIO.write(snapshotCase.name(), actual, snapshotCase.excludedProperties());
+    SnapshotIO.write(snapshotCase.name(), actual);
   }
 }
