@@ -1153,6 +1153,26 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.sources"] == "src"
   }
 
+  def "Exception is raised when android variant is not specified by the user"() {
+    given:
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/android-variant-not-defined")).build()
+
+    project.pluginManager.apply(SonarQubePlugin)
+    project.pluginManager.apply(GroovyPlugin)
+    project.sonar.properties {
+      property "sonar.sources", "src"
+    }
+
+    when:
+    SonarQubePlugin.getConfiguredAndroidVariant(project)
+
+    then:
+    def exception = thrown(IllegalStateException)
+    exception.message.contains("Android variant not set for project")
+  }
+
+
   private static void setSourceSets(Project project, List<String> mainDirs) {
     JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class)
     SourceSetContainer sourceSets = javaExtension.getSourceSets();

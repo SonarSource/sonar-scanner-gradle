@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
