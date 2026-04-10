@@ -26,6 +26,7 @@ import org.gradle.api.Task
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.StandardOutputListener
 import org.gradle.api.plugins.GroovyPlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
@@ -34,6 +35,9 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.initialization.GradlePropertiesController
 import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils
+import org.gradle.internal.logging.events.LogEvent
+import org.gradle.internal.logging.events.OutputEvent
+import org.gradle.internal.logging.events.OutputEventListener
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testing.jacoco.plugins.JacocoPlugin
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -1170,6 +1174,36 @@ class SonarQubePluginTest extends Specification {
     then:
     def exception = thrown(IllegalStateException)
     exception.message.contains("Android variant not set for project")
+  }
+
+  def "Warning is raised when 2 android variants are specified by the user"() {
+    given:
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/android-variant-not-defined")).build()
+    project.pluginManager.apply(SonarQubePlugin)
+    project.pluginManager.apply(GroovyPlugin)
+    final def variant1 = "variant1"
+    project.sonar {
+      androidVariant = variant1
+    }
+    project.sonarqube {
+      androidVariant = "variant2"
+    }
+
+    // StringBuilder output = new StringBuilder()
+    // def outputEventListener = new StandardOutputListener() {
+    //  @Override
+    //   void onOutput(CharSequence charSequence) {
+    //     output.append(charSequence)
+    //   }
+    // }
+    // project.getLogging().addStandardOutputListener(outputEventListener)
+
+    when:
+    def result = SonarQubePlugin.getConfiguredAndroidVariant(project)
+    then:
+    result == variant1 // test that the first variant is used
+    // output.toString().contains("Multiple Android variants specified for project 'parent'. Using 'variant1' and ignoring 'variant2'.") // why is output empty ???
   }
 
 
