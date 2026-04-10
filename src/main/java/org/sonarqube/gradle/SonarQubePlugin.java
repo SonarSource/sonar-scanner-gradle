@@ -235,12 +235,27 @@ public class SonarQubePlugin implements Plugin<Project> {
       .collect(Collectors.toList());
   }
 
-  @Nullable
   static String getConfiguredAndroidVariant(Project p) {
-    return getSonarExtensions(p).stream()
+    var extensions = getSonarExtensions(p);
+    var variants = extensions.stream()
       .map(SonarExtension::getAndroidVariant)
       .filter(Objects::nonNull)
-      .findFirst().orElse(null);
+      .collect(Collectors.toList());
+    if (variants.isEmpty()) {
+      throw new IllegalStateException(
+        "Android variant not set for project " +
+          p.getPath() +
+          ". Please set it using 'sonar { androidVariant = \"<variantName>\" }' in the build" +
+          " script of the project."
+      );
+    }
+    var variant = variants.get(0);
+    if (variants.size() > 1) {
+      LOGGER.warn("Multiple sonar extensions with androidVariant set found in project {}. " +
+        "This is not recommended. Please consolidate the configuration of the sonar extension in a single place. " +
+        "Using variant '{}' for analysis.", p.getPath(), variant);
+    }
+    return variant;
   }
 
   /**
