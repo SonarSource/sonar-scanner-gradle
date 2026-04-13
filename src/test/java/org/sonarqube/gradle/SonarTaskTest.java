@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SonarTaskTest {
 
-  private final ProjectProperties projectProperties = new ProjectProperties("", true, List.of(), List.of(), List.of(), List.of());
+  private final ProjectProperties projectProperties = new ProjectProperties("", true, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
 
   @Test
   void resolveSonarJavaLibraries_skips_resolution_when_no_configuration_provided() {
@@ -51,10 +51,10 @@ class SonarTaskTest {
     List<File> fileCollection = List.of(emptyJar);
     SonarTask.resolveSonarJavaLibraries(projectProperties, fileCollection, properties);
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
-            Map.of(
-                    "sonar.java.libraries", emptyJar.getAbsolutePath(),
-                    "sonar.libraries", emptyJar.getAbsolutePath()
-            )
+      Map.of(
+        "sonar.java.libraries", emptyJar.getAbsolutePath(),
+        "sonar.libraries", emptyJar.getAbsolutePath()
+      )
     );
   }
 
@@ -64,12 +64,12 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of());
+    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
     SonarTask.resolveSonarJavaLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
-            .hasSize(2)
-            .containsEntry(":subproject.sonar.java.libraries", emptyJar.getAbsolutePath())
-            .containsEntry(":subproject.sonar.libraries", emptyJar.getAbsolutePath());
+      .hasSize(2)
+      .containsEntry(":subproject.sonar.java.libraries", emptyJar.getAbsolutePath())
+      .containsEntry(":subproject.sonar.libraries", emptyJar.getAbsolutePath());
   }
 
   @Test
@@ -84,10 +84,10 @@ class SonarTaskTest {
     SonarTask.resolveSonarJavaLibraries(projectProperties, fileCollection, properties);
     String expectedValue = String.format("%s,%s", known.getAbsolutePath(), toBeResolved.getAbsolutePath());
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
-            Map.of(
-                    "sonar.java.libraries", expectedValue,
-                    "sonar.libraries", expectedValue
-            )
+      Map.of(
+        "sonar.java.libraries", expectedValue,
+        "sonar.libraries", expectedValue
+      )
     );
   }
 
@@ -106,8 +106,8 @@ class SonarTaskTest {
     List<File> fileCollection = List.of(emptyJar);
     SonarTask.resolveSonarJavaTestLibraries(projectProperties, fileCollection, properties);
     assertThat(properties)
-            .hasSize(1)
-            .containsEntry("sonar.java.test.libraries", emptyJar.getAbsolutePath());
+      .hasSize(1)
+      .containsEntry("sonar.java.test.libraries", emptyJar.getAbsolutePath());
   }
 
   @Test
@@ -116,11 +116,11 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of());
+    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
     SonarTask.resolveSonarJavaTestLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
-            .hasSize(1)
-            .containsEntry(":subproject.sonar.java.test.libraries", emptyJar.getAbsolutePath());
+      .hasSize(1)
+      .containsEntry(":subproject.sonar.java.test.libraries", emptyJar.getAbsolutePath());
   }
 
   @Test
@@ -137,15 +137,15 @@ class SonarTaskTest {
     SonarTask.resolveSonarJavaTestLibraries(projectProperties, fileCollection, properties);
 
     String expectedValue = String.format(
-            "%s,%s",
-            known.getAbsolutePath(),
-            toBeResolved.getAbsolutePath()
+      "%s,%s",
+      known.getAbsolutePath(),
+      toBeResolved.getAbsolutePath()
     );
 
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
-            Map.of(
-                    "sonar.java.test.libraries", expectedValue
-            )
+      Map.of(
+        "sonar.java.test.libraries", expectedValue
+      )
     );
   }
 
@@ -167,17 +167,80 @@ class SonarTaskTest {
     SonarTask.resolveSonarJavaTestLibraries(projectProperties, fileCollection, properties);
 
     String expectedValue = String.format(
-            "%s,%s,%s",
-            buildFolder.getAbsolutePath(),
-            known.getAbsolutePath(),
-            toBeResolved.getAbsolutePath()
+      "%s,%s,%s",
+      buildFolder.getAbsolutePath(),
+      known.getAbsolutePath(),
+      toBeResolved.getAbsolutePath()
     );
 
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
-            Map.of(
-                    "sonar.java.binaries", buildFolder.getAbsolutePath(),
-                    "sonar.java.test.libraries", expectedValue
-            )
+      Map.of(
+        "sonar.java.binaries", buildFolder.getAbsolutePath(),
+        "sonar.java.test.libraries", expectedValue
+      )
+    );
+  }
+
+  @Test
+  void resolveSources_addsSourcesToProperties(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+    File sourceDirectory = new File(tempDir, "src/main/java");
+    sourceDirectory.mkdirs();
+    List<File> fileCollection = List.of(sourceDirectory);
+    SonarTask.resolveSources(projectProperties, fileCollection, properties, false);
+    assertThat(properties).containsExactlyInAnyOrderEntriesOf(
+      Map.of("sonar.sources", sourceDirectory.getAbsolutePath())
+    );
+  }
+
+  @Test
+  void resolveSources_addsTestSourcesToProperties(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+    File testDirectory = new File(tempDir, "src/test/java");
+    testDirectory.mkdirs();
+    List<File> fileCollection = List.of(testDirectory);
+    SonarTask.resolveSources(projectProperties, fileCollection, properties, true);
+    assertThat(properties).containsExactlyInAnyOrderEntriesOf(
+      Map.of("sonar.tests", testDirectory.getAbsolutePath())
+    );
+  }
+
+  @Test
+  void resolveSources_addsSourcesToMapForSubproject(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+    File sourceDirectory = new File(tempDir, "src/main/java");
+    sourceDirectory.mkdirs();
+    List<File> fileCollection = List.of(sourceDirectory);
+    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+    SonarTask.resolveSources(subprojectProperties, fileCollection, properties, false);
+    assertThat(properties)
+      .hasSize(1)
+      .containsEntry(":subproject.sonar.sources", sourceDirectory.getAbsolutePath());
+  }
+
+  @Test
+  void resolveSources_combinesWithExistingPropertyToAddSonarSources(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+
+    File known = new File(tempDir, "src/main/java");
+    known.mkdirs();
+    properties.put("sonar.sources", known.getAbsolutePath());
+
+    File toBeResolved = new File(tempDir, "src/main/kotlin");
+    toBeResolved.mkdirs();
+    List<File> fileCollection = List.of(toBeResolved);
+    SonarTask.resolveSources(projectProperties, fileCollection, properties, false);
+
+    String expectedValue = String.format(
+      "%s,%s",
+      known.getAbsolutePath(),
+      toBeResolved.getAbsolutePath()
+    );
+
+    assertThat(properties).containsExactlyInAnyOrderEntriesOf(
+      Map.of(
+        "sonar.sources", expectedValue
+      )
     );
   }
 
@@ -202,6 +265,8 @@ class SonarTaskTest {
     ProjectProperties props = new ProjectProperties("", true,
       List.of(lib1.toAbsolutePath().toString(), lib2.toAbsolutePath().toString()),
       List.of(testLib1.toAbsolutePath().toString()),
+      List.of(),
+      List.of(),
       List.of(),
       List.of());
     ResolutionSerializer.write(resolverFile, props);

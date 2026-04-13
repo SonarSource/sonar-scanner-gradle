@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,7 +36,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
-import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -45,11 +45,11 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 
-import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 
 /**
@@ -59,11 +59,7 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 public class SonarQubePlugin implements Plugin<Project> {
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
-  private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
-    return actionBroadcastMap.computeIfAbsent(project.getPath(), s -> new ActionBroadcast<>());
-  }
-
-  private static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
+  static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
     try {
       allCompileTasks.add(p.getTasks().getByName(name));
       return true;
@@ -72,79 +68,91 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
   }
 
-  @Override
-  public void apply(Project project) {
-    // Don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to recursively resolve the configuration of all
-    // the projects, failing if a project has a sonarqube configuration since the extension wasn't added to it yet.
-    if (project.getExtensions().findByName(SonarExtension.SONAR_EXTENSION_NAME) == null) {
-      Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap = new HashMap<>();
-      addExtensions(project, SonarExtension.SONAR_EXTENSION_NAME, actionBroadcastMap);
-      addExtensions(project, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME, actionBroadcastMap);
-      LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
-
-      List<File> resolverFiles = registerAndConfigureResolverTasks(project);
-
-      TaskContainer tasks = project.getTasks();
-      tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
-        task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
-        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        task.setResolverFiles(resolverFiles);
-        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
-        configureTask(task, project, actionBroadcastMap);
-      });
-
-      tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
-        task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
-        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        task.setResolverFiles(resolverFiles);
-        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
-        configureTask(task, project, actionBroadcastMap);
-      });
-    }
+  private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
+    return actionBroadcastMap.computeIfAbsent(project.getPath(), s -> new ActionBroadcast<>());
   }
 
   /**
-   * Register and configure a resolver task per (sub-)project.
-   * As the tasks are configured, we capture the list of output files where the resolved properties will be written.
+   * Register Sonar extensions and Sonar resolver tasks and compute Android specific properties for each project included in some top-level project.
    */
-  private static List<File> registerAndConfigureResolverTasks(Project topLevelProject) {
-    List<File> resolverFiles = new ArrayList<>();
-    var androidTasks = getAndroidTasks(topLevelProject);
-
-    topLevelProject.getAllprojects().forEach(target ->
-      target.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, task -> {
-        Provider<Boolean> skipProject = target.provider(() -> isSkipped(target));
-
-        task.setDescription(SonarResolverTask.TASK_DESCRIPTION);
-        task.setSkipProject(skipProject);
-        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        if (target == topLevelProject) {
-          task.setTopLevelProject(true);
-        }
-        task.setProjectName(SonarUtils.constructPrefixedProjectName(target.getPath()));
-
-        Provider<FileCollection> compile = target.provider(() -> querySourceSet(target, SourceSet.MAIN_SOURCE_SET_NAME));
-        Provider<FileCollection> test = target.provider(() -> querySourceSet(target, SourceSet.TEST_SOURCE_SET_NAME));
-        task.setCompileClasspath(compile);
-        task.setTestCompileClasspath(test);
-
-        if (isAndroidProject(target)) {
-          task.setMainLibraries(target.provider(() -> AndroidUtils.findMainLibraries(target)));
-          task.setTestLibraries(target.provider(() -> AndroidUtils.findTestLibraries(target)));
-        } else {
-          task.setMainLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
-          task.setTestLibraries(target.provider(() -> target.files(SonarUtils.getRuntimeJars())));
-        }
-        DirectoryProperty buildDirectory = target.getLayout().getBuildDirectory();
-        File localSonarResolver = new File(buildDirectory.getAsFile().get(), "sonar-resolver");
-        task.setOutputDirectory(localSonarResolver);
-        resolverFiles.add(task.getOutputFile());
-        // Android uses JetifyTransform to translate and ensure compatibility for specific deprecated libraries.
-        // Therefore, we must wait for this transform to complete before collecting the classpath.
-        task.mustRunAfter(androidTasks);
-      })
-    );
+  private static Set<File> configureAllProjects(
+    Project topLevelProject,
+    Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap,
+    Map<String, AndroidConfig> androidConfigMap
+  ) {
+    Set<File> resolverFiles = new HashSet<>();
+    topLevelProject.getAllprojects().forEach(project -> {
+      registerSonarExtensions(project, actionBroadcastMap);
+      TaskProvider<SonarResolverTask> resolverTaskProvider = registerResolverTask(topLevelProject, project, resolverFiles);
+      configureAndroid(project, androidConfigMap, resolverTaskProvider);
+    });
     return resolverFiles;
+  }
+
+  /**
+   * Register Sonar extensions on a project.
+   */
+  private static void registerSonarExtensions(Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
+    ActionBroadcast<SonarProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
+
+    LOGGER.debug("Adding " + SonarExtension.SONAR_EXTENSION_NAME + " extension to " + project.getName());
+    project.getExtensions().create(SonarExtension.SONAR_EXTENSION_NAME, SonarExtension.class, actionBroadcast);
+
+    LOGGER.debug("Adding " + SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME + " extension to " + project.getName());
+    project.getExtensions().create(SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME, SonarExtension.class, actionBroadcast);
+  }
+
+  /**
+   * Register and configure the Sonar resolver task for a project.
+   */
+  private static TaskProvider<SonarResolverTask> registerResolverTask(Project topLevelProject, Project project, Set<File> resolverFiles) {
+    return project.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, resolverTask -> {
+      resolverTask.setDescription(SonarResolverTask.TASK_DESCRIPTION);
+      resolverTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+      resolverTask.setSkipProject(project.provider(() -> isSkipped(project)));
+      resolverTask.setProjectName(SonarUtils.constructPrefixedProjectName(project.getPath()));
+      if (project == topLevelProject) {
+        resolverTask.setTopLevelProject(true);
+      }
+      resolverTask.setCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME)));
+      resolverTask.setTestCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.TEST_SOURCE_SET_NAME)));
+      if (!isAndroidProject(project)) {
+        resolverTask.setMainLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
+        resolverTask.setTestLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
+      } else if (!AndroidConfig.usesAndroidGradlePlugin9()) {
+        resolverTask.setMainLibraries(project.provider(() -> LegacyAndroidConfig.findMainLibraries(project)));
+        resolverTask.setTestLibraries(project.provider(() -> LegacyAndroidConfig.findTestLibraries(project)));
+        resolverTask.mustRunAfter(getAndroidTasks(project));
+      }
+      File buildDirectory = new File(project.getLayout().getBuildDirectory().getAsFile().get(), "sonar-resolver");
+      resolverTask.setOutputDirectory(buildDirectory);
+      resolverFiles.add(resolverTask.getOutputFile());
+    });
+  }
+
+  /**
+   * Configure Android specific properties and classpath information for a project if it uses the Android Gradle plugin.
+   */
+  private static void configureAndroid(Project project, Map<String, AndroidConfig> androidConfigMap, TaskProvider<SonarResolverTask> resolverTaskProvider) {
+    try {
+      if (AndroidConfig.usesAndroidGradlePlugin9()) {
+        SonarUtils.ANDROID_PLUGIN_IDS.forEach(pluginId ->
+          project.getPlugins().withId(pluginId, plugin -> {
+            AndroidConfig androidConfig = AndroidConfig.of(project);
+            androidConfigMap.put(project.getPath(), androidConfig);
+            resolverTaskProvider.configure(resolverTask -> {
+              resolverTask.setMainLibraries(project.provider(androidConfig::getMainLibraries));
+              resolverTask.setTestLibraries(project.provider(androidConfig::getTestLibraries));
+              resolverTask.setAndroidSources(project.provider(androidConfig::getAndroidSources));
+              resolverTask.setAndroidTests(project.provider(androidConfig::getAndroidTests));
+              resolverTask.mustRunAfter(androidConfig.getTasks());
+            });
+          })
+        );
+      }
+    } catch (NoClassDefFoundError e) {
+      // The Android plugin is not available in the project, so we do not configure Android.
+    }
   }
 
   private static FileCollection querySourceSet(Project project, String sourceSetName) {
@@ -156,16 +164,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     return set == null ? project.files() : set.getCompileClasspath();
   }
 
-  private static void addExtensions(Project project, String name, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
-    project.getAllprojects().forEach(p -> {
-      LOGGER.debug("Adding " + name + " extension to " + p);
-      ActionBroadcast<SonarProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, p);
-      p.getExtensions().create(name, SonarExtension.class, actionBroadcast);
-    });
-  }
-
-  private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
-    Provider<ComputedProperties> computedPropertiesProvider = project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties());
+  private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap,
+    Map<String, AndroidConfig> androidConfigMap) {
+    Provider<ComputedProperties> computedPropertiesProvider =
+      project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, androidConfigMap, project).computeSonarProperties());
     Provider<Map<String, String>> conventionProvider = computedPropertiesProvider.map(computed ->
       computed.properties.entrySet()
         .stream()
@@ -183,10 +185,9 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
 
     sonarTask.mustRunAfter(getJavaCompileTasks(project));
-    sonarTask.mustRunAfter(getAndroidTasks(project));
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
-    sonarTask.dependsOn(getClassPathResolverTask(project));
+    sonarTask.dependsOn(getClassPathResolverTasks(project));
   }
 
   private static boolean isGradleVersionGreaterOrEqualTo(String version) {
@@ -215,7 +216,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       .collect(Collectors.toList());
   }
 
-  private static Callable<Iterable<? extends Task>> getClassPathResolverTask(Project project) {
+  private static Callable<Iterable<? extends Task>> getClassPathResolverTasks(Project project) {
     return () -> project.getAllprojects().stream()
       .map(p -> p.getTasks().getByName(SonarResolverTask.TASK_NAME))
       .collect(Collectors.toList());
@@ -235,26 +236,16 @@ public class SonarQubePlugin implements Plugin<Project> {
       .collect(Collectors.toList());
   }
 
-  @Nullable
-  static String getConfiguredAndroidVariant(Project p) {
-    return getSonarExtensions(p).stream()
-      .map(SonarExtension::getAndroidVariant)
-      .filter(Objects::nonNull)
-      .findFirst().orElse(null);
-  }
-
-  /**
-   * Must run after compilation to have access to class files, and after test to have access to test reports.
-   */
   private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && notSkipped(p))
       .map(p -> {
-        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
+        LegacyAndroidConfig.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidConfig.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
 
         List<Task> allTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
-          final String compileTaskPrefix = "compile" + capitalize(androidVariantAndExtension.getVariant().getName());
+          String variantName = SonarUtils.capitalize(androidVariantAndExtension.getVariant().getName());
+          final String compileTaskPrefix = "compile" + variantName;
           boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
           boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
           // Unit test compilation and android test compilation tasks already depend on main code compilation, so we don't add a useless dependency
@@ -263,12 +254,51 @@ public class SonarQubePlugin implements Plugin<Project> {
             addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
           }
 
-          final String testTaskPrefix = "test" + capitalize(androidVariantAndExtension.getVariant().getName());
+          final String testTaskPrefix = "test" + variantName;
           addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
         }
         return allTasks;
       })
       .flatMap(List::stream)
       .collect(Collectors.toList());
+  }
+
+  @Nullable
+  static String getConfiguredAndroidVariant(Project p) {
+    return getSonarExtensions(p).stream()
+      .map(SonarExtension::getAndroidVariant)
+      .filter(Objects::nonNull)
+      .findFirst().orElse(null);
+  }
+
+  @Override
+  public void apply(Project project) {
+    // Don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to recursively resolve the configuration of all
+    // the projects, failing if a project has a sonarqube configuration since the extension wasn't added to it yet.
+    if (project.getExtensions().findByName(SonarExtension.SONAR_EXTENSION_NAME) == null) {
+      Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap = new HashMap<>();
+      Map<String, AndroidConfig> androidConfigMap = new HashMap<>();
+
+      Set<File> resolverFiles = configureAllProjects(project, actionBroadcastMap, androidConfigMap);
+
+      LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_DEPRECATED_TASK_NAME, project);
+      TaskContainer tasks = project.getTasks();
+      tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
+        task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
+        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        task.setResolverFiles(resolverFiles);
+        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
+        configureTask(task, project, actionBroadcastMap, androidConfigMap);
+      });
+
+      LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
+      tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
+        task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
+        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        task.setResolverFiles(resolverFiles);
+        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
+        configureTask(task, project, actionBroadcastMap, androidConfigMap);
+      });
+    }
   }
 }
