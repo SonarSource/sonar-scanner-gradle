@@ -43,10 +43,26 @@ class ResolutionSerializerTest {
   Path tempDir;
 
   @ParameterizedTest
-  @MethodSource(value="provideProperties")
-  void testWriteReadWithProperties(List<String> compileClasspath, List<String> testCompileClasspath, List<String> mainLibraries, List<String> testLibraries) throws IOException {
+  @MethodSource(value = "provideProperties")
+  void testWriteReadWithProperties(
+    List<String> compileClasspath,
+    List<String> testCompileClasspath,
+    List<String> mainLibraries,
+    List<String> testLibraries,
+    List<String> androidSources,
+    List<String> androidTests
+  ) throws IOException {
     File file = tempDir.resolve("test.json").toFile();
-    ProjectProperties properties = new ProjectProperties(TEST_PROJECT_NAME, true, compileClasspath, testCompileClasspath, mainLibraries, testLibraries);
+    ProjectProperties properties = new ProjectProperties(
+      TEST_PROJECT_NAME,
+      true,
+      compileClasspath,
+      testCompileClasspath,
+      mainLibraries,
+      testLibraries,
+      androidSources,
+      androidTests
+    );
 
     ResolutionSerializer.write(file, properties);
     Optional<ProjectProperties> readProperties = ResolutionSerializer.read(file);
@@ -58,16 +74,18 @@ class ResolutionSerializerTest {
     assertThat(readProperties.get().testCompileClasspath).isEqualTo(testCompileClasspath);
     assertThat(readProperties.get().mainLibraries).isEqualTo(mainLibraries);
     assertThat(readProperties.get().testLibraries).isEqualTo(testLibraries);
+    assertThat(readProperties.get().androidSources).isEqualTo(androidSources);
+    assertThat(readProperties.get().androidTests).isEqualTo(androidTests);
   }
 
   static Stream<Arguments> provideProperties() {
     List<String> nonEmpty = Arrays.asList("path1.jar", "path2.jar");
     List<String> empty = Collections.emptyList();
     return Stream.of(
-      Arguments.of(nonEmpty, empty, empty, empty),
-      Arguments.of(nonEmpty, nonEmpty, empty, empty),
-      Arguments.of(nonEmpty, nonEmpty, nonEmpty, empty),
-      Arguments.of(nonEmpty, nonEmpty, nonEmpty, nonEmpty)
+      Arguments.of(nonEmpty, empty, empty, empty, empty, empty),
+      Arguments.of(nonEmpty, nonEmpty, empty, empty, empty, empty),
+      Arguments.of(nonEmpty, nonEmpty, nonEmpty, empty, empty, empty),
+      Arguments.of(nonEmpty, nonEmpty, nonEmpty, nonEmpty, nonEmpty, nonEmpty)
     );
   }
 
@@ -75,7 +93,7 @@ class ResolutionSerializerTest {
   void testWriteReadWithoutProperties() throws IOException {
     File file = tempDir.resolve("test.json").toFile();
     List<String> emptyList = Collections.emptyList();
-    ProjectProperties properties = new ProjectProperties(TEST_PROJECT_NAME, false, emptyList, emptyList, emptyList,emptyList);
+    ProjectProperties properties = new ProjectProperties(TEST_PROJECT_NAME, false, emptyList, emptyList, emptyList, emptyList, emptyList, emptyList);
 
     ResolutionSerializer.write(file, properties);
     Optional<ProjectProperties> readProperties = ResolutionSerializer.read(file);

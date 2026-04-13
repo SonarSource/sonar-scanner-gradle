@@ -55,7 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class AndroidUtilsTest {
+class LegacyAndroidConfigTest {
 
   private Project project;
   private ProductFlavor flavor;
@@ -108,7 +108,7 @@ class AndroidUtilsTest {
     when(defaultConfig.getMinSdk()).thenReturn(23);
 
     Map<String, Object> resultProperties = new HashMap<>();
-    AndroidUtils.configureForAndroid(project, null, resultProperties);
+    LegacyAndroidConfig.configureForAndroid(project, null, resultProperties);
 
     assertEquals(true, resultProperties.get("sonar.android.detected"));
     assertEquals(21, resultProperties.get("sonar.android.minsdkversion.min"));
@@ -133,7 +133,7 @@ class AndroidUtilsTest {
     when(baseVariant.getSourceSets()).thenReturn(List.of(javaSource));
 
     Map<String, Object> resultProperties = new HashMap<>();
-    AndroidUtils.configureForAndroid(project, "myVariant", resultProperties);
+    LegacyAndroidConfig.configureForAndroid(project, "myVariant", resultProperties);
 
     assertEquals(true, resultProperties.get("sonar.android.detected"));
     assertEquals(30, resultProperties.get("sonar.android.minsdkversion.min"));

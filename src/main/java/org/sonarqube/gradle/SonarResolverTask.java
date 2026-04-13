@@ -47,6 +47,8 @@ public abstract class SonarResolverTask extends DefaultTask {
   private Provider<FileCollection> testLibraries;
   private Provider<FileCollection> compileClasspath;
   private Provider<FileCollection> testCompileClasspath;
+  private Provider<FileCollection> androidSources;
+  private Provider<FileCollection> androidTests;
   private File outputDirectory;
   private Provider<Boolean> skipProject;
 
@@ -112,6 +114,24 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.testLibraries = testLibraries;
   }
 
+  @Internal
+  Provider<FileCollection> getAndroidSources() {
+    return this.androidSources;
+  }
+
+  public void setAndroidSources(Provider<FileCollection> androidSources) {
+    this.androidSources = androidSources;
+  }
+
+  @Internal
+  Provider<FileCollection> getAndroidTests() {
+    return this.androidTests;
+  }
+
+  public void setAndroidTests(Provider<FileCollection> androidTests) {
+    this.androidTests = androidTests;
+  }
+
   public void setOutputDirectory(File outputDirectory) {
     this.outputDirectory = outputDirectory;
   }
@@ -150,7 +170,7 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   @TaskAction
   void run() throws IOException {
-    if(Boolean.TRUE.equals(this.skipProject.get())){
+    if (Boolean.TRUE.equals(this.skipProject.get())) {
       return;
     }
 
@@ -164,13 +184,20 @@ public abstract class SonarResolverTask extends DefaultTask {
     List<String> mainLibrariesFilenames = getAbsolutePaths(getMainLibraries());
     List<String> testLibrariesFilenames = getAbsolutePaths(getTestLibraries());
 
+    Provider<FileCollection> androidSourcesProvider = getAndroidSources();
+    List<String> androidSourcesFilenames = androidSourcesProvider == null ? Collections.emptyList() : getAbsolutePaths(androidSourcesProvider);
+    Provider<FileCollection> androidTestsProvider = getAndroidTests();
+    List<String> androidTestsFilenames = androidTestsProvider == null ? Collections.emptyList() : getAbsolutePaths(androidTestsProvider);
+
     ProjectProperties projectProperties = new ProjectProperties(
       getProjectName(),
       isTopLevelProject(),
       compileClasspathFilenames,
       testCompileClasspathFilenames,
       mainLibrariesFilenames,
-      testLibrariesFilenames
+      testLibrariesFilenames,
+      androidSourcesFilenames,
+      androidTestsFilenames
     );
 
     outputDirectory.mkdirs();
