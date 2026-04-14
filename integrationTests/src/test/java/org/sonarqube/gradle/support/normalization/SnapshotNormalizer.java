@@ -29,15 +29,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class SnapshotNormalizer {
-  private static final List<String> ORDER_INSENSITIVE_KEYS = List.of(
+  private static final List<String> ORDER_INSENSITIVE_SUFFIXES = List.of(
     "sonar.modules",
     "sonar.libraries",
-    "sonar.java.libraries"
-  );
-  private static final List<String> ORDER_INSENSITIVE_SUFFIXES = List.of(
-    ".sonar.modules",
-    ".sonar.libraries",
-    ".sonar.java.libraries"
+    "sonar.binaries",
+    "sonar.java.libraries",
+    "sonar.java.binaries",
+    "sonar.java.test.libraries",
+    "sonar.java.test.binaries"
   );
 
   private SnapshotNormalizer() {
@@ -69,7 +68,7 @@ public final class SnapshotNormalizer {
   }
 
   private static String reorderIfNeeded(String key, String value) {
-    if (ORDER_INSENSITIVE_KEYS.contains(key) || ORDER_INSENSITIVE_SUFFIXES.stream().anyMatch(key::endsWith)) {
+    if (ORDER_INSENSITIVE_SUFFIXES.stream().anyMatch(key::endsWith)) {
       return Arrays.stream(value.split(",")).sorted().collect(Collectors.joining(","));
     }
     return value;

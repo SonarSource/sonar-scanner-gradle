@@ -9,7 +9,7 @@
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
   "sonar.java.test.binaries": "${PROJECT_BASE_DIR}/build/classes/java/test",
-  "sonar.java.test.libraries": "${PROJECT_BASE_DIR}/build/classes/java/main,${PROJECT_BASE_DIR}/build/resources/main,{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar,{M2_GRADLE_CACHE}/junit/junit/4.10/junit-4.10.jar,{HAMCREST}",
+  "sonar.java.test.libraries": "${PROJECT_BASE_DIR}/build/classes/java/main,${PROJECT_BASE_DIR}/build/resources/main,{HAMCREST},{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar,{M2_GRADLE_CACHE}/junit/junit/4.10/junit-4.10.jar",
   "sonar.junit.reportPaths": "${PROJECT_BASE_DIR}/build/test-results/test",
   "sonar.junit.reportsPath": "${PROJECT_BASE_DIR}/build/test-results/test",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",

@@ -10,7 +10,7 @@
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
   "sonar.java.test.binaries": "${PROJECT_BASE_DIR}/build/intermediates/javac/fullMinApi23ReleaseUnitTest/classes",
-  "sonar.java.test.libraries": "${PROJECT_BASE_DIR}/build/intermediates/javac/fullMinApi23Release/classes,${ANDROID_SDK}/platforms/android-30/android.jar,${BUILDTOOL}/core-lambda-stubs.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/fullMinApi23Release/R.jar,${PROJECT_BASE_DIR}/build/intermediates/app_classes/fullMinApi23Release/classes.jar,{M2_GRADLE_CACHE}/junit/junit/4.12/junit-4.12.jar,{HAMCREST},{M2_GRADLE_CACHE}/joda-time/joda-time/2.7/joda-time-2.7.jar",
+  "sonar.java.test.libraries": "${ANDROID_SDK}/platforms/android-30/android.jar,${BUILDTOOL}/core-lambda-stubs.jar,${PROJECT_BASE_DIR}/build/intermediates/app_classes/fullMinApi23Release/classes.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/fullMinApi23Release/R.jar,${PROJECT_BASE_DIR}/build/intermediates/javac/fullMinApi23Release/classes,{HAMCREST},{M2_GRADLE_CACHE}/joda-time/joda-time/2.7/joda-time-2.7.jar,{M2_GRADLE_CACHE}/junit/junit/4.12/junit-4.12.jar",
   "sonar.junit.reportPaths": "${PROJECT_BASE_DIR}/build/test-results/testFullMinApi23ReleaseUnitTest",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
   "sonar.libraries": "${ANDROID_SDK}/platforms/android-30/android.jar,${BUILDTOOL}/core-lambda-stubs.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/fullMinApi23Release/R.jar,{M2_GRADLE_CACHE}/joda-time/joda-time/2.7/joda-time-2.7.jar",

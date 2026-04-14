@@ -5,7 +5,7 @@
   "sonar.java.libraries": "{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar",
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
-  "sonar.java.test.libraries": "{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar,{M2_GRADLE_CACHE}/junit/junit/4.10/junit-4.10.jar,{HAMCREST}",
+  "sonar.java.test.libraries": "{HAMCREST},{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar,{M2_GRADLE_CACHE}/junit/junit/4.10/junit-4.10.jar",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
   "sonar.libraries": "{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar",
   "sonar.projectBaseDir": "${PROJECT_BASE_DIR}",

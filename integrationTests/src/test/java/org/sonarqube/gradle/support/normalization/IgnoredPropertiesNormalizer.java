@@ -51,7 +51,7 @@ public class IgnoredPropertiesNormalizer {
     if (IGNORED_KEYS.contains(key) || excludedProperties.contains(key)) {
       return Optional.empty();
     }
-    if (VALUE_INSENSITIVE_KEYS.contains(key) || VALUE_INSENSITIVE_SUFFIXES.stream().anyMatch(key::startsWith)) {
+    if (VALUE_INSENSITIVE_KEYS.contains(key) || VALUE_INSENSITIVE_SUFFIXES.stream().anyMatch(key::endsWith)) {
       return Optional.of(IGNORED_PROPERTY_PLACEHOLDER);
     }
     return Optional.of(value);
