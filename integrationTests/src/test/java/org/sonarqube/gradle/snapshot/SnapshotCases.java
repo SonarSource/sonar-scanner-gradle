@@ -222,6 +222,7 @@ public final class SnapshotCases {
         .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/app_classes/debug/classes.jar")
         .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/R.jar")
         .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/javac/debug/classes")
+        .excludePath("${PROJECT_BASE_DIR}/app2/build/intermediates/javac/debug/classes")
     );
   }
 
