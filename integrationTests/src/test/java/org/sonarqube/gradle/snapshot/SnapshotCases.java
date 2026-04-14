@@ -47,6 +47,7 @@ public final class SnapshotCases {
     private String minGradle;
     private String maxGradleExclusive;
     private String minAndroidGradle;
+    private String maxAndroidGradleExclusive;
     private String subdir;
     private boolean requiresAndroid;
 
@@ -61,7 +62,21 @@ public final class SnapshotCases {
     }
 
     public boolean shouldRun() {
-      return (minGradle == null || !AbstractGradleIT.getGradleVersion().isLowerThan(minGradle)) && (maxGradleExclusive == null || AbstractGradleIT.getGradleVersion().isLowerThan(maxGradleExclusive)) && (!requiresAndroid || (AbstractGradleIT.getAndroidGradleVersion() != null && (minAndroidGradle == null || AbstractGradleIT.getAndroidGradleVersion().isGreaterThanOrEqualTo(minAndroidGradle))));
+      return (
+        minGradle == null || !AbstractGradleIT.getGradleVersion().isLowerThan(minGradle)
+      ) && (
+        maxGradleExclusive == null || AbstractGradleIT.getGradleVersion().isLowerThan(maxGradleExclusive)
+      ) && fitsAndroidRequirements();
+    }
+
+    private boolean fitsAndroidRequirements() {
+      return !requiresAndroid || (
+        AbstractGradleIT.getAndroidGradleVersion() != null && (
+          minAndroidGradle == null || AbstractGradleIT.getAndroidGradleVersion().isGreaterThanOrEqualTo(minAndroidGradle)
+        ) && (
+          maxAndroidGradleExclusive == null || AbstractGradleIT.getAndroidGradleVersion().isLowerThan(maxAndroidGradleExclusive)
+        )
+      );
     }
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
@@ -97,6 +112,11 @@ public final class SnapshotCases {
       return this;
     }
 
+    public Case maxAndroidGradleExclusive(String value) {
+      this.maxAndroidGradleExclusive = value;
+      return this;
+    }
+
     public Case subdir(String subdir) {
       this.subdir = subdir;
       return this;
@@ -120,7 +140,7 @@ public final class SnapshotCases {
       c("android-gradle9", "/android-gradle9", "--quiet", "--console=plain")
         .minGradle("9.0.0")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("8.0.0"),
       c("java-gradle-simple", "/java-gradle-simple", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-custom-config", "/java-gradle-custom-config", "compileJava", "compileTestJava")
@@ -165,25 +185,28 @@ public final class SnapshotCases {
         .maxGradleExclusive("9.0.0"),
       c("android-gradle-default-variant", "/android-gradle-default-variant", "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("8.0.0"),
       c("android-gradle-dynamic-feature", "/android-gradle-dynamic-feature", "test", "compileDebugAndroidTestJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("8.0.0"),
       c("android-gradle-nondefault-variant", "/android-gradle-nondefault-variant", "test")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
-      c("multi-module-android-studio", "/multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
+        .minAndroidGradle("8.0.0"),
+      c("multi-module-android-studio", "/multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac")
+        .requiresAndroid()
+        .minAndroidGradle("8.0.0"),
       c("android-testing-blueprint-with-dynamic-feature-module", "/AndroidTestingBlueprintWithDynamicFeatureModule", "assembleDebug",
         "compileFlavor1DebugUnitTestJavaWithJavac", "compileFlavor1DebugAndroidTestJavaWithJavac", "compileDebugAndroidTestJavaWithJavac", "compileDebugUnitTestJavaWithJavac",
         "compileTestJava")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.0.0")
+        .maxAndroidGradleExclusive("9.0.0"),
       c("android-gradle-no-debug", "/android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7" + ".0.0"),
+        .minAndroidGradle("8.0.0"),
       c("multi-module-android-studio-lint", "/multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0")
+        .minAndroidGradle("8.0.0")
         .ignoreProperty(":app.sonar.binaries")
         .ignoreProperty(":app.sonar.java.binaries")
         .ignoreProperty(":app2.sonar.binaries")

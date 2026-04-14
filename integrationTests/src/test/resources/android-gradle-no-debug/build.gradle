@@ -25,13 +25,15 @@ dependencies {
 }
 
 android {
-  compileSdkVersion 30
-  namespace "org.hello"
+  compileSdk = 30
+  namespace = "org.hello"
 }
 
-android.variantFilter { variant ->
-  if(variant.buildType.name.equals('debug')) {
-    variant.setIgnore(true);
+androidComponents {
+  beforeVariants(selector().all()) { variantBuilder ->
+    if (variantBuilder.buildType == 'debug') {
+      variantBuilder.enable = false
+    }
   }
 }
 
@@ -41,4 +43,3 @@ sonar {
         property "sonar.projectKey", "org.sonarqube:example-android-gradle"
     }
 }
-
