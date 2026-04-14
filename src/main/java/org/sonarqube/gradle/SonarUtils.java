@@ -48,6 +48,8 @@ import org.sonarqube.gradle.properties.SonarProperty;
 
 public class SonarUtils {
 
+  public static final Set<String> ANDROID_PLUGIN_IDS = Set.of("com.android.application", "com.android.library", "com.android.dynamic-feature", "com.android.test");
+
   private static final Pattern REPORT_PATH_PROPERTY_PATTERN = Pattern.compile(
     "^sonar\\.(coverageReportPaths|([^.]++\\.)++(xml)?reports?paths?)$",
     Pattern.CASE_INSENSITIVE
@@ -77,12 +79,11 @@ public class SonarUtils {
     // Utility class
   }
 
+  /**
+   * Check if a Gradle project is an Android project.
+   */
   static boolean isAndroidProject(Project project) {
-    return project.getPlugins().hasPlugin("com.android.application")
-      || project.getPlugins().hasPlugin("com.android.library")
-      || project.getPlugins().hasPlugin("com.android.test")
-      || project.getPlugins().hasPlugin("com.android.feature")
-      || project.getPlugins().hasPlugin("com.android.dynamic-feature");
+    return ANDROID_PLUGIN_IDS.stream().anyMatch(pluginId -> project.getPlugins().hasPlugin(pluginId));
   }
 
   /**
