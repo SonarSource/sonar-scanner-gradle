@@ -3,16 +3,16 @@ plugins {
 }
 
 android {
-    compileSdk = rootProject.ext.compileSdkVersion
+    compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdk = rootProject.ext.minSdkVersion
-        targetSdk = rootProject.ext.targetSdkVersion
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
 
-        versionCode = 1
-        versionName = "1.0"
+        versionCode 1
+        versionName "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // Define ProGuard rules for this android library project. These rules will be applied when
         // a consumer of this library sets 'minifyEnabled true'.
@@ -22,7 +22,7 @@ android {
     lintOptions {
         abortOnError false
     }
-    namespace = "com.example.android.testing.blueprint.androidlibrarymodule"
+    namespace "com.example.android.testing.blueprint.androidlibrarymodule"
 }
 
 dependencies {

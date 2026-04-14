@@ -3,16 +3,16 @@ plugins {
 }
 
 android {
-    compileSdk = rootProject.ext.compileSdkVersion
+    compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdk = rootProject.ext.minSdkVersion
-        targetSdk = rootProject.ext.targetSdkVersion
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
 
-        versionCode = 1
-        versionName = "1.0"
+        versionCode 1
+        versionName "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // Define ProGuard rules for this android feature project. These rules will be applied when
         // a consumer of this feature sets 'minifyEnabled true'.
@@ -23,12 +23,12 @@ android {
         abortOnError false
     }
 
-    flavorDimensions = ["dim"]
+    flavorDimensions "dim"
     productFlavors {
-        flavor1 { dimension = "dim" }
-        flavor2 { dimension = "dim" }
+        flavor1 { dimension "dim" }
+        flavor2 { dimension "dim" }
     }
-    namespace = "com.example.android.testing.blueprint.androidfeaturemodule"
+    namespace "com.example.android.testing.blueprint.androidfeaturemodule"
 }
 
 dependencies {

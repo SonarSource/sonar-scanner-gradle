@@ -3,17 +3,17 @@ plugins {
 }
 
 android {
-    compileSdk = rootProject.ext.compileSdkVersion
+    compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdk = rootProject.ext.minSdkVersion
-        targetSdk = rootProject.ext.targetSdkVersion
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
 
-        applicationId = 'com.example.android.testing.blueprint'
-        versionCode = 1
-        versionName = '1.0'
+        applicationId 'com.example.android.testing.blueprint'
+        versionCode 1
+        versionName '1.0'
 
-        testInstrumentationRunner = 'android.support.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
         /*
         The Android Testing Support Library collects analytics to continuously improve the testing
         experience. More specifically, it uploads a hash of the package name of the application
@@ -33,7 +33,7 @@ android {
     buildTypes {
         debug {
             // Run code coverage reports by default on debug builds.
-            enableUnitTestCoverage = true
+            testCoverageEnabled = true
 
             // Uncomment this to run test against a minified version of the production APK
             /*
@@ -43,22 +43,22 @@ android {
              */
         }
         release {
-            minifyEnabled = true
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 
-    flavorDimensions = ["dim"]
+    flavorDimensions "dim"
 
     productFlavors {
         flavor1 {
-            applicationId = 'com.example.android.testing.blueprint.flavor1'
-            dimension = "dim"
+            applicationId 'com.example.android.testing.blueprint.flavor1'
+            dimension "dim"
         }
 
         flavor2 {
-            applicationId = 'com.example.android.testing.blueprint.flavor2'
-            dimension = "dim"
+            applicationId 'com.example.android.testing.blueprint.flavor2'
+            dimension "dim"
         }
     }
 
@@ -69,7 +69,7 @@ android {
         }
     }
     dynamicFeatures = [':module_android_feature']
-    namespace = "com.example.android.testing.blueprint"
+    namespace "com.example.android.testing.blueprint"
 }
 
 dependencies {
