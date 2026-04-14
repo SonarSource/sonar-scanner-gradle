@@ -37,14 +37,6 @@ public class IgnoredPropertiesNormalizer {
     "sonar.scanner.appVersion"
   );
 
-  private static final List<String> VALUE_INSENSITIVE_SUFFIXES = List.of(
-    "sonar.java.source",
-    "sonar.java.target",
-    "sonar.java.jdkHome",
-    "sonar.java.test.libraries",
-    "sonar.java.test.binaries"
-  );
-
   private IgnoredPropertiesNormalizer() {
     // Utility class: contains only static methods and is not intended to be instantiated.
   }
@@ -53,7 +45,7 @@ public class IgnoredPropertiesNormalizer {
     if (IGNORED_KEYS.contains(key) || excludedProperties.contains(key)) {
       return Optional.empty();
     }
-    if (VALUE_INSENSITIVE_KEYS.contains(key) || VALUE_INSENSITIVE_SUFFIXES.stream().anyMatch(key::endsWith)) {
+    if (VALUE_INSENSITIVE_KEYS.contains(key)) {
       return Optional.of(IGNORED_PROPERTY_PLACEHOLDER);
     }
     return Optional.of(value);

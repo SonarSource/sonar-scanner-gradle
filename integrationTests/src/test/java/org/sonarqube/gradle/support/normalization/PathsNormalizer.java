@@ -78,30 +78,27 @@ public class PathsNormalizer {
     "processReleaseResources/", ""
   );
 
+  private static final String ANDROID_SDK_PLACEHOLDER = "${ANDROID_SDK}";
+  public static final String SONAR_JDK_PLACEHOLDER = "${SONAR_JDK}";
+
   private static final Map<String, String> PROPERTIES_REPLACEMENT = linkedHashMapOf(
     "sonar.projectBaseDir", "${PROJECT_BASE_DIR}"
   );
 
-  private static final List<String> JDK_ROOTS = listOfPaths(
-    "/usr/lib/jvm",
-    "/Program Files/Java",
-    System.getenv("JAVA_HOME"),
-    System.getenv("JDK_HOME")
-  );
   private static final List<String> ANDROID_SDK_ROOTS = listOfPaths(
     "/usr/local/lib/android/sdk",
     "/Android/Sdk",
     System.getenv("ANDROID_HOME"),
     System.getenv("ANDROID_SDK_ROOT")
   );
-  private static final String ANDROID_SDK_PLACEHOLDER = "${ANDROID_SDK}";
-  public static final String JDK_PLACEHOLDER = "${JDK}";
+
 
   private PathsNormalizer() {
     // Utility class: contains only static methods and is not intended to be instantiated.
   }
 
   public static Map<String, String> normalize(Map<String, String> snapshot) {
+    snapshot = normalizeWindowsPaths(snapshot);
     var replacements = computeStringReplacements(snapshot);
     Map<String, String> normalized = new LinkedHashMap<>();
     for (Map.Entry<String, String> entry : snapshot.entrySet()) {
@@ -111,7 +108,7 @@ public class PathsNormalizer {
   }
 
   private static String normalizeEntry(String value, Map<String, String> replacements) {
-    String result = normalizeWindowsPath(value);
+    String result = value;
     for (Map.Entry<String, String> entry : replacements.entrySet()) {
       result = result.replace(entry.getKey(), entry.getValue());
     }
@@ -134,23 +131,37 @@ public class PathsNormalizer {
 
   private static Map<String, String> computeStringReplacements(Map<String, String> snapshot) {
     Map<String, String> replacements = new LinkedHashMap<>();
-    putReplacements(ANDROID_SDK_ROOTS, ANDROID_SDK_PLACEHOLDER, replacements);
-    putReplacements(JDK_ROOTS, JDK_PLACEHOLDER, replacements);
+    ANDROID_SDK_ROOTS.forEach(entry -> replacements.put(entry, ANDROID_SDK_PLACEHOLDER));
+    jdkRoot(snapshot).ifPresent(jdkRoot -> replacements.put(jdkRoot, SONAR_JDK_PLACEHOLDER));
     for (Map.Entry<String, String> entry : PROPERTIES_REPLACEMENT.entrySet()) {
       var key = entry.getKey();
       var placeHolder = entry.getValue();
       var value = snapshot.get(key);
-      Optional.ofNullable(value).ifPresent(v -> replacements.put(normalizeWindowsPath(v), placeHolder));
+      Optional.ofNullable(value).ifPresent(v -> replacements.put(v, placeHolder));
     }
     return replacements;
   }
 
-  private static void putReplacements(List<String> entries, String placeholder, Map<String, String> replacements) {
-    entries.forEach(entry -> replacements.put(entry, placeholder));
+  private static Optional<String> jdkRoot(Map<String, String> snapshot) {
+    for (Map.Entry<String, String> entry : snapshot.entrySet()) {
+      var key = entry.getKey();
+      if (key.endsWith("sonar.java.jdkHome")) {
+        return Optional.of(entry.getValue());
+      }
+    }
+    return Optional.empty();
   }
 
   private static List<String> listOfPaths(@Nullable String... entries) {
     return Arrays.stream(entries).filter(Objects::nonNull).map(PathsNormalizer::normalizeWindowsPath).collect(Collectors.toList());
+  }
+
+  private static Map<String, String> normalizeWindowsPaths(Map<String, String> snapshot) {
+    Map<String, String> normalized = new LinkedHashMap<>();
+    for (Map.Entry<String, String> entry : snapshot.entrySet()) {
+      normalized.put(entry.getKey(), normalizeWindowsPath(entry.getValue()));
+    }
+    return normalized;
   }
 
   private static String normalizeWindowsPath(String value) {
