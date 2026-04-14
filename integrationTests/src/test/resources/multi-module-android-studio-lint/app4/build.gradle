@@ -3,38 +3,38 @@ plugins {
     id 'com.android.library'
 }
 android {
-    compileSdkVersion 33
+    compileSdk = 33
     defaultConfig {
-        minSdkVersion 33
-        targetSdkVersion 33
-        versionCode 1
-        versionName "1.0"
+        minSdk = 33
+        targetSdk = 33
+        versionCode = 1
+        versionName = "1.0"
     }
 
-    flavorDimensions "version"
+    flavorDimensions = ["version"]
     productFlavors {
         demo {
-            dimension "version"
+            dimension = "version"
         }
         full {
-            dimension "version"
+            dimension = "version"
         }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            testCoverageEnabled = true
+            enableUnitTestCoverage = true
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    namespace 'com.example.test4.myapplication'
+    namespace = 'com.example.test4.myapplication'
 }
 
 dependencies {
