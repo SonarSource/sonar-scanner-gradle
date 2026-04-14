@@ -75,7 +75,17 @@ public class PathsNormalizer {
     "compileReleaseJavaWithJavac/", "",
     "generateDebugRFile/", "",
     "bundleFlavor1DebugClassesToCompileJar/", "",
-    "processReleaseResources/", ""
+    "processReleaseResources/", "",
+    "generateDebugUnitTestStubRFile/", "",
+    "compileDebugAndroidTestJavaWithJavac/", "",
+    "bundleDemoMinApi23DebugClassesToCompileJar/", "",
+    "processDemoMinApi23DebugAndroidTestResources/", "",
+    "compileReleaseUnitTestJavaWithJavac/", "",
+    "compileDebugUnitTestJavaWithJavac/", "",
+    "processDebugAndroidTestResources/", "",
+    "processFlavor1DebugAndroidTestResources/", "",
+    "compileFlavor1DebugUnitTestJavaWithJavac/", "",
+    "compileFlavor1DebugAndroidTestJavaWithJavac/", ""
   );
 
   private static final String ANDROID_SDK_PLACEHOLDER = "${ANDROID_SDK}";

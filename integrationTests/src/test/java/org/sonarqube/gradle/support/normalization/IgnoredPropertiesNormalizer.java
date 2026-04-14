@@ -37,6 +37,12 @@ public class IgnoredPropertiesNormalizer {
     "sonar.scanner.appVersion"
   );
 
+  private static final List<String> VALUE_INSENSITIVE_SUFFIXES = List.of(
+    // as we have QA J11 in the matrix so we can't assume a specific Java version for these properties
+    "sonar.java.source",
+    "sonar.java.target"
+  );
+
   private IgnoredPropertiesNormalizer() {
     // Utility class: contains only static methods and is not intended to be instantiated.
   }
@@ -45,7 +51,7 @@ public class IgnoredPropertiesNormalizer {
     if (IGNORED_KEYS.contains(key) || excludedProperties.contains(key)) {
       return Optional.empty();
     }
-    if (VALUE_INSENSITIVE_KEYS.contains(key)) {
+    if (VALUE_INSENSITIVE_KEYS.contains(key) || VALUE_INSENSITIVE_SUFFIXES.stream().anyMatch(key::startsWith)) {
       return Optional.of(IGNORED_PROPERTY_PLACEHOLDER);
     }
     return Optional.of(value);
