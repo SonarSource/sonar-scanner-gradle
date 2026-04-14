@@ -1,7 +1,7 @@
 {
   "sonar.NotAnActualProperty": "Exists simply to test the behavior of the scanner when handling unknown properties",
   "sonar.binaries": "${PROJECT_BASE_DIR}/build/classes/java/main",
-  "sonar.coverage.jacoco.xmlReportPaths": "reports/nonexisting.xml,**/*.xml",
+  "sonar.coverage.jacoco.xmlReportPaths": "**/*.xml,reports/nonexisting.xml",
   "sonar.host.url": "https://sonarcloud.io",
   "sonar.java.binaries": "${PROJECT_BASE_DIR}/build/classes/java/main",
   "sonar.java.enablePreview": "false",

@@ -8,7 +8,7 @@
   ":submodule.sonar.projectBaseDir": "${PROJECT_BASE_DIR}/submodule",
   ":submodule.sonar.projectName": "submodule",
   ":submodule.sonar.projectVersion": "unspecified",
-  ":submodule.sonar.sources": "${PROJECT_BASE_DIR}/submodule/src/commonMain/kotlin,${PROJECT_BASE_DIR}/submodule/src/jvmMain/kotlin,${PROJECT_BASE_DIR}/submodule/src/jvmMain/java",
+  ":submodule.sonar.sources": "${PROJECT_BASE_DIR}/submodule/src/commonMain/kotlin,${PROJECT_BASE_DIR}/submodule/src/jvmMain/java,${PROJECT_BASE_DIR}/submodule/src/jvmMain/kotlin",
   ":submodule.sonar.tests": "",
   "sonar.host.url": "https://sonarcloud.io",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",

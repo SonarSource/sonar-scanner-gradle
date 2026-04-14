@@ -29,48 +29,29 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class SnapshotNormalizer {
-  private static final List<String> ORDER_INSENSITIVE_SUFFIXES = List.of(
-    "sonar.modules",
-    "sonar.libraries",
-    "sonar.binaries",
-    "sonar.java.libraries",
-    "sonar.java.binaries",
-    "sonar.java.test.libraries",
-    "sonar.java.test.binaries"
-  );
+
 
   private SnapshotNormalizer() {
     // Utility class: contains only static methods and is not intended to be instantiated.
   }
 
-  public static Map<String, String> normalize(Properties properties, Set<String> excludedProperties) {
+  public static Map<String, String> normalize(Properties properties, Set<String> excludedProperties, Set<String> excludedPaths) {
     Map<String, String> propertiesMap = new LinkedHashMap<>();
     properties.forEach((key, value) -> propertiesMap.put(key.toString(), value.toString()));
-    return normalize(propertiesMap, excludedProperties);
+    return normalize(propertiesMap, excludedProperties, excludedPaths);
   }
 
-  public static Map<String, String> normalize(Map<String, String> snapshot, Set<String> excludedProperties) {
+  public static Map<String, String> normalize(Map<String, String> snapshot, Set<String> excludedProperties, Set<String> excludedPaths) {
     Map<String, String> normalized = new LinkedHashMap<>();
-    PathsNormalizer.normalize(snapshot).entrySet().stream()
+    PathsNormalizer.normalize(snapshot, excludedPaths).entrySet().stream()
       .sorted(Map.Entry.comparingByKey())
       .forEach(entry ->
-        normalizeEntry(entry.getKey(), entry.getValue(), excludedProperties).ifPresent(result ->
-          normalized.put(entry.getKey(), result)
-        )
+        IgnoredPropertiesNormalizer
+          .normalize(entry.getKey(), entry.getValue(), excludedProperties)
+          .ifPresent(result ->
+            normalized.put(entry.getKey(), result)
+          )
       );
     return normalized;
-  }
-
-  private static Optional<String> normalizeEntry(String key, String value, Set<String> excludedProperties) {
-    return IgnoredPropertiesNormalizer.normalize(key, value, excludedProperties).map(result ->
-      reorderIfNeeded(key, result)
-    );
-  }
-
-  private static String reorderIfNeeded(String key, String value) {
-    if (ORDER_INSENSITIVE_SUFFIXES.stream().anyMatch(key::endsWith)) {
-      return Arrays.stream(value.split(",")).sorted().collect(Collectors.joining(","));
-    }
-    return value;
   }
 }

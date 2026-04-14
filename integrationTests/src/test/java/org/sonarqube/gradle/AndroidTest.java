@@ -71,7 +71,7 @@ public class AndroidTest extends AbstractGradleIT {
     ignoreThisTestIfGradleVersionIsLessThan("9.0.0");
     Map<String, String> env = Collections.emptyMap();
     Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle9", env, new DefaultRunConfiguration(), "--quiet", "--console=plain");
-    Map<String, String> comparableProps = SnapshotNormalizer.normalize(props, Set.of());
+    Map<String, String> comparableProps = SnapshotNormalizer.normalize(props, Set.of(), Set.of());
 
     assertThat(comparableProps.get(":app.sonar.java.libraries"))
       .isNotEmpty()

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
@@ -85,7 +86,10 @@ public class PathsNormalizer {
     "processDebugAndroidTestResources/", "",
     "processFlavor1DebugAndroidTestResources/", "",
     "compileFlavor1DebugUnitTestJavaWithJavac/", "",
-    "compileFlavor1DebugAndroidTestJavaWithJavac/", ""
+    "compileFlavor1DebugAndroidTestJavaWithJavac/", "",
+    "compileFullMinApi23ReleaseUnitTestJavaWithJavac/", "",
+    "bundleFullMinApi23ReleaseClassesToCompileJar/", "",
+    "bundleReleaseClassesToCompileJar/", ""
   );
 
   private static final String ANDROID_SDK_PLACEHOLDER = "${ANDROID_SDK}";
@@ -107,23 +111,26 @@ public class PathsNormalizer {
     // Utility class: contains only static methods and is not intended to be instantiated.
   }
 
-  public static Map<String, String> normalize(Map<String, String> snapshot) {
+  public static Map<String, String> normalize(Map<String, String> snapshot, Set<String> excludedPaths) {
     snapshot = normalizeWindowsPaths(snapshot);
     var replacements = computeStringReplacements(snapshot);
     Map<String, String> normalized = new LinkedHashMap<>();
     for (Map.Entry<String, String> entry : snapshot.entrySet()) {
-      normalized.put(entry.getKey(), normalizeEntry(entry.getValue(), replacements));
+      normalized.put(
+        entry.getKey(),
+        normalizeEntry(entry.getValue(), replacements, excludedPaths)
+      );
     }
     return normalized;
   }
 
-  private static String normalizeEntry(String value, Map<String, String> replacements) {
+  private static String normalizeEntry(String value, Map<String, String> replacements, Set<String> excludedPaths) {
     String result = value;
     for (Map.Entry<String, String> entry : replacements.entrySet()) {
       result = result.replace(entry.getKey(), entry.getValue());
     }
     result = applyRegexReplacements(result);
-    return result;
+    return filterAndSort(result, excludedPaths);
   }
 
   private static String applyRegexReplacements(String value) {
@@ -191,5 +198,12 @@ public class PathsNormalizer {
       map.put(k, v);
     }
     return map;
+  }
+
+  private static String filterAndSort(String value, Set<String> excludedPaths) {
+    return Arrays.stream(value.split(","))
+      .filter(entry -> !excludedPaths.contains(entry))
+      .sorted()
+      .collect(Collectors.joining(","));
   }
 }

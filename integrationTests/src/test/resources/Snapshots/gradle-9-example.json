@@ -24,7 +24,7 @@
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
-  "sonar.sources": "${PROJECT_BASE_DIR}/src/main/java,${PROJECT_BASE_DIR}/build.gradle.kts,${PROJECT_BASE_DIR}/settings.gradle.kts",
+  "sonar.sources": "${PROJECT_BASE_DIR}/build.gradle.kts,${PROJECT_BASE_DIR}/settings.gradle.kts,${PROJECT_BASE_DIR}/src/main/java",
   "sonar.surefire.reportsPath": "${PROJECT_BASE_DIR}/build/test-results/test",
   "sonar.tests": "${PROJECT_BASE_DIR}/src/test/java",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"

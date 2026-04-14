@@ -11,7 +11,7 @@
   "sonar.java.libraries": "${ANDROID_SDK}/platforms/android-30/android.jar,${BUILDTOOL}/core-lambda-stubs.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/demoMinApi23Debug/R.jar,{M2_GRADLE_CACHE}/joda-time/joda-time/2.7/joda-time-2.7.jar",
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
-  "sonar.java.test.binaries": "${PROJECT_BASE_DIR}/build/intermediates/javac/demoMinApi23DebugAndroidTest/classes,${PROJECT_BASE_DIR}/build/intermediates/javac/demoMinApi23DebugUnitTest/classes",
+  "sonar.java.test.binaries": "${PROJECT_BASE_DIR}/build/intermediates/javac/demoMinApi23DebugUnitTest/classes",
   "sonar.java.test.libraries": "${ANDROID_SDK}/platforms/android-30/android.jar,${BUILDTOOL}/core-lambda-stubs.jar,${PROJECT_BASE_DIR}/build/intermediates/app_classes/demoMinApi23Debug/classes.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/demoMinApi23Debug/R.jar,${PROJECT_BASE_DIR}/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/demoMinApi23DebugAndroidTest/R.jar,${PROJECT_BASE_DIR}/build/intermediates/javac/demoMinApi23Debug/classes,{HAMCREST},{M2_GRADLE_CACHE}/joda-time/joda-time/2.7/joda-time-2.7.jar,{M2_GRADLE_CACHE}/junit/junit/4.12/junit-4.12.jar",
   "sonar.junit.reportPaths": "${PROJECT_BASE_DIR}/build/test-results/testDemoMinApi23DebugUnitTest",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",

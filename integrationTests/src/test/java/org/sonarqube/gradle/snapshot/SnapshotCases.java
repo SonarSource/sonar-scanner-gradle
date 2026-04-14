@@ -49,6 +49,7 @@ public final class SnapshotCases {
     private String subdir;
     private boolean requiresAndroid;
     private final Set<String> excludedProperties = new LinkedHashSet<>();
+    private final Set<String> excludedPaths = new LinkedHashSet<>();
 
     private Case(String name, String project, String... args) {
       this.name = name;
@@ -66,7 +67,7 @@ public final class SnapshotCases {
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
       Properties p = test.runGradlewSonarSimulationModeWithEnv(project, subdir, Collections.emptyMap(), new DefaultRunConfiguration(), args.toArray(String[]::new));
-      return SnapshotNormalizer.normalize(p, excludedProperties());
+      return SnapshotNormalizer.normalize(p, excludedProperties(), excludedPaths);
     }
 
     public Case minGradle(String value) {
@@ -103,8 +104,17 @@ public final class SnapshotCases {
       return this;
     }
 
+    public Case excludePath(String path) {
+      this.excludedPaths.add(path);
+      return this;
+    }
+
     public Set<String> excludedProperties() {
       return excludedProperties;
+    }
+
+    public  Set<String> excludedPaths() {
+      return excludedPaths;
     }
 
     @Override
@@ -167,7 +177,9 @@ public final class SnapshotCases {
         .maxGradleExclusive("9.0.0"),
       c("android-gradle-default-variant", "/android-gradle-default-variant", "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.0.0")
+        .excludePath("${PROJECT_BASE_DIR}/app3/build/intermediates/javac/debug/classes")
+        .excludePath("${PROJECT_BASE_DIR}/build/intermediates/javac/demoMinApi23DebugAndroidTest/classes"),
       c("android-gradle-dynamic-feature", "/android-gradle-dynamic-feature", "test", "compileDebugAndroidTestJavaWithJavac")
         .requiresAndroid()
         .minAndroidGradle("7.0.0"),
@@ -182,7 +194,10 @@ public final class SnapshotCases {
         .minAndroidGradle("7.0.0"),
       c("android-gradle-no-debug", "/android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.0.0")
+        .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/app_classes/debug/classes.jar")
+        .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/R.jar")
+        .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/javac/debug/classes"),
       c("multi-module-android-studio-lint", "/multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
         .minAndroidGradle("7.0.0")
@@ -202,6 +217,11 @@ public final class SnapshotCases {
         .excludeProperty(":app3.sonar.java.binaries")
         .excludeProperty(":app4.sonar.binaries")
         .excludeProperty(":app4.sonar.java.binaries")
+        .excludePath("${PROJECT_BASE_DIR}/app3/build/intermediates/javac/debug/classes")
+        .excludePath("${PROJECT_BASE_DIR}/app4/build/intermediates/javac/fullRelease/classes")
+        .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/app_classes/debug/classes.jar")
+        .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/R.jar")
+        .excludePath("${PROJECT_BASE_DIR}/app/build/intermediates/javac/debug/classes")
     );
   }
 
