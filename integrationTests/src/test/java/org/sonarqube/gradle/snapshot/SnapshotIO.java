@@ -32,12 +32,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.TreeMap;
 
 public final class SnapshotIO {
   private static final Gson GSON = new Gson();
   private static final Gson PRETTY_GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
   private static final Path SNAPSHOT_DIR = Paths.get("integrationTests", "src", "test", "resources", "Snapshots");
 
   private SnapshotIO() {
@@ -52,8 +52,8 @@ public final class SnapshotIO {
     Path parent = workingDirectory.getParent();
     if (
       parent != null &&
-      Files.exists(workingDirectory.resolve("pom.xml")) &&
-      Files.exists(parent.resolve("integrationTests").resolve("pom.xml"))
+        Files.exists(workingDirectory.resolve("pom.xml")) &&
+        Files.exists(parent.resolve("integrationTests").resolve("pom.xml"))
     ) {
       return parent;
     }
@@ -74,11 +74,13 @@ public final class SnapshotIO {
     }
   }
 
-  public static void write(String snapshotName, Map<String, String> properties) throws IOException {
+  public static void write(String snapshotName, Map<String, String> normalizedProperties) throws IOException {
     File parent = file(snapshotName).toFile().getParentFile();
-    if (parent != null && !parent.exists()) parent.mkdirs();
+    if (!parent.exists() && !parent.mkdirs()) {
+      throw new IOException("Failed to create directories for snapshot file: " + parent);
+    }
     try (FileWriter writer = new FileWriter(file(snapshotName).toFile(), StandardCharsets.UTF_8)) {
-      PRETTY_GSON.toJson(new TreeMap<>(SnapshotUtils.canonicalize(properties)), writer);
+      PRETTY_GSON.toJson(normalizedProperties, writer);
     }
   }
 }

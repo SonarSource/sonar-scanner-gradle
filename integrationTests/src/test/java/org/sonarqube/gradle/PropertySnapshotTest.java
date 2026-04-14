@@ -52,7 +52,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
     Map<String, String> actual = snapshotCase.collect(this);
     Path file = SnapshotIO.file(snapshotCase.name());
     assertThat(file).as("expected snapshot file for %s", snapshotCase.name()).exists();
-    Map<String, String> expected = snapshotCase.expected(SnapshotIO.load(file), actual);
+    Map<String, String> expected = SnapshotIO.load(file);
     assertThat(actual).as(snapshotCase.name()).containsAllEntriesOf(expected);
     assertThat(expected).as(snapshotCase.name() + " (no unexpected extra properties)").containsAllEntriesOf(actual);
   }
@@ -60,6 +60,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
   @Ignore("Run locally to regenerate all integration test property snapshots.")
   @Test
   public void rewritePropertySnapshot() throws Exception {
-    SnapshotIO.write(snapshotCase.name(), snapshotCase.collect(this));
+    var actual = snapshotCase.collect(this);
+    SnapshotIO.write(snapshotCase.name(), actual);
   }
 }

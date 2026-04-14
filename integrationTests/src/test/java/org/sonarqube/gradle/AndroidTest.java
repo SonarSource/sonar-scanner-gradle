@@ -23,11 +23,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.sonarqube.gradle.support.AbstractGradleIT;
 import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
+import org.sonarqube.gradle.support.normalization.SnapshotNormalizer;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
@@ -69,7 +71,7 @@ public class AndroidTest extends AbstractGradleIT {
     ignoreThisTestIfGradleVersionIsLessThan("9.0.0");
     Map<String, String> env = Collections.emptyMap();
     Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle9", env, new DefaultRunConfiguration(), "--quiet", "--console=plain");
-    Map<String, String> comparableProps = extractComparableProperties(props);
+    Map<String, String> comparableProps = SnapshotNormalizer.normalize(props, Set.of(), Set.of());
 
     assertThat(comparableProps.get(":app.sonar.java.libraries"))
       .isNotEmpty()
