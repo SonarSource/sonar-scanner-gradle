@@ -40,6 +40,7 @@ sourceCompatibility = 11
 targetCompatibility = 11
 
 sonar {
+    androidVariant  = "release"
 
     properties {
         property "sonar.projectKey", "com.test.app:app"

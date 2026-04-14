@@ -30,6 +30,7 @@ android {
 }
 
 sonar {
+    androidVariant  = "release"
     properties {
         property "sonar.projectName", "Simple Android Gradle Project"
         property "sonar.projectKey", "org.sonarqube:example-android-gradle"

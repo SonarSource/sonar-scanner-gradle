@@ -26,6 +26,7 @@ task clean(type: Delete) {
 }
 
 sonar {
+    androidVariant  = "release"
     properties {
         property "sonar.projectName", "Simple Android Gradle Project With Dynamic Module"
         property "sonar.projectKey", "org.sonarqube:example-android-gradle-dynamic-module"
