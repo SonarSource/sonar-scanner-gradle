@@ -66,8 +66,7 @@ public final class SnapshotCases {
         minGradle == null || !AbstractGradleIT.getGradleVersion().isLowerThan(minGradle)
       ) && (
         maxGradleExclusive == null || AbstractGradleIT.getGradleVersion().isLowerThan(maxGradleExclusive)
-      ) && fitsAndroidRequirements()
-        ;
+      ) && fitsAndroidRequirements();
     }
 
     private boolean fitsAndroidRequirements() {
@@ -193,7 +192,9 @@ public final class SnapshotCases {
       c("android-gradle-nondefault-variant", "/android-gradle-nondefault-variant", "test")
         .requiresAndroid()
         .minAndroidGradle("8.0.0"),
-      c("multi-module-android-studio", "/multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
+      c("multi-module-android-studio", "/multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac")
+        .requiresAndroid()
+        .minAndroidGradle("8.0.0"),
       c("android-testing-blueprint-with-dynamic-feature-module", "/AndroidTestingBlueprintWithDynamicFeatureModule", "assembleDebug",
         "compileFlavor1DebugUnitTestJavaWithJavac", "compileFlavor1DebugAndroidTestJavaWithJavac", "compileDebugAndroidTestJavaWithJavac", "compileDebugUnitTestJavaWithJavac",
         "compileTestJava")
