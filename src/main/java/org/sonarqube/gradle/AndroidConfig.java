@@ -20,17 +20,21 @@
 package org.sonarqube.gradle;
 
 import com.android.build.api.variant.AndroidComponentsExtension;
-import com.android.build.api.variant.ComponentIdentity;
-import com.android.build.api.variant.HasAndroidTest;
-import com.android.build.api.variant.HasUnitTest;
+import com.android.build.api.variant.AndroidTest;
+import com.android.build.api.variant.Component;
+import com.android.build.api.variant.TestComponent;
 import com.android.build.api.variant.Variant;
 import com.android.build.gradle.internal.lint.AndroidLintTask;
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.UnknownTaskException;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
@@ -94,20 +98,60 @@ public class AndroidConfig {
     this.variantConfigs = new HashMap<>();
   }
 
+  /**
+   * Get the variant selected for the analysis with Sonar.
+   */
   public Variant getVariant() {
     return variantConfigs.get(getVariantName()).getVariant();
   }
 
+  /**
+   * Get the properties computed for the variant selected for the analysis with Sonar.
+   */
   public Map<String, Object> getProperties() {
     return variantConfigs.get(getVariantName()).getProperties();
   }
 
+  /**
+   * Get the main libraries file collection for the variant selected for the analysis with Sonar.
+   */
   public FileCollection getMainLibraries() {
     return variantConfigs.get(getVariantName()).getMainLibraries();
   }
 
+  /**
+   * Get the test libraries file collection for the variant selected for the analysis with Sonar.
+   */
   public FileCollection getTestLibraries() {
     return variantConfigs.get(getVariantName()).getTestLibraries();
+  }
+
+  /**
+   * Get the Android tasks on which Sonar tasks need to depend for the variant selected for the analysis with Sonar.
+   */
+  public Set<Task> getTasks() {
+    String variantName = SonarUtils.capitalize(getVariantName());
+    String compileTaskPrefix = "compile" + variantName;
+    Set<Task> tasks = new HashSet<>();
+
+    boolean unitTestTaskAdded = addTaskByName(tasks, compileTaskPrefix + "UnitTestJavaWithJavac", project);
+    boolean androidTestTaskAdded = addTaskByName(tasks, compileTaskPrefix + "AndroidTestJavaWithJavac", project);
+    // The compilation of unit tests or Android tests already depends on the main compilation task, so it is only necessary to add it if no test compilation tasks were found.
+    if (!unitTestTaskAdded && !androidTestTaskAdded) {
+      addTaskByName(tasks, compileTaskPrefix + "JavaWithJavac", project);
+    }
+    addTaskByName(tasks, "test" + variantName + "UnitTest", project);
+
+    return tasks;
+  }
+
+  private boolean addTaskByName(Set<Task> taskSet, String name, Project project) {
+    try {
+      taskSet.add(project.getTasks().getByName(name));
+      return true;
+    } catch (UnknownTaskException e) {
+      return false;
+    }
   }
 
   private String getVariantName() {
@@ -126,14 +170,15 @@ public class AndroidConfig {
           "Unable to find variant '"
             + configuredVariantName
             + "' to use for SonarQube analysis. Candidates are: "
-            + String.join(", ", variants.stream().map(ComponentIdentity::getName).collect(Collectors.toSet())));
+            + String.join(", ", variants.stream().map(Variant::getName).collect(Collectors.toSet())));
       }
+
       return configuredVariantName;
     }
 
-    // Find the variant that is the target for Android (integration) tests in the project. If no variant has integration tests, return the first one.
+    // Find the variant that is the target for Android (integration) tests in the project. If no variant has Android tests, return the first we find.
     Variant variant = variants.stream()
-      .filter(v -> v.getNestedComponents().stream().anyMatch(HasAndroidTest.class::isInstance))
+      .filter(v -> v.getNestedComponents().stream().anyMatch(AndroidTest.class::isInstance))
       .findFirst()
       .orElse(variants.get(0));
 
@@ -204,7 +249,7 @@ public class AndroidConfig {
    */
   private FileCollection computeMainLibraries(Variant variant) {
     FileCollection mainLibraries = project.files(androidExtension.getSdkComponents().getBootClasspath());
-    mainLibraries.plus(project.getConfigurations().getByName(variant.getName() + "CompileClasspath").getIncoming().getFiles());
+    mainLibraries = mainLibraries.plus(variant.getCompileClasspath());
     return mainLibraries;
   }
 
@@ -213,11 +258,11 @@ public class AndroidConfig {
    */
   private FileCollection computeTestLibraries(Variant variant) {
     FileCollection testLibraries = project.files(androidExtension.getSdkComponents().getBootClasspath());
-    variant.getNestedComponents().forEach(component -> {
-      if (component instanceof HasUnitTest || component instanceof HasAndroidTest) {
-        testLibraries.plus(project.getConfigurations().getByName(component.getName() + "CompileClasspath").getIncoming().getFiles());
+    for (Component component : variant.getNestedComponents()) {
+      if (component instanceof TestComponent) {
+        testLibraries = testLibraries.plus(component.getCompileClasspath());
       }
-    });
+    }
     return testLibraries;
   }
 
