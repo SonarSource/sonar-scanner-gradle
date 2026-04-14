@@ -116,6 +116,9 @@ class AndroidUtilsIT extends Specification {
             compileSdkVersion 30
             namespace "org.hello"
         }
+        sonar {
+            androidVariant = "release"
+        }
         """
 
         when: "run sonarResolver task"
