@@ -67,7 +67,7 @@ public final class SnapshotCases {
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
       Properties p = test.runGradlewSonarSimulationModeWithEnv(project, subdir, Collections.emptyMap(), new DefaultRunConfiguration(), args.toArray(String[]::new));
-      return SnapshotNormalizer.normalize(p, excludedProperties(), excludedPaths);
+      return SnapshotNormalizer.normalize(p, excludedProperties, excludedPaths);
     }
 
     public Case minGradle(String value) {
@@ -107,14 +107,6 @@ public final class SnapshotCases {
     public Case excludePath(String path) {
       this.excludedPaths.add(path);
       return this;
-    }
-
-    public Set<String> excludedProperties() {
-      return excludedProperties;
-    }
-
-    public  Set<String> excludedPaths() {
-      return excludedPaths;
     }
 
     @Override
