@@ -1,13 +1,11 @@
 {
-  "sonar.binaries": "main",
   "sonar.host.url": "https://sonarcloud.io",
-  "sonar.java.binaries": "main",
   "sonar.java.enablePreview": "false",
   "sonar.java.jdkHome": "<ignored>",
   "sonar.java.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
-  "sonar.java.test.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar,main",
+  "sonar.java.test.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
   "sonar.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   "sonar.projectBaseDir": "${PROJECT_BASE_DIR}",
@@ -22,6 +20,5 @@
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
   "sonar.sources": "${PROJECT_BASE_DIR}/src/main/kotlin",
-  "sonar.tests": "",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

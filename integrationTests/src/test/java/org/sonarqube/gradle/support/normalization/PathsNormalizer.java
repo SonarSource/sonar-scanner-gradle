@@ -57,9 +57,11 @@ public class PathsNormalizer {
           value = value.replace(projectBaseDir.get(), PROJECT_BASE_DIR_PLACEHOLDER);
         }
       }
-      normalized.put(
-        property, value
-      );
+      if (!value.isEmpty()) {
+        normalized.put(
+          property, value
+        );
+      }
     }
     return normalized;
   }
@@ -67,6 +69,7 @@ public class PathsNormalizer {
   private static String takeOnlyFileNames(String paths) {
     return Arrays.stream(paths.split(","))
       .map(PathsNormalizer::normalizePath)
+      .filter(path -> !"main".equals(path))
       .distinct()
       .sorted()
       .collect(Collectors.joining(","));

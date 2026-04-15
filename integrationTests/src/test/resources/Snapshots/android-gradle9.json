@@ -26,7 +26,6 @@
   ":javalib.sonar.projectName": "javalib",
   ":javalib.sonar.projectVersion": "unspecified",
   ":javalib.sonar.sources": "${PROJECT_BASE_DIR}/javalib/src/main/java",
-  ":javalib.sonar.tests": "",
   ":mydynamicfeature.sonar.android.detected": "true",
   ":mydynamicfeature.sonar.android.minsdkversion.max": "21",
   ":mydynamicfeature.sonar.android.minsdkversion.min": "21",
@@ -57,7 +56,5 @@
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
-  "sonar.sources": "",
-  "sonar.tests": "",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

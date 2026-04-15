@@ -54,7 +54,5 @@
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
-  "sonar.sources": "",
-  "sonar.tests": "",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

@@ -18,6 +18,5 @@
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
   "sonar.sources": "${PROJECT_BASE_DIR}/src/main/java,${PROJECT_BASE_DIR}/build.gradle.kts,${PROJECT_BASE_DIR}/settings.gradle.kts",
-  "sonar.tests": "",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

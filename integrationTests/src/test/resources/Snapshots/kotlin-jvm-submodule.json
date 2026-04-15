@@ -1,19 +1,16 @@
 {
-  ":submodule.sonar.binaries": "main",
-  ":submodule.sonar.java.binaries": "main",
   ":submodule.sonar.java.enablePreview": "false",
   ":submodule.sonar.java.jdkHome": "<ignored>",
   ":submodule.sonar.java.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   ":submodule.sonar.java.source": "<ignored>",
   ":submodule.sonar.java.target": "<ignored>",
-  ":submodule.sonar.java.test.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar,main",
+  ":submodule.sonar.java.test.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   ":submodule.sonar.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   ":submodule.sonar.moduleKey": "kotlin-jvm-submodule:submodule",
   ":submodule.sonar.projectBaseDir": "${PROJECT_BASE_DIR}/submodule",
   ":submodule.sonar.projectName": "submodule",
   ":submodule.sonar.projectVersion": "unspecified",
   ":submodule.sonar.sources": "${PROJECT_BASE_DIR}/submodule/src/main/kotlin",
-  ":submodule.sonar.tests": "",
   "sonar.host.url": "https://sonarcloud.io",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
   "sonar.modules": ":submodule",
@@ -28,7 +25,5 @@
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
-  "sonar.sources": "",
-  "sonar.tests": "",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }
