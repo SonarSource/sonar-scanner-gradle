@@ -117,8 +117,10 @@ public class SonarQubePlugin implements Plugin<Project> {
       }
       resolverTask.setCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME)));
       resolverTask.setTestCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.TEST_SOURCE_SET_NAME)));
-      resolverTask.setMainLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
-      resolverTask.setTestLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
+      if (!isAndroidProject(project)) {
+        resolverTask.setMainLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
+        resolverTask.setTestLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
+      }
       File buildDirectory = new File(project.getLayout().getBuildDirectory().getAsFile().get(), "sonar-resolver");
       resolverTask.setOutputDirectory(buildDirectory);
       resolverFiles.add(resolverTask.getOutputFile());
