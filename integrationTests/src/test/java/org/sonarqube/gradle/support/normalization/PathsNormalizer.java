@@ -94,7 +94,6 @@ public class PathsNormalizer {
   }
 
   private static String takeOnlyFileName(String path) {
-    path = normalizeWindowsPath(path);
     return path.substring(path.lastIndexOf('/') + 1);
   }
 
