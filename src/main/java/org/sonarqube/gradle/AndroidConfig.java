@@ -209,8 +209,8 @@ public class AndroidConfig {
    */
   private void populateAndroidProperties(Map<String, Object> properties, Variant variant) {
     properties.put(AndroidProperties.ANDROID_DETECTED, true);
-    properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, variant.getMinSdk().getApiLevel());
-    properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, variant.getMinSdk().getApiLevel());
+    properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, variant.getMinSdkVersion().getApiLevel());
+    properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, variant.getMinSdkVersion().getApiLevel());
   }
 
   /**
