@@ -19,14 +19,10 @@
  */
 package org.sonarqube.gradle.support.normalization;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class SnapshotNormalizer {
 
@@ -35,19 +31,19 @@ public final class SnapshotNormalizer {
     // Utility class: contains only static methods and is not intended to be instantiated.
   }
 
-  public static Map<String, String> normalize(Properties properties, Set<String> excludedProperties, Set<String> excludedPaths) {
+  public static Map<String, String> normalize(Properties properties) {
     Map<String, String> propertiesMap = new LinkedHashMap<>();
     properties.forEach((key, value) -> propertiesMap.put(key.toString(), value.toString()));
-    return normalize(propertiesMap, excludedProperties, excludedPaths);
+    return normalize(propertiesMap);
   }
 
-  public static Map<String, String> normalize(Map<String, String> snapshot, Set<String> excludedProperties, Set<String> excludedPaths) {
+  public static Map<String, String> normalize(Map<String, String> snapshot) {
     Map<String, String> normalized = new LinkedHashMap<>();
-    PathsNormalizer.normalize(snapshot, excludedPaths).entrySet().stream()
+    PathsNormalizer.normalize(snapshot).entrySet().stream()
       .sorted(Map.Entry.comparingByKey())
       .forEach(entry ->
         IgnoredPropertiesNormalizer
-          .normalize(entry.getKey(), entry.getValue(), excludedProperties)
+          .normalize(entry.getKey(), entry.getValue())
           .ifPresent(result ->
             normalized.put(entry.getKey(), result)
           )
