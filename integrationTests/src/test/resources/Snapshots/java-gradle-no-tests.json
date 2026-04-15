@@ -1,13 +1,13 @@
 {
   "sonar.host.url": "https://sonarcloud.io",
   "sonar.java.enablePreview": "false",
-  "sonar.java.jdkHome": "${SONAR_JDK}",
-  "sonar.java.libraries": "{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar",
+  "sonar.java.jdkHome": "<ignored>",
+  "sonar.java.libraries": "commons-io-2.5.jar",
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
-  "sonar.java.test.libraries": "{HAMCREST},{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar,{M2_GRADLE_CACHE}/junit/junit/4.10/junit-4.10.jar",
+  "sonar.java.test.libraries": "commons-io-2.5.jar,hamcrest-core-1.1.jar,junit-4.10.jar",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
-  "sonar.libraries": "{M2_GRADLE_CACHE}/commons-io/commons-io/2.5/commons-io-2.5.jar",
+  "sonar.libraries": "commons-io-2.5.jar",
   "sonar.projectBaseDir": "${PROJECT_BASE_DIR}",
   "sonar.projectKey": "org.codehaus.sonar:example-java-gradle",
   "sonar.projectName": "Simple Java Gradle Project",
@@ -20,6 +20,5 @@
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
   "sonar.sources": "${PROJECT_BASE_DIR}/src/main/java",
-  "sonar.tests": "",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

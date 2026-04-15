@@ -1,15 +1,13 @@
 {
-  "sonar.binaries": "${PROJECT_BASE_DIR}/build/classes/kotlin/main",
   "sonar.host.url": "https://sonarcloud.io",
-  "sonar.java.binaries": "${PROJECT_BASE_DIR}/build/classes/kotlin/main",
   "sonar.java.enablePreview": "false",
-  "sonar.java.jdkHome": "${SONAR_JDK}",
-  "sonar.java.libraries": "{M2_GRADLE_CACHE}/org.jetbrains.kotlin/kotlin-stdlib/1.9.20/kotlin-stdlib-1.9.20.jar,{M2_GRADLE_CACHE}/org.jetbrains/annotations/13.0/annotations-13.0.jar",
+  "sonar.java.jdkHome": "<ignored>",
+  "sonar.java.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
-  "sonar.java.test.libraries": "${PROJECT_BASE_DIR}/build/classes/kotlin/main,{M2_GRADLE_CACHE}/org.jetbrains.kotlin/kotlin-stdlib/1.9.20/kotlin-stdlib-1.9.20.jar,{M2_GRADLE_CACHE}/org.jetbrains/annotations/13.0/annotations-13.0.jar",
+  "sonar.java.test.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
-  "sonar.libraries": "{M2_GRADLE_CACHE}/org.jetbrains.kotlin/kotlin-stdlib/1.9.20/kotlin-stdlib-1.9.20.jar,{M2_GRADLE_CACHE}/org.jetbrains/annotations/13.0/annotations-13.0.jar",
+  "sonar.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   "sonar.projectBaseDir": "${PROJECT_BASE_DIR}",
   "sonar.projectKey": "kotlin-jvm",
   "sonar.projectName": "kotlin-jvm",
@@ -22,6 +20,5 @@
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
   "sonar.sources": "${PROJECT_BASE_DIR}/src/main/kotlin",
-  "sonar.tests": "",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

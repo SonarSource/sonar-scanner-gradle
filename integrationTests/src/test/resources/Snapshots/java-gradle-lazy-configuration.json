@@ -1,9 +1,7 @@
 {
-  "sonar.binaries": "${PROJECT_BASE_DIR}/build/classes/java/main",
   "sonar.host.url": "https://sonarcloud.io",
-  "sonar.java.binaries": "${PROJECT_BASE_DIR}/build/classes/java/main",
   "sonar.java.enablePreview": "false",
-  "sonar.java.jdkHome": "${SONAR_JDK}",
+  "sonar.java.jdkHome": "<ignored>",
   "sonar.java.source": "<ignored>",
   "sonar.java.target": "<ignored>",
   "sonar.kotlin.gradleProjectRoot": "${PROJECT_BASE_DIR}",
@@ -19,6 +17,5 @@
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
   "sonar.sources": "${PROJECT_BASE_DIR}/src/main/java",
-  "sonar.tests": "",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }
