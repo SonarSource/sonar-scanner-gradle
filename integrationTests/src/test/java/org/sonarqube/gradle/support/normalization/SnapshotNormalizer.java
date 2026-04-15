@@ -20,12 +20,30 @@
 package org.sonarqube.gradle.support.normalization;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 public final class SnapshotNormalizer {
+  private static final String IGNORED_PROPERTY_PLACEHOLDER = "<ignored>";
 
+  private static final List<String> IGNORED_KEYS = List.of(
+    "sonar.token"
+  );
+
+  private static final List<String> VALUE_INSENSITIVE_KEYS = List.of(
+    "sonar.scanner.os",
+    "sonar.scanner.arch",
+    "sonar.scanner.internal.dumpToFile",
+    "sonar.scanner.appVersion"
+  );
+
+  private static final List<String> VALUE_INSENSITIVE_SUFFIXES = List.of(
+    // as we have QA J11 in the matrix so we can't assume a specific Java version for these properties
+    "sonar.java.source",
+    "sonar.java.target",
+    "jdkHome"
+  );
 
   private SnapshotNormalizer() {
     // Utility class: contains only static methods and is not intended to be instantiated.
@@ -41,13 +59,16 @@ public final class SnapshotNormalizer {
     Map<String, String> normalized = new LinkedHashMap<>();
     PathsNormalizer.normalize(snapshot).entrySet().stream()
       .sorted(Map.Entry.comparingByKey())
-      .forEach(entry ->
-        IgnoredPropertiesNormalizer
-          .normalize(entry.getKey(), entry.getValue())
-          .ifPresent(result ->
-            normalized.put(entry.getKey(), result)
-          )
-      );
+      .filter(entry -> !IGNORED_KEYS.contains(entry.getKey()))
+      .forEach(entry -> {
+        var key = entry.getKey();
+        if (VALUE_INSENSITIVE_KEYS.contains(key) || VALUE_INSENSITIVE_SUFFIXES.stream().anyMatch(key::endsWith)) {
+          normalized.put(key, IGNORED_PROPERTY_PLACEHOLDER);
+        } else {
+          normalized.put(key, entry.getValue());
+        }
+      }
+    );
     return normalized;
   }
 }

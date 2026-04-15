@@ -23,12 +23,9 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import org.jspecify.annotations.Nullable;
 
 public class PathsNormalizer {
-
   private static final String DELIMITER = ",";
 
   public static final String BINARIES_SUFFIX = "binaries";
@@ -47,6 +44,7 @@ public class PathsNormalizer {
     "sonar.working.directory",
     "sonar.coverage.jacoco.xmlReportPaths"
   );
+
   private static final List<String> IGNORED_PATHS = List.of(
     "main", "R.jar", "classes.jar", "classes"
   );
@@ -56,7 +54,7 @@ public class PathsNormalizer {
   }
 
   public static Map<String, String> normalize(Map<String, String> snapshot) {
-    String projectBaseDir = Optional.ofNullable(snapshot.get(PROJECT_BASE_DIR_PROPERTY)).map(PathsNormalizer::normalizeWindowsPath).orElse(null);
+    String projectBaseDir = normalizeWindowsPath(snapshot.get(PROJECT_BASE_DIR_PROPERTY));
 
     Map<String, String> normalized = new LinkedHashMap<>();
     for (Map.Entry<String, String> entry : snapshot.entrySet()) {
@@ -73,7 +71,7 @@ public class PathsNormalizer {
     return normalized;
   }
 
-  private static String normalizeEntry(String property, String value, @Nullable String projectBaseDir) {
+  private static String normalizeEntry(String property, String value, String projectBaseDir) {
     var paths = Arrays.stream(value.split(DELIMITER));
     if (property.endsWith(BINARIES_SUFFIX) || property.endsWith(LIBRARIES_SUFFIX)) {
       paths = paths
