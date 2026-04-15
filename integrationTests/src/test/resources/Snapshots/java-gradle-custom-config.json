@@ -21,7 +21,7 @@
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
-  "sonar.sources": "${PROJECT_BASE_DIR}/src/main/java,${PROJECT_BASE_DIR}/src/main/foo.js",
-  "sonar.tests": "${PROJECT_BASE_DIR}/src/test/java,${PROJECT_BASE_DIR}/src/test/fooTest.js",
+  "sonar.sources": "${PROJECT_BASE_DIR}/src/main/foo.js,${PROJECT_BASE_DIR}/src/main/java",
+  "sonar.tests": "${PROJECT_BASE_DIR}/src/test/fooTest.js,${PROJECT_BASE_DIR}/src/test/java",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }

@@ -25,17 +25,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 
 public class PathsNormalizer {
+
+  private static final String DELIMITER = ",";
 
   public static final String BINARIES_SUFFIX = "binaries";
   public static final String LIBRARIES_SUFFIX = "libraries";
 
   private static final String PROJECT_BASE_DIR_PROPERTY = "sonar.projectBaseDir";
   private static final String PROJECT_BASE_DIR_PLACEHOLDER = "${PROJECT_BASE_DIR}";
-
   private static final List<String> PROPERTIES_SUFFIX_TO_NORMALIZE = List.of(
-    "reportPaths", "reportsPath", "projectBaseDir", "sonar.sources", "sonar.tests", "gradleProjectRoot", "sonar.working.directory", "sonar.coverage.jacoco.xmlReportPaths"
+    "reportPaths",
+    "sonar.tests",
+    "reportsPath",
+    "sonar.modules",
+    "sonar.sources",
+    "projectBaseDir",
+    "gradleProjectRoot",
+    "sonar.working.directory",
+    "sonar.coverage.jacoco.xmlReportPaths"
+  );
+  private static final List<String> IGNORED_PATHS = List.of(
+    "main", "R.jar", "classes.jar", "classes"
   );
 
   private PathsNormalizer() {
@@ -43,39 +56,46 @@ public class PathsNormalizer {
   }
 
   public static Map<String, String> normalize(Map<String, String> snapshot) {
-    Optional<String> projectBaseDir = Optional.ofNullable(snapshot.get(PROJECT_BASE_DIR_PROPERTY)).map(PathsNormalizer::normalizeWindowsPath);
+    String projectBaseDir = Optional.ofNullable(snapshot.get(PROJECT_BASE_DIR_PROPERTY)).map(PathsNormalizer::normalizeWindowsPath).orElse(null);
+
     Map<String, String> normalized = new LinkedHashMap<>();
     for (Map.Entry<String, String> entry : snapshot.entrySet()) {
       var property = entry.getKey();
       var value = entry.getValue();
-      if (property.endsWith(BINARIES_SUFFIX) || property.endsWith(LIBRARIES_SUFFIX)) {
-        value = takeOnlyFileNames(value);
-      }
-      if (PROPERTIES_SUFFIX_TO_NORMALIZE.stream().anyMatch(property::endsWith)) {
-        value = normalizeWindowsPath(value);
-        if (projectBaseDir.isPresent()) {
-          value = value.replace(projectBaseDir.get(), PROJECT_BASE_DIR_PLACEHOLDER);
-        }
-      }
-      if (!value.isEmpty()) {
+      var normalizedValue = normalizeEntry(property, value, projectBaseDir);
+      if (!normalizedValue.isEmpty()) {
         normalized.put(
-          property, value
+          property, normalizedValue
         );
       }
     }
+
     return normalized;
   }
 
-  private static String takeOnlyFileNames(String paths) {
-    return Arrays.stream(paths.split(","))
-      .map(PathsNormalizer::normalizePath)
-      .filter(path -> !"main".equals(path))
+  private static String normalizeEntry(String property, String value, @Nullable String projectBaseDir) {
+    var paths = Arrays.stream(value.split(DELIMITER));
+    if (property.endsWith(BINARIES_SUFFIX) || property.endsWith(LIBRARIES_SUFFIX)) {
+      paths = paths
+        .map(PathsNormalizer::normalizeWindowsPath)
+        .map(PathsNormalizer::takeOnlyFileName);
+    }
+    if (PROPERTIES_SUFFIX_TO_NORMALIZE.stream().anyMatch(property::endsWith)) {
+      paths = paths.map(PathsNormalizer::normalizeWindowsPath);
+      if (projectBaseDir != null) {
+        paths = paths.map(path ->
+          path.replace(projectBaseDir, PROJECT_BASE_DIR_PLACEHOLDER)
+        );
+      }
+    }
+    return paths
+      .filter(path -> !IGNORED_PATHS.contains(path))
       .distinct()
       .sorted()
-      .collect(Collectors.joining(","));
+      .collect(Collectors.joining(DELIMITER));
   }
 
-  private static String normalizePath(String path) {
+  private static String takeOnlyFileName(String path) {
     path = normalizeWindowsPath(path);
     return path.substring(path.lastIndexOf('/') + 1);
   }
@@ -83,5 +103,4 @@ public class PathsNormalizer {
   private static String normalizeWindowsPath(String value) {
     return value.replace("\\", "/");
   }
-
 }

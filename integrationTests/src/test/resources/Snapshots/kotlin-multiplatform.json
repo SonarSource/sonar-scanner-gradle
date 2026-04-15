@@ -15,6 +15,6 @@
   "sonar.scanner.internal.dumpToFile": "<ignored>",
   "sonar.scanner.os": "<ignored>",
   "sonar.scanner.sonarcloudUrl": "https://sonarcloud.io",
-  "sonar.sources": "${PROJECT_BASE_DIR}/src/commonMain/kotlin,${PROJECT_BASE_DIR}/src/jvmMain/kotlin,${PROJECT_BASE_DIR}/src/jvmMain/java",
+  "sonar.sources": "${PROJECT_BASE_DIR}/src/commonMain/kotlin,${PROJECT_BASE_DIR}/src/jvmMain/java,${PROJECT_BASE_DIR}/src/jvmMain/kotlin",
   "sonar.working.directory": "${PROJECT_BASE_DIR}/build/sonar"
 }
