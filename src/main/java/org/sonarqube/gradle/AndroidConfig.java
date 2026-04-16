@@ -47,8 +47,6 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.testing.Test;
 import org.sonarqube.gradle.properties.SonarProperty;
 
-import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
-
 /**
  * The Android configuration for a project contains properties and classpath information for all the Android variants defined in it.
  */
@@ -59,6 +57,7 @@ public class AndroidConfig {
   private final List<Variant> variants;
   private Variant selectedVariant;
 
+  @SuppressWarnings({"java:S1612", "java:S1602"})
   public static AndroidConfig of(Project project) {
     AndroidComponentsExtension<?, ?, ?> androidComponentsExtension = project.getExtensions().getByType(AndroidComponentsExtension.class);
     var androidConfig = new AndroidConfig(project, androidComponentsExtension);
@@ -133,11 +132,16 @@ public class AndroidConfig {
    * Get the test libraries file collection for the variant selected for the analysis with Sonar.
    */
   public FileCollection getTestLibraries() {
-    FileCollection testLibraries = project.files(androidComponentsExtension.getSdkComponents().getBootClasspath());
+    FileCollection testLibraries = project.files();
+    boolean foundTestComponent = false;
     for (Component component : getVariant().getNestedComponents()) {
       if (component instanceof TestComponent) {
+        foundTestComponent = true;
         testLibraries = testLibraries.plus(getCompileClasspath(component));
       }
+    }
+    if (foundTestComponent) {
+      testLibraries = testLibraries.plus(project.files(androidComponentsExtension.getSdkComponents().getBootClasspath()));
     }
     return testLibraries;
   }
@@ -161,31 +165,29 @@ public class AndroidConfig {
     return tasks;
   }
 
-  private FileCollection getCompileClasspath(Component variant) {
+  private FileCollection getCompileClasspath(Component component) {
     try {
-      java.lang.reflect.Method method = variant.getClass().getMethod("getCompileClasspath");
-      return (FileCollection) method.invoke(variant);
+      java.lang.reflect.Method method = component.getClass().getMethod("getCompileClasspath");
+      return (FileCollection) method.invoke(component);
     } catch (NoSuchMethodException e) {
-      String configName = variant.getName() + "CompileClasspath";
+      String configName = component.getName() + "CompileClasspath";
       Configuration configuration = project.getConfigurations().getByName(configName);
 
-      return configuration.getIncoming().artifactView(viewConfiguration -> {
-        viewConfiguration.attributes(attributeContainer -> {
-          // Explicitly request the Android-optimized classes JAR to prevent ArtifactSelectionException
-          attributeContainer.attribute(
-            Attribute.of("artifactType", String.class),
-            "android-classes-jar"
-          );
-          // Explicitly request the Android JVM environment to satisfy missing target environment attributes
-          attributeContainer.attribute(
-            TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
-            project.getObjects().named(TargetJvmEnvironment.class, TargetJvmEnvironment.ANDROID)
-          );
-        });
-      }).getFiles();
+      return configuration.getIncoming().artifactView(viewConfiguration -> viewConfiguration.attributes(attributeContainer -> {
+        // Explicitly request the Android-optimized classes JAR to prevent ArtifactSelectionException
+        attributeContainer.attribute(
+          Attribute.of("artifactType", String.class),
+          "android-classes-jar"
+        );
+        // Explicitly request the Android JVM environment to satisfy missing target environment attributes
+        attributeContainer.attribute(
+          TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+          project.getObjects().named(TargetJvmEnvironment.class, TargetJvmEnvironment.ANDROID)
+        );
+      })).getFiles();
 
     } catch (Exception e) {
-      throw new IllegalStateException("Failed to compute compile classpath for variant: " + variant.getName(), e);
+      throw new IllegalStateException("Failed to compute compile classpath for variant: " + component.getName(), e);
     }
   }
 
