@@ -110,7 +110,7 @@ public final class SnapshotCases {
       c("android-gradle9", "/android-gradle9", "--quiet", "--console=plain")
         .minGradle("9.0.0")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.2.0"),
       c("java-gradle-simple", "/java-gradle-simple", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-custom-config", "/java-gradle-custom-config", "compileJava", "compileTestJava")
@@ -130,9 +130,9 @@ public final class SnapshotCases {
       c("java-gradle-lazy-configuration", "/java-gradle-lazy-configuration", "test")
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-jacoco-before-7", "/java-gradle-jacoco-before-7", "processResources", "processTestResources", "test", "jacocoTestReport")
-        .maxGradleExclusive("7.0.0"),
+        .maxGradleExclusive("7.2.0"),
       c("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", "processResources", "processTestResources", "test", "jacocoTestReport")
-        .gradleRange("7.0.0", "9.0.0"),
+        .gradleRange("7.2.0", "9.0.0"),
       c("kotlin-multiplatform", "/kotlin-multiplatform", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")
         .gradleRange("6.8.3", "9.0.0"),
       c("kotlin-multiplatform-with-submodule", "/kotlin-multiplatform-with-submodule", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")
@@ -153,25 +153,25 @@ public final class SnapshotCases {
         .maxGradleExclusive("9.0.0"),
       c("android-gradle-default-variant", "/android-gradle-default-variant", "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.2.0"),
       c("android-gradle-dynamic-feature", "/android-gradle-dynamic-feature", "test", "compileDebugAndroidTestJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.2.0"),
       c("android-gradle-nondefault-variant", "/android-gradle-nondefault-variant", "test")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
-      c("multi-module-android-studio", "/multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.2.0"),
+      c("multi-module-android-studio", "/multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.2.0"),
       c("android-testing-blueprint-with-dynamic-feature-module", "/AndroidTestingBlueprintWithDynamicFeatureModule", "assembleDebug",
         "compileFlavor1DebugUnitTestJavaWithJavac", "compileFlavor1DebugAndroidTestJavaWithJavac", "compileDebugAndroidTestJavaWithJavac", "compileDebugUnitTestJavaWithJavac",
         "compileTestJava")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.2.0"),
       c("android-gradle-no-debug", "/android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
+        .minAndroidGradle("7.2.0"),
       c("multi-module-android-studio-lint", "/multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0")
+        .minAndroidGradle("7.2.0")
     );
   }
 

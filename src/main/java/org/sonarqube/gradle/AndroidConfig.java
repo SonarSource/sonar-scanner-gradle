@@ -104,12 +104,17 @@ public class AndroidConfig {
     return selectedVariant;
   }
 
+
+  private FileCollection getCompileClasspath(Component variant) {
+    return project.getConfigurations().getByName(variant.getName() + "CompileClasspath").getIncoming().getFiles();
+  }
   /**
    * Get the main libraries file collection for the variant selected for the analysis with Sonar.
    */
   public FileCollection getMainLibraries() {
     FileCollection mainLibraries = project.files(androidComponentsExtension.getSdkComponents().getBootClasspath());
-    mainLibraries = mainLibraries.plus(getVariant().getCompileClasspath());
+    // for 7.2.0 use project.getConfigurations().getByName("debugCompileClasspath").getIncoming().getFiles()
+    mainLibraries = mainLibraries.plus(getCompileClasspath(getVariant())); // https://developer.android.com/reference/tools/gradle-api/7.2/com/android/build/api/variant/DynamicFeatureVariant
     return mainLibraries;
   }
 
@@ -120,7 +125,7 @@ public class AndroidConfig {
     FileCollection testLibraries = project.files(androidComponentsExtension.getSdkComponents().getBootClasspath());
     for (Component component : getVariant().getNestedComponents()) {
       if (component instanceof TestComponent) {
-        testLibraries = testLibraries.plus(component.getCompileClasspath());
+        testLibraries = testLibraries.plus(getCompileClasspath(component));
       }
     }
     return testLibraries;

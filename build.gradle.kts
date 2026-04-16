@@ -79,10 +79,10 @@ val archunitVersion = "1.2.1"
 dependencies {
     implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:$sonarScannerJavaLibraryVersion")
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
-    compileOnly("com.android.tools.build:gradle:8.1.1")
+    compileOnly("com.android.tools.build:gradle:7.2.0")
     compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
     testImplementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
-    testImplementation("com.android.tools.build:gradle:8.1.1")
+    testImplementation("com.android.tools.build:gradle:7.2.0")
     testImplementation(localGroovy())
     testImplementation("org.assertj:assertj-core:3.26.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
