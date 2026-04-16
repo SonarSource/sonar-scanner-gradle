@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle.snapshot;
 
+import com.vdurmont.semver4j.Semver;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -60,7 +61,19 @@ public final class SnapshotCases {
     }
 
     public boolean shouldRun() {
-      return (minGradle == null || !AbstractGradleIT.getGradleVersion().isLowerThan(minGradle)) && (maxGradleExclusive == null || AbstractGradleIT.getGradleVersion().isLowerThan(maxGradleExclusive)) && (!requiresAndroid || (AbstractGradleIT.getAndroidGradleVersion() != null && (minAndroidGradle == null || AbstractGradleIT.getAndroidGradleVersion().isGreaterThanOrEqualTo(minAndroidGradle))));
+      final Semver androidGradleVersion = AbstractGradleIT.getAndroidGradleVersion();
+      if (
+        requiresAndroid && androidGradleVersion == null ||
+          !requiresAndroid && androidGradleVersion != null
+      ) {
+        return false;
+      }
+      final Semver gradleVersion = AbstractGradleIT.getGradleVersion();
+      final boolean gradleVersionSatisfied = (minGradle == null || !gradleVersion.isLowerThan(minGradle)) &&
+        (maxGradleExclusive == null || gradleVersion.isLowerThan(maxGradleExclusive));
+      final boolean androidGradleVersionSatisfied = minAndroidGradle == null ||
+        (androidGradleVersion != null && !androidGradleVersion.isLowerThan(minAndroidGradle));
+      return gradleVersionSatisfied && androidGradleVersionSatisfied;
     }
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
