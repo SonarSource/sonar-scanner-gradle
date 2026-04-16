@@ -23,17 +23,31 @@ import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.Component;
 import com.android.build.api.variant.TestComponent;
+import com.android.build.api.variant.UnitTest;
 import com.android.build.api.variant.Variant;
+import com.android.build.gradle.internal.lint.AndroidLintTask;
+import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.java.TargetJvmEnvironment;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.testing.Test;
+import org.sonarqube.gradle.properties.SonarProperty;
+
+import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 
 /**
  * The Android configuration for a project contains properties and classpath information for all the Android variants defined in it.
@@ -84,7 +98,9 @@ public class AndroidConfig {
 
     String configuredVariantName = SonarQubePlugin.getConfiguredAndroidVariant(project);
     if (configuredVariantName != null) {
-      Optional<Variant> configuredVariant = variants.stream().filter(variant -> variant.getName().equals(configuredVariantName)).findFirst();
+      Optional<Variant> configuredVariant = variants.stream()
+        .filter(variant -> variant.getName().equals(configuredVariantName))
+        .findFirst();
       if (configuredVariant.isEmpty()) {
         throw new IllegalStateException(
           "Unable to find variant '"
@@ -94,7 +110,7 @@ public class AndroidConfig {
       }
       selectedVariant = configuredVariant.get();
     } else {
-      // Find the variant that is the target for Android (integration) tests in the project. If no variant has Android tests, return the first we find.
+      // Find the variant that is the target for Android tests in the project. If no variant has Android tests, return the first we find.
       selectedVariant = variants.stream()
         .filter(v -> v.getNestedComponents().stream().anyMatch(AndroidTest.class::isInstance))
         .findFirst()
@@ -109,7 +125,7 @@ public class AndroidConfig {
    */
   public FileCollection getMainLibraries() {
     FileCollection mainLibraries = project.files(androidComponentsExtension.getSdkComponents().getBootClasspath());
-    mainLibraries = mainLibraries.plus(getVariant().getCompileClasspath());
+    mainLibraries = mainLibraries.plus(getCompileClasspath(getVariant()));
     return mainLibraries;
   }
 
@@ -120,7 +136,7 @@ public class AndroidConfig {
     FileCollection testLibraries = project.files(androidComponentsExtension.getSdkComponents().getBootClasspath());
     for (Component component : getVariant().getNestedComponents()) {
       if (component instanceof TestComponent) {
-        testLibraries = testLibraries.plus(component.getCompileClasspath());
+        testLibraries = testLibraries.plus(getCompileClasspath(component));
       }
     }
     return testLibraries;
@@ -143,6 +159,91 @@ public class AndroidConfig {
     addTaskByName(tasks, "test" + variantName + "UnitTest", project);
 
     return tasks;
+  }
+
+  private FileCollection getCompileClasspath(Component variant) {
+    try {
+      java.lang.reflect.Method method = variant.getClass().getMethod("getCompileClasspath");
+      return (FileCollection) method.invoke(variant);
+    } catch (NoSuchMethodException e) {
+      String configName = variant.getName() + "CompileClasspath";
+      Configuration configuration = project.getConfigurations().getByName(configName);
+
+      return configuration.getIncoming().artifactView(viewConfiguration -> {
+        viewConfiguration.attributes(attributeContainer -> {
+          // Explicitly request the Android-optimized classes JAR to prevent ArtifactSelectionException
+          attributeContainer.attribute(
+            Attribute.of("artifactType", String.class),
+            "android-classes-jar"
+          );
+          // Explicitly request the Android JVM environment to satisfy missing target environment attributes
+          attributeContainer.attribute(
+            TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+            project.getObjects().named(TargetJvmEnvironment.class, TargetJvmEnvironment.ANDROID)
+          );
+        });
+      }).getFiles();
+
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to compute compile classpath for variant: " + variant.getName(), e);
+    }
+  }
+
+  /**
+   * Populate the properties of an Android variant with Android specific value.
+   */
+  private void configureProperties(Map<String, Object> properties, Variant variant) {
+    properties.put(AndroidProperties.ANDROID_DETECTED, true);
+    properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, variant.getMinSdk().getApiLevel());
+    properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, variant.getMinSdk().getApiLevel());
+  }
+
+  /**
+   * Compute the JUnit test report paths for a given Android variant and populate properties with them.
+   */
+  private void configureTestReports(Map<String, Object> properties, Variant variant) {
+    List<DirectoryProperty> directories = new ArrayList<>();
+
+    variant.getNestedComponents().stream()
+      .filter(UnitTest.class::isInstance)
+      .forEach(component ->
+        project.getTasks().withType(Test.class).stream()
+          .filter(task -> task.getName().equals("test" + SonarUtils.capitalize(component.getName())))
+          .map(task -> task.getReports().getJunitXml().getOutputLocation())
+          .forEach(directories::add)
+      );
+
+    variant.getNestedComponents().stream()
+      .filter(AndroidTest.class::isInstance)
+      .forEach(component ->
+        project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
+          .filter(task -> component.getName().equals(task.getVariantName()))
+          .map(DeviceProviderInstrumentTestTask::getReportsDir)
+          .filter(DirectoryProperty::isPresent)
+          .forEach(directories::add)
+      );
+
+    if (directories.isEmpty()) {
+      return;
+    }
+
+    List<File> value = directories.stream()
+      .filter(Provider::isPresent)
+      .map(d -> d.get().getAsFile())
+      .collect(Collectors.toList());
+    properties.put(SonarProperty.JUNIT_REPORT_PATHS, value);
+  }
+
+  /**
+   * Compute the Android lint report path for a given Android variant and populate properties with it.
+   */
+  private void configureLintReports(Map<String, Object> properties, Variant variant) {
+    project.getTasks().withType(AndroidLintTask.class).stream()
+      .filter(task -> task.getXmlReportOutputFile().isPresent())
+      .filter(task -> task.getVariantName().equals(variant.getName()))
+      .map(task -> task.getXmlReportOutputFile().get().getAsFile())
+      .findFirst()
+      .ifPresent(output -> properties.put(SonarProperty.ANDROID_LINT_REPORT_PATHS, output));
   }
 
 }
