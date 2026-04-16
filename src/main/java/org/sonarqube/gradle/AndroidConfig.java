@@ -19,9 +19,13 @@
  */
 package org.sonarqube.gradle;
 
+import com.android.build.api.artifact.SingleArtifact;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
+import com.android.build.api.variant.AndroidVersion;
 import com.android.build.api.variant.Component;
+import com.android.build.api.variant.SourceDirectories;
+import com.android.build.api.variant.Sources;
 import com.android.build.api.variant.TestComponent;
 import com.android.build.api.variant.UnitTest;
 import com.android.build.api.variant.Variant;
@@ -29,27 +33,29 @@ import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.java.TargetJvmEnvironment;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.testing.Test;
 import org.sonarqube.gradle.properties.SonarProperty;
 
-/**
- * The Android configuration for a project contains properties and classpath information for all the Android variants defined in it.
- */
+import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
+
 public class AndroidConfig {
 
   private final Project project;
@@ -166,47 +172,68 @@ public class AndroidConfig {
   }
 
   private FileCollection getCompileClasspath(Component component) {
-    try {
-      java.lang.reflect.Method method = component.getClass().getMethod("getCompileClasspath");
-      return (FileCollection) method.invoke(component);
-    } catch (NoSuchMethodException e) {
-      String configName = component.getName() + "CompileClasspath";
-      Configuration configuration = project.getConfigurations().getByName(configName);
+    String configName = component.getName() + "CompileClasspath";
+    Configuration configuration = project.getConfigurations().getByName(configName);
 
-      return configuration.getIncoming().artifactView(viewConfiguration -> viewConfiguration.attributes(attributeContainer -> {
-        // Explicitly request the Android-optimized classes JAR to prevent ArtifactSelectionException
-        attributeContainer.attribute(
-          Attribute.of("artifactType", String.class),
-          "android-classes-jar"
-        );
-        // Explicitly request the Android JVM environment to satisfy missing target environment attributes
-        attributeContainer.attribute(
-          TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
-          project.getObjects().named(TargetJvmEnvironment.class, TargetJvmEnvironment.ANDROID)
-        );
-      })).getFiles();
-
-    } catch (Exception e) {
-      throw new IllegalStateException("Failed to compute compile classpath for variant: " + component.getName(), e);
-    }
+    return configuration.getIncoming().artifactView(viewConfiguration -> viewConfiguration.attributes(attributeContainer -> {
+      // Explicitly request the Android-optimized classes JAR to prevent ArtifactSelectionException
+      attributeContainer.attribute(
+        Attribute.of("artifactType", String.class),
+        "android-classes-jar"
+      );
+      // Explicitly request the Android JVM environment to satisfy missing target environment attributes
+      attributeContainer.attribute(
+        TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+        project.getObjects().named(TargetJvmEnvironment.class, TargetJvmEnvironment.ANDROID)
+      );
+    })).getFiles();
   }
 
   /**
    * Populate the properties of an Android variant with Android specific value.
    */
-  private void configureProperties(Map<String, Object> properties, Variant variant) {
+  private void configureProperties(Map<String, Object> properties) {
+    configureAndroidProperties(properties);
+    configureTestReports(properties);
+    configureLintReports(properties);
+
+    if (project.getPlugins().hasPlugin("com.android.test")) {
+      // Instrumentation tests only
+      populateSonarQubeProps(properties, getVariant(), true);
+      return;
+    }
+    populateSonarQubeProps(properties, getVariant(), false);
+    for (Component component : getVariant().getNestedComponents()) {
+      if (component instanceof TestComponent) {
+        populateSonarQubeProps(properties, component, true);
+      }
+    }
+  }
+
+  private void configureAndroidProperties(Map<String, Object> properties) {
     properties.put(AndroidProperties.ANDROID_DETECTED, true);
-    properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, variant.getMinSdk().getApiLevel());
-    properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, variant.getMinSdk().getApiLevel());
+    if (SonarQubePlugin.getConfiguredAndroidVariant(project) != null) {
+      AndroidVersion minSdkVersion = getVariant().getMinSdk();
+      properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdkVersion.getApiLevel());
+      properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdkVersion.getApiLevel());
+    } else {
+      Set<Integer> minSdks = variants.stream()
+        .map(variant -> variant.getMinSdk().getApiLevel())
+        .collect(Collectors.toSet());
+      if (!minSdks.isEmpty()) {
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, Collections.min(minSdks));
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, Collections.max(minSdks));
+      }
+    }
   }
 
   /**
    * Compute the JUnit test report paths for a given Android variant and populate properties with them.
    */
-  private void configureTestReports(Map<String, Object> properties, Variant variant) {
+  private void configureTestReports(Map<String, Object> properties) {
     List<DirectoryProperty> directories = new ArrayList<>();
 
-    variant.getNestedComponents().stream()
+    getVariant().getNestedComponents().stream()
       .filter(UnitTest.class::isInstance)
       .forEach(component ->
         project.getTasks().withType(Test.class).stream()
@@ -215,7 +242,7 @@ public class AndroidConfig {
           .forEach(directories::add)
       );
 
-    variant.getNestedComponents().stream()
+    getVariant().getNestedComponents().stream()
       .filter(AndroidTest.class::isInstance)
       .forEach(component ->
         project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
@@ -239,13 +266,92 @@ public class AndroidConfig {
   /**
    * Compute the Android lint report path for a given Android variant and populate properties with it.
    */
-  private void configureLintReports(Map<String, Object> properties, Variant variant) {
+  private void configureLintReports(Map<String, Object> properties) {
     project.getTasks().withType(AndroidLintTask.class).stream()
       .filter(task -> task.getXmlReportOutputFile().isPresent())
-      .filter(task -> task.getVariantName().equals(variant.getName()))
+      .filter(task -> task.getVariantName().equals(getVariant().getName()))
       .map(task -> task.getXmlReportOutputFile().get().getAsFile())
       .findFirst()
       .ifPresent(output -> properties.put(SonarProperty.ANDROID_LINT_REPORT_PATHS, output));
+  }
+
+  public void populateSonarQubeProps(Map<String, Object> properties, Component component, boolean isTest) {
+    List<File> srcDirsProvider = getFilesFromSourceSet(project, component.getSources()).get();
+    appendSourcesProp(properties, srcDirsProvider, isTest);
+
+    // TODO: populate JDK properties
+
+    Provider<List<File>> destinationDirsProvider = getCompiledClasses(project, component);
+    if (isTest) {
+      properties.put("sonar.java.test.binaries", destinationDirsProvider);
+    } else {
+      properties.put("sonar.java.binaries", destinationDirsProvider);
+      properties.put("sonar.binaries", destinationDirsProvider);
+    }
+  }
+
+  private Provider<List<File>> getFilesFromSourceSet(Project project, Sources sources) {
+    Provider<List<File>> javaDirs = extractFlat(project, sources.getJava());
+    Provider<List<File>> kotlinDirs = extractFlat(project, sources.getKotlin());
+    Provider<List<File>> aidlDirs = extractFlat(project, sources.getAidl());
+    Provider<List<File>> rsDirs = extractFlat(project, sources.getRenderscript());
+
+    Provider<List<File>> resDirs = extractLayered(project, sources.getRes());
+    Provider<List<File>> assetsDirs = extractLayered(project, sources.getAssets());
+
+    Provider<List<File>> manifestFiles = getVariant().getArtifacts()
+      .get(SingleArtifact.MERGED_MANIFEST.INSTANCE)
+      .map(regularFile -> Collections.singletonList(regularFile.getAsFile()));
+
+    // Dynamically resolve C/C++ via the incubating getByName API
+    Provider<List<File>> cDirs = extractFlat(project, sources.getByName("c"));
+    Provider<List<File>> cppDirs = extractFlat(project, sources.getByName("cpp"));
+
+    // Zip providers together to maintain lazy evaluation
+    return javaDirs
+      .zip(kotlinDirs, AndroidConfig::combine)
+      .zip(resDirs, AndroidConfig::combine)
+      .zip(assetsDirs, AndroidConfig::combine)
+      .zip(manifestFiles, AndroidConfig::combine)
+      .zip(aidlDirs, AndroidConfig::combine)
+      .zip(rsDirs, AndroidConfig::combine)
+      .zip(cDirs, AndroidConfig::combine)
+      .zip(cppDirs, AndroidConfig::combine);
+  }
+
+  private static Provider<List<File>> extractFlat(Project project, @Nullable SourceDirectories.Flat flat) {
+    if (flat == null) {
+      return project.provider(Collections::emptyList);
+    }
+    return flat.getAll().map(directories ->
+      directories.stream().map(Directory::getAsFile).collect(Collectors.toList())
+    );
+  }
+
+  private static Provider<List<File>> extractLayered(Project project, @Nullable SourceDirectories.Layered layered) {
+    if (layered == null) {
+      return project.provider(Collections::emptyList);
+    }
+    return layered.getAll().map(directories ->
+      directories.stream()
+        .flatMap(dirs -> dirs.stream().map(Directory::getAsFile))
+        .collect(Collectors.toList())
+    );
+  }
+
+  private static List<File> combine(List<File> list1, List<File> list2) {
+    List<File> combined = new ArrayList<>(list1);
+    combined.addAll(list2);
+    return combined;
+  }
+
+  private static Provider<List<File>> getCompiledClasses(Project project, Component component) {
+    return project.provider(() -> {
+      File defaultJavaPath = project.getLayout().getBuildDirectory()
+        .dir("intermediates/javac/" + component.getName() + "/classes")
+        .get().getAsFile();
+      return Collections.singletonList(defaultJavaPath);
+    });
   }
 
 }
