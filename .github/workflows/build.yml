@@ -148,7 +148,8 @@ jobs:
           - gradle_version: "6.8.3"
           - gradle_version: "5.6.4"
     name: >
-      QA J11 - Gradle ${{ matrix.item.gradle_version }} Android ${{ matrix.item.android_gradle_version }}
+      QA J11 - Gradle ${{ matrix.item.gradle_version }} 
+      ${{ matrix.item.android_gradle_version && format(' Android {0}', matrix.item.android_gradle_version) || '' }}
     env:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
@@ -161,7 +162,7 @@ jobs:
       - uses: ./.github/actions/qa
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
-          android-gradle-version: ${{ matrix.item.android_gradle_version }}
+          android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
 
