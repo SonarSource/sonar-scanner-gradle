@@ -21,7 +21,7 @@ on:
 
 jobs:
   cleanup:
-    runs-on: sonar-xs-public
+    runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write
       contents: read
