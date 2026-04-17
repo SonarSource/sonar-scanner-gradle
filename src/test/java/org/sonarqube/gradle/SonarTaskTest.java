@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SonarTaskTest {
 
-  private final ProjectProperties projectProperties = new ProjectProperties("", true, List.of(), List.of(), List.of(), List.of());
+  private final ProjectProperties projectProperties = new ProjectProperties("", true, List.of(), List.of(), List.of(), List.of(), List.of());
 
   @Test
   void resolveSonarJavaLibraries_skips_resolution_when_no_configuration_provided() {
@@ -64,7 +64,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of());
+    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of());
     SonarTask.resolveSonarJavaLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
             .hasSize(2)
@@ -116,7 +116,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of());
+    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of());
     SonarTask.resolveSonarJavaTestLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
             .hasSize(1)
@@ -202,6 +202,7 @@ class SonarTaskTest {
     ProjectProperties props = new ProjectProperties("", true,
       List.of(lib1.toAbsolutePath().toString(), lib2.toAbsolutePath().toString()),
       List.of(testLib1.toAbsolutePath().toString()),
+      List.of(),
       List.of(),
       List.of());
     ResolutionSerializer.write(resolverFile, props);

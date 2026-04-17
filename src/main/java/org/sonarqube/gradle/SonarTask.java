@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +62,7 @@ import static org.sonarqube.gradle.properties.SonarProperty.JAVA_BINARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.JAVA_LIBRARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.JAVA_TEST_LIBRARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.LIBRARIES;
+import static org.sonarqube.gradle.properties.SonarProperty.PROJECT_SOURCE_DIRS;
 import static org.sonarqube.gradle.properties.SonarProperty.VERBOSE;
 
 /**
@@ -183,6 +185,12 @@ public class SonarTask extends ConventionTask {
         return;
       }
       ProjectProperties resolvedProperties = prop.get();
+
+      if (resolvedProperties.androidSources != null) {
+        List<File> sources = resolvedProperties.androidSources.stream().map(File::new).collect(Collectors.toList());
+        resolveSources(resolvedProperties, sources, result);
+      }
+
       List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
 
       // Add mainLibraries if present (for Android projects)
@@ -205,6 +213,32 @@ public class SonarTask extends ConventionTask {
     } catch (IOException e) {
       LOGGER.warn("Could not read from resolver file {}", resolverFile, e);
     }
+  }
+
+  static void resolveSources(ProjectProperties projectProperties, @Nullable Collection<File> sources, Map<String, String> properties) {
+    if (sources == null || sources.isEmpty()) {
+      return;
+    }
+
+    boolean isTopLevelProject = projectProperties.isRootProject;
+    if (isTopLevelProject) {
+      LOGGER.debug("Resolving Android sources for the top-level project.");
+    } else {
+      LOGGER.debug("Resolving Android sources for {}.", projectProperties.projectName);
+    }
+
+    List<File> resolvedSources = SonarUtils.exists(sources);
+    String resolvedAsAString = resolvedSources.stream()
+      .filter(File::exists)
+      .map(File::getAbsolutePath)
+      .collect(Collectors.joining(","));
+
+    String propertyKey = isTopLevelProject ? PROJECT_SOURCE_DIRS : (projectProperties.projectName + "." + PROJECT_SOURCE_DIRS);
+
+    String sourcesString = properties.getOrDefault(propertyKey, "");
+    sourcesString = sourcesString.isEmpty() ? resolvedAsAString : sourcesString + "," + resolvedAsAString;
+
+    properties.put(propertyKey, sourcesString);
   }
 
   /**
@@ -362,7 +396,7 @@ public class SonarTask extends ConventionTask {
         // empty assignments for `sonar.sources` and `sonar.tests` are required,
         // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
         // This can eventually lead to a double indexing issue in the scanner-engine.
-        if (filtered.isEmpty() && !SonarProperty.PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
+        if (filtered.isEmpty() && !PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
           && !SonarProperty.PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
           return null;
         }
@@ -550,7 +584,7 @@ public class SonarTask extends ConventionTask {
       return;
     }
 
-    mapProperties = resolveJavaLibraries(mapProperties);
+    mapProperties = resolveFiles(mapProperties);
     filterPathProperties(mapProperties, this.userDefinedKeys.get());
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
@@ -575,13 +609,13 @@ public class SonarTask extends ConventionTask {
   }
 
   /**
-   * Finish the configuration of `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the class paths that
+   * Finish the configuration of `sonar.sources`, `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the Android sources and class paths that
    * were attached to the task at configuration time.
    * The analysis parameters are added to a copy of the properties given as input.
    */
-  private Map<String, String> resolveJavaLibraries(Map<String, String> properties) {
+  private Map<String, String> resolveFiles(Map<String, String> properties) {
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Resolving classpath entries");
+      LOGGER.debug("Resolving sources and classpath entries");
     }
 
     final Map<String, String> result = new HashMap<>(properties);

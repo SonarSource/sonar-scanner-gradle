@@ -21,16 +21,15 @@ package org.sonarqube.gradle;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.nio.file.Files;
-import java.util.Optional;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Optional;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 
 public class ResolutionSerializer {
 
@@ -59,7 +58,8 @@ public class ResolutionSerializer {
     if (properties.compileClasspath.isEmpty()
       && properties.testCompileClasspath.isEmpty()
       && properties.mainLibraries.isEmpty()
-      && properties.testLibraries.isEmpty()) {
+      && properties.testLibraries.isEmpty()
+      && properties.androidSources.isEmpty()) {
       // make sure we do not reuse output from previous execution
       Files.deleteIfExists(output.toPath());
       return;

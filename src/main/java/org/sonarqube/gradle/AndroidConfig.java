@@ -19,13 +19,10 @@
  */
 package org.sonarqube.gradle;
 
-import com.android.build.api.artifact.SingleArtifact;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.AndroidVersion;
 import com.android.build.api.variant.Component;
-import com.android.build.api.variant.SourceDirectories;
-import com.android.build.api.variant.Sources;
 import com.android.build.api.variant.TestComponent;
 import com.android.build.api.variant.UnitTest;
 import com.android.build.api.variant.Variant;
@@ -40,21 +37,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.java.TargetJvmEnvironment;
-import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.testing.Test;
 import org.sonarqube.gradle.properties.SonarProperty;
-
-import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
 
 public class AndroidConfig {
 
@@ -80,6 +73,15 @@ public class AndroidConfig {
     } catch (UnknownTaskException e) {
       return false;
     }
+  }
+
+  private static Provider<List<File>> getCompiledClasses(Project project, Component component) {
+    return project.provider(() -> {
+      File defaultJavaPath = project.getLayout().getBuildDirectory()
+        .dir("intermediates/javac/" + component.getName() + "/classes")
+        .get().getAsFile();
+      return Collections.singletonList(defaultJavaPath);
+    });
   }
 
   private AndroidConfig(Project project, AndroidComponentsExtension<?, ?, ?> androidComponentsExtension) {
@@ -152,6 +154,26 @@ public class AndroidConfig {
     return testLibraries;
   }
 
+  public FileCollection getAndroidSources() {
+    return project.files(
+      getVariant().getSources().getJava().getAll(),
+      getVariant().getSources().getKotlin().getAll(),
+      //getVariant().getSources().getAidl().getAll(),
+      //getVariant().getSources().getRenderscript().getAll(),
+
+      // Works for layered sources too
+      //getVariant().getSources().getRes().getAll(),
+      getVariant().getSources().getAssets().getAll(),
+
+      // Works natively with Provider<RegularFile> without needing to map to getAsFile()
+      //getVariant().getArtifacts().get(SingleArtifact.MERGED_MANIFEST.INSTANCE),
+
+      // Works with the dynamic C/C++ API
+      getVariant().getSources().getByName("c").getAll(),
+      getVariant().getSources().getByName("cpp").getAll()
+    );
+  }
+
   /**
    * Get the Android tasks on which Sonar tasks need to depend for the variant selected for the analysis with Sonar.
    */
@@ -192,7 +214,7 @@ public class AndroidConfig {
   /**
    * Populate the properties of an Android variant with Android specific value.
    */
-  private void configureProperties(Map<String, Object> properties) {
+  public void configureProperties(Map<String, Object> properties) {
     configureAndroidProperties(properties);
     configureTestReports(properties);
     configureLintReports(properties);
@@ -275,10 +297,7 @@ public class AndroidConfig {
       .ifPresent(output -> properties.put(SonarProperty.ANDROID_LINT_REPORT_PATHS, output));
   }
 
-  public void populateSonarQubeProps(Map<String, Object> properties, Component component, boolean isTest) {
-    List<File> srcDirsProvider = getFilesFromSourceSet(project, component.getSources()).get();
-    appendSourcesProp(properties, srcDirsProvider, isTest);
-
+  private void populateSonarQubeProps(Map<String, Object> properties, Component component, boolean isTest) {
     // TODO: populate JDK properties
 
     Provider<List<File>> destinationDirsProvider = getCompiledClasses(project, component);
@@ -288,70 +307,6 @@ public class AndroidConfig {
       properties.put("sonar.java.binaries", destinationDirsProvider);
       properties.put("sonar.binaries", destinationDirsProvider);
     }
-  }
-
-  private Provider<List<File>> getFilesFromSourceSet(Project project, Sources sources) {
-    Provider<List<File>> javaDirs = extractFlat(project, sources.getJava());
-    Provider<List<File>> kotlinDirs = extractFlat(project, sources.getKotlin());
-    Provider<List<File>> aidlDirs = extractFlat(project, sources.getAidl());
-    Provider<List<File>> rsDirs = extractFlat(project, sources.getRenderscript());
-
-    Provider<List<File>> resDirs = extractLayered(project, sources.getRes());
-    Provider<List<File>> assetsDirs = extractLayered(project, sources.getAssets());
-
-    Provider<List<File>> manifestFiles = getVariant().getArtifacts()
-      .get(SingleArtifact.MERGED_MANIFEST.INSTANCE)
-      .map(regularFile -> Collections.singletonList(regularFile.getAsFile()));
-
-    // Dynamically resolve C/C++ via the incubating getByName API
-    Provider<List<File>> cDirs = extractFlat(project, sources.getByName("c"));
-    Provider<List<File>> cppDirs = extractFlat(project, sources.getByName("cpp"));
-
-    // Zip providers together to maintain lazy evaluation
-    return javaDirs
-      .zip(kotlinDirs, AndroidConfig::combine)
-      .zip(resDirs, AndroidConfig::combine)
-      .zip(assetsDirs, AndroidConfig::combine)
-      .zip(manifestFiles, AndroidConfig::combine)
-      .zip(aidlDirs, AndroidConfig::combine)
-      .zip(rsDirs, AndroidConfig::combine)
-      .zip(cDirs, AndroidConfig::combine)
-      .zip(cppDirs, AndroidConfig::combine);
-  }
-
-  private static Provider<List<File>> extractFlat(Project project, @Nullable SourceDirectories.Flat flat) {
-    if (flat == null) {
-      return project.provider(Collections::emptyList);
-    }
-    return flat.getAll().map(directories ->
-      directories.stream().map(Directory::getAsFile).collect(Collectors.toList())
-    );
-  }
-
-  private static Provider<List<File>> extractLayered(Project project, @Nullable SourceDirectories.Layered layered) {
-    if (layered == null) {
-      return project.provider(Collections::emptyList);
-    }
-    return layered.getAll().map(directories ->
-      directories.stream()
-        .flatMap(dirs -> dirs.stream().map(Directory::getAsFile))
-        .collect(Collectors.toList())
-    );
-  }
-
-  private static List<File> combine(List<File> list1, List<File> list2) {
-    List<File> combined = new ArrayList<>(list1);
-    combined.addAll(list2);
-    return combined;
-  }
-
-  private static Provider<List<File>> getCompiledClasses(Project project, Component component) {
-    return project.provider(() -> {
-      File defaultJavaPath = project.getLayout().getBuildDirectory()
-        .dir("intermediates/javac/" + component.getName() + "/classes")
-        .get().getAsFile();
-      return Collections.singletonList(defaultJavaPath);
-    });
   }
 
 }
