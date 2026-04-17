@@ -21,11 +21,9 @@ package org.sonarqube.gradle.snapshot;
 
 import com.vdurmont.semver4j.Semver;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.sonarqube.gradle.run_configuration.DefaultRunConfiguration;
 import org.sonarqube.gradle.support.AbstractGradleIT;
@@ -42,19 +40,19 @@ public final class SnapshotCases {
 
   public static final class Case {
     private final String name;
-    private final String project;
     private final List<String> args;
+    private String projectDir;
     private String minGradle;
     private String maxGradleExclusive;
-    private String minAndroidGradle;
     private String subdir;
     private boolean requiresAndroid;
 
-    private Case(String name, String project, String... args) {
+    private Case(String name, String... args) {
       this.name = name;
-      this.project = project;
+      this.projectDir = name;
       this.args = List.of(args);
     }
+
 
     public String name() {
       return name;
@@ -62,22 +60,16 @@ public final class SnapshotCases {
 
     public boolean shouldRun() {
       final Semver androidGradleVersion = AbstractGradleIT.getAndroidGradleVersion();
-      if (
-        requiresAndroid && androidGradleVersion == null ||
-          !requiresAndroid && androidGradleVersion != null
-      ) {
+      if (requiresAndroid ^ (androidGradleVersion != null)) {
         return false;
       }
       final Semver gradleVersion = AbstractGradleIT.getGradleVersion();
-      final boolean gradleVersionSatisfied = (minGradle == null || !gradleVersion.isLowerThan(minGradle)) &&
+      return (minGradle == null || !gradleVersion.isLowerThan(minGradle)) &&
         (maxGradleExclusive == null || gradleVersion.isLowerThan(maxGradleExclusive));
-      final boolean androidGradleVersionSatisfied = minAndroidGradle == null ||
-        (androidGradleVersion != null && !androidGradleVersion.isLowerThan(minAndroidGradle));
-      return gradleVersionSatisfied && androidGradleVersionSatisfied;
     }
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
-      Properties p = test.runGradlewSonarSimulationModeWithEnv(project, subdir, Collections.emptyMap(), new DefaultRunConfiguration(), args.toArray(String[]::new));
+      Properties p = test.runGradlewSonarSimulationModeWithEnv("/" + projectDir, subdir, Collections.emptyMap(), new DefaultRunConfiguration(), args.toArray(String[]::new));
       return SnapshotNormalizer.normalize(p);
     }
 
@@ -100,13 +92,13 @@ public final class SnapshotCases {
       return this;
     }
 
-    public Case minAndroidGradle(String value) {
-      this.minAndroidGradle = value;
+    public Case subdir(String subdir) {
+      this.subdir = subdir;
       return this;
     }
 
-    public Case subdir(String subdir) {
-      this.subdir = subdir;
+    public Case withProjectDir(String projectDir) {
+      this.projectDir = projectDir;
       return this;
     }
 
@@ -118,77 +110,71 @@ public final class SnapshotCases {
 
   private static List<Case> cases() {
     return List.of(
-      c("gradle-9-example", "/gradle-9-example", "--console=plain", "build")
+      c("gradle-9-example", "--console=plain", "build")
         .minGradle("9.0.0"),
-      c("android-gradle9", "/android-gradle9", "--quiet", "--console=plain")
+      c("android-gradle9", "--quiet", "--console=plain")
         .minGradle("9.0.0")
-        .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
-      c("java-gradle-simple", "/java-gradle-simple", "compileJava", "compileTestJava")
+        .requiresAndroid(),
+      c("java-gradle-simple", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
-      c("java-gradle-custom-config", "/java-gradle-custom-config", "compileJava", "compileTestJava")
+      c("java-gradle-custom-config", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
-      c("java-gradle-user-properties", "/java-gradle-user-properties", "compileJava", "compileTestJava"),
-      c("java-groovy-tests-gradle", "/java-groovy-tests-gradle", "build")
+      c("java-gradle-user-properties", "compileJava", "compileTestJava"),
+      c("java-groovy-tests-gradle", "build")
         .maxGradleExclusive("9.0.0"),
-      c("module-inclusion", "/module-inclusion"),
-      c("multi-module-source-in-root", "/multi-module-source-in-root", "compileJava", "compileTestJava")
+      c("module-inclusion"),
+      c("multi-module-source-in-root", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
-      c("multi-module-flat", "/multi-module-flat").subdir("build")
+      c("multi-module-flat").subdir("build")
         .maxGradleExclusive("9.0.0"),
-      c("java-gradle-no-tests", "/java-gradle-no-tests")
+      c("java-gradle-no-tests")
         .maxGradleExclusive("9.0.0"),
-      c("java-gradle-no-real-tests", "/java-gradle-no-real-tests", "test")
+      c("java-gradle-no-real-tests", "test")
         .maxGradleExclusive("9.0.0"),
-      c("java-gradle-lazy-configuration", "/java-gradle-lazy-configuration", "test")
+      c("java-gradle-lazy-configuration", "test")
         .maxGradleExclusive("9.0.0"),
-      c("java-gradle-jacoco-before-7", "/java-gradle-jacoco-before-7", "processResources", "processTestResources", "test", "jacocoTestReport")
+      c("java-gradle-jacoco-before-7", "processResources", "processTestResources", "test", "jacocoTestReport")
         .maxGradleExclusive("7.0.0"),
-      c("java-gradle-jacoco-after-7", "/java-gradle-jacoco-after-7", "processResources", "processTestResources", "test", "jacocoTestReport")
+      c("java-gradle-jacoco-after-7", "processResources", "processTestResources", "test", "jacocoTestReport")
         .gradleRange("7.0.0", "9.0.0"),
-      c("kotlin-multiplatform", "/kotlin-multiplatform", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")
+      c("kotlin-multiplatform", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")
         .gradleRange("6.8.3", "9.0.0"),
-      c("kotlin-multiplatform-with-submodule", "/kotlin-multiplatform-with-submodule", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")
+      c("kotlin-multiplatform-with-submodule", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")
         .gradleRange("6" + ".8.3", "9.0.0"),
-      c("kotlin-jvm", "/kotlin-jvm", "compileKotlin", "compileTestKotlin")
+      c("kotlin-jvm", "compileKotlin", "compileTestKotlin")
         .gradleRange("6.8.3", "9.0.0"),
-      c("kotlin-jvm-submodule", "/kotlin-jvm-submodule", "compileKotlin", "compileTestKotlin")
+      c("kotlin-jvm-submodule", "compileKotlin", "compileTestKotlin")
         .gradleRange("6.8.3", "9.0.0"),
-      c("multi-module-with-submodules", "/multi-module-with-submodules", "compileJava", "compileTestJava", "--info"),
-      c("java-gradle-simple-with-github", "/java-gradle-simple-with-github", "compileJava", "compileTestJava")
+      c("multi-module-with-submodules", "compileJava", "compileTestJava", "--info"),
+      c("java-gradle-simple-with-github", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
-      c("java-compile-only", "/java-compile-only")
+      c("java-compile-only")
         .maxGradleExclusive("9.0.0"),
-      c("java-gradle-log-level", "/java-gradle-log-level")
+      c("java-gradle-log-level")
         .maxGradleExclusive("9.0.0"),
-      c("java-gradle-classpath-dependency", "/java-gradle-classpath-dependency"),
-      c("java-gradle-simple-skip-jre-prov", "/java-gradle-simple-skip-jre-prov")
+      c("java-gradle-classpath-dependency"),
+      c("java-gradle-simple-skip-jre-prov")
         .maxGradleExclusive("9.0.0"),
-      c("android-gradle-default-variant", "/android-gradle-default-variant", "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac")
-        .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
-      c("android-gradle-dynamic-feature", "/android-gradle-dynamic-feature", "test", "compileDebugAndroidTestJavaWithJavac")
-        .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
-      c("android-gradle-nondefault-variant", "/android-gradle-nondefault-variant", "test")
-        .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
-      c("multi-module-android-studio", "/multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid().minAndroidGradle("7.0.0"),
-      c("android-testing-blueprint-with-dynamic-feature-module", "/AndroidTestingBlueprintWithDynamicFeatureModule", "assembleDebug",
+      c("android-gradle-default-variant", "test", "compileDemoMinApi23DebugAndroidTestJavaWithJavac")
+        .requiresAndroid(),
+      c("android-gradle-dynamic-feature", "test", "compileDebugAndroidTestJavaWithJavac")
+        .requiresAndroid(),
+      c("android-gradle-nondefault-variant", "test")
+        .requiresAndroid(),
+      c("multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid(),
+      c("android-testing-blueprint-with-dynamic-feature-module", "assembleDebug",
         "compileFlavor1DebugUnitTestJavaWithJavac", "compileFlavor1DebugAndroidTestJavaWithJavac", "compileDebugAndroidTestJavaWithJavac", "compileDebugUnitTestJavaWithJavac",
         "compileTestJava")
+        .withProjectDir("AndroidTestingBlueprintWithDynamicFeatureModule")
+        .requiresAndroid(),
+      c("android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
+        .requiresAndroid(),
+      c("multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
-      c("android-gradle-no-debug", "/android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
-        .requiresAndroid()
-        .minAndroidGradle("7.0.0"),
-      c("multi-module-android-studio-lint", "/multi-module-android-studio-lint", "lint", "lintFullRelease")
-        .requiresAndroid()
-        .minAndroidGradle("7.0.0")
     );
   }
 
-  private static Case c(String name, String project, String... args) {
-    return new Case(name, project, args);
+  private static Case c(String projectName, String... args) {
+    return new Case(projectName, args);
   }
 }
