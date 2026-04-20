@@ -58,7 +58,6 @@ import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 public class AndroidConfig {
 
   private static final Logger LOGGER = Logging.getLogger(AndroidConfig.class);
-  private static final String JAVA_COMPILE_TASK_SUFFIX = "JavaWithJavac";
 
   private final Project project;
   private final AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
@@ -100,6 +99,10 @@ public class AndroidConfig {
         .getAsFile();
       return Collections.singletonList(defaultJavaPath);
     });
+  }
+
+  private static String getCompileTaskName(Component component) {
+    return "compile" + SonarUtils.capitalize(component.getName()) + "JavaWithJavac";
   }
 
   private AndroidConfig(Project project, AndroidComponentsExtension<?, ?, ?> androidComponentsExtension) {
@@ -192,20 +195,19 @@ public class AndroidConfig {
    * Get the Android tasks on which Sonar tasks need to depend for the variant selected for the analysis with Sonar.
    */
   public Set<Task> getTasks() {
-    String variantName = SonarUtils.capitalize(getVariant().getName());
-    String compileTaskPrefix = "compile" + variantName;
     Set<Task> tasks = new HashSet<>();
+    Variant variant = getVariant();
 
     boolean testTaskAdded = false;
     for (Component component : getTestComponents()) {
-      testTaskAdded = addTaskByName(tasks, "compile" + SonarUtils.capitalize(component.getName()) + JAVA_COMPILE_TASK_SUFFIX, project);
+      testTaskAdded = addTaskByName(tasks, getCompileTaskName(component), project);
     }
     // The compilation of unit tests or Android tests already depends on the main compilation task, so it is only necessary to add it if no test compilation tasks were found.
     if (!testTaskAdded) {
-      addTaskByName(tasks, compileTaskPrefix + JAVA_COMPILE_TASK_SUFFIX, project);
+      addTaskByName(tasks, getCompileTaskName(variant), project);
     }
 
-    addTaskByName(tasks, "test" + variantName + "UnitTest", project);
+    addTaskByName(tasks, "test" + SonarUtils.capitalize(variant.getName()) + "UnitTest", project);
 
     return tasks;
   }
@@ -242,10 +244,8 @@ public class AndroidConfig {
       return;
     }
     configureJDK(properties, getVariant(), false);
-    for (Component component : getVariant().getNestedComponents()) {
-      if (component instanceof TestComponent) {
-        configureJDK(properties, component, true);
-      }
+    for (Component component : getTestComponents()) {
+      configureJDK(properties, component, true);
     }
   }
 
@@ -342,7 +342,7 @@ public class AndroidConfig {
    */
   private Set<Component> getTestComponents() {
     Set<Component> testComponents = new HashSet<>();
-    for (Component component : getVariant().getComponents()) {
+    for (Component component : getVariant().getNestedComponents()) {
       if (component instanceof TestComponent) {
         testComponents.add(component);
       }
@@ -377,9 +377,8 @@ public class AndroidConfig {
    * Retrieve the Java compilation task for the selected Android variant.
    */
   private Optional<JavaCompile> getJavaCompileTask() {
-    String variantName = SonarUtils.capitalize(getVariant().getName());
     return project.getTasks().withType(JavaCompile.class).stream()
-      .filter(task -> task.getName().equals("compile" + variantName + JAVA_COMPILE_TASK_SUFFIX))
+      .filter(task -> task.getName().equals(getCompileTaskName(getVariant())))
       .findFirst();
   }
 

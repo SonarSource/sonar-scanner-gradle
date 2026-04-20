@@ -129,7 +129,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   }
 
   public void setAndroidTests(Provider<FileCollection> androidTests) {
-    this.androidSources = androidTests;
+    this.androidTests = androidTests;
   }
 
   public void setOutputDirectory(File outputDirectory) {
