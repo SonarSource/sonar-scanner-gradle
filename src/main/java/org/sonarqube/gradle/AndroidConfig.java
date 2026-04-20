@@ -21,7 +21,6 @@ package org.sonarqube.gradle;
 
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
-import com.android.build.api.variant.AndroidVersion;
 import com.android.build.api.variant.Component;
 import com.android.build.api.variant.SourceDirectories;
 import com.android.build.api.variant.Sources;
@@ -54,6 +53,8 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.sonarqube.gradle.properties.SonarProperty;
 
+import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
+
 public class AndroidConfig {
 
   private static final Logger LOGGER = Logging.getLogger(AndroidConfig.class);
@@ -80,6 +81,13 @@ public class AndroidConfig {
     } catch (UnknownTaskException e) {
       return false;
     }
+  }
+
+  private static int getMinSdk(Variant variant) {
+    if (Version.of(ANDROID_GRADLE_PLUGIN_VERSION).compareTo(Version.of(8, 0)) < 0) {
+      return variant.getMinSdkVersion().getApiLevel();
+    }
+    return variant.getMinSdk().getApiLevel();
   }
 
   private static Provider<List<File>> getCompiledClasses(Project project, Component component) {
@@ -248,12 +256,12 @@ public class AndroidConfig {
   private void configureAndroidProperties(Map<String, Object> properties) {
     properties.put(AndroidProperties.ANDROID_DETECTED, true);
     if (SonarQubePlugin.getConfiguredAndroidVariant(project) != null) {
-      AndroidVersion minSdkVersion = getVariant().getMinSdk();
-      properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdkVersion.getApiLevel());
-      properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdkVersion.getApiLevel());
+      int minSdkVersion = getMinSdk(getVariant());
+      properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdkVersion);
+      properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdkVersion);
     } else {
       Set<Integer> minSdks = variants.stream()
-        .map(variant -> variant.getMinSdk().getApiLevel())
+        .map(AndroidConfig::getMinSdk)
         .collect(Collectors.toSet());
       if (!minSdks.isEmpty()) {
         properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, Collections.min(minSdks));
