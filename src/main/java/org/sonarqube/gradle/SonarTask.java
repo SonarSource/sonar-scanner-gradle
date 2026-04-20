@@ -236,7 +236,7 @@ public class SonarTask extends ConventionTask {
     String propertyKey = isTopLevelProject ? PROJECT_SOURCE_DIRS : (projectProperties.projectName + "." + PROJECT_SOURCE_DIRS);
 
     String sourcesString = properties.getOrDefault(propertyKey, "");
-    sourcesString = sourcesString.isEmpty() ? resolvedAsAString : sourcesString + "," + resolvedAsAString;
+    sourcesString = sourcesString.isEmpty() ? resolvedAsAString : (sourcesString + "," + resolvedAsAString);
 
     properties.put(propertyKey, sourcesString);
   }
@@ -389,10 +389,10 @@ public class SonarTask extends ConventionTask {
 
     List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
 
-    // filter non-existing paths and remove empty source properties
+    // Filter non-existing paths and generated sources, and remove empty source properties.
     for (PropertyInfo prop : sourcesProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
+        var filtered = filterPaths(commaList, SonarTask::containsValidSources, userDefinedKeys.contains(k));
         // empty assignments for `sonar.sources` and `sonar.tests` are required,
         // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
         // This can eventually lead to a double indexing issue in the scanner-engine.
@@ -405,7 +405,6 @@ public class SonarTask extends ConventionTask {
       });
     }
 
-
     Set<String> junitReportNames = Set.of(
       SonarProperty.JUNIT_REPORT_PATHS,
       SonarProperty.SUREFIRE_REPORTS_PATH,
@@ -413,7 +412,7 @@ public class SonarTask extends ConventionTask {
     );
     List<PropertyInfo> junitReportProperties = parsePropertiesWithNames(properties, junitReportNames);
 
-    // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
+    // Filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning.
     for (PropertyInfo prop : junitReportProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
         var filtered = filterPaths(commaList, SonarTask::containJunitReport, userDefinedKeys.contains(k));
@@ -421,7 +420,7 @@ public class SonarTask extends ConventionTask {
       });
     }
 
-    // remove xml report if directory do not exist
+    // Remove xml reports if the directory does not exist.
     List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
     for (PropertyInfo prop : xmlReportProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
@@ -476,6 +475,11 @@ public class SonarTask extends ConventionTask {
     }
 
     return filter.test(Path.of(value));
+  }
+
+  private static boolean containsValidSources(Path path) {
+    String normalizedPath = path.toString().replace('\\', '/');
+    return !normalizedPath.contains("build/generated") && Files.exists(path);
   }
 
   private static boolean containJunitReport(Path p) {
