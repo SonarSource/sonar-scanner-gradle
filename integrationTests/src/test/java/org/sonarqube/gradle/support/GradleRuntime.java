@@ -21,7 +21,6 @@ package org.sonarqube.gradle.support;
 
 import com.vdurmont.semver4j.Semver;
 import com.vdurmont.semver4j.Semver.SemverType;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
@@ -47,19 +46,6 @@ public final class GradleRuntime {
 
   static boolean isWindows() {
     return System.getProperty("os.name").startsWith("Windows");
-  }
-
-  public static String userDir() {
-    return System.getProperty("user.dir");
-  }
-
-  static String userHome() {
-    return System.getProperty("user.home");
-  }
-
-  public static String comparableHome() {
-    String githubWorkingDir = System.getenv("GITHUB_WORKING_DIR");
-    return githubWorkingDir == null ? userHome() : githubWorkingDir.replace('/', File.separatorChar);
   }
 
   static int javaVersion() {

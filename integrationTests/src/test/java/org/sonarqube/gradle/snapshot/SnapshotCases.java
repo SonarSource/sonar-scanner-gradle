@@ -46,6 +46,8 @@ public final class SnapshotCases {
     private String maxGradleExclusive;
     private String subdir;
     private boolean requiresAndroid;
+    private String rewriteWithGradle;
+    private String rewriteWithAndroidGradle;
 
     private Case(String name, String... args) {
       this.name = name;
@@ -70,6 +72,19 @@ public final class SnapshotCases {
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
       Properties p = test.runGradlewSonarSimulationModeWithEnv("/" + projectDir, subdir, Collections.emptyMap(), new DefaultRunConfiguration(), args.toArray(String[]::new));
+      return SnapshotNormalizer.normalize(p);
+    }
+
+    public Map<String, String> collectWithVersionsOverride(AbstractGradleIT test) throws Exception {
+      Properties p = test.runGradlewSonarSimulationModeWithVersions(
+        "/" + projectDir,
+        subdir,
+        Collections.emptyMap(),
+        new DefaultRunConfiguration(),
+        rewriteWithGradle,
+        rewriteWithAndroidGradle,
+        args.toArray(String[]::new)
+      );
       return SnapshotNormalizer.normalize(p);
     }
 
@@ -99,6 +114,16 @@ public final class SnapshotCases {
 
     public Case withProjectDir(String projectDir) {
       this.projectDir = projectDir;
+      return this;
+    }
+
+    public Case rewriteWithGradle(String value) {
+      this.rewriteWithGradle = value;
+      return this;
+    }
+
+    public Case rewriteWithAndroidGradle(String value) {
+      this.rewriteWithAndroidGradle = value;
       return this;
     }
 
@@ -134,7 +159,8 @@ public final class SnapshotCases {
       c("java-gradle-lazy-configuration", "test")
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-jacoco-before-7", "processResources", "processTestResources", "test", "jacocoTestReport")
-        .maxGradleExclusive("7.0.0"),
+        .maxGradleExclusive("7.0.0")
+        .rewriteWithGradle("6.8.3"),
       c("java-gradle-jacoco-after-7", "processResources", "processTestResources", "test", "jacocoTestReport")
         .gradleRange("7.0.0", "9.0.0"),
       c("kotlin-multiplatform", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")

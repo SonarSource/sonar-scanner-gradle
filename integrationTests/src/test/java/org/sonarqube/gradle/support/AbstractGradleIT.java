@@ -71,6 +71,18 @@ public abstract class AbstractGradleIT {
     return GradleRunner.runSonarSimulation(temp, project, subdir, env, config, args);
   }
 
+  public Properties runGradlewSonarSimulationModeWithVersions(
+    String project,
+    @Nullable String subdir,
+    Map<String, String> env,
+    RunConfiguration config,
+    @Nullable String gradleVersion,
+    @Nullable String androidGradleVersion,
+    String... args
+  ) throws Exception {
+    return GradleRunner.runSonarSimulation(temp, project, subdir, env, config, gradleVersion, androidGradleVersion, args);
+  }
+
   protected RunResult runGradlewSonarWithEnv(String project, Map<String, String> env, RunConfiguration config, String... args) throws Exception {
     return GradleRunner.runSonar(temp, project, null, env, config, args);
   }
