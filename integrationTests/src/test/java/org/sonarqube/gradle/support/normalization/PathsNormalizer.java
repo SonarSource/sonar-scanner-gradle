@@ -46,7 +46,18 @@ public class PathsNormalizer {
   );
 
   private static final List<String> IGNORED_PATHS = List.of(
-    "main", "R.jar", "classes.jar", "classes"
+    "main",
+    "classes.jar",
+    "classes",
+    "R.jar" // In AGP 9+, this JAR was removed from the classpath of Android applications. To keep supporting both AGP <9 and >=9, we ignore it in the tests.
+  );
+
+  /**
+   * The substrings in this list correspond to the names of JARs that vary across combinations of Gradle and AGP versions. To support several of these combinations on the same
+   * projects in the integration tests, we ignore JARs that contain these patterns.
+   */
+  private static final List<String> ANDROID_IGNORED_PATHS_SUBSTRINGS = List.of(
+    "kotlin-stdlib", "annotations-", "core-runtime-", "lifecycle-common-"
   );
 
   private PathsNormalizer() {
@@ -87,7 +98,7 @@ public class PathsNormalizer {
       }
     }
     return paths
-      .filter(path -> !IGNORED_PATHS.contains(path))
+      .filter(path -> !IGNORED_PATHS.contains(path) && ANDROID_IGNORED_PATHS_SUBSTRINGS.stream().noneMatch(path::contains))
       .distinct()
       .sorted()
       .collect(Collectors.joining(DELIMITER));

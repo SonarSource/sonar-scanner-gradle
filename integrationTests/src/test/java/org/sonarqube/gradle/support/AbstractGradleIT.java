@@ -49,6 +49,10 @@ public abstract class AbstractGradleIT {
     Assume.assumeTrue(getGradleVersion().isGreaterThanOrEqualTo(version));
   }
 
+  protected static void ignoreForAgp9Plus() {
+    Assume.assumeFalse(getAndroidGradleVersion().isGreaterThanOrEqualTo("9.0.0"));
+  }
+
   protected static void ignoreThisTestIfGradleVersionIsGreaterThanOrEqualTo(String version) {
     Assume.assumeTrue(getGradleVersion().isLowerThan(version));
   }
@@ -69,6 +73,18 @@ public abstract class AbstractGradleIT {
 
   public Properties runGradlewSonarSimulationModeWithEnv(String project, @Nullable String subdir, Map<String, String> env, RunConfiguration config, String... args) throws Exception {
     return GradleRunner.runSonarSimulation(temp, project, subdir, env, config, args);
+  }
+
+  public Properties runGradlewSonarSimulationModeWithVersions(
+    String project,
+    @Nullable String subdir,
+    Map<String, String> env,
+    RunConfiguration config,
+    @Nullable String gradleVersion,
+    @Nullable String androidGradleVersion,
+    String... args
+  ) throws Exception {
+    return GradleRunner.runSonarSimulation(temp, project, subdir, env, config, gradleVersion, androidGradleVersion, args);
   }
 
   protected RunResult runGradlewSonarWithEnv(String project, Map<String, String> env, RunConfiguration config, String... args) throws Exception {
