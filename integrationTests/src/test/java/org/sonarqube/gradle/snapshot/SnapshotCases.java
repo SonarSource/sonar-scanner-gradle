@@ -137,7 +137,7 @@ public final class SnapshotCases {
     return List.of(
       c("gradle-9-example", "--console=plain", "build")
         .minGradle("9.0.0"),
-      c("android-gradle9", "--quiet", "--console=plain")
+      c("android-gradle9", "--console=plain")
         .minGradle("9.0.0")
         .requiresAndroid(),
       c("java-gradle-simple", "compileJava", "compileTestJava")
@@ -160,7 +160,7 @@ public final class SnapshotCases {
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-jacoco-before-7", "processResources", "processTestResources", "test", "jacocoTestReport")
         .maxGradleExclusive("7.0.0")
-        .rewriteWithGradle("6.8.3"),
+        .rewriteWithGradle("7.5.1"),
       c("java-gradle-jacoco-after-7", "processResources", "processTestResources", "test", "jacocoTestReport")
         .gradleRange("7.0.0", "9.0.0"),
       c("kotlin-multiplatform", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")
