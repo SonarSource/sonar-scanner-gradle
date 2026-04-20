@@ -23,6 +23,8 @@ import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.AndroidVersion;
 import com.android.build.api.variant.Component;
+import com.android.build.api.variant.SourceDirectories;
+import com.android.build.api.variant.Sources;
 import com.android.build.api.variant.TestComponent;
 import com.android.build.api.variant.UnitTest;
 import com.android.build.api.variant.Variant;
@@ -155,23 +157,23 @@ public class AndroidConfig {
   }
 
   public FileCollection getAndroidSources() {
-    return project.files(
-      getVariant().getSources().getJava().getAll(),
-      getVariant().getSources().getKotlin().getAll(),
-      //getVariant().getSources().getAidl().getAll(),
-      //getVariant().getSources().getRenderscript().getAll(),
-
-      // Works for layered sources too
-      //getVariant().getSources().getRes().getAll(),
-      getVariant().getSources().getAssets().getAll(),
-
-      // Works natively with Provider<RegularFile> without needing to map to getAsFile()
-      //getVariant().getArtifacts().get(SingleArtifact.MERGED_MANIFEST.INSTANCE),
-
-      // Works with the dynamic C/C++ API
-      getVariant().getSources().getByName("c").getAll(),
-      getVariant().getSources().getByName("cpp").getAll()
+    Sources sources = getVariant().getSources();
+    FileCollection sourceFiles = project.files(
+      sources.getJava().getAll(),
+      sources.getKotlin().getAll(),
+      sources.getAssets().getAll(),
+      sources.getByName("c").getAll(),
+      sources.getByName("cpp").getAll()
     );
+    SourceDirectories.Flat aidlSources = sources.getAidl();
+    if (aidlSources != null) {
+      sourceFiles = sourceFiles.plus(project.files(aidlSources.getAll()));
+    }
+    SourceDirectories.Flat renderscriptSources = sources.getRenderscript();
+    if (renderscriptSources != null) {
+      sourceFiles = sourceFiles.plus(project.files(renderscriptSources.getAll()));
+    }
+    return sourceFiles;
   }
 
   /**
@@ -198,12 +200,10 @@ public class AndroidConfig {
     Configuration configuration = project.getConfigurations().getByName(configName);
 
     return configuration.getIncoming().artifactView(viewConfiguration -> viewConfiguration.attributes(attributeContainer -> {
-      // Explicitly request the Android-optimized classes JAR to prevent ArtifactSelectionException
       attributeContainer.attribute(
         Attribute.of("artifactType", String.class),
         "android-classes-jar"
       );
-      // Explicitly request the Android JVM environment to satisfy missing target environment attributes
       attributeContainer.attribute(
         TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
         project.getObjects().named(TargetJvmEnvironment.class, TargetJvmEnvironment.ANDROID)
