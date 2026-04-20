@@ -58,6 +58,7 @@ import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 public class AndroidConfig {
 
   private static final Logger LOGGER = Logging.getLogger(AndroidConfig.class);
+  private static final String JAVA_COMPILE_TASK_SUFFIX = "JavaWithJavac";
 
   private final Project project;
   private final AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
@@ -92,9 +93,11 @@ public class AndroidConfig {
 
   private static Provider<List<File>> getCompiledClasses(Project project, Component component) {
     return project.provider(() -> {
-      File defaultJavaPath = project.getLayout().getBuildDirectory()
+      File defaultJavaPath = project.getLayout()
+        .getBuildDirectory()
         .dir("intermediates/javac/" + component.getName() + "/classes")
-        .get().getAsFile();
+        .get()
+        .getAsFile();
       return Collections.singletonList(defaultJavaPath);
     });
   }
@@ -156,15 +159,13 @@ public class AndroidConfig {
    */
   public FileCollection getTestLibraries() {
     FileCollection testLibraries = project.files();
-    boolean foundTestComponent = false;
-    for (Component component : getVariant().getNestedComponents()) {
-      if (component instanceof TestComponent) {
-        foundTestComponent = true;
-        testLibraries = testLibraries.plus(getCompileClasspath(component));
-      }
+    Set<Component> testComponents = getTestComponents();
+    if (testComponents.isEmpty()) {
+      return testLibraries;
     }
-    if (foundTestComponent) {
-      testLibraries = testLibraries.plus(project.files(androidComponentsExtension.getSdkComponents().getBootClasspath()));
+    testLibraries = testLibraries.plus(project.files(androidComponentsExtension.getSdkComponents().getBootClasspath()));
+    for (Component component : testComponents) {
+      testLibraries = testLibraries.plus(getCompileClasspath(component));
     }
     return testLibraries;
   }
@@ -173,23 +174,18 @@ public class AndroidConfig {
    * Get the source directories for the selected Android variant.
    */
   public FileCollection getAndroidSources() {
-    Sources sources = getVariant().getSources();
-    FileCollection sourceFiles = project.files(
-      sources.getJava().getAll(),
-      sources.getKotlin().getAll(),
-      sources.getAssets().getAll(),
-      sources.getByName("c").getAll(),
-      sources.getByName("cpp").getAll()
-    );
-    SourceDirectories.Flat aidlSources = sources.getAidl();
-    if (aidlSources != null) {
-      sourceFiles = sourceFiles.plus(project.files(aidlSources.getAll()));
+    return getSources(getVariant());
+  }
+
+  /**
+   * Get the source directories for the selected Android variant's tests.
+   */
+  public FileCollection getAndroidTests() {
+    FileCollection tests = project.files();
+    for (Component component : getTestComponents()) {
+      tests = tests.plus(getSources(component));
     }
-    SourceDirectories.Flat renderscriptSources = sources.getRenderscript();
-    if (renderscriptSources != null) {
-      sourceFiles = sourceFiles.plus(project.files(renderscriptSources.getAll()));
-    }
-    return sourceFiles;
+    return tests;
   }
 
   /**
@@ -200,12 +196,15 @@ public class AndroidConfig {
     String compileTaskPrefix = "compile" + variantName;
     Set<Task> tasks = new HashSet<>();
 
-    boolean unitTestTaskAdded = addTaskByName(tasks, compileTaskPrefix + "UnitTestJavaWithJavac", project);
-    boolean androidTestTaskAdded = addTaskByName(tasks, compileTaskPrefix + "AndroidTestJavaWithJavac", project);
-    // The compilation of unit tests or Android tests already depends on the main compilation task, so it is only necessary to add it if no test compilation tasks were found.
-    if (!unitTestTaskAdded && !androidTestTaskAdded) {
-      addTaskByName(tasks, compileTaskPrefix + "JavaWithJavac", project);
+    boolean testTaskAdded = false;
+    for (Component component : getTestComponents()) {
+      testTaskAdded = addTaskByName(tasks, "compile" + SonarUtils.capitalize(component.getName()) + JAVA_COMPILE_TASK_SUFFIX, project);
     }
+    // The compilation of unit tests or Android tests already depends on the main compilation task, so it is only necessary to add it if no test compilation tasks were found.
+    if (!testTaskAdded) {
+      addTaskByName(tasks, compileTaskPrefix + JAVA_COMPILE_TASK_SUFFIX, project);
+    }
+
     addTaskByName(tasks, "test" + variantName + "UnitTest", project);
 
     return tasks;
@@ -339,12 +338,48 @@ public class AndroidConfig {
   }
 
   /**
+   * Get the test components for the selected Android variant.
+   */
+  private Set<Component> getTestComponents() {
+    Set<Component> testComponents = new HashSet<>();
+    for (Component component : getVariant().getComponents()) {
+      if (component instanceof TestComponent) {
+        testComponents.add(component);
+      }
+    }
+    return testComponents;
+  }
+
+  /**
+   * Get the sources for a given Android component.
+   */
+  private FileCollection getSources(Component component) {
+    Sources sources = component.getSources();
+    FileCollection sourceFiles = project.files(
+      sources.getJava().getAll(),
+      sources.getKotlin().getAll(),
+      sources.getAssets().getAll(),
+      sources.getByName("c").getAll(),
+      sources.getByName("cpp").getAll()
+    );
+    SourceDirectories.Flat aidlSources = sources.getAidl();
+    if (aidlSources != null) {
+      sourceFiles = sourceFiles.plus(project.files(aidlSources.getAll()));
+    }
+    SourceDirectories.Flat renderscriptSources = sources.getRenderscript();
+    if (renderscriptSources != null) {
+      sourceFiles = sourceFiles.plus(project.files(renderscriptSources.getAll()));
+    }
+    return sourceFiles;
+  }
+
+  /**
    * Retrieve the Java compilation task for the selected Android variant.
    */
   private Optional<JavaCompile> getJavaCompileTask() {
     String variantName = SonarUtils.capitalize(getVariant().getName());
     return project.getTasks().withType(JavaCompile.class).stream()
-      .filter(task -> task.getName().equals("compile" + variantName + "JavaWithJavac"))
+      .filter(task -> task.getName().equals("compile" + variantName + JAVA_COMPILE_TASK_SUFFIX))
       .findFirst();
   }
 

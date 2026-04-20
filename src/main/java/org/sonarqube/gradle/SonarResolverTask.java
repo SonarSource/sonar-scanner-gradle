@@ -48,6 +48,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   private Provider<FileCollection> compileClasspath;
   private Provider<FileCollection> testCompileClasspath;
   private Provider<FileCollection> androidSources;
+  private Provider<FileCollection> androidTests;
   private File outputDirectory;
   private Provider<Boolean> skipProject;
 
@@ -122,6 +123,15 @@ public abstract class SonarResolverTask extends DefaultTask {
     this.androidSources = androidSources;
   }
 
+  @Internal
+  Provider<FileCollection> getAndroidTests() {
+    return this.androidTests;
+  }
+
+  public void setAndroidTests(Provider<FileCollection> androidTests) {
+    this.androidSources = androidTests;
+  }
+
   public void setOutputDirectory(File outputDirectory) {
     this.outputDirectory = outputDirectory;
   }
@@ -175,6 +185,8 @@ public abstract class SonarResolverTask extends DefaultTask {
     List<String> testLibrariesFilenames = getAbsolutePaths(getTestLibraries());
     Provider<FileCollection> androidSourcesProvider = getAndroidSources();
     List<String> androidSourcesFilenames = androidSourcesProvider == null ? Collections.emptyList() : getAbsolutePaths(androidSourcesProvider);
+    Provider<FileCollection> androidTestsProvider = getAndroidTests();
+    List<String> androidTestsFilenames = androidTestsProvider == null ? Collections.emptyList() : getAbsolutePaths(androidTestsProvider);
 
     ProjectProperties projectProperties = new ProjectProperties(
       getProjectName(),
@@ -183,7 +195,8 @@ public abstract class SonarResolverTask extends DefaultTask {
       testCompileClasspathFilenames,
       mainLibrariesFilenames,
       testLibrariesFilenames,
-      androidSourcesFilenames
+      androidSourcesFilenames,
+      androidTestsFilenames
     );
 
     outputDirectory.mkdirs();

@@ -63,6 +63,7 @@ import static org.sonarqube.gradle.properties.SonarProperty.JAVA_LIBRARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.JAVA_TEST_LIBRARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.LIBRARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.PROJECT_SOURCE_DIRS;
+import static org.sonarqube.gradle.properties.SonarProperty.PROJECT_TEST_DIRS;
 import static org.sonarqube.gradle.properties.SonarProperty.VERBOSE;
 
 /**
@@ -188,7 +189,12 @@ public class SonarTask extends ConventionTask {
 
       if (resolvedProperties.androidSources != null) {
         List<File> sources = resolvedProperties.androidSources.stream().map(File::new).collect(Collectors.toList());
-        resolveSources(resolvedProperties, sources, result);
+        resolveSources(resolvedProperties, sources, result, false);
+      }
+
+      if (resolvedProperties.androidTests != null) {
+        List<File> sources = resolvedProperties.androidTests.stream().map(File::new).collect(Collectors.toList());
+        resolveSources(resolvedProperties, sources, result, true);
       }
 
       List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
@@ -215,7 +221,7 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  static void resolveSources(ProjectProperties projectProperties, @Nullable Collection<File> sources, Map<String, String> properties) {
+  static void resolveSources(ProjectProperties projectProperties, @Nullable Collection<File> sources, Map<String, String> properties, boolean isTest) {
     if (sources == null || sources.isEmpty()) {
       return;
     }
@@ -233,7 +239,8 @@ public class SonarTask extends ConventionTask {
       .map(File::getAbsolutePath)
       .collect(Collectors.joining(","));
 
-    String propertyKey = isTopLevelProject ? PROJECT_SOURCE_DIRS : (projectProperties.projectName + "." + PROJECT_SOURCE_DIRS);
+    String property = isTest ? PROJECT_TEST_DIRS : PROJECT_SOURCE_DIRS;
+    String propertyKey = isTopLevelProject ? property : (projectProperties.projectName + "." + property);
 
     String sourcesString = properties.getOrDefault(propertyKey, "");
     sourcesString = sourcesString.isEmpty() ? resolvedAsAString : (sourcesString + "," + resolvedAsAString);
@@ -378,7 +385,7 @@ public class SonarTask extends ConventionTask {
   static void filterPathProperties(Map<String, String> properties, Set<String> userDefinedKeys) {
     Set<String> sourcePropNames = Set.of(
       SonarProperty.PROJECT_SOURCE_DIRS,
-      SonarProperty.PROJECT_TEST_DIRS,
+      PROJECT_TEST_DIRS,
       SonarProperty.JAVA_BINARIES,
       SonarProperty.JAVA_LIBRARIES,
       SonarProperty.JAVA_TEST_BINARIES,
@@ -397,7 +404,7 @@ public class SonarTask extends ConventionTask {
         // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
         // This can eventually lead to a double indexing issue in the scanner-engine.
         if (filtered.isEmpty() && !PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
-          && !SonarProperty.PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
+          && !PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
           return null;
         }
 

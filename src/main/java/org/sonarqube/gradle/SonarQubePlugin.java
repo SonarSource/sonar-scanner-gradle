@@ -137,6 +137,7 @@ public class SonarQubePlugin implements Plugin<Project> {
           resolverTask.setMainLibraries(project.provider(androidConfig::getMainLibraries));
           resolverTask.setTestLibraries(project.provider(androidConfig::getTestLibraries));
           resolverTask.setAndroidSources(project.provider(androidConfig::getAndroidSources));
+          resolverTask.setAndroidTests(project.provider(androidConfig::getAndroidTests));
           resolverTask.mustRunAfter(androidConfig.getTasks());
         });
       })

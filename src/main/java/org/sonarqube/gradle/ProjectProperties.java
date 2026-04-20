@@ -72,7 +72,15 @@ public class ProjectProperties {
    */
   public final List<String> testLibraries;
 
+  /**
+   * The resolved source directories for an Android project.
+   */
   public final List<String> androidSources;
+
+  /**
+   * The resolved test directories for an Android project.
+   */
+  public final List<String> androidTests;
 
   /**
    * Creates a new immutable ProjectProperties instance.
@@ -91,7 +99,8 @@ public class ProjectProperties {
     List<String> testCompileClasspath,
     List<String> mainLibraries,
     List<String> testLibraries,
-    List<String> androidSources
+    List<String> androidSources,
+    List<String> androidTests
   ) {
     this.projectName = projectName;
     this.isRootProject = isRootProject;
@@ -100,6 +109,7 @@ public class ProjectProperties {
     this.mainLibraries = mainLibraries;
     this.testLibraries = testLibraries;
     this.androidSources = androidSources;
+    this.androidTests = androidTests;
   }
 
 }
