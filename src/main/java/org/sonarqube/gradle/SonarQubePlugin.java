@@ -20,7 +20,6 @@
 package org.sonarqube.gradle;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,7 +49,6 @@ import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
 
-import static org.sonarqube.gradle.SonarUtils.capitalize;
 import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 
 /**
@@ -154,8 +152,10 @@ public class SonarQubePlugin implements Plugin<Project> {
     return set == null ? project.files() : set.getCompileClasspath();
   }
 
-  private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
-    Provider<ComputedProperties> computedPropertiesProvider = project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, project).computeSonarProperties());
+  private static void configureTask(SonarTask sonarTask, Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap,
+    Map<String, AndroidConfig> androidConfigMap) {
+    Provider<ComputedProperties> computedPropertiesProvider =
+      project.provider(() -> new SonarPropertyComputer(actionBroadcastMap, androidConfigMap, project).computeSonarProperties());
     Provider<Map<String, String>> conventionProvider = computedPropertiesProvider.map(computed ->
       computed.properties.entrySet()
         .stream()
@@ -173,10 +173,9 @@ public class SonarQubePlugin implements Plugin<Project> {
     }
 
     sonarTask.mustRunAfter(getJavaCompileTasks(project));
-    sonarTask.mustRunAfter(getAndroidTasks(project));
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
-    sonarTask.dependsOn(getClassPathResolverTask(project));
+    sonarTask.dependsOn(getClassPathResolverTasks(project));
   }
 
   private static boolean isGradleVersionGreaterOrEqualTo(String version) {
@@ -205,7 +204,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       .collect(Collectors.toList());
   }
 
-  private static Callable<Iterable<? extends Task>> getClassPathResolverTask(Project project) {
+  private static Callable<Iterable<? extends Task>> getClassPathResolverTasks(Project project) {
     return () -> project.getAllprojects().stream()
       .map(p -> p.getTasks().getByName(SonarResolverTask.TASK_NAME))
       .collect(Collectors.toList());
@@ -233,35 +232,6 @@ public class SonarQubePlugin implements Plugin<Project> {
       .findFirst().orElse(null);
   }
 
-  /**
-   * Must run after compilation to have access to class files, and after test to have access to test reports.
-   */
-  private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
-    return () -> project.getAllprojects().stream()
-      .filter(p -> isAndroidProject(p) && notSkipped(p))
-      .map(p -> {
-        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
-
-        List<Task> allTasks = new ArrayList<>();
-        if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
-          final String compileTaskPrefix = "compile" + capitalize(androidVariantAndExtension.getVariant().getName());
-          boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
-          boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
-          // Unit test compilation and android test compilation tasks already depend on main code compilation, so we don't add a useless dependency
-          // that would lead to run the main compilation task several times.
-          if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
-            addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
-          }
-
-          final String testTaskPrefix = "test" + capitalize(androidVariantAndExtension.getVariant().getName());
-          addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
-        }
-        return allTasks;
-      })
-      .flatMap(List::stream)
-      .collect(Collectors.toList());
-  }
-
   @Override
   public void apply(Project project) {
     // Don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to recursively resolve the configuration of all
@@ -279,7 +249,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         task.setResolverFiles(resolverFiles);
         task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
-        configureTask(task, project, actionBroadcastMap);
+        configureTask(task, project, actionBroadcastMap, androidConfigMap);
       });
 
       LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
@@ -288,7 +258,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         task.setResolverFiles(resolverFiles);
         task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
-        configureTask(task, project, actionBroadcastMap);
+        configureTask(task, project, actionBroadcastMap, androidConfigMap);
       });
     }
   }

@@ -86,10 +86,12 @@ public class SonarPropertyComputer {
   private static final String TEST_SOURCE_SET_SUFFIX = "test";
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
+  private final Map<String, AndroidConfig> androidConfigMap;
   private final Project targetProject;
 
-  public SonarPropertyComputer(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project targetProject) {
+  public SonarPropertyComputer(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Map<String, AndroidConfig> androidConfigMap, Project targetProject) {
     this.actionBroadcastMap = actionBroadcastMap;
+    this.androidConfigMap = androidConfigMap;
     this.targetProject = targetProject;
   }
 
@@ -125,7 +127,7 @@ public class SonarPropertyComputer {
     addGradleDefaults(project, rawProperties);
 
     if (isAndroidProject(project)) {
-      AndroidUtils.configureForAndroid(project, SonarQubePlugin.getConfiguredAndroidVariant(project), rawProperties);
+      androidConfigMap.get(project.getPath()).configureProperties(rawProperties);
     }
 
     if (isRootProject(project)) {

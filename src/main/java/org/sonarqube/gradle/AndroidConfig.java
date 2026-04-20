@@ -47,11 +47,16 @@ import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.java.TargetJvmEnvironment;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.sonarqube.gradle.properties.SonarProperty;
 
 public class AndroidConfig {
+
+  private static final Logger LOGGER = Logging.getLogger(AndroidConfig.class);
 
   private final Project project;
   private final AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
@@ -156,6 +161,9 @@ public class AndroidConfig {
     return testLibraries;
   }
 
+  /**
+   * Get the source directories for the selected Android variant.
+   */
   public FileCollection getAndroidSources() {
     Sources sources = getVariant().getSources();
     FileCollection sourceFiles = project.files(
@@ -195,6 +203,9 @@ public class AndroidConfig {
     return tasks;
   }
 
+  /**
+   * Compute the compilation classpath for an Android component.
+   */
   private FileCollection getCompileClasspath(Component component) {
     String configName = component.getName() + "CompileClasspath";
     Configuration configuration = project.getConfigurations().getByName(configName);
@@ -212,7 +223,7 @@ public class AndroidConfig {
   }
 
   /**
-   * Populate the properties of an Android variant with Android specific value.
+   * Populate the properties of an Android variant with Android specific values.
    */
   public void configureProperties(Map<String, Object> properties) {
     configureAndroidProperties(properties);
@@ -220,18 +231,20 @@ public class AndroidConfig {
     configureLintReports(properties);
 
     if (project.getPlugins().hasPlugin("com.android.test")) {
-      // Instrumentation tests only
-      populateSonarQubeProps(properties, getVariant(), true);
+      configureJDK(properties, getVariant(), true);
       return;
     }
-    populateSonarQubeProps(properties, getVariant(), false);
+    configureJDK(properties, getVariant(), false);
     for (Component component : getVariant().getNestedComponents()) {
       if (component instanceof TestComponent) {
-        populateSonarQubeProps(properties, component, true);
+        configureJDK(properties, component, true);
       }
     }
   }
 
+  /**
+   * Compute Android specific properties and populate properties with them.
+   */
   private void configureAndroidProperties(Map<String, Object> properties) {
     properties.put(AndroidProperties.ANDROID_DETECTED, true);
     if (SonarQubePlugin.getConfiguredAndroidVariant(project) != null) {
@@ -297,8 +310,16 @@ public class AndroidConfig {
       .ifPresent(output -> properties.put(SonarProperty.ANDROID_LINT_REPORT_PATHS, output));
   }
 
-  private void populateSonarQubeProps(Map<String, Object> properties, Component component, boolean isTest) {
-    // TODO: populate JDK properties
+  /**
+   * Compute JDK properties and binaries for the selected Android variant.
+   */
+  private void configureJDK(Map<String, Object> properties, Component component, boolean isTest) {
+    Optional<JavaCompile> javaCompile = getJavaCompileTask();
+    if (javaCompile.isEmpty()) {
+      LOGGER.warn("Unable to find Java compiler on variant '{}'.", getVariant().getName());
+    } else {
+      SonarUtils.populateJdkProperties(properties, JavaCompilerUtils.extractConfiguration(javaCompile.get()));
+    }
 
     Provider<List<File>> destinationDirsProvider = getCompiledClasses(project, component);
     if (isTest) {
@@ -307,6 +328,16 @@ public class AndroidConfig {
       properties.put("sonar.java.binaries", destinationDirsProvider);
       properties.put("sonar.binaries", destinationDirsProvider);
     }
+  }
+
+  /**
+   * Retrieve the Java compilation task for the selected Android variant.
+   */
+  private Optional<JavaCompile> getJavaCompileTask() {
+    String variantName = SonarUtils.capitalize(getVariant().getName());
+    return project.getTasks().withType(JavaCompile.class).stream()
+      .filter(task -> task.getName().equals("compile" + variantName + "JavaWithJavac"))
+      .findFirst();
   }
 
 }
