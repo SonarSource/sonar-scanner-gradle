@@ -59,7 +59,8 @@ public class ResolutionSerializer {
       && properties.testCompileClasspath.isEmpty()
       && properties.mainLibraries.isEmpty()
       && properties.testLibraries.isEmpty()
-      && properties.androidSources.isEmpty()) {
+      && properties.androidSources.isEmpty()
+      && properties.androidTests.isEmpty()) {
       // make sure we do not reuse output from previous execution
       Files.deleteIfExists(output.toPath());
       return;

@@ -161,12 +161,11 @@ public class AndroidConfig {
    * Get the test libraries file collection for the variant selected for the analysis with Sonar.
    */
   public FileCollection getTestLibraries() {
-    FileCollection testLibraries = project.files();
     Set<Component> testComponents = getTestComponents();
     if (testComponents.isEmpty()) {
-      return testLibraries;
+      return project.files();
     }
-    testLibraries = testLibraries.plus(project.files(androidComponentsExtension.getSdkComponents().getBootClasspath()));
+    FileCollection testLibraries = project.files(androidComponentsExtension.getSdkComponents().getBootClasspath());
     for (Component component : testComponents) {
       testLibraries = testLibraries.plus(getCompileClasspath(component));
     }
