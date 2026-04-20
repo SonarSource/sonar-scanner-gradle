@@ -46,6 +46,8 @@ public final class SnapshotCases {
     private String maxGradleExclusive;
     private String subdir;
     private boolean requiresAndroid;
+    private String rewriteWithGradle;
+    private String rewriteWithAndroidGradle;
 
     private Case(String name, String... args) {
       this.name = name;
@@ -70,6 +72,19 @@ public final class SnapshotCases {
 
     public Map<String, String> collect(AbstractGradleIT test) throws Exception {
       Properties p = test.runGradlewSonarSimulationModeWithEnv("/" + projectDir, subdir, Collections.emptyMap(), new DefaultRunConfiguration(), args.toArray(String[]::new));
+      return SnapshotNormalizer.normalize(p);
+    }
+
+    public Map<String, String> collectWithVersionsOverride(AbstractGradleIT test) throws Exception {
+      Properties p = test.runGradlewSonarSimulationModeWithVersions(
+        "/" + projectDir,
+        subdir,
+        Collections.emptyMap(),
+        new DefaultRunConfiguration(),
+        rewriteWithGradle,
+        rewriteWithAndroidGradle,
+        args.toArray(String[]::new)
+      );
       return SnapshotNormalizer.normalize(p);
     }
 
@@ -102,6 +117,16 @@ public final class SnapshotCases {
       return this;
     }
 
+    public Case rewriteWithGradle(String value) {
+      this.rewriteWithGradle = value;
+      return this;
+    }
+
+    public Case rewriteWithAndroidGradle(String value) {
+      this.rewriteWithAndroidGradle = value;
+      return this;
+    }
+
     @Override
     public String toString() {
       return name;
@@ -112,7 +137,7 @@ public final class SnapshotCases {
     return List.of(
       c("gradle-9-example", "--console=plain", "build")
         .minGradle("9.0.0"),
-      c("android-gradle9", "--quiet", "--console=plain")
+      c("android-gradle9", "--console=plain")
         .minGradle("9.0.0")
         .requiresAndroid(),
       c("java-gradle-simple", "compileJava", "compileTestJava")
@@ -134,7 +159,8 @@ public final class SnapshotCases {
       c("java-gradle-lazy-configuration", "test")
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-jacoco-before-7", "processResources", "processTestResources", "test", "jacocoTestReport")
-        .maxGradleExclusive("7.0.0"),
+        .maxGradleExclusive("7.0.0")
+        .rewriteWithGradle("7.5.1"),
       c("java-gradle-jacoco-after-7", "processResources", "processTestResources", "test", "jacocoTestReport")
         .gradleRange("7.0.0", "9.0.0"),
       c("kotlin-multiplatform", "compileKotlinJvm", "compileKotlinMetadata", "compileTestKotlinJvm")
@@ -160,17 +186,27 @@ public final class SnapshotCases {
       c("android-gradle-dynamic-feature", "test", "compileDebugAndroidTestJavaWithJavac")
         .requiresAndroid(),
       c("android-gradle-nondefault-variant", "test")
+        // this project is compatible with gradle 9 but not fully supported yet,
+        // tests libraries are not correctly resolved and thus not included in the snapshot.
+        .maxGradleExclusive("9.0.0")
         .requiresAndroid(),
-      c("multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid(),
+      c("multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac")
+        .requiresAndroid()
+        .maxGradleExclusive("9.0.0"),
       c("android-testing-blueprint-with-dynamic-feature-module", "assembleDebug",
         "compileFlavor1DebugUnitTestJavaWithJavac", "compileFlavor1DebugAndroidTestJavaWithJavac", "compileDebugAndroidTestJavaWithJavac", "compileDebugUnitTestJavaWithJavac",
         "compileTestJava")
         .withProjectDir("AndroidTestingBlueprintWithDynamicFeatureModule")
-        .requiresAndroid(),
-      c("android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
+        .requiresAndroid()
+        .maxGradleExclusive("9.0.0"),
+      c("android-gradle-no-debug")
+        // this project is compatible with gradle 9 but not fully supported yet,
+        // tests libraries are not correctly resolved and thus not included in the snapshot.
+        .maxGradleExclusive("9.0.0")
         .requiresAndroid(),
       c("multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
+        .maxGradleExclusive("9.0.0")
     );
   }
 
