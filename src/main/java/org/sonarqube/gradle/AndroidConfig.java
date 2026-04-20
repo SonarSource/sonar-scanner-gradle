@@ -161,7 +161,7 @@ public class AndroidConfig {
    * Get the test libraries file collection for the variant selected for the analysis with Sonar.
    */
   public FileCollection getTestLibraries() {
-    Set<Component> testComponents = getTestComponents();
+    List<Component> testComponents = getTestComponents();
     if (testComponents.isEmpty()) {
       return project.files();
     }
@@ -327,7 +327,7 @@ public class AndroidConfig {
       SonarUtils.populateJdkProperties(properties, JavaCompilerUtils.extractConfiguration(javaCompile.get()));
     }
 
-    Provider<List<File>> destinationDirsProvider = getCompiledClasses(project, component);
+    List<File> destinationDirsProvider = getCompiledClasses(project, component).get();
     if (isTest) {
       properties.put("sonar.java.test.binaries", destinationDirsProvider);
     } else {
@@ -339,8 +339,8 @@ public class AndroidConfig {
   /**
    * Get the test components for the selected Android variant.
    */
-  private Set<Component> getTestComponents() {
-    Set<Component> testComponents = new HashSet<>();
+  private List<Component> getTestComponents() {
+    List<Component> testComponents = new ArrayList<>();
     for (Component component : getVariant().getNestedComponents()) {
       if (component instanceof TestComponent) {
         testComponents.add(component);

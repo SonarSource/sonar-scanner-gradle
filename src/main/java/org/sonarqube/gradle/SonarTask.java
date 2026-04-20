@@ -193,8 +193,8 @@ public class SonarTask extends ConventionTask {
       }
 
       if (resolvedProperties.androidTests != null) {
-        List<File> sources = resolvedProperties.androidTests.stream().map(File::new).collect(Collectors.toList());
-        resolveSources(resolvedProperties, sources, result, true);
+        List<File> tests = resolvedProperties.androidTests.stream().map(File::new).collect(Collectors.toList());
+        resolveSources(resolvedProperties, tests, result, true);
       }
 
       List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
