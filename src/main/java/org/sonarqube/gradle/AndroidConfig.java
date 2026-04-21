@@ -21,6 +21,7 @@ package org.sonarqube.gradle;
 
 import com.android.build.api.dsl.AndroidSourceSet;
 import com.android.build.api.dsl.ApplicationExtension;
+import com.android.build.api.dsl.CommonExtension;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.Component;
@@ -378,7 +379,7 @@ public class AndroidConfig {
 
   private FileCollection addManifestAndRes(FileCollection files, boolean isTest) {
     String name = isTest ? "test" : "main";
-    AndroidSourceSet sourceSets = project.getExtensions().getByType(ApplicationExtension.class).getSourceSets().getByName(name);
+    AndroidSourceSet sourceSets = (AndroidSourceSet) project.getExtensions().getByType(CommonExtension.class).getSourceSets().getByName(name);
     Set<File> resDirectories = ((DefaultAndroidSourceDirectorySet) sourceSets.getRes()).getSrcDirs();
     return files.plus(project.files(sourceSets.getManifest().toString(), resDirectories));
   }
