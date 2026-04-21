@@ -22,11 +22,8 @@ package org.sonarqube.gradle;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.Component;
+import com.android.build.api.variant.SourceDirectories;
 import com.android.build.api.variant.Sources;
-import com.android.build.api.artifact.SingleArtifact;
-import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.RegularFile;
-import java.lang.reflect.Method;
 import com.android.build.api.variant.TestComponent;
 import com.android.build.api.variant.UnitTest;
 import com.android.build.api.variant.Variant;
@@ -357,54 +354,24 @@ public class AndroidConfig {
    */
   private FileCollection getSources(Component component) {
     Sources sources = component.getSources();
-    ConfigurableFileCollection sourceFiles = project.getObjects().fileCollection();
-
-    // 1. Manifests (Using reflection bridge for 7/8/9 compatibility)
-    sourceFiles.from(getManifestsProvider(component));
-
-    // 2. Core Sources (Safe null checks for AGP 9 compatibility)
-    if (sources.getJava()!= null) sourceFiles.from(sources.getJava().getAll());
-    if (sources.getKotlin()!= null) sourceFiles.from(sources.getKotlin().getAll());
-    if (sources.getAssets()!= null) sourceFiles.from(sources.getAssets().getAll());
-    if (sources.getRes()!= null) sourceFiles.from(sources.getRes().getAll());
-
-    // 3. Aidl and Native Sources
-    if (sources.getAidl()!= null) sourceFiles.from(sources.getAidl().getAll());
-
-    // Custom source types (C/CPP) are safer to access via string name
-    try { sourceFiles.from(sources.getByName("c").getAll()); } catch (Exception ignored) {}
-    try { sourceFiles.from(sources.getByName("cpp").getAll()); } catch (Exception ignored) {}
-
-    // 4. Renderscript (Handled via reflection as it is removed/deprecated in AGP 9)
-    try {
-      Method getRs = sources.getClass().getMethod("getRenderscript");
-      Object rs = getRs.invoke(sources);
-      if (rs!= null) {
-        Method getAll = rs.getClass().getMethod("getAll");
-        sourceFiles.from(getAll.invoke(rs));
-      }
-    } catch (Exception ignored) {}
-
+    FileCollection sourceFiles = project.files(
+      sources.getJava().getAll(),
+      sources.getKotlin().getAll(),
+      sources.getAssets().getAll(),
+      sources.getByName("c").getAll(),
+      sources.getByName("cpp").getAll()
+    );
+    SourceDirectories.Flat aidlSources = sources.getAidl();
+    if (aidlSources != null) {
+      sourceFiles = sourceFiles.plus(project.files(aidlSources.getAll()));
+    }
+    SourceDirectories.Flat renderscriptSources = sources.getRenderscript();
+    if (renderscriptSources != null) {
+      sourceFiles = sourceFiles.plus(project.files(renderscriptSources.getAll()));
+    }
     return sourceFiles;
   }
 
-
-  @SuppressWarnings("unchecked")
-  private static Provider<List<RegularFile>> getManifestsProvider(Component component) {
-    Sources sources = component.getSources();
-    try {
-      // Try the modern Sources API (Added in AGP 8.3.1)
-      Method getManifestsMethod = sources.getClass().getMethod("getManifests");
-      Object manifestFiles = getManifestsMethod.invoke(sources);
-      Method getAllMethod = manifestFiles.getClass().getMethod("getAll");
-      return (Provider<List<RegularFile>>) getAllMethod.invoke(manifestFiles);
-    } catch (Exception e) {
-      // Fallback for AGP 7.0 - 8.3.0: Use the Merged Manifest Artifact
-      // This retrieves the final merged manifest file as a single-element list.
-      Provider<RegularFile> merged = component.getArtifacts().get(SingleArtifact.MERGED_MANIFEST.INSTANCE);
-      return merged.map(Collections::singletonList);
-    }
-  }
   /**
    * Retrieve the Java compilation task for the selected Android variant.
    */
