@@ -19,6 +19,8 @@
  */
 package org.sonarqube.gradle;
 
+import com.android.build.api.dsl.AndroidSourceSet;
+import com.android.build.api.dsl.ApplicationExtension;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.Component;
@@ -176,7 +178,8 @@ public class AndroidConfig {
    * Get the source directories for the selected Android variant.
    */
   public FileCollection getAndroidSources() {
-    return getSources(getVariant());
+    FileCollection sources = getSources(getVariant());
+    return addManifestAndRes(sources, false);
   }
 
   /**
@@ -187,7 +190,7 @@ public class AndroidConfig {
     for (Component component : getTestComponents()) {
       tests = tests.plus(getSources(component));
     }
-    return tests;
+    return addManifestAndRes(tests, true);
   }
 
   /**
@@ -370,6 +373,12 @@ public class AndroidConfig {
       sourceFiles = sourceFiles.plus(project.files(renderscriptSources.getAll()));
     }
     return sourceFiles;
+  }
+
+  private FileCollection addManifestAndRes(FileCollection files, boolean isTest) {
+    String name = isTest ? "test" : "main";
+    AndroidSourceSet sourceSets = project.getExtensions().getByType(ApplicationExtension.class).getSourceSets().getByName(name);
+    return files.plus(project.files(sourceSets.getManifest().toString(), sourceSets.getRes().toString()));
   }
 
   /**
