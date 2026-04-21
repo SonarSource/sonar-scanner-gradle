@@ -20,7 +20,6 @@
 package org.sonarqube.gradle;
 
 import com.android.build.api.dsl.AndroidSourceSet;
-import com.android.build.api.dsl.ApplicationExtension;
 import com.android.build.api.dsl.CommonExtension;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
@@ -181,7 +180,8 @@ public class AndroidConfig {
    */
   public FileCollection getAndroidSources() {
     FileCollection sources = getSources(getVariant());
-    return addManifestAndRes(sources, false);
+    sources = addManifestAndRes(sources, "main");
+    return addManifestAndRes(sources, getVariant().getName());
   }
 
   /**
@@ -189,10 +189,16 @@ public class AndroidConfig {
    */
   public FileCollection getAndroidTests() {
     FileCollection tests = project.files();
+    String variantName = SonarUtils.capitalize(getVariant().getName());
     for (Component component : getTestComponents()) {
       tests = tests.plus(getSources(component));
+      if (component instanceof AndroidTest) {
+        tests = addManifestAndRes(tests, "androidTest" + variantName);
+      } else {
+        tests = addManifestAndRes(tests, "test" + variantName);
+      }
     }
-    return addManifestAndRes(tests, true);
+    return tests;
   }
 
   /**
@@ -377,9 +383,8 @@ public class AndroidConfig {
     return sourceFiles;
   }
 
-  private FileCollection addManifestAndRes(FileCollection files, boolean isTest) {
-    String name = isTest ? "test" : "main";
-    AndroidSourceSet sourceSets = (AndroidSourceSet) project.getExtensions().getByType(CommonExtension.class).getSourceSets().getByName(name);
+  private FileCollection addManifestAndRes(FileCollection files, String sourceSetName) {
+    AndroidSourceSet sourceSets = (AndroidSourceSet) project.getExtensions().getByType(CommonExtension.class).getSourceSets().getByName(sourceSetName);
     Set<File> resDirectories = ((DefaultAndroidSourceDirectorySet) sourceSets.getRes()).getSrcDirs();
     return files.plus(project.files(sourceSets.getManifest().toString(), resDirectories));
   }
