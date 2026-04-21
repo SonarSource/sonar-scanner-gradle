@@ -35,7 +35,6 @@ import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,7 +42,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.UnknownTaskException;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.java.TargetJvmEnvironment;
@@ -77,13 +75,8 @@ public class AndroidConfig {
     return androidConfig;
   }
 
-  private static boolean addTaskByName(Set<Task> taskSet, String name, Project project) {
-    try {
-      taskSet.add(project.getTasks().getByName(name));
-      return true;
-    } catch (UnknownTaskException e) {
-      return false;
-    }
+  public static boolean usesAndroidGradlePlugin9() {
+    return Version.of(ANDROID_GRADLE_PLUGIN_VERSION).compareTo(Version.of("9.0.0")) >= 0;
   }
 
   private static int getMinSdk(Variant variant) {
@@ -205,8 +198,10 @@ public class AndroidConfig {
    * Get the Android tasks on which Sonar tasks need to depend for the variant selected for the analysis with Sonar.
    */
   public Set<Task> getTasks() {
-    String variantName = SonarUtils.capitalize(getVariant().getName());
-    return project.getTasks().stream().filter(task -> task.getName().contains(variantName)).collect(Collectors.toSet());
+    String variantName = getVariant().getName().toLowerCase();
+    return project.getTasks().stream()
+      .filter(task -> task.getName().toLowerCase().contains(variantName))
+      .collect(Collectors.toSet());
   }
 
   /**

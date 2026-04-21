@@ -68,6 +68,7 @@ import org.sonarqube.gradle.SonarUtils.InputFileType;
 import org.sonarqube.gradle.properties.SonarProperty;
 import org.sonarsource.scanner.lib.EnvironmentConfig;
 
+import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
 import static java.util.stream.Collectors.groupingBy;
 import static org.sonarqube.gradle.SonarUtils.appendProp;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
@@ -127,7 +128,11 @@ public class SonarPropertyComputer {
     addGradleDefaults(project, rawProperties);
 
     if (isAndroidProject(project)) {
-      androidConfigMap.get(project.getPath()).configureProperties(rawProperties);
+      if (AndroidConfig.usesAndroidGradlePlugin9()) {
+        androidConfigMap.get(project.getPath()).configureProperties(rawProperties);
+      } else {
+        AndroidUtils.configureForAndroid(project, SonarQubePlugin.getConfiguredAndroidVariant(project), rawProperties);
+      }
     }
 
     if (isRootProject(project)) {

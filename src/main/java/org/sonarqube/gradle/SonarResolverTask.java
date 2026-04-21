@@ -183,6 +183,7 @@ public abstract class SonarResolverTask extends DefaultTask {
     List<String> testCompileClasspathFilenames = getAbsolutePaths(testCompileClasspath);
     List<String> mainLibrariesFilenames = getAbsolutePaths(getMainLibraries());
     List<String> testLibrariesFilenames = getAbsolutePaths(getTestLibraries());
+
     Provider<FileCollection> androidSourcesProvider = getAndroidSources();
     List<String> androidSourcesFilenames = androidSourcesProvider == null ? Collections.emptyList() : getAbsolutePaths(androidSourcesProvider);
     Provider<FileCollection> androidTestsProvider = getAndroidTests();

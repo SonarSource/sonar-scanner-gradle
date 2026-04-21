@@ -20,6 +20,7 @@
 package org.sonarqube.gradle;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,6 +119,10 @@ public class SonarQubePlugin implements Plugin<Project> {
       if (!isAndroidProject(project)) {
         resolverTask.setMainLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
         resolverTask.setTestLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
+      } else if (!AndroidConfig.usesAndroidGradlePlugin9()) {
+        resolverTask.setMainLibraries(project.provider(() -> AndroidUtils.findMainLibraries(project)));
+        resolverTask.setTestLibraries(project.provider(() -> AndroidUtils.findTestLibraries(project)));
+        resolverTask.mustRunAfter(getAndroidTasks(project));
       }
       File buildDirectory = new File(project.getLayout().getBuildDirectory().getAsFile().get(), "sonar-resolver");
       resolverTask.setOutputDirectory(buildDirectory);
@@ -129,19 +134,21 @@ public class SonarQubePlugin implements Plugin<Project> {
    * Configure Android specific properties and classpath information for a project if it uses the Android Gradle plugin.
    */
   private static void configureAndroid(Project project, Map<String, AndroidConfig> androidConfigMap, TaskProvider<SonarResolverTask> resolverTaskProvider) {
-    SonarUtils.ANDROID_PLUGIN_IDS.forEach(pluginId ->
-      project.getPlugins().withId(pluginId, plugin -> {
-        AndroidConfig androidConfig = AndroidConfig.of(project);
-        androidConfigMap.put(project.getPath(), androidConfig);
-        resolverTaskProvider.configure(resolverTask -> {
-          resolverTask.setMainLibraries(project.provider(androidConfig::getMainLibraries));
-          resolverTask.setTestLibraries(project.provider(androidConfig::getTestLibraries));
-          resolverTask.setAndroidSources(project.provider(androidConfig::getAndroidSources));
-          resolverTask.setAndroidTests(project.provider(androidConfig::getAndroidTests));
-          resolverTask.mustRunAfter(androidConfig.getTasks());
-        });
-      })
-    );
+    if (isAndroidProject(project) && AndroidConfig.usesAndroidGradlePlugin9()) {
+      SonarUtils.ANDROID_PLUGIN_IDS.forEach(pluginId ->
+        project.getPlugins().withId(pluginId, plugin -> {
+          AndroidConfig androidConfig = AndroidConfig.of(project);
+          androidConfigMap.put(project.getPath(), androidConfig);
+          resolverTaskProvider.configure(resolverTask -> {
+            resolverTask.setMainLibraries(project.provider(androidConfig::getMainLibraries));
+            resolverTask.setTestLibraries(project.provider(androidConfig::getTestLibraries));
+            resolverTask.setAndroidSources(project.provider(androidConfig::getAndroidSources));
+            resolverTask.setAndroidTests(project.provider(androidConfig::getAndroidTests));
+            resolverTask.mustRunAfter(androidConfig.getTasks());
+          });
+        })
+      );
+    }
   }
 
   private static FileCollection querySourceSet(Project project, String sourceSetName) {
@@ -222,6 +229,33 @@ public class SonarQubePlugin implements Plugin<Project> {
   private static List<SonarExtension> getSonarExtensions(Project p) {
     return Stream.of(SonarExtension.SONAR_EXTENSION_NAME, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME)
       .map(name -> (SonarExtension) p.getExtensions().getByName(name))
+      .collect(Collectors.toList());
+  }
+
+  private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
+    return () -> project.getAllprojects().stream()
+      .filter(p -> isAndroidProject(p) && notSkipped(p))
+      .map(p -> {
+        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
+
+        List<Task> allTasks = new ArrayList<>();
+        if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
+          String variantName = SonarUtils.capitalize(androidVariantAndExtension.getVariant().getName());
+          final String compileTaskPrefix = "compile" + variantName;
+          boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
+          boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
+          // Unit test compilation and android test compilation tasks already depend on main code compilation, so we don't add a useless dependency
+          // that would lead to run the main compilation task several times.
+          if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
+            addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
+          }
+
+          final String testTaskPrefix = "test" + variantName;
+          addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
+        }
+        return allTasks;
+      })
+      .flatMap(List::stream)
       .collect(Collectors.toList());
   }
 
