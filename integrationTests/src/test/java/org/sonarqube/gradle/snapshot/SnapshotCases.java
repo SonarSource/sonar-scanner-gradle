@@ -197,6 +197,7 @@ public final class SnapshotCases {
         .requiresAndroid(),
       c("multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
+        .maxGradleExclusive("9.0.0")
     );
   }
 

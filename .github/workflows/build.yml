@@ -21,7 +21,7 @@ env:
 jobs:
   build:
     # Build takes over 30 minutes on "s" and around 5 minutes on "m".
-    runs-on: github-ubuntu-latest-m  # Public repo
+    runs-on: github-ubuntu-latest-l  # Public repo
     name: Build
     permissions:
       id-token: write  # Required for Vault OIDC authentication
@@ -117,7 +117,7 @@ jobs:
     name: >
       QA Gradle ${{ matrix.item.gradle_version }}
       ${{ matrix.item.android_gradle_version && format(' Android {0}', matrix.item.android_gradle_version) || '' }}
-    runs-on: 'github-ubuntu-latest-m'
+    runs-on: 'github-ubuntu-latest-l'
     permissions:
       id-token: write
       contents: write
