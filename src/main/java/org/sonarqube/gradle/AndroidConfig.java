@@ -205,21 +205,8 @@ public class AndroidConfig {
    * Get the Android tasks on which Sonar tasks need to depend for the variant selected for the analysis with Sonar.
    */
   public Set<Task> getTasks() {
-    Set<Task> tasks = new HashSet<>();
-    Variant variant = getVariant();
-
-    boolean testTaskAdded = false;
-    for (Component component : getTestComponents()) {
-      testTaskAdded = addTaskByName(tasks, getCompileTaskName(component), project);
-    }
-    // The compilation of unit tests or Android tests already depends on the main compilation task, so it is only necessary to add it if no test compilation tasks were found.
-    if (!testTaskAdded) {
-      addTaskByName(tasks, getCompileTaskName(variant), project);
-    }
-
-    addTaskByName(tasks, "test" + SonarUtils.capitalize(variant.getName()) + "UnitTest", project);
-
-    return tasks;
+    String variantName = SonarUtils.capitalize(getVariant().getName());
+    return project.getTasks().stream().filter(task -> task.getName().contains(variantName)).collect(Collectors.toSet());
   }
 
   /**
