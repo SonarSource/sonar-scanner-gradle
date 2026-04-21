@@ -29,6 +29,7 @@ import com.android.build.api.variant.Sources;
 import com.android.build.api.variant.TestComponent;
 import com.android.build.api.variant.UnitTest;
 import com.android.build.api.variant.Variant;
+import com.android.build.gradle.internal.api.DefaultAndroidSourceDirectorySet;
 import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import java.io.File;
@@ -378,7 +379,8 @@ public class AndroidConfig {
   private FileCollection addManifestAndRes(FileCollection files, boolean isTest) {
     String name = isTest ? "test" : "main";
     AndroidSourceSet sourceSets = project.getExtensions().getByType(ApplicationExtension.class).getSourceSets().getByName(name);
-    return files.plus(project.files(sourceSets.getManifest().toString(), sourceSets.getRes().toString()));
+    Set<File> resDirectories = ((DefaultAndroidSourceDirectorySet) sourceSets.getRes()).getSrcDirs();
+    return files.plus(project.files(sourceSets.getManifest().toString(), resDirectories));
   }
 
   /**
