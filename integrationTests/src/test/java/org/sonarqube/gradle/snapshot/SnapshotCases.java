@@ -187,12 +187,15 @@ public final class SnapshotCases {
         .requiresAndroid(),
       c("android-gradle-nondefault-variant", "test")
         .requiresAndroid(),
-      c("multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac").requiresAndroid(),
+      c("multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac")
+        .requiresAndroid()
+        .maxGradleExclusive("9.0.0"),
       c("android-testing-blueprint-with-dynamic-feature-module", "assembleDebug",
         "compileFlavor1DebugUnitTestJavaWithJavac", "compileFlavor1DebugAndroidTestJavaWithJavac", "compileDebugAndroidTestJavaWithJavac", "compileDebugUnitTestJavaWithJavac",
         "compileTestJava")
         .withProjectDir("AndroidTestingBlueprintWithDynamicFeatureModule")
-        .requiresAndroid(),
+        .requiresAndroid()
+        .maxGradleExclusive("9.0.0"),
       c("android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
         .requiresAndroid(),
       c("multi-module-android-studio-lint", "lint", "lintFullRelease")
