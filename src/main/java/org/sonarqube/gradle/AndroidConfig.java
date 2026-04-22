@@ -174,9 +174,7 @@ public class AndroidConfig {
    * Get the source directories for the selected Android variant.
    */
   public FileCollection getAndroidSources() {
-    FileCollection sources = getSources(getVariant());
-    sources = addManifestAndRes(sources, "main");
-    return addManifestAndRes(sources, getVariant().getName());
+    return getSources(getVariant());
   }
 
   /**
@@ -184,14 +182,8 @@ public class AndroidConfig {
    */
   public FileCollection getAndroidTests() {
     FileCollection tests = project.files();
-    String variantName = SonarUtils.capitalize(getVariant().getName());
     for (Component component : getTestComponents()) {
       tests = tests.plus(getSources(component));
-      if (component instanceof AndroidTest) {
-        tests = addManifestAndRes(tests, "androidTest" + variantName);
-      } else {
-        tests = addManifestAndRes(tests, "test" + variantName);
-      }
     }
     return tests;
   }
@@ -385,12 +377,6 @@ public class AndroidConfig {
     }
 
     return sourceFiles;
-  }
-
-  private FileCollection addManifestAndRes(FileCollection files, String sourceSetName) {
-    AndroidSourceSet sourceSets = (AndroidSourceSet) project.getExtensions().getByType(CommonExtension.class).getSourceSets().getByName(sourceSetName);
-    Set<File> resDirectories = ((DefaultAndroidSourceDirectorySet) sourceSets.getRes()).getSrcDirs();
-    return files.plus(project.files(sourceSets.getManifest().toString(), resDirectories));
   }
 
   @SuppressWarnings("unchecked")

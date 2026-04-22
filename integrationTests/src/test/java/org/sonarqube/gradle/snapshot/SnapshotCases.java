@@ -196,7 +196,7 @@ public final class SnapshotCases {
         .withProjectDir("AndroidTestingBlueprintWithDynamicFeatureModule")
         .requiresAndroid()
         .maxGradleExclusive("9.0.0"),
-      c("android-gradle-no-debug", "compileReleaseUnitTestJavaWithJavac", "compileReleaseJavaWithJavac")
+      c("android-gradle-no-debug")
         .requiresAndroid(),
       c("multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()

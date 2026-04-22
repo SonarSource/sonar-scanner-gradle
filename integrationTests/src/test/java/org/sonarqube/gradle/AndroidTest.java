@@ -47,26 +47,6 @@ public class AndroidTest extends AbstractGradleIT {
   }
 
   @Test
-  public void testSonarTaskHasNoDependencies() throws Exception {
-    RunResult result = runGradlewWithEnvQuietly("/AndroidTestingBlueprintWithDynamicFeatureModule", emptyMap(), new DefaultRunConfiguration(), "sonar", "--dry-run",
-      "--max-workers=1");
-
-    Stream<String> logs = stream(result.getLog().split("\\r?\\n")).sorted();
-
-    assertThat(logs)
-      .contains(":sonar SKIPPED")
-      .doesNotContainAnyElementsOf(Arrays.asList(
-        ":app:compileFlavor1DebugAndroidTestJavaWithJavac SKIPPED",
-        ":app:compileFlavor1DebugUnitTestJavaWithJavac SKIPPED",
-        ":module-android-library:compileDebugAndroidTestJavaWithJavac SKIPPED",
-        ":module-android-library:compileDebugUnitTestJavaWithJavac SKIPPED",
-        ":module-flavor1-androidTest-only:compileDebugJavaWithJavac SKIPPED",
-        ":module-plain-java:compileTestJava SKIPPED",
-        ":module_android_feature:compileFlavor1DebugJavaWithJavac SKIPPED")
-      );
-  }
-
-  @Test
   public void gradle9AndroidParallelExample() throws Exception {
     ignoreThisTestIfGradleVersionIsLessThan("9.0.0");
     Map<String, String> env = Collections.emptyMap();
