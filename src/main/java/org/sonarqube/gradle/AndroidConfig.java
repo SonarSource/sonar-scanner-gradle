@@ -24,7 +24,6 @@ import com.android.build.api.dsl.CommonExtension;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.Component;
-import com.android.build.api.variant.SourceDirectories;
 import com.android.build.api.variant.Sources;
 import com.android.build.api.variant.TestComponent;
 import com.android.build.api.variant.UnitTest;
@@ -33,6 +32,7 @@ import com.android.build.gradle.internal.api.DefaultAndroidSourceDirectorySet;
 import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,8 +45,10 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.java.TargetJvmEnvironment;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
@@ -347,21 +349,41 @@ public class AndroidConfig {
    */
   private FileCollection getSources(Component component) {
     Sources sources = component.getSources();
-    FileCollection sourceFiles = project.files(
-      sources.getJava().getAll(),
-      sources.getKotlin().getAll(),
-      sources.getAssets().getAll(),
-      sources.getByName("c").getAll(),
-      sources.getByName("cpp").getAll()
-    );
-    SourceDirectories.Flat aidlSources = sources.getAidl();
-    if (aidlSources != null) {
-      sourceFiles = sourceFiles.plus(project.files(aidlSources.getAll()));
+    ConfigurableFileCollection sourceFiles = project.getObjects().fileCollection();
+
+    // 1. Manifests (Using reflection bridge for 7/8/9 compatibility)
+    sourceFiles.from(getManifestsProvider(component));
+
+    // 2. Core Sources (Safe null checks for AGP 9 compatibility)
+    if (sources.getJava() != null) sourceFiles.from(sources.getJava().getAll());
+    if (sources.getKotlin() != null) sourceFiles.from(sources.getKotlin().getAll());
+    if (sources.getAssets() != null) sourceFiles.from(sources.getAssets().getAll());
+    if (sources.getRes() != null) sourceFiles.from(sources.getRes().getAll());
+
+    // 3. Aidl and Native Sources
+    if (sources.getAidl() != null) sourceFiles.from(sources.getAidl().getAll());
+
+    // Custom source types (C/CPP) are safer to access via string name
+    try {
+      sourceFiles.from(sources.getByName("c").getAll());
+    } catch (Exception ignored) {
     }
-    SourceDirectories.Flat renderscriptSources = sources.getRenderscript();
-    if (renderscriptSources != null) {
-      sourceFiles = sourceFiles.plus(project.files(renderscriptSources.getAll()));
+    try {
+      sourceFiles.from(sources.getByName("cpp").getAll());
+    } catch (Exception ignored) {
     }
+
+    // 4. Renderscript (Handled via reflection as it is removed/deprecated in AGP 9)
+    try {
+      Method getRs = sources.getClass().getMethod("getRenderscript");
+      Object rs = getRs.invoke(sources);
+      if (rs != null) {
+        Method getAll = rs.getClass().getMethod("getAll");
+        sourceFiles.from(getAll.invoke(rs));
+      }
+    } catch (Exception ignored) {
+    }
+
     return sourceFiles;
   }
 
@@ -369,6 +391,20 @@ public class AndroidConfig {
     AndroidSourceSet sourceSets = (AndroidSourceSet) project.getExtensions().getByType(CommonExtension.class).getSourceSets().getByName(sourceSetName);
     Set<File> resDirectories = ((DefaultAndroidSourceDirectorySet) sourceSets.getRes()).getSrcDirs();
     return files.plus(project.files(sourceSets.getManifest().toString(), resDirectories));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Provider<List<RegularFile>> getManifestsProvider(Component component) {
+    Sources sources = component.getSources();
+    try {
+      // Try the modern Sources API (Added in AGP 8.3.1)
+      Method getManifestsMethod = sources.getClass().getMethod("getManifests");
+      Object manifestFiles = getManifestsMethod.invoke(sources);
+      Method getAllMethod = manifestFiles.getClass().getMethod("getAll");
+      return (Provider<List<RegularFile>>) getAllMethod.invoke(manifestFiles);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

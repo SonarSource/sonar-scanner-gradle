@@ -134,20 +134,24 @@ public class SonarQubePlugin implements Plugin<Project> {
    * Configure Android specific properties and classpath information for a project if it uses the Android Gradle plugin.
    */
   private static void configureAndroid(Project project, Map<String, AndroidConfig> androidConfigMap, TaskProvider<SonarResolverTask> resolverTaskProvider) {
-    if (isAndroidProject(project) && AndroidConfig.usesAndroidGradlePlugin9()) {
-      SonarUtils.ANDROID_PLUGIN_IDS.forEach(pluginId ->
-        project.getPlugins().withId(pluginId, plugin -> {
-          AndroidConfig androidConfig = AndroidConfig.of(project);
-          androidConfigMap.put(project.getPath(), androidConfig);
-          resolverTaskProvider.configure(resolverTask -> {
-            resolverTask.setMainLibraries(project.provider(androidConfig::getMainLibraries));
-            resolverTask.setTestLibraries(project.provider(androidConfig::getTestLibraries));
-            resolverTask.setAndroidSources(project.provider(androidConfig::getAndroidSources));
-            resolverTask.setAndroidTests(project.provider(androidConfig::getAndroidTests));
-            resolverTask.mustRunAfter(androidConfig.getTasks());
-          });
-        })
-      );
+    try {
+      if (AndroidConfig.usesAndroidGradlePlugin9()) {
+        SonarUtils.ANDROID_PLUGIN_IDS.forEach(pluginId ->
+          project.getPlugins().withId(pluginId, plugin -> {
+            AndroidConfig androidConfig = AndroidConfig.of(project);
+            androidConfigMap.put(project.getPath(), androidConfig);
+            resolverTaskProvider.configure(resolverTask -> {
+              resolverTask.setMainLibraries(project.provider(androidConfig::getMainLibraries));
+              resolverTask.setTestLibraries(project.provider(androidConfig::getTestLibraries));
+              resolverTask.setAndroidSources(project.provider(androidConfig::getAndroidSources));
+              resolverTask.setAndroidTests(project.provider(androidConfig::getAndroidTests));
+              resolverTask.mustRunAfter(androidConfig.getTasks());
+            });
+          })
+        );
+      }
+    } catch (NoClassDefFoundError e) {
+      // android not available, do nothing
     }
   }
 
