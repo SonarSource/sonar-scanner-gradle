@@ -50,7 +50,7 @@ public class PathsNormalizer {
   );
 
   private static final List<String> IGNORED_PATHS_SUBSTRINGS = List.of(
-    "kotlin-stdlib", "annotations-", "core-runtime-"
+    "kotlin-stdlib", "annotations-", "core-runtime-", "lifecycle-common-"
   );
 
   private PathsNormalizer() {
