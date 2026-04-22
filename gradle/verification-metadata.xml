@@ -1183,6 +1183,14 @@
             <sha256 value="c91ab5aa570d86f6fd07cc158ec6bc2c50080402972ee9179fe24100739fbb20" origin="Verified"/>
          </artifact>
       </component>
+      <component group="de.siegmar" name="fastcsv" version="3.7.0">
+         <artifact name="fastcsv-3.7.0.jar">
+            <sha256 value="9e1f94bdeb021d18e77750d3eca92daa35cb03ea0f5bd63b078935868a18b206" origin="Verified"/>
+         </artifact>
+         <artifact name="fastcsv-3.7.0.pom">
+            <sha256 value="a21bdc9784fff33123b0983ae64225af433b3558c47bcecb55a502926f9fb5a9" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="gradle.plugin.com.hierynomus.gradle.plugins" name="license-gradle-plugin" version="0.16.1">
          <artifact name="license-gradle-plugin-0.16.1.jar">
             <sha256 value="bd3cfc404948066259faf1df09118cc54d78b3d5696854808b7d5b3b3baba62d" origin="Verified"/>
@@ -1203,8 +1211,13 @@
          <artifact name="ayza-10.0.2.jar">
             <sha256 value="9aa06304993aff5677dba769c677e578364f5793cbaf1569b2b5f39b71119a7b" origin="Verified"/>
          </artifact>
-         <artifact name="ayza-10.0.2.pom">
-            <sha256 value="441136232173d5eb533feffc96daa0353f8f0cb695033ca9631ecc8e68ddd335" origin="Verified"/>
+      </component>
+      <component group="io.github.hakky54" name="ayza" version="10.0.3">
+         <artifact name="ayza-10.0.3.jar">
+            <sha256 value="ac92cede6c4e3a03d17b9e7fb858e39ae10545035cfe83de8d8ef4ce565fae8a" origin="Verified"/>
+         </artifact>
+         <artifact name="ayza-10.0.3.pom">
+            <sha256 value="3b7f648f3a52a5495c1f1b2670383d18c93c77c466ae061597545369d43fd2a0" origin="Verified"/>
          </artifact>
       </component>
       <component group="io.github.hakky54" name="sslcontext-kickstart" version="8.3.6">
@@ -2071,6 +2084,11 @@
          </artifact>
          <artifact name="bcprov-jdk18on-1.83.pom">
             <sha256 value="c87cf06f5aac4656380f1d441b2459fbe066ec812b29469bd0b3fcb8bb20574a" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="org.bouncycastle" name="bcprov-jdk18on" version="1.84">
+         <artifact name="bcprov-jdk18on-1.84.jar">
+            <sha256 value="64d6c5a6121fcd927152dd182cbed39afe0fda641a970d9bcc0c9cb1858b2731" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.checkerframework" name="checker-qual" version="2.5.8">
@@ -3085,148 +3103,34 @@
             <sha256 value="6244b08edc9f86b3fafa5f383a12fd295dee03ca3fad13c4453dd6922bafd452" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-download-cache" version="3.5.0.539">
-         <artifact name="sonar-scanner-download-cache-3.5.0.539.jar">
-            <sha256 value="131acf408d161019f99eec1c2a2050edc27d2e50a571f68b43f5925c71790c7f" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-download-cache-3.5.0.539.pom">
-            <sha256 value="10e566fb72ecab87b0d40a4496b5ade8b561814fa7538799f23202eb59b565a3" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-download-cache" version="3.6.0.1565">
-         <artifact name="sonar-scanner-download-cache-3.6.0.1565.jar">
-            <sha256 value="90d901a5cc50d90b668596c07eb8e4b8bc33d37b696b3d90e67b5e7d14676da7" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-download-cache-3.6.0.1565.pom">
-            <sha256 value="310bb689a1da0cdad79de696f8d4acefe71501797fdcba7bdf403839fc424bcc" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-download-cache" version="4.0.0.1577">
-         <artifact name="sonar-scanner-download-cache-4.0.0.1577.jar">
-            <sha256 value="9aab157571f7adb8e40f4cf468c2a2cbe518d4bd01dcbca489d385e11e7aaf67" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-download-cache-4.0.0.1577.pom">
-            <sha256 value="4756ba7cfd52ae0e4ce3d38240926dcfb93fac11f73c541a3ab230915a6dd262" origin="Verified"/>
-         </artifact>
-      </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-download-cache" version="4.0.1.1587">
          <artifact name="sonar-scanner-download-cache-4.0.1.1587.jar">
             <sha256 value="d64cc2cee46c48fffac89ee68a9be3c93484b00b01c721d11cb709aa59a01c01" origin="Verified"/>
          </artifact>
-         <artifact name="sonar-scanner-download-cache-4.0.1.1587.pom">
-            <sha256 value="b4f06059205a1224dc9a86c9f04b498827bf1a09e93e906040b06579fe5e8fd0" origin="Verified"/>
-         </artifact>
       </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="3.1.1.261">
-         <artifact name="sonar-scanner-java-library-3.1.1.261.jar">
-            <sha256 value="adb2ffbf5542b2560e23193675fecc88d90995fcc533b0851cada3e226bd68e6" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-3.1.1.261.pom">
-            <sha256 value="a1c138f87ef153eadfd7ecd0aa22858f233589702d5bf66283dfdb4d9cad0f5f" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="3.3.0.442">
-         <artifact name="sonar-scanner-java-library-3.3.0.442.jar">
-            <sha256 value="a08ffa49972657d7e4fa2d428424ea92fb582eff1a7a9273c4f08cbae7c10cbb" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-3.3.0.442.pom">
-            <sha256 value="35aef9b8bdb798f01ccc9357fba0714ea74d7f3e3c36ee8c25f0713ddf475cea" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="3.3.1.450">
-         <artifact name="sonar-scanner-java-library-3.3.1.450.jar">
-            <sha256 value="cd2941a71a705a96c181e10903f2e4f787087eb7e49d99b6dada408dc5dd9176" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-3.3.1.450.pom">
-            <sha256 value="023d77e24e5bfe3c150e002579e5684c101d5c1dc7a860173ed2fedcbd615227" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="3.5.0.539">
-         <artifact name="sonar-scanner-java-library-3.5.0.539.jar">
-            <sha256 value="bcdb76fb12dc24f31f24bd26730e980fdab9ea031d682e17d64d607f3cbbdad7" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-3.5.0.539.pom">
-            <sha256 value="e6e852237d003a46bbc8717453776cd7f7e641f56f609b4af450990e1cd069ff" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="3.6.0.1565">
-         <artifact name="sonar-scanner-java-library-3.6.0.1565.jar">
-            <sha256 value="117aade75f2cc85f01e2997e869388a0d57cbc395da3ced3826ca8b67e9a305c" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-3.6.0.1565.pom">
-            <sha256 value="2f35d7226c0af6d5872a988794b93f38a48c8f73d3f2f7dcdf6f65e49d6f1974" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="4.0.0.1577">
-         <artifact name="sonar-scanner-java-library-4.0.0.1577.jar">
-            <sha256 value="8303a8371b3a6371526f68213238a19f1811f59dbcc801166c7c4dbce04cb9d2" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-4.0.0.1577.pom">
-            <sha256 value="4b07568c0c61dbb06a3d9e9bf2b758bb14ee16fa62e6fbbdcd10deb1b8960f51" origin="Verified"/>
+      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-download-cache" version="4.1.1.1633">
+         <artifact name="sonar-scanner-download-cache-4.1.1.1633.jar">
+            <sha256 value="ea4a37e5907186236b53cb679d416663112f5b2862893ca693ea7108e1a75927" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="4.0.1.1587">
          <artifact name="sonar-scanner-java-library-4.0.1.1587.jar">
             <sha256 value="218b882440a8d0dd11687aadbcf4f9b0a327d12111832000a395a2f496e8e90a" origin="Verified"/>
          </artifact>
-         <artifact name="sonar-scanner-java-library-4.0.1.1587.pom">
-            <sha256 value="00d471d121b8781199c88d1937e376446c709f7979667c8ae57d3dd1b78c6b9d" origin="Verified"/>
-         </artifact>
       </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="3.1.1.261">
-         <artifact name="sonar-scanner-java-library-batch-interface-3.1.1.261.jar">
-            <sha256 value="2b3b32eb982ba0ea72aded29338fe182132fb4c657256ebba23a526aa40b58ff" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-batch-interface-3.1.1.261.pom">
-            <sha256 value="60a1c278f24b140818f83fe280182e5e7c4b2eab38638e2106d1660d117fdcd9" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="3.3.0.442">
-         <artifact name="sonar-scanner-java-library-batch-interface-3.3.0.442.jar">
-            <sha256 value="31ab96b97d2990abac00dd11aa9cfe7f43a5b56bedad9747ed1ca3a86616d2b2" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-batch-interface-3.3.0.442.pom">
-            <sha256 value="92cd9d6d33ed275694084e3b051b3c45f2ac10be20ae075c69ba7d23558ce9bb" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="3.3.1.450">
-         <artifact name="sonar-scanner-java-library-batch-interface-3.3.1.450.jar">
-            <sha256 value="adbfef2053957a4e9639db69730ba83a090a5f8fa1cc3424a122c2c6663297d9" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-batch-interface-3.3.1.450.pom">
-            <sha256 value="b3d7ba47dfc2de1cc9e4cf062dfc5017a3b2e3466d36098e61ce9f54147b85f4" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="3.5.0.539">
-         <artifact name="sonar-scanner-java-library-batch-interface-3.5.0.539.jar">
-            <sha256 value="9206577ad77d5bc022015695f6d18e1332478b0951b5b778f2b41b7dd587a55a" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-batch-interface-3.5.0.539.pom">
-            <sha256 value="014a0ea622f1b67f1267e214f01148f5c2686c8483998632eb0e9a9ab58c3f2c" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="3.6.0.1565">
-         <artifact name="sonar-scanner-java-library-batch-interface-3.6.0.1565.jar">
-            <sha256 value="dcdc3504c41fbfdc477c1ea6d9d13422f00ff5fba2690f8f162ff83c2338420f" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-batch-interface-3.6.0.1565.pom">
-            <sha256 value="5c26ce11dd26cf61287fe3f1d1c665a843c60833852b210ce35d7ba4b6e8d627" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="4.0.0.1577">
-         <artifact name="sonar-scanner-java-library-batch-interface-4.0.0.1577.jar">
-            <sha256 value="77c5b93677c2356236c646273fcd624f56f84dbfe5a775be92c8ecf2d55d3934" origin="Verified"/>
-         </artifact>
-         <artifact name="sonar-scanner-java-library-batch-interface-4.0.0.1577.pom">
-            <sha256 value="09dedb480da05310223717ca746dedf9aeaf37610182fe4382b8015e81bdbe3f" origin="Verified"/>
+      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="4.1.1.1633">
+         <artifact name="sonar-scanner-java-library-4.1.1.1633.jar">
+            <sha256 value="1f3d0263e4a49dffbf1683c18524357774628fe812cf907fd559bd68d551a562" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="4.0.1.1587">
          <artifact name="sonar-scanner-java-library-batch-interface-4.0.1.1587.jar">
             <sha256 value="096426e2198cdad65014390ba4ec7b9c802e7d2747108da6905bc857637dd3a4" origin="Verified"/>
          </artifact>
-         <artifact name="sonar-scanner-java-library-batch-interface-4.0.1.1587.pom">
-            <sha256 value="2bbb735d92c14e32d3d9d6ad19c5c2e08a006da7550139de478565f2bd148ff0" origin="Verified"/>
+      </component>
+      <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="4.1.1.1633">
+         <artifact name="sonar-scanner-java-library-batch-interface-4.1.1.1633.jar">
+            <sha256 value="a080a9e0d8bf9f4293503f8802ce3c1b9455f1d8eb0a051b5e8f1cffb63c35ce" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-parent" version="3.1.1.261">
