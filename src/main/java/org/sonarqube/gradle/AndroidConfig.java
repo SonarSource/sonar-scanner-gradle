@@ -19,8 +19,6 @@
  */
 package org.sonarqube.gradle;
 
-import com.android.build.api.dsl.AndroidSourceSet;
-import com.android.build.api.dsl.CommonExtension;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.Component;
@@ -28,7 +26,6 @@ import com.android.build.api.variant.Sources;
 import com.android.build.api.variant.TestComponent;
 import com.android.build.api.variant.UnitTest;
 import com.android.build.api.variant.Variant;
-import com.android.build.gradle.internal.api.DefaultAndroidSourceDirectorySet;
 import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import java.io.File;
@@ -57,6 +54,7 @@ import org.gradle.api.tasks.testing.Test;
 import org.sonarqube.gradle.properties.SonarProperty;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
+import static org.sonarqube.gradle.SonarQubePlugin.addTaskByName;
 
 public class AndroidConfig {
 
@@ -82,9 +80,6 @@ public class AndroidConfig {
   }
 
   private static int getMinSdk(Variant variant) {
-    if (Version.of(ANDROID_GRADLE_PLUGIN_VERSION).compareTo(Version.of(8, 0)) < 0) {
-      return variant.getMinSdkVersion().getApiLevel();
-    }
     return variant.getMinSdk().getApiLevel();
   }
 
@@ -191,11 +186,22 @@ public class AndroidConfig {
   /**
    * Get the Android tasks on which Sonar tasks need to depend for the variant selected for the analysis with Sonar.
    */
-  public Set<Task> getTasks() {
-    String variantName = getVariant().getName().toLowerCase();
-    return project.getTasks().stream()
-      .filter(task -> task.getName().toLowerCase().contains(variantName))
-      .collect(Collectors.toSet());
+  public List<Task> getTasks() {
+    List<Task> tasks = new ArrayList<>();
+    Variant variant = getVariant();
+
+    boolean testTaskAdded = false;
+    for (Component component : getTestComponents()) {
+      testTaskAdded = addTaskByName(project, getCompileTaskName(component), tasks);
+    }
+    // The compilation of unit tests or Android tests already depends on the main compilation task, so it is only necessary to add it if no test compilation tasks were found.
+    if (!testTaskAdded) {
+      addTaskByName(project, getCompileTaskName(variant), tasks);
+    }
+
+    addTaskByName(project, "test" + SonarUtils.capitalize(variant.getName()) + "UnitTest", tasks);
+
+    return tasks;
   }
 
   /**
@@ -343,30 +349,28 @@ public class AndroidConfig {
     Sources sources = component.getSources();
     ConfigurableFileCollection sourceFiles = project.getObjects().fileCollection();
 
-    // 1. Manifests (Using reflection bridge for 7/8/9 compatibility)
     sourceFiles.from(getManifestsProvider(component));
 
-    // 2. Core Sources (Safe null checks for AGP 9 compatibility)
-    if (sources.getJava() != null) sourceFiles.from(sources.getJava().getAll());
-    if (sources.getKotlin() != null) sourceFiles.from(sources.getKotlin().getAll());
-    if (sources.getAssets() != null) sourceFiles.from(sources.getAssets().getAll());
-    if (sources.getRes() != null) sourceFiles.from(sources.getRes().getAll());
+    if (sources.getJava() != null) {
+      sourceFiles.from(sources.getJava().getAll());
+    }
+    if (sources.getKotlin() != null) {
+      sourceFiles.from(sources.getKotlin().getAll());
+    }
+    if (sources.getAssets() != null) {
+      sourceFiles.from(sources.getAssets().getAll());
+    }
+    if (sources.getRes() != null) {
+      sourceFiles.from(sources.getRes().getAll());
+    }
+    if (sources.getAidl() != null) {
+      sourceFiles.from(sources.getAidl().getAll());
+    }
 
-    // 3. Aidl and Native Sources
-    if (sources.getAidl() != null) sourceFiles.from(sources.getAidl().getAll());
-
-    // Custom source types (C/CPP) are safer to access via string name
     try {
       sourceFiles.from(sources.getByName("c").getAll());
-    } catch (Exception ignored) {
-    }
-    try {
       sourceFiles.from(sources.getByName("cpp").getAll());
-    } catch (Exception ignored) {
-    }
 
-    // 4. Renderscript (Handled via reflection as it is removed/deprecated in AGP 9)
-    try {
       Method getRs = sources.getClass().getMethod("getRenderscript");
       Object rs = getRs.invoke(sources);
       if (rs != null) {
@@ -374,13 +378,14 @@ public class AndroidConfig {
         sourceFiles.from(getAll.invoke(rs));
       }
     } catch (Exception ignored) {
+      // We ignore the situations where C/C++ or renderscript sources are absent.
     }
 
     return sourceFiles;
   }
 
   @SuppressWarnings("unchecked")
-  private static Provider<List<RegularFile>> getManifestsProvider(Component component) {
+  private Provider<List<RegularFile>> getManifestsProvider(Component component) {
     Sources sources = component.getSources();
     try {
       // Try the modern Sources API (Added in AGP 8.3.1)
@@ -389,7 +394,8 @@ public class AndroidConfig {
       Method getAllMethod = manifestFiles.getClass().getMethod("getAll");
       return (Provider<List<RegularFile>>) getAllMethod.invoke(manifestFiles);
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      LOGGER.debug("No manifest files found for Android component {} of project {}.", component.getName(), project.getName());
+      return project.provider(Collections::emptyList);
     }
   }
 

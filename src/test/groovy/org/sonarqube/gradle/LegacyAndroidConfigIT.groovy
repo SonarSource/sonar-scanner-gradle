@@ -34,7 +34,7 @@ import spock.lang.TempDir
 /**
  * Integration tests for AndroidUtils. Uses gradle testkit to run tests against real Gradle builds.
  */
-class AndroidUtilsIT extends Specification {
+class LegacyAndroidConfigIT extends Specification {
     @TempDir
     Path projectDir
     Path settingsFile

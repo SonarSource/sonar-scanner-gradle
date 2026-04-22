@@ -59,17 +59,17 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 public class SonarQubePlugin implements Plugin<Project> {
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
-  private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
-    return actionBroadcastMap.computeIfAbsent(project.getPath(), s -> new ActionBroadcast<>());
-  }
-
-  private static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
+  static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
     try {
       allCompileTasks.add(p.getTasks().getByName(name));
       return true;
     } catch (UnknownTaskException e) {
       return false;
     }
+  }
+
+  private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
+    return actionBroadcastMap.computeIfAbsent(project.getPath(), s -> new ActionBroadcast<>());
   }
 
   /**
@@ -103,7 +103,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   }
 
   /**
-   * Register and configure a Sonar resolver task for a project.
+   * Register and configure the Sonar resolver task for a project.
    */
   private static TaskProvider<SonarResolverTask> registerResolverTask(Project topLevelProject, Project project, Set<File> resolverFiles) {
     return project.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, resolverTask -> {
@@ -120,8 +120,8 @@ public class SonarQubePlugin implements Plugin<Project> {
         resolverTask.setMainLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
         resolverTask.setTestLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
       } else if (!AndroidConfig.usesAndroidGradlePlugin9()) {
-        resolverTask.setMainLibraries(project.provider(() -> AndroidUtils.findMainLibraries(project)));
-        resolverTask.setTestLibraries(project.provider(() -> AndroidUtils.findTestLibraries(project)));
+        resolverTask.setMainLibraries(project.provider(() -> LegacyAndroidConfig.findMainLibraries(project)));
+        resolverTask.setTestLibraries(project.provider(() -> LegacyAndroidConfig.findTestLibraries(project)));
         resolverTask.mustRunAfter(getAndroidTasks(project));
       }
       File buildDirectory = new File(project.getLayout().getBuildDirectory().getAsFile().get(), "sonar-resolver");
@@ -151,7 +151,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         );
       }
     } catch (NoClassDefFoundError e) {
-      // android not available, do nothing
+      // The Android plugin is not available in the project, so we do not configure Android.
     }
   }
 
@@ -240,7 +240,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && notSkipped(p))
       .map(p -> {
-        AndroidUtils.AndroidVariantAndExtension androidVariantAndExtension = AndroidUtils.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
+        LegacyAndroidConfig.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidConfig.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
 
         List<Task> allTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {

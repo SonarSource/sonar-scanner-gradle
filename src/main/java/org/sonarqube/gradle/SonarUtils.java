@@ -48,7 +48,13 @@ import org.sonarqube.gradle.properties.SonarProperty;
 
 public class SonarUtils {
 
-  public static final Set<String> ANDROID_PLUGIN_IDS = Set.of("com.android.application", "com.android.library", "com.android.dynamic-feature", "com.android.test", "com.android.feature");
+  public static final Set<String> ANDROID_PLUGIN_IDS = Set.of(
+    "com.android.application",
+    "com.android.library",
+    "com.android.dynamic-feature",
+    "com.android.feature",
+    "com.android.test"
+  );
 
   private static final Pattern REPORT_PATH_PROPERTY_PATTERN = Pattern.compile(
     "^sonar\\.(coverageReportPaths|([^.]++\\.)++(xml)?reports?paths?)$",
@@ -62,7 +68,7 @@ public class SonarUtils {
   /**
    * Find test files given the path by looking for the keyword "test", for example:
    * - script/test/run.sh
-   *          ^^^^
+   * ^^^^
    * But exclude not test related English words. AI was used to find the most common words.
    */
   private static final Pattern TEST_FILE_PATH_PATTERN = Pattern.compile(
@@ -332,6 +338,7 @@ public class SonarUtils {
 
   /**
    * Computes the absolute paths for the report paths extracted from the properties.
+   *
    * @return The set of absolute paths to external and coverage reports
    * @throws IllegalStateException if the property "sonar.projectBaseDir" is not defined in the properties argument
    */

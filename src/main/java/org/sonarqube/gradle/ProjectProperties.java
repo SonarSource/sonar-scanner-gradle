@@ -92,6 +92,7 @@ public class ProjectProperties {
    * @param mainLibraries        filtered main libraries for analysis
    * @param testLibraries        filtered test libraries for analysis
    */
+  @SuppressWarnings("java:S107")
   public ProjectProperties(
     String projectName,
     Boolean isRootProject,
