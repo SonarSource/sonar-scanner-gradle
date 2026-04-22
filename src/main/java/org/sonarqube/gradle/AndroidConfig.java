@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle;
 
+import com.android.build.api.dsl.CommonExtension;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.Component;
@@ -29,6 +30,7 @@ import com.android.build.api.variant.Variant;
 import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -177,8 +179,22 @@ public class AndroidConfig {
    */
   public FileCollection getAndroidTests() {
     FileCollection tests = project.files();
-    for (Component component : getTestComponents()) {
-      tests = tests.plus(getSources(component));
+    List<Component> testComponents = getTestComponents();
+    if (testComponents.isEmpty()) {
+      var sourceSet = project.getExtensions().getByType(CommonExtension.class).getSourceSets().findByName("test");
+      if (sourceSet == null) {
+        return project.files();
+      }
+      try {
+        var java = sourceSet.getClass().getMethod("getJava").invoke(sourceSet);
+        return project.files(java.getClass().getMethod("getSrcDirs").invoke(java));
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        return project.files();
+      }
+    } else {
+      for (Component component : getTestComponents()) {
+        tests = tests.plus(getSources(component));
+      }
     }
     return tests;
   }
