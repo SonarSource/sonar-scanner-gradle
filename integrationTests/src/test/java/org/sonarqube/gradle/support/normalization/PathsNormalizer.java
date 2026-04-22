@@ -45,8 +45,12 @@ public class PathsNormalizer {
     "sonar.coverage.jacoco.xmlReportPaths"
   );
 
-  private static final List<String> SUBSTRING_EXCLUSION_LIST = List.of(
-    "main", "R.jar", "classes.jar", "classes", "kotlin-stdlib", "annotations-"
+  private static final List<String> IGNORED_PATHS = List.of(
+    "main", "R.jar", "classes.jar", "classes"
+  );
+
+  private static final List<String> IGNORED_PATHS_SUBSTRINGS = List.of(
+    "kotlin-stdlib", "annotations-"
   );
 
   private PathsNormalizer() {
@@ -87,7 +91,7 @@ public class PathsNormalizer {
       }
     }
     return paths
-      .filter(path -> SUBSTRING_EXCLUSION_LIST.stream().noneMatch(path::contains))
+      .filter(path -> !IGNORED_PATHS.contains(path) && IGNORED_PATHS_SUBSTRINGS.stream().noneMatch(path::contains))
       .distinct()
       .sorted()
       .collect(Collectors.joining(DELIMITER));
