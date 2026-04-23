@@ -2220,9 +2220,9 @@
             <sha256 value="7a5001ab88105b4f37c4fab3b62d977316290a13f8b14c6684f25f2a32efdef1" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.codehaus.plexus" name="plexus-utils" version="3.6.0">
-         <artifact name="plexus-utils-3.6.0.jar">
-            <sha256 value="27ef130e32c236090e408fb5498d94cb9ea26d14070fb1c8985d607b62d098d1" origin="Verified"/>
+      <component group="org.codehaus.plexus" name="plexus-utils" version="3.6.1">
+         <artifact name="plexus-utils-3.6.1.jar">
+            <sha256 value="05a63effd67e2d6b9d610cc82e2bd7473289d34802e57a529b28110f28af5679" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.codehaus.woodstox" name="stax2-api" version="4.2.1">
