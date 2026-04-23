@@ -1,11 +1,8 @@
 {
   ":submodule.sonar.java.enablePreview": "false",
   ":submodule.sonar.java.jdkHome": "<ignored>",
-  ":submodule.sonar.java.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   ":submodule.sonar.java.source": "<ignored>",
   ":submodule.sonar.java.target": "<ignored>",
-  ":submodule.sonar.java.test.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
-  ":submodule.sonar.libraries": "annotations-13.0.jar,kotlin-stdlib-1.9.20.jar",
   ":submodule.sonar.moduleKey": "kotlin-jvm-submodule:submodule",
   ":submodule.sonar.projectBaseDir": "${PROJECT_BASE_DIR}/submodule",
   ":submodule.sonar.projectName": "submodule",

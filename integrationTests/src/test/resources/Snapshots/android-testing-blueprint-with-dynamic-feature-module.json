@@ -46,6 +46,7 @@
   ":module-flavor1-androidTest-only.sonar.projectBaseDir": "${PROJECT_BASE_DIR}/module-flavor1-androidTest-only",
   ":module-flavor1-androidTest-only.sonar.projectName": "module-flavor1-androidTest-only",
   ":module-flavor1-androidTest-only.sonar.projectVersion": "unspecified",
+  ":module-flavor1-androidTest-only.sonar.sources": "${PROJECT_BASE_DIR}/module-flavor1-androidTest-only/src/main/java",
   ":module-flavor1-androidTest-only.sonar.tests": "${PROJECT_BASE_DIR}/module-flavor1-androidTest-only/src/main/AndroidManifest.xml,${PROJECT_BASE_DIR}/module-flavor1-androidTest-only/src/main/java",
   ":module-plain-java.sonar.java.enablePreview": "false",
   ":module-plain-java.sonar.java.jdkHome": "<ignored>",
