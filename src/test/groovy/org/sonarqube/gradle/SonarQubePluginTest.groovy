@@ -1153,6 +1153,26 @@ class SonarQubePluginTest extends Specification {
     properties["sonar.sources"] == "src"
   }
 
+  def "android project analyzed correctly"() {
+    def rootProject = ProjectBuilder.builder().withName("root").build()
+    def project = ProjectBuilder.builder().withName("parent").withParent(rootProject).withProjectDir(new File("src/test/projects/HelloAgp9")).build()
+
+    project.pluginManager.apply(SonarQubePlugin)
+    project.pluginManager.apply("com.android.library")
+
+    when:
+    def properties = project.tasks.sonar.properties.get()
+
+    then:
+    relativize(project, "sonar.sources") == """
+      .github
+      build.gradle.kts
+      settings.gradle.kts
+      """.stripIndent().trim()
+    relativize(project, "sonar.tests") == """
+      """.stripIndent().trim()
+  }
+
   private static void setSourceSets(Project project, List<String> mainDirs) {
     JavaPluginExtension javaExtension = project.getExtensions().getByType(JavaPluginExtension.class)
     SourceSetContainer sourceSets = javaExtension.getSourceSets();
