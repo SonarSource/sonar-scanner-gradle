@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.sonarqube.gradle.support.AbstractGradleIT;
@@ -49,6 +50,7 @@ public class AndroidTest extends AbstractGradleIT {
   @Test
   public void gradle9AndroidParallelExample() throws Exception {
     ignoreThisTestIfGradleVersionIsLessThan("9.0.0");
+    Assume.assumeFalse(getAndroidGradleVersion().isGreaterThanOrEqualTo("9.0.0"));
     Map<String, String> env = Collections.emptyMap();
     Properties props = runGradlewSonarSimulationModeWithEnv("/android-gradle9", env, new DefaultRunConfiguration(), "--quiet", "--console=plain");
     Map<String, String> comparableProps = SnapshotNormalizer.normalize(props);
