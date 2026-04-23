@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +62,8 @@ import static org.sonarqube.gradle.properties.SonarProperty.JAVA_BINARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.JAVA_LIBRARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.JAVA_TEST_LIBRARIES;
 import static org.sonarqube.gradle.properties.SonarProperty.LIBRARIES;
+import static org.sonarqube.gradle.properties.SonarProperty.PROJECT_SOURCE_DIRS;
+import static org.sonarqube.gradle.properties.SonarProperty.PROJECT_TEST_DIRS;
 import static org.sonarqube.gradle.properties.SonarProperty.VERBOSE;
 
 /**
@@ -73,15 +76,6 @@ import static org.sonarqube.gradle.properties.SonarProperty.VERBOSE;
  * <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner documentation</a>.
  */
 public class SonarTask extends ConventionTask {
-
-  private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
-  private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
-
-  private LogOutput logOutput = new DefaultLogOutput();
-
-  private Provider<Map<String, String>> properties;
-  private Provider<Set<String>> userDefinedKeys;
-  private Provider<Directory> buildSonar;
 
   private static class DefaultLogOutput implements LogOutput {
     @Override
@@ -108,13 +102,6 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  @Inject
-  public SonarTask(){
-    super();
-    // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
-    this.getOutputs().upToDateWhen(task -> false);
-  }
-
   /**
    * Logs output from the given {@link Level} at the {@link LogLevel#LIFECYCLE} log level, which is the default log
    * level for Gradle tasks. This can be used to specify the level of Sonar Scanner which it output during standard
@@ -136,53 +123,27 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  @TaskAction
-  public void run() {
-    logEnvironmentInformation();
+  /**
+   * A simple data holder class that associates a {@link SonarProperty} with its full property name.
+   */
+  private static class PropertyInfo {
+    final SonarProperty property;
+    final String fullName;
 
-    if (SonarExtension.SONAR_DEPRECATED_TASK_NAME.equals(this.getName())) {
-      LOGGER.warn("Task 'sonarqube' is deprecated. Use 'sonar' instead.");
-    }
-
-    Map<String, String> mapProperties = getProperties().get();
-    if (mapProperties.isEmpty()) {
-      LOGGER.warn("Skipping Sonar analysis: no properties configured, was it skipped in all projects?");
-      return;
-    }
-
-    if (LOGGER.isDebugEnabled()) {
-      mapProperties = new HashMap<>(mapProperties);
-      mapProperties.put(VERBOSE, "true");
-      mapProperties = Collections.unmodifiableMap(mapProperties);
-    }
-
-    if (isSkippedWithProperty(mapProperties)) {
-      return;
-    }
-
-    mapProperties = resolveJavaLibraries(mapProperties);
-    filterPathProperties(mapProperties, this.userDefinedKeys.get());
-
-    ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
-      .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
-      .addBootstrapProperties(mapProperties);
-    try (ScannerEngineBootstrapResult boostrapping = scanner.bootstrap()) {
-      // implement behavior according to SCANJLIB-169
-      if (!boostrapping.isSuccessful()) {
-        throw new AnalysisException("The scanner boostrapping has failed! See the logs for more details.");
-      }
-      try (ScannerEngineFacade engineFacade = boostrapping.getEngineFacade()) {
-        boolean analysisIsSuccessful = engineFacade.analyze(new HashMap<>());
-        if (!analysisIsSuccessful) {
-          throw new AnalysisException("The analysis has failed! See the logs for more details.");
-        }
-      }
-    } catch (AnalysisException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new AnalysisException(e);
+    public PropertyInfo(SonarProperty property, String fullName) {
+      this.property = property;
+      this.fullName = fullName;
     }
   }
+
+  private static final Logger LOGGER = Logging.getLogger(SonarTask.class);
+  private static final Pattern TEST_RESULT_FILE_PATTERN = Pattern.compile("TESTS?-.*\\.xml");
+
+  private LogOutput logOutput = new DefaultLogOutput();
+  private Provider<Map<String, String>> properties;
+  private Provider<Set<String>> userDefinedKeys;
+  private Provider<Directory> buildSonar;
+  private Set<File> resolverFiles;
 
   private static void logEnvironmentInformation() {
     if (LOGGER.isInfoEnabled()) {
@@ -212,73 +173,6 @@ public class SonarTask extends ConventionTask {
     return "";
   }
 
-  private static boolean isSkippedWithProperty(Map<String, String> properties) {
-    if ("true".equalsIgnoreCase(properties.getOrDefault(SonarProperty.SKIP, "false"))) {
-      LOGGER.warn("Sonar Scanner analysis skipped");
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * @return The String key/value pairs to be passed to the SonarQube Scanner.
-   * {@code null} values are not permitted.
-   */
-  @Input
-  public Provider<Map<String, String>> getProperties() {
-    return properties;
-  }
-
-  private List<File> resolverFiles;
-
-  @Internal
-  public List<File> getResolverFiles() {
-    return resolverFiles;
-  }
-
-  public void setResolverFiles(List<File> resolverFiles) {
-    this.resolverFiles = resolverFiles;
-  }
-
-  /**
-   * @return folder containing all files generated by the analysis
-   * {@code null} values are not permitted.
-   */
-  @OutputDirectory
-  public Provider<Directory> getBuildSonar() {
-    return this.buildSonar;
-  }
-
-  public void setBuildSonar(Provider<Directory> buildSonar) {
-    this.buildSonar = buildSonar;
-  }
-
-  /**
-   * Finish the configuration of `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the class paths that
-   * were attached to the task at configuration time.
-   * The analysis parameters are added to a copy of the properties given as input.
-   */
-  Map<String, String> resolveJavaLibraries(Map<String, String> properties) {
-
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Resolving classpath entries");
-    }
-
-
-    final Map<String, String> result = new HashMap<>(properties);
-
-    LOGGER.info("About to look at resolver files: {}", getResolverFiles());
-    for (File resolverFile : getResolverFiles()) {
-      processResolverFile(resolverFile, result);
-    }
-
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Finished resolving classpath entries");
-    }
-
-    return result;
-  }
-
   /**
    * Reads class path information produced as output of {@link SonarResolverTask}, regenerates related
    * sonar.java.libraries and sonar.java.test.libraries and stores them into the result map.
@@ -288,10 +182,21 @@ public class SonarTask extends ConventionTask {
     LOGGER.info("Looking at file: {}", resolverFile);
     try {
       var prop = ResolutionSerializer.read(resolverFile);
-      if(prop.isEmpty()){
+      if (prop.isEmpty()) {
         return;
       }
       ProjectProperties resolvedProperties = prop.get();
+
+      if (resolvedProperties.androidSources != null) {
+        List<File> sources = resolvedProperties.androidSources.stream().map(File::new).collect(Collectors.toList());
+        resolveSources(resolvedProperties, sources, result, false);
+      }
+
+      if (resolvedProperties.androidTests != null) {
+        List<File> tests = resolvedProperties.androidTests.stream().map(File::new).collect(Collectors.toList());
+        resolveSources(resolvedProperties, tests, result, true);
+      }
+
       List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
 
       // Add mainLibraries if present (for Android projects)
@@ -316,133 +221,31 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  /**
-   * Post-process the sonar properties to prepare them for analysis.
-   * You should not filter properties inside Provider, as you do not have any guarantees about when they will be executed.
-   * It could be that files haven't been generated yet.
-   * <p>
-   * Remove file and directories that are not present on the file system.
-   * </p>
-   * <p>
-   * Note: User-defined properties (those explicitly set via sonarqube {} DSL or system/env properties) are not filtered,
-   * as users may legitimately reference paths that don't exist yet or use wildcards/placeholders.
-   * </p>
-   */
-  static void filterPathProperties(Map<String, String> properties, Set<String> userDefinedKeys) {
-    Set<String> sourcePropNames = Set.of(
-      SonarProperty.PROJECT_SOURCE_DIRS,
-      SonarProperty.PROJECT_TEST_DIRS,
-      SonarProperty.JAVA_BINARIES,
-      SonarProperty.JAVA_LIBRARIES,
-      SonarProperty.JAVA_TEST_BINARIES,
-      SonarProperty.JAVA_TEST_LIBRARIES,
-      SonarProperty.LIBRARIES,
-      SonarProperty.GROOVY_BINARIES,
-      SonarProperty.BINARIES);
-
-    List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
-
-    // filter non-existing paths and remove empty source properties
-    for (PropertyInfo prop : sourcesProperties) {
-      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
-        // empty assignments for `sonar.sources` and `sonar.tests` are required,
-        // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
-        // This can eventually lead to a double indexing issue in the scanner-engine.
-        if (filtered.isEmpty() && !SonarProperty.PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
-          && !SonarProperty.PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
-          return null;
-        }
-
-        return filtered;
-      });
+  static void resolveSources(ProjectProperties projectProperties, @Nullable Collection<File> sources, Map<String, String> properties, boolean isTest) {
+    if (sources == null || sources.isEmpty()) {
+      return;
     }
 
-
-    Set<String> junitReportNames = Set.of(
-      SonarProperty.JUNIT_REPORT_PATHS,
-      SonarProperty.SUREFIRE_REPORTS_PATH,
-      SonarProperty.JUNIT_REPORTS_PATH
-    );
-    List<PropertyInfo> junitReportProperties = parsePropertiesWithNames(properties, junitReportNames);
-
-    // filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning
-    for (PropertyInfo prop : junitReportProperties) {
-      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, SonarTask::containJunitReport, userDefinedKeys.contains(k));
-        return filtered.isEmpty() ? null : filtered;
-      });
-    }
-
-    // remove xml report if directory do not exist
-    List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
-    for (PropertyInfo prop : xmlReportProperties) {
-      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
-        return filtered.isEmpty() ? null : filtered;
-      });
-    }
-  }
-
-  private static List<PropertyInfo> parsePropertiesWithNames(Map<String, String> properties, Set<String> sonarNames) {
-    List<PropertyInfo> parsedProperties = new ArrayList<>();
-    for (String propName : properties.keySet()) {
-      var parsed = SonarProperty.parse(propName);
-      parsed
-        .filter(p -> sonarNames.contains(p.getProperty()))
-        .ifPresent(property -> parsedProperties.add(new PropertyInfo(property, propName)));
-    }
-    return parsedProperties;
-  }
-
-  /**
-   * Filter paths that weren't user-defined and don't contain wildcards.
-   *
-   * @param value       A comma-delimited list of paths.
-   * @param filter      A predicate to filter the paths.
-   * @param userDefined Whether the property was user-defined.
-   * @return A filtered comma-delimited list of paths.
-   */
-  private static String filterPaths(String value, Predicate<Path> filter, boolean userDefined) {
-    return Arrays.stream(value.split(","))
-      .filter(p -> isCompliantPath(p, filter, userDefined))
-      .collect(Collectors.joining(","));
-  }
-
-  private static boolean isCompliantPath(String value, Predicate<Path> filter, boolean userDefined) {
-    // We shouldn't filter paths containing wildcards, no matter if they were user-defined or not.
-    if (Set.of("*", "?", "${").stream().anyMatch(value::contains)) {
-      return true;
-    }
-
-    // User-defined paths shouldn't be filtered either, except if they end with '.github' or 'settings.gradle.kts', as these are added by default by the sonar property computer.
-    if (userDefined && !(value.endsWith(".github") || value.endsWith("settings.gradle.kts"))) {
-      return true;
-    }
-
-    return filter.test(Path.of(value));
-  }
-
-  /**
-   * A simple data holder class that associates a {@link SonarProperty} with its full property name.
-   */
-  private static class PropertyInfo {
-    final SonarProperty property;
-    final String fullName;
-
-    public PropertyInfo(SonarProperty property, String fullName) {
-      this.property = property;
-      this.fullName = fullName;
-    }
-  }
-
-  private static boolean containJunitReport(Path p) {
-    var children = p.toFile().list();
-    if (children != null) {
-      return Arrays.stream(children).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches());
+    boolean isTopLevelProject = projectProperties.isRootProject;
+    if (isTopLevelProject) {
+      LOGGER.debug("Resolving Android sources for the top-level project.");
     } else {
-      return false;
+      LOGGER.debug("Resolving Android sources for {}.", projectProperties.projectName);
     }
+
+    List<File> resolvedSources = SonarUtils.exists(sources);
+    String resolvedAsAString = resolvedSources.stream()
+      .filter(File::exists)
+      .map(File::getAbsolutePath)
+      .collect(Collectors.joining(","));
+
+    String property = isTest ? PROJECT_TEST_DIRS : PROJECT_SOURCE_DIRS;
+    String propertyKey = isTopLevelProject ? property : (projectProperties.projectName + "." + property);
+
+    String sourcesString = properties.getOrDefault(propertyKey, "");
+    sourcesString = sourcesString.isEmpty() ? resolvedAsAString : (sourcesString + "," + resolvedAsAString);
+
+    properties.put(propertyKey, sourcesString);
   }
 
   /**
@@ -567,8 +370,187 @@ public class SonarTask extends ConventionTask {
     properties.put(propertyKey, libraries);
   }
 
+  /**
+   * Post-process the sonar properties to prepare them for analysis.
+   * You should not filter properties inside Provider, as you do not have any guarantees about when they will be executed.
+   * It could be that files haven't been generated yet.
+   * <p>
+   * Remove file and directories that are not present on the file system.
+   * </p>
+   * <p>
+   * Note: User-defined properties (those explicitly set via sonarqube {} DSL or system/env properties) are not filtered,
+   * as users may legitimately reference paths that don't exist yet or use wildcards/placeholders.
+   * </p>
+   */
+  static void filterPathProperties(Map<String, String> properties, Set<String> userDefinedKeys) {
+    Set<String> sourcePropNames = Set.of(
+      SonarProperty.PROJECT_SOURCE_DIRS,
+      PROJECT_TEST_DIRS,
+      SonarProperty.JAVA_BINARIES,
+      SonarProperty.JAVA_LIBRARIES,
+      SonarProperty.JAVA_TEST_BINARIES,
+      SonarProperty.JAVA_TEST_LIBRARIES,
+      SonarProperty.LIBRARIES,
+      SonarProperty.GROOVY_BINARIES,
+      SonarProperty.BINARIES);
 
-  void setProperties(Provider<Map<String, String>> properties, Provider<Set<String>> userDefinedKeys) {
+    List<PropertyInfo> sourcesProperties = parsePropertiesWithNames(properties, sourcePropNames);
+
+    // Filter non-existing paths and generated sources, and remove empty source properties.
+    for (PropertyInfo prop : sourcesProperties) {
+      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
+        var filtered = filterPaths(commaList, SonarTask::containsValidSources, userDefinedKeys.contains(k));
+        // empty assignments for `sonar.sources` and `sonar.tests` are required,
+        // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
+        // This can eventually lead to a double indexing issue in the scanner-engine.
+        if (filtered.isEmpty() && !PROJECT_SOURCE_DIRS.equals(prop.property.getProperty())
+          && !PROJECT_TEST_DIRS.equals(prop.property.getProperty())) {
+          return null;
+        }
+
+        return filtered;
+      });
+    }
+
+    Set<String> junitReportNames = Set.of(
+      SonarProperty.JUNIT_REPORT_PATHS,
+      SonarProperty.SUREFIRE_REPORTS_PATH,
+      SonarProperty.JUNIT_REPORTS_PATH
+    );
+    List<PropertyInfo> junitReportProperties = parsePropertiesWithNames(properties, junitReportNames);
+
+    // Filter report paths if directory do not exist or do not contain reports, otherwise Sonar will emit a warning.
+    for (PropertyInfo prop : junitReportProperties) {
+      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
+        var filtered = filterPaths(commaList, SonarTask::containJunitReport, userDefinedKeys.contains(k));
+        return filtered.isEmpty() ? null : filtered;
+      });
+    }
+
+    // Remove xml reports if the directory does not exist.
+    List<PropertyInfo> xmlReportProperties = parsePropertiesWithNames(properties, Set.of(SonarProperty.JACOCO_XML_REPORT_PATHS));
+    for (PropertyInfo prop : xmlReportProperties) {
+      properties.computeIfPresent(prop.fullName, (k, commaList) -> {
+        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
+        return filtered.isEmpty() ? null : filtered;
+      });
+    }
+  }
+
+  private static boolean isSkippedWithProperty(Map<String, String> properties) {
+    if ("true".equalsIgnoreCase(properties.getOrDefault(SonarProperty.SKIP, "false"))) {
+      LOGGER.warn("Sonar Scanner analysis skipped");
+      return true;
+    }
+    return false;
+  }
+
+  private static List<PropertyInfo> parsePropertiesWithNames(Map<String, String> properties, Set<String> sonarNames) {
+    List<PropertyInfo> parsedProperties = new ArrayList<>();
+    for (String propName : properties.keySet()) {
+      var parsed = SonarProperty.parse(propName);
+      parsed
+        .filter(p -> sonarNames.contains(p.getProperty()))
+        .ifPresent(property -> parsedProperties.add(new PropertyInfo(property, propName)));
+    }
+    return parsedProperties;
+  }
+
+  /**
+   * Filter paths that weren't user-defined and don't contain wildcards.
+   *
+   * @param value       A comma-delimited list of paths.
+   * @param filter      A predicate to filter the paths.
+   * @param userDefined Whether the property was user-defined.
+   * @return A filtered comma-delimited list of paths.
+   */
+  private static String filterPaths(String value, Predicate<Path> filter, boolean userDefined) {
+    return Arrays.stream(value.split(","))
+      .filter(p -> isCompliantPath(p, filter, userDefined))
+      .collect(Collectors.joining(","));
+  }
+
+  private static boolean isCompliantPath(String value, Predicate<Path> filter, boolean userDefined) {
+    // We shouldn't filter paths containing wildcards, no matter if they were user-defined or not.
+    if (Set.of("*", "?", "${").stream().anyMatch(value::contains)) {
+      return true;
+    }
+
+    // User-defined paths shouldn't be filtered either, except if they end with '.github' or 'settings.gradle.kts', as these are added by default by the sonar property computer.
+    if (userDefined && !(value.endsWith(".github") || value.endsWith("settings.gradle.kts"))) {
+      return true;
+    }
+
+    return filter.test(Path.of(value));
+  }
+
+  private static boolean containsValidSources(Path path) {
+    String normalizedPath = path.toString().replace('\\', '/');
+    return !normalizedPath.contains("build/generated") && Files.exists(path);
+  }
+
+  private static boolean containJunitReport(Path p) {
+    var children = p.toFile().list();
+    if (children != null) {
+      return Arrays.stream(children).anyMatch(file -> TEST_RESULT_FILE_PATTERN.matcher(file).matches());
+    } else {
+      return false;
+    }
+  }
+
+  @Inject
+  public SonarTask() {
+    super();
+    // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
+    this.getOutputs().upToDateWhen(task -> false);
+  }
+
+  /**
+   * @return The String key/value pairs to be passed to the SonarQube Scanner.
+   * {@code null} values are not permitted.
+   */
+  @Input
+  public Provider<Map<String, String>> getProperties() {
+    return properties;
+  }
+
+  @Internal
+  public Set<File> getResolverFiles() {
+    return resolverFiles;
+  }
+
+  public void setResolverFiles(Set<File> resolverFiles) {
+    this.resolverFiles = resolverFiles;
+  }
+
+  /**
+   * @return folder containing all files generated by the analysis
+   * {@code null} values are not permitted.
+   */
+  @OutputDirectory
+  public Provider<Directory> getBuildSonar() {
+    return this.buildSonar;
+  }
+
+  public void setBuildSonar(Provider<Directory> buildSonar) {
+    this.buildSonar = buildSonar;
+  }
+
+  /**
+   * @return The {@link LogOutput} object to use during Scanner execution. All logged messages from the Scanner will
+   * pass through this object. If needed, a custom implementation can be used to handle logged output, such as printing
+   * {@link LogLevel#INFO}-level log output when Gradle is only configured at the {@link LogLevel#LIFECYCLE} level.
+   */
+  @Internal
+  public LogOutput getLogOutput() {
+    return this.logOutput;
+  }
+
+  public void setLogOutput(LogOutput logOutput) {
+    this.logOutput = logOutput;
+  }
+
+  public void setProperties(Provider<Map<String, String>> properties, Provider<Set<String>> userDefinedKeys) {
     this.properties = properties;
     this.userDefinedKeys = userDefinedKeys;
   }
@@ -589,17 +571,75 @@ public class SonarTask extends ConventionTask {
     this.logOutput = new LifecycleLogOutput(internalLevel);
   }
 
-  /**
-   * @return The {@link LogOutput} object to use during Scanner execution. All logged messages from the Scanner will
-   * pass through this object. If needed, a custom implementation can be used to handle logged output, such as printing
-   * {@link LogLevel#INFO}-level log output when Gradle is only configured at the {@link LogLevel#LIFECYCLE} level.
-   */
-  @Internal
-  public LogOutput getLogOutput() {
-    return this.logOutput;
+  @TaskAction
+  public void run() {
+    logEnvironmentInformation();
+
+    if (SonarExtension.SONAR_DEPRECATED_TASK_NAME.equals(this.getName())) {
+      LOGGER.warn("Task 'sonarqube' is deprecated. Use 'sonar' instead.");
+    }
+
+    Map<String, String> mapProperties = getProperties().get();
+    if (mapProperties.isEmpty()) {
+      LOGGER.warn("Skipping Sonar analysis: no properties configured, was it skipped in all projects?");
+      return;
+    }
+
+    if (LOGGER.isDebugEnabled()) {
+      mapProperties = new HashMap<>(mapProperties);
+      mapProperties.put(VERBOSE, "true");
+      mapProperties = Collections.unmodifiableMap(mapProperties);
+    }
+
+    if (isSkippedWithProperty(mapProperties)) {
+      return;
+    }
+
+    mapProperties = resolveFiles(mapProperties);
+    filterPathProperties(mapProperties, this.userDefinedKeys.get());
+
+    ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
+      .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
+      .addBootstrapProperties(mapProperties);
+    try (ScannerEngineBootstrapResult boostrapping = scanner.bootstrap()) {
+      // implement behavior according to SCANJLIB-169
+      if (!boostrapping.isSuccessful()) {
+        throw new AnalysisException("The scanner boostrapping has failed! See the logs for more details.");
+      }
+      try (ScannerEngineFacade engineFacade = boostrapping.getEngineFacade()) {
+        boolean analysisIsSuccessful = engineFacade.analyze(new HashMap<>());
+        if (!analysisIsSuccessful) {
+          throw new AnalysisException("The analysis has failed! See the logs for more details.");
+        }
+      }
+    } catch (AnalysisException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new AnalysisException(e);
+    }
   }
 
-  public void setLogOutput(LogOutput logOutput) {
-    this.logOutput = logOutput;
+  /**
+   * Finish the configuration of `sonar.sources`, `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the Android sources and class paths that
+   * were attached to the task at configuration time.
+   * The analysis parameters are added to a copy of the properties given as input.
+   */
+  private Map<String, String> resolveFiles(Map<String, String> properties) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Resolving sources and classpath entries");
+    }
+
+    final Map<String, String> result = new HashMap<>(properties);
+
+    LOGGER.info("About to look at resolver files: {}", getResolverFiles());
+    for (File resolverFile : getResolverFiles()) {
+      processResolverFile(resolverFile, result);
+    }
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Finished resolving classpath entries");
+    }
+
+    return result;
   }
 }
