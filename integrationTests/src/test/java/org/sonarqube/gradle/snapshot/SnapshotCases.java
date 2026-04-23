@@ -186,6 +186,9 @@ public final class SnapshotCases {
       c("android-gradle-dynamic-feature", "test", "compileDebugAndroidTestJavaWithJavac")
         .requiresAndroid(),
       c("android-gradle-nondefault-variant", "test")
+        // this project is compatible with gradle 9 but not fully supported yet,
+        // tests libraries are not correctly resolved and thus not included in the snapshot.
+        .maxGradleExclusive("9.0.0")
         .requiresAndroid(),
       c("multi-module-android-studio", "test", "compileDebugAndroidTestJavaWithJavac")
         .requiresAndroid()
@@ -197,6 +200,9 @@ public final class SnapshotCases {
         .requiresAndroid()
         .maxGradleExclusive("9.0.0"),
       c("android-gradle-no-debug")
+        // this project is compatible with gradle 9 but not fully supported yet,
+        // tests libraries are not correctly resolved and thus not included in the snapshot.
+        .maxGradleExclusive("9.0.0")
         .requiresAndroid(),
       c("multi-module-android-studio-lint", "lint", "lintFullRelease")
         .requiresAndroid()
