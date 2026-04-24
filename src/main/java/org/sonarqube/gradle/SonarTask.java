@@ -189,12 +189,12 @@ public class SonarTask extends ConventionTask {
 
       if (resolvedProperties.androidSources != null) {
         List<File> sources = resolvedProperties.androidSources.stream().map(File::new).collect(Collectors.toList());
-        resolveSources(resolvedProperties, sources, result, false);
+        resolveAndroidSources(resolvedProperties, sources, result, false);
       }
 
       if (resolvedProperties.androidTests != null) {
         List<File> tests = resolvedProperties.androidTests.stream().map(File::new).collect(Collectors.toList());
-        resolveSources(resolvedProperties, tests, result, true);
+        resolveAndroidSources(resolvedProperties, tests, result, true);
       }
 
       List<File> libraries = resolvedProperties.compileClasspath.stream().map(File::new).collect(Collectors.toList());
@@ -221,7 +221,7 @@ public class SonarTask extends ConventionTask {
     }
   }
 
-  static void resolveSources(ProjectProperties projectProperties, @Nullable Collection<File> sources, Map<String, String> properties, boolean isTest) {
+  static void resolveAndroidSources(ProjectProperties projectProperties, @Nullable Collection<File> sources, Map<String, String> properties, boolean isTest) {
     if (sources == null || sources.isEmpty()) {
       return;
     }
@@ -620,7 +620,7 @@ public class SonarTask extends ConventionTask {
   }
 
   /**
-   * Finish the configuration of `sonar.sources`, `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the Android sources and class paths that
+   * Finish the configuration of `sonar.sources`, `sonar.tests`, `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the Android sources and class paths that
    * were attached to the task at configuration time.
    * The analysis parameters are added to a copy of the properties given as input.
    */

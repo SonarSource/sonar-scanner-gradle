@@ -291,11 +291,12 @@ public class SonarPropertyComputer {
 
   private static void appendAdditionalSourceFiles(Map<String, Object> properties, String sourcePropertyToUpdate, List<Path> collectedSources) {
     String existingValue = (String) properties.getOrDefault(sourcePropertyToUpdate, "");
-    Set<Path> existingSources = existingValue.isBlank() ? Collections.emptySet() : SonarUtils.splitAsCsv(existingValue)
-                                                                                   .stream()
-                                                                                   .filter(Predicate.not(String::isBlank))
-                                                                                   .map(Paths::get)
-                                                                                   .collect(Collectors.toSet());
+    Set<Path> existingSources = existingValue.isBlank()
+      ? Collections.emptySet()
+      : SonarUtils.splitAsCsv(existingValue).stream()
+        .filter(Predicate.not(String::isBlank))
+        .map(Paths::get)
+        .collect(Collectors.toSet());
 
     List<String> mergedSources = Stream.of(existingSources, collectedSources)
       .flatMap(Collection::stream)

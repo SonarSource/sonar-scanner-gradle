@@ -70,7 +70,7 @@ public class SonarUtils {
   /**
    * Find test files given the path by looking for the keyword "test", for example:
    * - script/test/run.sh
-   * ^^^^
+   *          ^^^^
    * But exclude not test related English words. AI was used to find the most common words.
    */
   private static final Pattern TEST_FILE_PATH_PATTERN = Pattern.compile(
@@ -102,7 +102,7 @@ public class SonarUtils {
   }
 
   /**
-   * Check if a Gradle project is an Android project.
+   * Check if a Gradle project is an Android project by looking up known plugins.
    */
   static boolean isAndroidProject(Project project) {
     return ANDROID_PLUGIN_IDS.stream().anyMatch(pluginId -> project.getPlugins().hasPlugin(pluginId));
@@ -371,7 +371,6 @@ public class SonarUtils {
 
   /**
    * Computes the absolute paths for the report paths extracted from the properties.
-   *
    * @return The set of absolute paths to external and coverage reports
    * @throws IllegalStateException if the property "sonar.projectBaseDir" is not defined in the properties argument
    */

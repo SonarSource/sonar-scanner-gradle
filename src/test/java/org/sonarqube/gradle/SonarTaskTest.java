@@ -182,44 +182,44 @@ class SonarTaskTest {
   }
 
   @Test
-  void resolveSources_addsSourcesToProperties(@TempDir File tempDir) {
+  void resolveAndroidSources_addsSourcesToProperties(@TempDir File tempDir) {
     Map<String, String> properties = new HashMap<>();
     File sourceDirectory = new File(tempDir, "src/main/java");
     sourceDirectory.mkdirs();
     List<File> fileCollection = List.of(sourceDirectory);
-    SonarTask.resolveSources(projectProperties, fileCollection, properties, false);
+    SonarTask.resolveAndroidSources(projectProperties, fileCollection, properties, false);
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
       Map.of("sonar.sources", sourceDirectory.getAbsolutePath())
     );
   }
 
   @Test
-  void resolveSources_addsTestSourcesToProperties(@TempDir File tempDir) {
+  void resolveAndroidSources_addsTestSourcesToProperties(@TempDir File tempDir) {
     Map<String, String> properties = new HashMap<>();
     File testDirectory = new File(tempDir, "src/test/java");
     testDirectory.mkdirs();
     List<File> fileCollection = List.of(testDirectory);
-    SonarTask.resolveSources(projectProperties, fileCollection, properties, true);
+    SonarTask.resolveAndroidSources(projectProperties, fileCollection, properties, true);
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
       Map.of("sonar.tests", testDirectory.getAbsolutePath())
     );
   }
 
   @Test
-  void resolveSources_addsSourcesToMapForSubproject(@TempDir File tempDir) {
+  void resolveAndroidSources_addsSourcesToMapForSubproject(@TempDir File tempDir) {
     Map<String, String> properties = new HashMap<>();
     File sourceDirectory = new File(tempDir, "src/main/java");
     sourceDirectory.mkdirs();
     List<File> fileCollection = List.of(sourceDirectory);
     ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
-    SonarTask.resolveSources(subprojectProperties, fileCollection, properties, false);
+    SonarTask.resolveAndroidSources(subprojectProperties, fileCollection, properties, false);
     assertThat(properties)
       .hasSize(1)
       .containsEntry(":subproject.sonar.sources", sourceDirectory.getAbsolutePath());
   }
 
   @Test
-  void resolveSources_combinesWithExistingPropertyToAddSonarSources(@TempDir File tempDir) {
+  void resolveAndroidSources_combinesWithExistingPropertyToAddSources(@TempDir File tempDir) {
     Map<String, String> properties = new HashMap<>();
 
     File known = new File(tempDir, "src/main/java");
@@ -229,7 +229,7 @@ class SonarTaskTest {
     File toBeResolved = new File(tempDir, "src/main/kotlin");
     toBeResolved.mkdirs();
     List<File> fileCollection = List.of(toBeResolved);
-    SonarTask.resolveSources(projectProperties, fileCollection, properties, false);
+    SonarTask.resolveAndroidSources(projectProperties, fileCollection, properties, false);
 
     String expectedValue = String.format(
       "%s,%s",
