@@ -102,7 +102,7 @@ public class SonarPropertyComputer {
 
     computedProperties.properties.computeIfPresent(SonarProperty.PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(computedProperties.properties));
 
-    if (SonarQubePlugin.notSkipped(targetProject)) {
+    if (SonarUtils.notSkipped(targetProject)) {
       computedProperties.properties.put(SonarProperty.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getRootProject().getProjectDir().getAbsolutePath());
     }
 
@@ -118,7 +118,7 @@ public class SonarPropertyComputer {
   }
 
   private void computeDefaultProperties(Project project, ComputedProperties computedProperties, String prefix) {
-    if (SonarQubePlugin.isSkipped(project)) {
+    if (SonarUtils.isSkipped(project)) {
       return;
     }
     Map<String, Object> rawProperties = new LinkedHashMap<>();
@@ -127,10 +127,10 @@ public class SonarPropertyComputer {
     addGradleDefaults(project, rawProperties);
 
     if (isAndroidProject(project)) {
-      if (AndroidConfig.usesAndroidGradlePlugin9()) {
+      if (AndroidConfig.usesAndroidGradlePlugin9OrGreater()) {
         androidConfigMap.get(project.getPath()).configureProperties(rawProperties);
       } else {
-        LegacyAndroidConfig.configureForAndroid(project, SonarQubePlugin.getConfiguredAndroidVariant(project), rawProperties);
+        LegacyAndroidConfig.configureForAndroid(project, SonarUtils.getConfiguredAndroidVariant(project), rawProperties);
       }
     }
 
@@ -159,11 +159,11 @@ public class SonarPropertyComputer {
       .forEach(computedProperties.userDefinedKeys::add);
 
     List<Project> enabledChildProjects = project.getChildProjects().values().stream()
-      .filter(SonarQubePlugin::notSkipped)
+      .filter(SonarUtils::notSkipped)
       .collect(Collectors.toList());
 
     List<Project> skippedChildProjects = project.getChildProjects().values().stream()
-      .filter(SonarQubePlugin::isSkipped)
+      .filter(SonarUtils::isSkipped)
       .collect(Collectors.toList());
 
     if (!skippedChildProjects.isEmpty()) {
@@ -665,7 +665,7 @@ public class SonarPropertyComputer {
   private static Stream<Project> skippedProjects(Project project) {
     Set<Project> projectsMarkedAsSkipped = project.getAllprojects()
       .stream()
-      .filter(SonarQubePlugin::isSkipped)
+      .filter(SonarUtils::isSkipped)
       .collect(Collectors.toSet());
 
     return project.getAllprojects().stream().filter(p -> hasSkippedAncestor(p, projectsMarkedAsSkipped));

@@ -26,16 +26,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.UnknownTaskException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -59,17 +56,8 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 public class SonarQubePlugin implements Plugin<Project> {
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
 
-  static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
-    try {
-      allCompileTasks.add(p.getTasks().getByName(name));
-      return true;
-    } catch (UnknownTaskException e) {
-      return false;
-    }
-  }
-
   private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
-    return actionBroadcastMap.computeIfAbsent(project.getPath(), s -> new ActionBroadcast<>());
+    return actionBroadcastMap.computeIfAbsent(project.getPath(), ignored -> new ActionBroadcast<>());
   }
 
   /**
@@ -109,7 +97,7 @@ public class SonarQubePlugin implements Plugin<Project> {
     return project.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, resolverTask -> {
       resolverTask.setDescription(SonarResolverTask.TASK_DESCRIPTION);
       resolverTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-      resolverTask.setSkipProject(project.provider(() -> isSkipped(project)));
+      resolverTask.setSkipProject(project.provider(() -> SonarUtils.isSkipped(project)));
       resolverTask.setProjectName(SonarUtils.constructPrefixedProjectName(project.getPath()));
       if (project == topLevelProject) {
         resolverTask.setTopLevelProject(true);
@@ -119,10 +107,6 @@ public class SonarQubePlugin implements Plugin<Project> {
       if (!isAndroidProject(project)) {
         resolverTask.setMainLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
         resolverTask.setTestLibraries(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
-      } else if (!AndroidConfig.usesAndroidGradlePlugin9()) {
-        resolverTask.setMainLibraries(project.provider(() -> LegacyAndroidConfig.findMainLibraries(project)));
-        resolverTask.setTestLibraries(project.provider(() -> LegacyAndroidConfig.findTestLibraries(project)));
-        resolverTask.mustRunAfter(getAndroidTasks(project));
       }
       File buildDirectory = new File(project.getLayout().getBuildDirectory().getAsFile().get(), "sonar-resolver");
       resolverTask.setOutputDirectory(buildDirectory);
@@ -135,7 +119,7 @@ public class SonarQubePlugin implements Plugin<Project> {
    */
   private static void configureAndroid(Project project, Map<String, AndroidConfig> androidConfigMap, TaskProvider<SonarResolverTask> resolverTaskProvider) {
     try {
-      if (AndroidConfig.usesAndroidGradlePlugin9()) {
+      if (AndroidConfig.usesAndroidGradlePlugin9OrGreater()) {
         SonarUtils.ANDROID_PLUGIN_IDS.forEach(pluginId ->
           project.getPlugins().withId(pluginId, plugin -> {
             AndroidConfig androidConfig = AndroidConfig.of(project);
@@ -149,8 +133,14 @@ public class SonarQubePlugin implements Plugin<Project> {
             });
           })
         );
+      } else {
+        resolverTaskProvider.configure(resolverTask -> {
+          resolverTask.setMainLibraries(project.provider(() -> LegacyAndroidConfig.findMainLibraries(project)));
+          resolverTask.setTestLibraries(project.provider(() -> LegacyAndroidConfig.findTestLibraries(project)));
+          resolverTask.mustRunAfter(getAndroidTasks(project));
+        });
       }
-    } catch (NoClassDefFoundError e) {
+    } catch (NoClassDefFoundError ignored) {
       // The Android plugin is not available in the project, so we do not configure Android.
     }
   }
@@ -196,7 +186,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getJacocoTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && notSkipped(p))
+      .filter(p -> p.getPlugins().hasPlugin(JacocoPlugin.class) && SonarUtils.notSkipped(p))
       .map(p -> p.getTasks().withType(JacocoReport.class))
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
@@ -204,14 +194,14 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getJavaTestTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && notSkipped(p))
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && SonarUtils.notSkipped(p))
       .map(p -> p.getTasks().getByName(JavaPlugin.TEST_TASK_NAME))
       .collect(Collectors.toList());
   }
 
   private static Callable<Iterable<? extends Task>> getJavaCompileTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && notSkipped(p))
+      .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && SonarUtils.notSkipped(p))
       .flatMap(p -> Stream.of(p.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME), p.getTasks().getByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME)))
       .collect(Collectors.toList());
   }
@@ -222,53 +212,31 @@ public class SonarQubePlugin implements Plugin<Project> {
       .collect(Collectors.toList());
   }
 
-  static boolean notSkipped(Project p) {
-    return !isSkipped(p);
-  }
-
-  static boolean isSkipped(Project p) {
-    return getSonarExtensions(p).stream().anyMatch(SonarExtension::isSkipProject);
-  }
-
-  private static List<SonarExtension> getSonarExtensions(Project p) {
-    return Stream.of(SonarExtension.SONAR_EXTENSION_NAME, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME)
-      .map(name -> (SonarExtension) p.getExtensions().getByName(name))
-      .collect(Collectors.toList());
-  }
-
   private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(p -> isAndroidProject(p) && notSkipped(p))
+      .filter(p -> isAndroidProject(p) && SonarUtils.notSkipped(p))
       .map(p -> {
-        LegacyAndroidConfig.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidConfig.findVariantAndExtension(p, getConfiguredAndroidVariant(p));
+        LegacyAndroidConfig.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidConfig.findVariantAndExtension(p, SonarUtils.getConfiguredAndroidVariant(p));
 
         List<Task> allTasks = new ArrayList<>();
         if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
           String variantName = SonarUtils.capitalize(androidVariantAndExtension.getVariant().getName());
           final String compileTaskPrefix = "compile" + variantName;
-          boolean unitTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
-          boolean androidTestTaskDepAdded = addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
+          boolean unitTestTaskDepAdded = SonarUtils.addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
+          boolean androidTestTaskDepAdded = SonarUtils.addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
           // Unit test compilation and android test compilation tasks already depend on main code compilation, so we don't add a useless dependency
           // that would lead to run the main compilation task several times.
           if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
-            addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
+            SonarUtils.addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
           }
 
           final String testTaskPrefix = "test" + variantName;
-          addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
+          SonarUtils.addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
         }
         return allTasks;
       })
       .flatMap(List::stream)
       .collect(Collectors.toList());
-  }
-
-  @Nullable
-  static String getConfiguredAndroidVariant(Project p) {
-    return getSonarExtensions(p).stream()
-      .map(SonarExtension::getAndroidVariant)
-      .filter(Objects::nonNull)
-      .findFirst().orElse(null);
   }
 
   @Override

@@ -56,7 +56,7 @@ import org.gradle.api.tasks.testing.Test;
 import org.sonarqube.gradle.properties.SonarProperty;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
-import static org.sonarqube.gradle.SonarQubePlugin.addTaskByName;
+import static org.sonarqube.gradle.SonarUtils.addTaskByName;
 
 public class AndroidConfig {
 
@@ -77,7 +77,7 @@ public class AndroidConfig {
     return androidConfig;
   }
 
-  public static boolean usesAndroidGradlePlugin9() {
+  public static boolean usesAndroidGradlePlugin9OrGreater() {
     return Version.of(ANDROID_GRADLE_PLUGIN_VERSION).compareTo(Version.of("9.0.0")) >= 0;
   }
 
@@ -119,7 +119,7 @@ public class AndroidConfig {
       throw new IllegalStateException("No Android variant found for project " + project.getName() + ".");
     }
 
-    String configuredVariantName = SonarQubePlugin.getConfiguredAndroidVariant(project);
+    String configuredVariantName = SonarUtils.getConfiguredAndroidVariant(project);
     if (configuredVariantName != null) {
       Optional<Variant> configuredVariant = variants.stream()
         .filter(variant -> variant.getName().equals(configuredVariantName))
@@ -262,7 +262,7 @@ public class AndroidConfig {
    */
   private void configureAndroidProperties(Map<String, Object> properties) {
     properties.put(AndroidProperties.ANDROID_DETECTED, true);
-    if (SonarQubePlugin.getConfiguredAndroidVariant(project) != null) {
+    if (SonarUtils.getConfiguredAndroidVariant(project) != null) {
       int minSdkVersion = getMinSdk(getVariant());
       properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdkVersion);
       properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdkVersion);

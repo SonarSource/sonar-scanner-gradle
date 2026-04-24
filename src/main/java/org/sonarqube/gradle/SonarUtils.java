@@ -39,6 +39,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
@@ -85,11 +87,42 @@ public class SonarUtils {
     // Utility class
   }
 
+  static boolean isSkipped(Project p) {
+    return getSonarExtensions(p).stream().anyMatch(SonarExtension::isSkipProject);
+  }
+
+  static boolean notSkipped(Project p) {
+    return !isSkipped(p);
+  }
+
+  static List<SonarExtension> getSonarExtensions(Project p) {
+    return Stream.of(SonarExtension.SONAR_EXTENSION_NAME, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME)
+      .map(name -> (SonarExtension) p.getExtensions().getByName(name))
+      .collect(Collectors.toList());
+  }
+
   /**
    * Check if a Gradle project is an Android project.
    */
   static boolean isAndroidProject(Project project) {
     return ANDROID_PLUGIN_IDS.stream().anyMatch(pluginId -> project.getPlugins().hasPlugin(pluginId));
+  }
+
+  @Nullable
+  static String getConfiguredAndroidVariant(Project p) {
+    return getSonarExtensions(p).stream()
+      .map(SonarExtension::getAndroidVariant)
+      .filter(Objects::nonNull)
+      .findFirst().orElse(null);
+  }
+
+  static boolean addTaskByName(Project p, String name, List<Task> allCompileTasks) {
+    try {
+      allCompileTasks.add(p.getTasks().getByName(name));
+      return true;
+    } catch (UnknownTaskException e) {
+      return false;
+    }
   }
 
   /**

@@ -66,7 +66,7 @@ import org.gradle.util.GradleVersion;
 import org.sonarqube.gradle.properties.SonarProperty;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
-import static org.sonarqube.gradle.SonarQubePlugin.getConfiguredAndroidVariant;
+import static org.sonarqube.gradle.SonarUtils.getConfiguredAndroidVariant;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
 
