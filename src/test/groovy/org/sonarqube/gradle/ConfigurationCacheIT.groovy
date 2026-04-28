@@ -19,7 +19,6 @@
  */
 package org.sonarqube.gradle
 
-import groovy.json.JsonSlurper
 import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Specification
 import spock.lang.TempDir

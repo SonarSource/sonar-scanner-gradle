@@ -20,21 +20,18 @@
 package org.sonarqube.gradle
 
 import groovy.json.JsonSlurper
-import org.gradle.internal.impldep.org.junit.Assume
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.params.ParameterizedTest
 import spock.lang.Requires
 import spock.lang.Specification
-import spock.lang.Unroll
+import spock.lang.TempDir
 
 import java.nio.file.Path
-import spock.lang.TempDir
 
 /**
  * Integration tests for AndroidUtils. Uses gradle testkit to run tests against real Gradle builds.
  */
-class AndroidUtilsIT extends Specification {
+class LegacyAndroidConfigIT extends Specification {
     @TempDir
     Path projectDir
     Path settingsFile

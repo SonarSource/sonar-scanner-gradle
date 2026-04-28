@@ -66,18 +66,20 @@ import org.gradle.util.GradleVersion;
 import org.sonarqube.gradle.properties.SonarProperty;
 
 import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
-import static org.sonarqube.gradle.SonarQubePlugin.getConfiguredAndroidVariant;
 import static org.sonarqube.gradle.SonarUtils.appendProps;
 import static org.sonarqube.gradle.SonarUtils.appendSourcesProp;
+import static org.sonarqube.gradle.SonarUtils.getConfiguredAndroidVariant;
 
 /**
- * Only access this class when running on an Android application
+ * This class contains helper methods to compute Android specific properties for projects using the Android Gradle plugin (AGP) with versions before 9.
+ * For AGP 9+, see {@code AndroidConfig}.
+ * This class should only be accessed when running on an Android application, as it uses the runtime provided AGP library and will crash if it is not present.
  */
-class AndroidUtils {
-  private static final Logger LOGGER = Logging.getLogger(AndroidUtils.class);
+class LegacyAndroidConfig {
+  private static final Logger LOGGER = Logging.getLogger(LegacyAndroidConfig.class);
   private static final String SONAR_ANDROID_LINT_REPORT_PATHS_PROP = SonarProperty.ANDROID_LINT_REPORT_PATHS;
 
-  private AndroidUtils() {
+  private LegacyAndroidConfig() {
   }
 
   static void configureForAndroid(Project project, @Nullable String userConfiguredBuildVariantName, final Map<String, Object> properties) {
@@ -180,7 +182,7 @@ class AndroidUtils {
       Function<DeviceProviderInstrumentTestTask, DirectoryProperty> testTaskToDirectoryProperty;
       if (getAndroidPluginVersion().compareTo(Version.of("4.2")) < 0) {
         // SONARGRADL-101 a File is returned instead of a DirectoryProperty
-        testTaskToDirectoryProperty = AndroidUtils::getReportsDirBeforeGradle42;
+        testTaskToDirectoryProperty = LegacyAndroidConfig::getReportsDirBeforeGradle42;
       } else {
         testTaskToDirectoryProperty = DeviceProviderInstrumentTestTask::getReportsDir;
       }
@@ -301,7 +303,7 @@ class AndroidUtils {
   }
 
   private static Optional<AndroidVariantAndExtension> findVariantAndExtension(Project project) {
-    return Optional.ofNullable(AndroidUtils.findVariantAndExtension(project, getConfiguredAndroidVariant(project)));
+    return Optional.ofNullable(LegacyAndroidConfig.findVariantAndExtension(project, getConfiguredAndroidVariant(project)));
   }
 
   @Nullable
@@ -329,7 +331,7 @@ class AndroidUtils {
   }
 
   private static void populateSonarQubeProps(Map<String, Object> properties, BaseVariant variant, boolean isTest) {
-    List<File> srcDirs = variant.getSourceSets().stream().map(AndroidUtils::getFilesFromSourceSet).collect(
+    List<File> srcDirs = variant.getSourceSets().stream().map(LegacyAndroidConfig::getFilesFromSourceSet).collect(
       ArrayList::new,
       ArrayList::addAll,
       ArrayList::addAll);
@@ -435,7 +437,7 @@ class AndroidUtils {
   public static FileCollection findMainLibraries(Project project) {
     return findVariantAndExtension(project)
       .map(AndroidVariantAndExtension::getVariant)
-      .map(variant -> AndroidUtils.getLibrariesFileCollection(project, variant))
+      .map(variant -> LegacyAndroidConfig.getLibrariesFileCollection(project, variant))
       .orElse(project.files());
   }
 
@@ -446,7 +448,7 @@ class AndroidUtils {
     }
     var testVariants = getTestVariants(variantAndExtension.get().getVariant());
     return testVariants.stream()
-      .map(testVariant -> AndroidUtils.getLibrariesFileCollection(project, testVariant))
+      .map(testVariant -> LegacyAndroidConfig.getLibrariesFileCollection(project, testVariant))
       .filter(Objects::nonNull)
       .reduce(project.files(), FileCollection::plus);
   }

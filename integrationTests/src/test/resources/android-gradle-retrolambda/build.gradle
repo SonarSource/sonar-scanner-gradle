@@ -25,8 +25,8 @@ dependencies {
 }
 
 android {
-  compileSdkVersion 30
-  namespace "org.hello"
+  compileSdk = 30
+  namespace = "org.hello"
 }
 
 sonar {
@@ -35,4 +35,3 @@ sonar {
         property "sonar.projectKey", "org.sonarqube:example-android-gradle"
     }
 }
-

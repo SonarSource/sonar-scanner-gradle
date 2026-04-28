@@ -1,29 +1,29 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
-    namespace 'com.example.test.myapplication'
+    compileSdk = 33
+    namespace = 'com.example.test.myapplication'
     defaultConfig {
-        applicationId "com.example.test.myapplication"
-        minSdkVersion 33
-        targetSdkVersion 33
-        versionCode 1
-        versionName "1.0"
+        applicationId = "com.example.test.myapplication"
+        minSdk = 33
+        targetSdk = 33
+        versionCode = 1
+        versionName = "1.0"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            testCoverageEnabled = true
+            enableUnitTestCoverage = true
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    namespace "com.example.test.myapplication"
+    namespace = "com.example.test.myapplication"
 }
 
 dependencies {

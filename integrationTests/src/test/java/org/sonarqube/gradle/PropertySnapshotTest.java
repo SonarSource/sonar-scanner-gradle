@@ -60,7 +60,7 @@ public class PropertySnapshotTest extends AbstractGradleIT {
   @Ignore("Run locally to regenerate all integration test property snapshots.")
   @Test
   public void rewritePropertySnapshot() throws Exception {
-    var actual = snapshotCase.collect(this);
+    var actual = snapshotCase.collectWithVersionsOverride(this);
     SnapshotIO.write(snapshotCase.name(), actual);
   }
 }

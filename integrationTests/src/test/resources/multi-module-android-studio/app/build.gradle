@@ -1,25 +1,25 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
+    compileSdk = 30
 
     defaultConfig {
-        applicationId "com.example.test.myapplication"
-        minSdkVersion 30
-        targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
+        applicationId = "com.example.test.myapplication"
+        minSdk = 30
+        targetSdk = 30
+        versionCode = 1
+        versionName = "1.0"
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            testCoverageEnabled = true
+            enableUnitTestCoverage = true
         }
     }
-    namespace "com.example.test.myapplication"
+    namespace = "com.example.test.myapplication"
 }
 
 dependencies {

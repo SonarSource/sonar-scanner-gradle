@@ -2,13 +2,13 @@ plugins {
     id 'com.android.library'
 }
 android {
-    compileSdkVersion 33
-    namespace 'com.example.test2.myapplication'
+    compileSdk = 33
+    namespace = 'com.example.test2.myapplication'
     defaultConfig {
-        minSdkVersion 33
-        targetSdkVersion 33
-        versionCode 1
-        versionName "1.0"
+        minSdk = 33
+        targetSdk = 33
+        versionCode = 1
+        versionName = "1.0"
     }
 
     lintOptions {
@@ -17,18 +17,18 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            testCoverageEnabled = true
+            enableUnitTestCoverage = true
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    namespace "com.example.test.myapplication"
+    namespace = "com.example.test.myapplication"
 }
 
 dependencies {

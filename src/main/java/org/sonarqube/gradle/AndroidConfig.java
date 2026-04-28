@@ -1,0 +1,432 @@
+/*
+ * SonarQube Scanner for Gradle
+ * Copyright (C) 2015-2025 SonarSource
+ * mailto:info AT sonarsource DOT com
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
+ */
+package org.sonarqube.gradle;
+
+import com.android.build.api.dsl.CommonExtension;
+import com.android.build.api.variant.AndroidComponentsExtension;
+import com.android.build.api.variant.AndroidTest;
+import com.android.build.api.variant.Component;
+import com.android.build.api.variant.Sources;
+import com.android.build.api.variant.TestComponent;
+import com.android.build.api.variant.UnitTest;
+import com.android.build.api.variant.Variant;
+import com.android.build.gradle.internal.lint.AndroidLintTask;
+import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.java.TargetJvmEnvironment;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.testing.Test;
+import org.sonarqube.gradle.properties.SonarProperty;
+
+import static com.android.builder.model.Version.ANDROID_GRADLE_PLUGIN_VERSION;
+import static org.sonarqube.gradle.SonarUtils.addTaskByName;
+
+/**
+ * This class provides methods to compute Android specific properties for projects using the Android Gradle plugin (AGP) with versions greater than 9.
+ * For AGP versions before 9, see the {@code LegacyAndroidConfig}.
+ * This class should only be accessed when running on an Android application, as it uses the runtime provided AGP library and will crash if it is not present.
+ */
+public class AndroidConfig {
+
+  private static final Logger LOGGER = Logging.getLogger(AndroidConfig.class);
+
+  private final Project project;
+  private final AndroidComponentsExtension<?, ?, ?> androidComponentsExtension;
+  private final List<Variant> variants;
+  private final Variant selectedVariant;
+
+  private AndroidConfig(Project project, AndroidComponentsExtension<?, ?, ?> androidComponentsExtension) {
+    this.project = project;
+    this.androidComponentsExtension = androidComponentsExtension;
+    this.variants = new ArrayList<>();
+    this.selectedVariant = null;
+  }
+
+  public static AndroidConfig of(Project project) {
+    AndroidComponentsExtension<?, ?, ?> androidComponentsExtension = project.getExtensions().getByType(AndroidComponentsExtension.class);
+    var androidConfig = new AndroidConfig(project, androidComponentsExtension);
+    androidComponentsExtension.onVariants(androidComponentsExtension.selector().all(), variant -> {
+      androidConfig.variants.add(variant);
+    });
+    return androidConfig;
+  }
+
+  /**
+   * Check if a Gradle project uses the Android Gradle plugin with a version greater or equal to 9.
+   * To compute this, the method uses the {@code ANDROID_GRADLE_PLUGIN_VERSION} constant, which is defined by the plugin used at runtime for a project.
+   */
+  public static boolean usesAndroidGradlePlugin9OrGreater() {
+    return Version.of(ANDROID_GRADLE_PLUGIN_VERSION).compareTo(Version.of("9.0.0")) >= 0;
+  }
+
+  private static int getMinSdk(Variant variant) {
+    return variant.getMinSdk().getApiLevel();
+  }
+
+  private static Provider<File> getCompiledClasses(Project project, Component component) {
+    return project.provider(() -> project.getLayout()
+      .getBuildDirectory()
+      .dir("intermediates/javac/" + component.getName() + "/classes")
+      .get()
+      .getAsFile()
+    );
+  }
+
+  private static String getCompileTaskName(Component component) {
+    return "compile" + SonarUtils.capitalize(component.getName()) + "JavaWithJavac";
+  }
+
+  /**
+   * Get the variant selected for the analysis with Sonar.
+   */
+  public Variant getVariant() {
+    if (selectedVariant != null) {
+      return selectedVariant;
+    }
+
+    if (variants.isEmpty()) {
+      throw new IllegalStateException("No Android variant found for project " + project.getName() + ".");
+    }
+
+    String configuredVariantName = SonarUtils.getConfiguredAndroidVariant(project);
+    if (configuredVariantName != null) {
+      Optional<Variant> configuredVariant = variants.stream()
+        .filter(variant -> variant.getName().equals(configuredVariantName))
+        .findFirst();
+      if (configuredVariant.isEmpty()) {
+        throw new IllegalStateException(
+          "Unable to find variant '"
+            + configuredVariantName
+            + "' to use for SonarQube analysis. Candidates are: "
+            + String.join(", ", variants.stream().map(Variant::getName).collect(Collectors.toSet())));
+      }
+      return configuredVariant.get();
+    }
+
+    // Find the variant that is the target for Android tests in the project. If no variant has Android tests, return the first we find.
+    return variants.stream()
+      .filter(v -> v.getNestedComponents().stream().anyMatch(AndroidTest.class::isInstance))
+      .findFirst()
+      .orElse(variants.get(0));
+  }
+
+  /**
+   * Get the main libraries file collection for the variant selected for the analysis with Sonar.
+   */
+  public FileCollection getMainLibraries() {
+    FileCollection mainLibraries = project.files(androidComponentsExtension.getSdkComponents().getBootClasspath());
+    mainLibraries = mainLibraries.plus(getCompileClasspath(getVariant()));
+    return mainLibraries;
+  }
+
+  /**
+   * Get the test libraries file collection for the variant selected for the analysis with Sonar.
+   */
+  public FileCollection getTestLibraries() {
+    List<Component> testComponents = getTestComponents();
+    if (testComponents.isEmpty()) {
+      return project.files();
+    }
+    FileCollection testLibraries = project.files(androidComponentsExtension.getSdkComponents().getBootClasspath());
+    for (Component component : testComponents) {
+      testLibraries = testLibraries.plus(getCompileClasspath(component));
+    }
+    return testLibraries;
+  }
+
+  /**
+   * Get the source directories for the selected Android variant.
+   */
+  public FileCollection getAndroidSources() {
+    return getSources(getVariant());
+  }
+
+  /**
+   * Get the source directories for the selected Android variant's tests.
+   */
+  public FileCollection getAndroidTests() {
+    List<Component> testComponents = getTestComponents();
+    if (testComponents.isEmpty()) {
+      var sourceSet = project.getExtensions().getByType(CommonExtension.class).getSourceSets().findByName("test");
+      if (sourceSet == null) {
+        return project.files();
+      }
+      try {
+        var java = sourceSet.getClass().getMethod("getJava").invoke(sourceSet);
+        return project.files(java.getClass().getMethod("getSrcDirs").invoke(java));
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        return project.files();
+      }
+    } else {
+      FileCollection tests = project.files();
+      for (Component component : getTestComponents()) {
+        tests = tests.plus(getSources(component));
+      }
+      return tests;
+    }
+  }
+
+  /**
+   * Get the Android tasks on which Sonar tasks need to depend for the variant selected for the analysis with Sonar.
+   */
+  public List<Task> getTasks() {
+    List<Task> tasks = new ArrayList<>();
+    Variant variant = getVariant();
+
+    boolean testTaskAdded = false;
+    for (Component component : getTestComponents()) {
+      testTaskAdded |= addTaskByName(project, getCompileTaskName(component), tasks);
+    }
+    // The compilation of unit tests or Android tests already depends on the main compilation task, so it is only necessary to add it if no test compilation tasks were found.
+    if (!testTaskAdded) {
+      addTaskByName(project, getCompileTaskName(variant), tasks);
+    }
+
+    // To get access to the test reports for the selected variant, the Sonar resolver task needs to depend on the test task below.
+    addTaskByName(project, "test" + SonarUtils.capitalize(variant.getName()) + "UnitTest", tasks);
+
+    return tasks;
+  }
+
+  /**
+   * Compute the compilation classpath for an Android component.
+   */
+  private FileCollection getCompileClasspath(Component component) {
+    String configName = component.getName() + "CompileClasspath";
+    Configuration configuration = project.getConfigurations().getByName(configName);
+
+    return configuration.getIncoming().artifactView(viewConfiguration -> viewConfiguration.attributes(attributeContainer -> {
+      attributeContainer.attribute(
+        Attribute.of("artifactType", String.class),
+        "android-classes-jar"
+      );
+      attributeContainer.attribute(
+        TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+        project.getObjects().named(TargetJvmEnvironment.class, TargetJvmEnvironment.ANDROID)
+      );
+    })).getFiles();
+  }
+
+  /**
+   * Populate the properties of an Android variant with Android specific values.
+   */
+  public void configureProperties(Map<String, Object> properties) {
+    configureAndroidProperties(properties);
+    configureTestReports(properties);
+    configureLintReports(properties);
+
+    if (project.getPlugins().hasPlugin("com.android.test")) {
+      configureJDK(properties, getVariant(), true);
+      return;
+    }
+    configureJDK(properties, getVariant(), false);
+    for (Component component : getTestComponents()) {
+      configureJDK(properties, component, true);
+    }
+  }
+
+  /**
+   * Compute Android specific properties and populate properties with them.
+   */
+  private void configureAndroidProperties(Map<String, Object> properties) {
+    properties.put(AndroidProperties.ANDROID_DETECTED, true);
+    if (SonarUtils.getConfiguredAndroidVariant(project) != null) {
+      int minSdkVersion = getMinSdk(getVariant());
+      properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, minSdkVersion);
+      properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, minSdkVersion);
+    } else {
+      Set<Integer> minSdks = variants.stream()
+        .map(AndroidConfig::getMinSdk)
+        .collect(Collectors.toSet());
+      if (!minSdks.isEmpty()) {
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MIN, Collections.min(minSdks));
+        properties.put(AndroidProperties.MIN_SDK_VERSION_MAX, Collections.max(minSdks));
+      }
+    }
+  }
+
+  /**
+   * Compute the JUnit test report paths for a given Android variant and populate properties with them.
+   */
+  private void configureTestReports(Map<String, Object> properties) {
+    List<DirectoryProperty> directories = new ArrayList<>();
+    List<Component> nestedComponents = getVariant().getNestedComponents();
+
+    nestedComponents.stream()
+      .filter(UnitTest.class::isInstance)
+      .forEach(component ->
+        project.getTasks().withType(Test.class).stream()
+          .filter(task -> task.getName().equals("test" + SonarUtils.capitalize(component.getName())))
+          .map(task -> task.getReports().getJunitXml().getOutputLocation())
+          .forEach(directories::add)
+      );
+
+    nestedComponents.stream()
+      .filter(AndroidTest.class::isInstance)
+      .forEach(component ->
+        project.getTasks().withType(DeviceProviderInstrumentTestTask.class).stream()
+          .filter(task -> component.getName().equals(task.getVariantName()))
+          .map(DeviceProviderInstrumentTestTask::getReportsDir)
+          .filter(DirectoryProperty::isPresent)
+          .forEach(directories::add)
+      );
+
+    if (directories.isEmpty()) {
+      return;
+    }
+
+    List<File> value = directories.stream()
+      .filter(Provider::isPresent)
+      .map(d -> d.get().getAsFile())
+      .collect(Collectors.toList());
+    properties.put(SonarProperty.JUNIT_REPORT_PATHS, value);
+  }
+
+  /**
+   * Compute the Android lint report path for a given Android variant and populate properties with it.
+   */
+  private void configureLintReports(Map<String, Object> properties) {
+    String variantName = getVariant().getName();
+    project.getTasks().withType(AndroidLintTask.class).stream()
+      .filter(task -> task.getXmlReportOutputFile().isPresent())
+      .filter(task -> task.getVariantName().equals(variantName))
+      .map(task -> task.getXmlReportOutputFile().get().getAsFile())
+      .findFirst()
+      .ifPresent(output -> properties.put(SonarProperty.ANDROID_LINT_REPORT_PATHS, output));
+  }
+
+  /**
+   * Compute JDK properties and binaries for the selected Android variant.
+   */
+  private void configureJDK(Map<String, Object> properties, Component component, boolean isTest) {
+    Optional<JavaCompile> javaCompile = getJavaCompileTask();
+    if (javaCompile.isEmpty()) {
+      LOGGER.warn("Unable to find Java compiler on variant '{}'.", getVariant().getName());
+    } else {
+      SonarUtils.populateJdkProperties(properties, JavaCompilerUtils.extractConfiguration(javaCompile.get()));
+    }
+
+    File destinationDirs = getCompiledClasses(project, component).get();
+    if (isTest) {
+      properties.put("sonar.java.test.binaries", destinationDirs);
+    } else {
+      properties.put("sonar.java.binaries", destinationDirs);
+      properties.put("sonar.binaries", destinationDirs);
+    }
+  }
+
+  /**
+   * Get the test components for the selected Android variant.
+   */
+  private List<Component> getTestComponents() {
+    return getVariant().getNestedComponents().stream()
+      .filter(TestComponent.class::isInstance)
+      .collect(Collectors.toUnmodifiableList());
+  }
+
+  /**
+   * Get the sources for a given Android component.
+   */
+  private FileCollection getSources(Component component) {
+    Sources sources = component.getSources();
+    ConfigurableFileCollection sourceFiles = project.getObjects().fileCollection();
+
+    sourceFiles.from(getManifestsProvider(component));
+
+    if (sources.getJava() != null) {
+      sourceFiles.from(sources.getJava().getAll());
+    }
+    if (sources.getKotlin() != null) {
+      sourceFiles.from(sources.getKotlin().getAll());
+    }
+    if (sources.getAssets() != null) {
+      sourceFiles.from(sources.getAssets().getAll());
+    }
+    if (sources.getRes() != null) {
+      sourceFiles.from(sources.getRes().getAll());
+    }
+    if (sources.getAidl() != null) {
+      sourceFiles.from(sources.getAidl().getAll());
+    }
+
+    try {
+      sourceFiles.from(sources.getByName("c").getAll());
+      sourceFiles.from(sources.getByName("cpp").getAll());
+
+      Method getRs = sources.getClass().getMethod("getRenderscript");
+      Object rs = getRs.invoke(sources);
+      if (rs != null) {
+        Method getAll = rs.getClass().getMethod("getAll");
+        sourceFiles.from(getAll.invoke(rs));
+      }
+    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | RuntimeException ignored) {
+      // We ignore the situations where C/C++ or renderscript sources are absent.
+    }
+
+    return sourceFiles;
+  }
+
+  /**
+   * Get the manifest files for a component.
+   */
+  private Provider<List<RegularFile>> getManifestsProvider(Component component) {
+    Sources sources = component.getSources();
+    try {
+      // Try the modern Sources API (Added in AGP 8.3.1)
+      Method getManifestsMethod = sources.getClass().getMethod("getManifests");
+      Object manifestFiles = getManifestsMethod.invoke(sources);
+      Method getAllMethod = manifestFiles.getClass().getMethod("getAll");
+      return (Provider<List<RegularFile>>) getAllMethod.invoke(manifestFiles);
+    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+      LOGGER.debug("No manifest files found for Android component {} of project {}.", component.getName(), project.getName());
+      return project.provider(Collections::emptyList);
+    }
+  }
+
+  /**
+   * Retrieve the Java compilation task for the selected Android variant.
+   */
+  private Optional<JavaCompile> getJavaCompileTask() {
+    return project.getTasks().withType(JavaCompile.class).stream()
+      .filter(task -> task.getName().equals(getCompileTaskName(getVariant())))
+      .findFirst();
+  }
+
+}

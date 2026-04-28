@@ -42,42 +42,75 @@ import java.util.List;
  */
 public class ProjectProperties {
 
-  /** The Gradle project name (e.g., ":subproject" for subprojects, "" for root) */
+  /**
+   * The Gradle project name (e.g., ":subproject" for subprojects, "" for root)
+   */
   public final String projectName;
 
-  /** Whether this project is the root project of the analysis */
+  /**
+   * Whether this project is the root project of the analysis
+   */
   public final Boolean isRootProject;
 
-  /** Resolved absolute paths of compile classpath dependencies */
+  /**
+   * Resolved absolute paths of compile classpath dependencies
+   */
   public final List<String> compileClasspath;
 
-  /** Resolved absolute paths of test compile classpath dependencies */
+  /**
+   * Resolved absolute paths of test compile classpath dependencies
+   */
   public final List<String> testCompileClasspath;
 
-  /** Filtered main libraries (subset of compileClasspath) for SonarQube analysis */
+  /**
+   * Filtered main libraries (subset of compileClasspath) for SonarQube analysis
+   */
   public final List<String> mainLibraries;
 
-  /** Filtered test libraries (subset of testCompileClasspath) for SonarQube analysis */
+  /**
+   * Filtered test libraries (subset of testCompileClasspath) for SonarQube analysis
+   */
   public final List<String> testLibraries;
+
+  /**
+   * The resolved source directories for an Android project.
+   */
+  public final List<String> androidSources;
+
+  /**
+   * The resolved test directories for an Android project.
+   */
+  public final List<String> androidTests;
 
   /**
    * Creates a new immutable ProjectProperties instance.
    *
-   * @param projectName the Gradle project name
-   * @param isRootProject whether this is the root project
-   * @param compileClasspath resolved compile classpath as absolute paths
+   * @param projectName          the Gradle project name
+   * @param isRootProject        whether this is the root project
+   * @param compileClasspath     resolved compile classpath as absolute paths
    * @param testCompileClasspath resolved test compile classpath as absolute paths
-   * @param mainLibraries filtered main libraries for analysis
-   * @param testLibraries filtered test libraries for analysis
+   * @param mainLibraries        filtered main libraries for analysis
+   * @param testLibraries        filtered test libraries for analysis
    */
-  public ProjectProperties(String projectName, Boolean isRootProject, List<String> compileClasspath, List<String> testCompileClasspath,
-                           List<String> mainLibraries, List<String> testLibraries) {
+  @SuppressWarnings("java:S107")
+  public ProjectProperties(
+    String projectName,
+    Boolean isRootProject,
+    List<String> compileClasspath,
+    List<String> testCompileClasspath,
+    List<String> mainLibraries,
+    List<String> testLibraries,
+    List<String> androidSources,
+    List<String> androidTests
+  ) {
     this.projectName = projectName;
     this.isRootProject = isRootProject;
     this.compileClasspath = compileClasspath;
     this.testCompileClasspath = testCompileClasspath;
     this.mainLibraries = mainLibraries;
     this.testLibraries = testLibraries;
+    this.androidSources = androidSources;
+    this.androidTests = androidTests;
   }
 
 }

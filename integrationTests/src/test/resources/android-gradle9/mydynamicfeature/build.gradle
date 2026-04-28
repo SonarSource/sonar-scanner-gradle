@@ -2,21 +2,21 @@ plugins {
     id 'com.android.dynamic-feature'
 }
 android {
-    compileSdkVersion 33
+    compileSdk = 33
 
     defaultConfig {
-        applicationId "com.example.mydynamicfeature"
-        minSdkVersion 21
-        targetSdkVersion 33
-        versionCode 1
-        versionName "1.0"
+        applicationId = "com.example.mydynamicfeature"
+        minSdk = 21
+        targetSdk = 33
+        versionCode = 1
+        versionName = "1.0"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
         }
     }
     namespace = "com.example.mydynamicfeature"
