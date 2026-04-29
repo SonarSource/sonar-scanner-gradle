@@ -399,7 +399,7 @@ public class SonarTask extends ConventionTask {
     // Filter non-existing paths and generated sources, and remove empty source properties.
     for (PropertyInfo prop : sourcesProperties) {
       properties.computeIfPresent(prop.fullName, (k, commaList) -> {
-        var filtered = filterPaths(commaList, SonarTask::containsValidSources, userDefinedKeys.contains(k));
+        var filtered = filterPaths(commaList, Files::exists, userDefinedKeys.contains(k));
         // empty assignments for `sonar.sources` and `sonar.tests` are required,
         // because modules with no `sonar.sources` or `sonar.tests` value inherit the value from their parent module.
         // This can eventually lead to a double indexing issue in the scanner-engine.
@@ -482,11 +482,6 @@ public class SonarTask extends ConventionTask {
     }
 
     return filter.test(Path.of(value));
-  }
-
-  private static boolean containsValidSources(Path path) {
-    String normalizedPath = path.toString().replace('\\', '/');
-    return !normalizedPath.contains("build/generated") && Files.exists(path);
   }
 
   private static boolean containJunitReport(Path p) {
