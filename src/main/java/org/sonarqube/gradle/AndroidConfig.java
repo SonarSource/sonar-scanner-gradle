@@ -100,15 +100,6 @@ public class AndroidConfig {
     return variant.getMinSdk().getApiLevel();
   }
 
-  private static Provider<File> getCompiledClasses(Project project, Component component) {
-    return project.provider(() -> project.getLayout()
-      .getBuildDirectory()
-      .dir("intermediates/javac/" + component.getName() + "/classes")
-      .get()
-      .getAsFile()
-    );
-  }
-
   private static String getCompileTaskName(Component component) {
     return "compile" + SonarUtils.capitalize(component.getName()) + "JavaWithJavac";
   }
@@ -336,14 +327,14 @@ public class AndroidConfig {
    * Compute JDK properties and binaries for the selected Android variant.
    */
   private void configureJDK(Map<String, Object> properties, Component component, boolean isTest) {
-    Optional<JavaCompile> javaCompile = getJavaCompileTask();
+    Optional<JavaCompile> javaCompile = getJavaCompileTask(component);
     if (javaCompile.isEmpty()) {
-      LOGGER.warn("Unable to find Java compiler on variant '{}'.", getVariant().getName());
-    } else {
-      SonarUtils.populateJdkProperties(properties, JavaCompilerUtils.extractConfiguration(javaCompile.get()));
+      LOGGER.warn("Unable to find Java compiler on variant '{}'.", component.getName());
+      return;
     }
 
-    File destinationDirs = getCompiledClasses(project, component).get();
+    SonarUtils.populateJdkProperties(properties, JavaCompilerUtils.extractConfiguration(javaCompile.get()));
+    File destinationDirs = javaCompile.get().getDestinationDirectory().getAsFile().get();
     if (isTest) {
       properties.put("sonar.java.test.binaries", destinationDirs);
     } else {
@@ -421,11 +412,11 @@ public class AndroidConfig {
   }
 
   /**
-   * Retrieve the Java compilation task for the selected Android variant.
+   * Retrieve the Java compilation task for the Android component.
    */
-  private Optional<JavaCompile> getJavaCompileTask() {
+  private Optional<JavaCompile> getJavaCompileTask(Component component) {
     return project.getTasks().withType(JavaCompile.class).stream()
-      .filter(task -> task.getName().equals(getCompileTaskName(getVariant())))
+      .filter(task -> task.getName().equals(getCompileTaskName(component)))
       .findFirst();
   }
 

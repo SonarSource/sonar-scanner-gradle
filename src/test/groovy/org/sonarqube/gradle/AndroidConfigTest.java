@@ -61,12 +61,15 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.PluginContainer;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.JUnitXmlReport;
 import org.gradle.api.tasks.testing.TestTaskReports;
+import org.gradle.jvm.toolchain.JavaCompiler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sonarqube.gradle.properties.SonarProperty;
@@ -320,35 +323,37 @@ class AndroidConfigTest {
     return variant;
   }
 
-  /**
-   * Stubs the project.getLayout()...getAsFile() chain for one or more component names, and overrides project.provider() to execute the callable eagerly so the chain is actually
-   * traversed when Provider.get() is called.
-   */
-  private Map<String, File> stubCompiledClassesPaths(String... componentNames) {
-    ProjectLayout layout = mock(ProjectLayout.class);
-    DirectoryProperty buildDir = mock(DirectoryProperty.class);
-    when(project.getLayout()).thenReturn(layout);
-    when(layout.getBuildDirectory()).thenReturn(buildDir);
+  private JavaCompile mockJavaCompileTask(String taskName, File destinationDirectory) {
+    JavaCompile javaCompile = mock(JavaCompile.class);
+    when(javaCompile.getName()).thenReturn(taskName);
+    when(javaCompile.getSourceCompatibility()).thenReturn("11");
+    when(javaCompile.getTargetCompatibility()).thenReturn("11");
 
-    Map<String, File> expectedFiles = new HashMap<>();
-    for (String name : componentNames) {
-      Provider<Directory> dirProvider = mock(Provider.class);
-      Directory dir = mock(Directory.class);
-      File classesFile = new File("build/intermediates/javac/" + name + "/classes");
-      when(buildDir.dir("intermediates/javac/" + name + "/classes")).thenReturn(dirProvider);
-      when(dirProvider.get()).thenReturn(dir);
-      when(dir.getAsFile()).thenReturn(classesFile);
-      expectedFiles.put(name, classesFile);
-    }
+    CompileOptions compileOptions = mock(CompileOptions.class);
+    when(compileOptions.getCompilerArgs()).thenReturn(Collections.emptyList());
+    when(compileOptions.isFork()).thenReturn(false);
+    Property<Integer> release = mock(Property.class);
+    when(release.isPresent()).thenReturn(false);
+    when(compileOptions.getRelease()).thenReturn(release);
+    when(javaCompile.getOptions()).thenReturn(compileOptions);
 
-    return expectedFiles;
+    Property<JavaCompiler> javaCompiler = mock(Property.class);
+    when(javaCompiler.isPresent()).thenReturn(false);
+    when(javaCompile.getJavaCompiler()).thenReturn(javaCompiler);
+
+    DirectoryProperty destinationDirectoryProperty = mock(DirectoryProperty.class);
+    Provider<File> destinationFileProvider = mock(Provider.class);
+    when(destinationDirectoryProperty.getAsFile()).thenReturn(destinationFileProvider);
+    when(destinationFileProvider.get()).thenReturn(destinationDirectory);
+    when(javaCompile.getDestinationDirectory()).thenReturn(destinationDirectoryProperty);
+
+    return javaCompile;
   }
 
-  /**
-   * Convenience wrapper for the single-component case.
-   */
-  private File stubCompiledClassesPath(String componentName) {
-    return stubCompiledClassesPaths(componentName).get(componentName);
+  private void stubJavaCompileTasks(JavaCompile... javaCompileTasks) {
+    TaskCollection<JavaCompile> tasks = mock(TaskCollection.class);
+    when(tasks.stream()).thenAnswer(inv -> Stream.of(javaCompileTasks));
+    when(taskContainer.withType(JavaCompile.class)).thenReturn(tasks);
   }
 
   @Test
@@ -1002,18 +1007,25 @@ class AndroidConfigTest {
   @Test
   void configureProperties_setsBinaries_forMainVariant() {
     stubOnVariants(mockVariant("debug", 28, false));
+    File classesDir = new File("build/intermediates/javac/debug/compileDebugJavaWithJavac/classes");
+    stubJavaCompileTasks(mockJavaCompileTask("compileDebugJavaWithJavac", classesDir));
 
     Map<String, Object> props = new HashMap<>();
     AndroidConfig.of(project).configureProperties(props);
 
-    assertTrue(props.containsKey("sonar.java.binaries"));
-    assertTrue(props.containsKey("sonar.binaries"));
+    assertEquals(classesDir, props.get("sonar.java.binaries"));
+    assertEquals(classesDir, props.get("sonar.binaries"));
     assertFalse(props.containsKey("sonar.java.test.binaries"));
   }
 
   @Test
   void configureProperties_setsTestBinaries_whenTestComponentsExist() {
     stubOnVariants(mockVariantWithUnitTest("debug"));
+    File mainClassesDir = new File("build/intermediates/javac/debug/compileDebugJavaWithJavac/classes");
+    File testClassesDir = new File("build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes");
+    stubJavaCompileTasks(
+      mockJavaCompileTask("compileDebugJavaWithJavac", mainClassesDir),
+      mockJavaCompileTask("compileDebugUnitTestJavaWithJavac", testClassesDir));
 
     TaskCollection<org.gradle.api.tasks.testing.Test> testTasks = mock(TaskCollection.class);
     when(testTasks.stream()).thenAnswer(inv -> Stream.empty());
@@ -1022,9 +1034,9 @@ class AndroidConfigTest {
     Map<String, Object> props = new HashMap<>();
     AndroidConfig.of(project).configureProperties(props);
 
-    assertTrue(props.containsKey("sonar.java.binaries"));
-    assertTrue(props.containsKey("sonar.binaries"));
-    assertTrue(props.containsKey("sonar.java.test.binaries"));
+    assertEquals(mainClassesDir, props.get("sonar.java.binaries"));
+    assertEquals(mainClassesDir, props.get("sonar.binaries"));
+    assertEquals(testClassesDir, props.get("sonar.java.test.binaries"));
   }
 
   @Test
@@ -1036,13 +1048,15 @@ class AndroidConfigTest {
     when(plugins.hasPlugin("com.android.test")).thenReturn(true);
 
     stubOnVariants(mockVariant("debug", 28, false));
+    File classesDir = new File("build/intermediates/javac/debug/compileDebugJavaWithJavac/classes");
+    stubJavaCompileTasks(mockJavaCompileTask("compileDebugJavaWithJavac", classesDir));
 
     Map<String, Object> props = new HashMap<>();
     AndroidConfig.of(project).configureProperties(props);
 
     assertFalse(props.containsKey("sonar.java.binaries"));
     assertFalse(props.containsKey("sonar.binaries"));
-    assertTrue(props.containsKey("sonar.java.test.binaries"));
+    assertEquals(classesDir, props.get("sonar.java.test.binaries"));
   }
 
   @Test
@@ -1110,10 +1124,11 @@ class AndroidConfigTest {
   }
 
   @Test
-  void configureProperties_setsBinariesPath_fromBuildDirectory_forMainVariant() {
+  void configureProperties_setsBinariesPath_fromJavaCompileDestinationDirectory_forMainVariant() {
     stubOnVariants(mockVariant("debug", 28, false));
 
-    File expectedClassesDir = stubCompiledClassesPath("debug");
+    File expectedClassesDir = new File("build/intermediates/javac/debug/compileDebugJavaWithJavac/classes");
+    stubJavaCompileTasks(mockJavaCompileTask("compileDebugJavaWithJavac", expectedClassesDir));
 
     Map<String, Object> props = new HashMap<>();
     AndroidConfig.of(project).configureProperties(props);
@@ -1131,13 +1146,28 @@ class AndroidConfigTest {
     when(testTasks.stream()).thenAnswer(inv -> Stream.empty());
     when(taskContainer.withType(org.gradle.api.tasks.testing.Test.class)).thenReturn(testTasks);
 
-    Map<String, File> classesDirs = stubCompiledClassesPaths("debug", "debugUnitTest");
+    File mainClassesDir = new File("build/intermediates/javac/debug/compileDebugJavaWithJavac/classes");
+    File testClassesDir = new File("build/intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes");
+    stubJavaCompileTasks(
+      mockJavaCompileTask("compileDebugJavaWithJavac", mainClassesDir),
+      mockJavaCompileTask("compileDebugUnitTestJavaWithJavac", testClassesDir));
 
     Map<String, Object> props = new HashMap<>();
     AndroidConfig.of(project).configureProperties(props);
 
-    assertEquals(classesDirs.get("debug"), props.get("sonar.java.binaries"));
-    assertEquals(classesDirs.get("debugUnitTest"), props.get("sonar.java.test.binaries"));
+    assertEquals(mainClassesDir, props.get("sonar.java.binaries"));
+    assertEquals(testClassesDir, props.get("sonar.java.test.binaries"));
+  }
+
+  @Test
+  void configureProperties_doesNotSetBinariesPath_whenJavaCompileTaskIsMissing() {
+    stubOnVariants(mockVariant("debug", 28, false));
+
+    Map<String, Object> props = new HashMap<>();
+    AndroidConfig.of(project).configureProperties(props);
+
+    assertFalse(props.containsKey("sonar.java.binaries"));
+    assertFalse(props.containsKey("sonar.binaries"));
   }
 
 }
