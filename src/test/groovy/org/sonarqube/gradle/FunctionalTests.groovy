@@ -35,7 +35,7 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE
 
 class FunctionalTests extends Specification {
-    String gradleVersion = "7.6.2"
+    String gradleVersion = "8.14"
 
     @TempDir
     Path projectDir
@@ -146,8 +146,8 @@ class FunctionalTests extends Specification {
         new File(props."sonar.java.jdkHome").exists()
         "${props."sonar.java.jdkHome"}${File.separator}bin${File.separator}java -version".execute()
           .err.text.contains("\"1.8.")
-        props."sonar.java.source" == '8'
-        props."sonar.java.target" == '8'
+        props."sonar.java.source" == '1.8'
+        props."sonar.java.target" == '1.8'
     }
 
     def "set java release version"() {
@@ -189,8 +189,8 @@ class FunctionalTests extends Specification {
             id 'org.sonarqube'
         }
         
-        compileJava {
-          options.compilerArgs.addAll(['--release', '10'])
+        tasks.withType(JavaCompile).configureEach {
+            options.release = 10
         }
         """
 
@@ -265,8 +265,8 @@ class FunctionalTests extends Specification {
         new File(props."sonar.java.jdkHome").exists()
         "${props."sonar.java.jdkHome"}${File.separator}bin${File.separator}java -version".execute()
           .err.text.contains("\"1.8.")
-        props."sonar.java.source" == '8'
-        props."sonar.java.target" == '8'
+        props."sonar.java.source" == '1.8'
+        props."sonar.java.target" == '1.8'
     }
 
     def "log execution context"() {
