@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         with:
-          version: 2025.12.10
+          version: 2026.4.25
       - name: Install Property Dump Plugin
         run: |
           mvn -f property-dump-plugin/pom.xml -B install
