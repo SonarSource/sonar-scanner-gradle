@@ -104,7 +104,7 @@ jobs:
             android_gradle_version: "9.1.0"
             java_version: "21"
           - gradle_version: "9.3.1"
-            javav_ersion: "21"
+            java_version: "21"
           - gradle_version: "9.2.1"
             java_version: "21"
           - gradle_version: "9.1.0"
