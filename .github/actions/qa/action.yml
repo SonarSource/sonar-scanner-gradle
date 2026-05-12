@@ -2,7 +2,7 @@ name: QA Gradle
 description: Run QA tests with different Gradle versions
 
 inputs:
-  java_version:
+  java-version:
     required: true
   gradle-version:
     required: true
@@ -24,7 +24,10 @@ runs:
       with:
         version: 2026.4.25
     - name: Set Java version
-      run: mise use java@${{ inputs.java_version }}
+      env:
+        JAVA_VERSION: ${{ inputs.java-version }}
+      run: |
+        mise use java@${JAVA_VERSION}
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3

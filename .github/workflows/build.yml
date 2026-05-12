@@ -137,7 +137,7 @@ jobs:
           - gradle_version: "5.6.4"
             java_version: "11"
     name: >
-      QA J${{ matrix.item.java-version }} - Gradle ${{ matrix.item.gradle_version }}
+      QA J${{ matrix.item.java_version }} - Gradle ${{ matrix.item.gradle_version }}
       ${{ matrix.item.android_gradle_version && format(' Android {0}', matrix.item.android_gradle_version) || '' }}
     runs-on: 'github-ubuntu-latest-l'
     permissions:
@@ -151,6 +151,7 @@ jobs:
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
+          java-version: ${{ matrix.item.java_version }}
           sonar-runtime-version: "LATEST_RELEASE[25.11]"
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
@@ -176,6 +177,7 @@ jobs:
         with:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
+          java-version: "17"
           sonar-runtime-version: "LATEST_RELEASE[25.11]"
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
