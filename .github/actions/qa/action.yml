@@ -2,6 +2,8 @@ name: QA Gradle
 description: Run QA tests with different Gradle versions
 
 inputs:
+  java_version:
+    required: true
   gradle-version:
     required: true
   android-gradle-version:
@@ -21,6 +23,8 @@ runs:
     - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
       with:
         version: 2026.4.25
+    - name: Set Java version
+      run: mise use java@${{ inputs.java_version }}
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3
