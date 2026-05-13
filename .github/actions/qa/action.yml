@@ -24,10 +24,10 @@ runs:
       with:
         version: 2026.4.25
     - name: Set Java version
+      shell: bash
       env:
         JAVA_VERSION: ${{ inputs.java-version }}
-      run: |
-        mise use java@${JAVA_VERSION}
+      run: mise use java@${JAVA_VERSION}
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3
