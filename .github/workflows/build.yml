@@ -178,7 +178,7 @@ jobs:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
           java-version: "17"
-          sonar-runtime-version: "LATEST_RELEASE[25.11]"
+          sonar-runtime-version: "LATEST_RELEASE[26.4]"
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
 
