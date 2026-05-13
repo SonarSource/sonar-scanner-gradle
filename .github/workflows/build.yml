@@ -152,7 +152,7 @@ jobs:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
           java-version: ${{ matrix.item.java_version }}
-          sonar-runtime-version: "LATEST_RELEASE[25.11]"
+          sonar-runtime-version: "LATEST_RELEASE[26.4]"
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
 
