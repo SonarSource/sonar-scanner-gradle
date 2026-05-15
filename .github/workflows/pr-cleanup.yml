@@ -5,7 +5,7 @@ on:
 
 jobs:
   cleanup:
-    runs-on: github-ubuntu-latest-s  # Public repo
+    runs-on: warp-custom-ubuntu-24-04  # Public repo
     permissions:
       actions: write
     steps:
