@@ -138,7 +138,7 @@ jobs:
             java_version: "11"
     name: >
       QA J${{ matrix.item.java_version }} - Gradle ${{ matrix.item.gradle_version }}
-      ${{ matrix.item.android_gradle_version && format(' Android {0}', matrix.item.android_gradle_version) || '' }}
+      ${{ matrix.item.android_gradle_version && format(' AGP {0}', matrix.item.android_gradle_version) || '' }}
     runs-on: 'github-ubuntu-latest-l'
     permissions:
       id-token: write
