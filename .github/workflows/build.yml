@@ -31,9 +31,9 @@ jobs:
       deployed: ${{ steps.build-gradle.outputs.deployed }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         with:
-          version: 2025.12.10
+          version: 2026.4.25
       - name: Install Property Dump Plugin
         run: |
           mvn -f property-dump-plugin/pom.xml -B install
@@ -68,9 +68,9 @@ jobs:
       - name: Configure Long Paths
         run: git config --global core.longpaths true
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         with:
-          version: 2025.7.12
+          version: 2026.4.25
       - name: Configure Gradle
         uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
         with:
@@ -99,26 +99,46 @@ jobs:
         # Make sure to move `&latest-gradle-version` when adding a new test case with a new version.
           - gradle_version: &latest-gradle-version "9.5.1"
             android_gradle_version: "9.2.0"
+            java_version: "21"
           - gradle_version: "9.4.1"
             android_gradle_version: "9.1.0"
+            java_version: "21"
           - gradle_version: "9.3.1"
+            java_version: "21"
           - gradle_version: "9.2.1"
+            java_version: "21"
           - gradle_version: "9.1.0"
             android_gradle_version: "9.0.0"
+            java_version: "21"
           - gradle_version: "9.0.0"
+            java_version: "21"
           - gradle_version: "8.13"
+            java_version: "21"
           - gradle_version: "8.13"
             android_gradle_version: "8.13.0"
+            java_version: "21"
           - gradle_version: "8.4"
+            java_version: "17"
           - gradle_version: "8.4"
             android_gradle_version: "8.3.0"
+            java_version: "17"
           - gradle_version: "8.0"
+            java_version: "17"
           - gradle_version: "7.6.4"
+            java_version: "17"
           - gradle_version: "7.5.1"
             android_gradle_version: "7.4.0"
+            java_version: "17"
+          - gradle_version: "7.5.1"
+            android_gradle_version: "7.4.0"
+            java_version: "11"
+          - gradle_version: "6.8.3"
+            java_version: "11"
+          - gradle_version: "5.6.4"
+            java_version: "11"
     name: >
-      QA Gradle ${{ matrix.item.gradle_version }}
-      ${{ matrix.item.android_gradle_version && format(' Android {0}', matrix.item.android_gradle_version) || '' }}
+      QA J${{ matrix.item.java_version }} - Gradle ${{ matrix.item.gradle_version }}
+      ${{ matrix.item.android_gradle_version && format(' AGP {0}', matrix.item.android_gradle_version) || '' }}
     runs-on: 'github-ubuntu-latest-l'
     permissions:
       id-token: write
@@ -131,42 +151,8 @@ jobs:
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
           android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
-          sonar-runtime-version: "LATEST_RELEASE[25.11]"
-          use-develocity: ${{ env.USE_DEVELOCITY }}
-          develocity-url: ${{ env.DEVELOCITY_URL }}
-
-  qa-java11:
-    if: ${{ needs.build.outputs.deployed }}
-    needs:
-      - build
-    runs-on: 'github-ubuntu-latest-m'
-    permissions:
-      id-token: write
-      contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        item:
-          - gradle_version: "7.5.1"
-            android_gradle_version: "7.4.0"
-          - gradle_version: "6.8.3"
-          - gradle_version: "5.6.4"
-    name: >
-      QA J11 - Gradle ${{ matrix.item.gradle_version }} 
-      ${{ matrix.item.android_gradle_version && format(' Android {0}', matrix.item.android_gradle_version) || '' }}
-    env:
-      BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # 3.5.1
-        with:
-          version: 2025.12.10
-      - name: Set Java 11
-        run: mise use java@11
-      - uses: ./.github/actions/qa
-        with:
-          gradle-version: ${{ matrix.item.gradle_version }}
-          android-gradle-version: ${{ matrix.item.android_gradle_version || 'NOT_AVAILABLE' }}
+          java-version: ${{ matrix.item.java_version }}
+          sonar-runtime-version: "LATEST_RELEASE[26.4]"
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
 
@@ -191,7 +177,8 @@ jobs:
         with:
           gradle-version: *latest-gradle-version
           android-gradle-version: 'NOT_AVAILABLE'
-          sonar-runtime-version: "LATEST_RELEASE[25.11]"
+          java-version: "17"
+          sonar-runtime-version: "LATEST_RELEASE[26.4]"
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
 
@@ -200,7 +187,6 @@ jobs:
       - build
       - build-windows
       - qa
-      - qa-java11
       - qa-windows
     if: ${{ needs.build.outputs.deployed }}
     runs-on: github-ubuntu-latest-s  # Public repo uses custom GitHub-hosted runners

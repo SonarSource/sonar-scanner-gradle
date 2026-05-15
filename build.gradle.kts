@@ -126,7 +126,7 @@ tasks.withType<LicenseCheck>().configureEach {
 }
 
 jacoco {
-    toolVersion = "0.8.7"
+    toolVersion = "0.8.14"
 }
 
 tasks.jacocoTestReport {

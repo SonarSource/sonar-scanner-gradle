@@ -48,7 +48,7 @@ public class BootstrapTest extends AbstractGradleIT {
   public static final OrchestratorRule ORCHESTRATOR;
 
   static {
-    if (getJavaVersion() < 17) {
+    if (getJavaVersion() < 21) {
       ORCHESTRATOR = null;
     } else {
       ORCHESTRATOR = OrchestratorRule.builderEnv()
