@@ -21,7 +21,7 @@ env:
 jobs:
   build:
     # Build takes over 30 minutes on "s" and around 5 minutes on "m".
-    runs-on: github-ubuntu-latest-l  # Public repo
+    runs-on: warp-custom-ubuntu-24-04  # Public repo
     name: Build
     permissions:
       id-token: write  # Required for Vault OIDC authentication
@@ -139,7 +139,7 @@ jobs:
     name: >
       QA J${{ matrix.item.java_version }} - Gradle ${{ matrix.item.gradle_version }}
       ${{ matrix.item.android_gradle_version && format(' AGP {0}', matrix.item.android_gradle_version) || '' }}
-    runs-on: 'github-ubuntu-latest-l'
+    runs-on: 'warp-custom-ubuntu-24-04'
     permissions:
       id-token: write
       contents: write
@@ -189,7 +189,7 @@ jobs:
       - qa
       - qa-windows
     if: ${{ needs.build.outputs.deployed }}
-    runs-on: github-ubuntu-latest-s  # Public repo uses custom GitHub-hosted runners
+    runs-on: warp-custom-ubuntu-24-04  # Public repo uses custom GitHub-hosted runners
     name: Promote
     permissions:
       id-token: write
