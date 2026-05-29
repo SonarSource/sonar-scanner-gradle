@@ -54,9 +54,23 @@ Developer documentation
 -----------------------
 
 ### Building the project
-To build the plugin and run the tests, you will need Java 17.
+To build the plugin and run the tests, you will need Java 21 and android SDK.
+
+Prerequisites:
 ```bash
-./gradlew clean build
+# install java, mvn, gradle
+mise install
+# use java 21
+mise shell java@21
+# install android platform
+mise install android-sdk@20.0
+export ANDROID_HOME="${HOME}/.local/share/mise/installs/android-sdk/20.0"
+"${ANDROID_HOME}/cmdline-tools/20.0/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+```
+
+Build and install a SNAPSHOT in the local Maven repository:
+```bash
+./gradlew clean build publishToMavenLocal
 ```
 
 #### Fix the error `* What went wrong: Dependency verification failed ... update the gradle/verification-metadata.xml file ...`
@@ -124,12 +138,14 @@ By default, Integration Tests are skipped during the build. To run them, you nee
 * Set `ANDROID_HOME` environment variable
 * Run the following command from the `integrationTests` project:
     ```
-    mvn --errors --batch-mode clean verify
+    # unset environment variables that could interfere with the test execution
+    unset SONAR_SCANNER_OPTS
+
+    # mvn --errors clean verify -Dgradle.version="<gradle-version>" -DandroidGradle.version="<android-gradle-version>" -Dsonar.runtimeVersion="sonar-runtime-version"
+    # for example:
+    cd integrationTests
+    mvn --errors clean verify -Dgradle.version="9.5.1" -DandroidGradle.version="9.2.0" -Dsonar.runtimeVersion="LATEST_RELEASE[26.4]"
     ```
-
-### Install a SNAPSHOT in the local Maven repository
-
-    ./gradlew publishToMavenLocal
 
 ### Using the plugin SNAPSHOT previously installed in the local Maven repository
 
