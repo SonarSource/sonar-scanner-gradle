@@ -368,56 +368,36 @@ public class AndroidConfig {
     Sources sources = component.getSources();
     ConfigurableFileCollection sourceFiles = project.getObjects().fileCollection();
 
-    sourceFiles.from(getManifestsProvider(component));
-
+    if (sources.getManifests() != null) {
+      sourceFiles.from(sources.getManifests().getAll());
+    }
     if (sources.getJava() != null) {
-      sourceFiles.from(sources.getJava().getAll());
+      sourceFiles.from(sources.getJava().getStatic());
     }
     if (sources.getKotlin() != null) {
-      sourceFiles.from(sources.getKotlin().getAll());
+      sourceFiles.from(sources.getKotlin().getStatic());
     }
     if (sources.getAssets() != null) {
-      sourceFiles.from(sources.getAssets().getAll());
+      sourceFiles.from(sources.getAssets().getStatic());
     }
     if (sources.getRes() != null) {
-      sourceFiles.from(sources.getRes().getAll());
+      sourceFiles.from(sources.getRes().getStatic());
     }
     if (sources.getAidl() != null) {
-      sourceFiles.from(sources.getAidl().getAll());
+      sourceFiles.from(sources.getAidl().getStatic());
+    }
+    if (sources.getRenderscript() != null) {
+      sourceFiles.from(sources.getRenderscript().getStatic());
     }
 
     try {
       sourceFiles.from(sources.getByName("c").getAll());
       sourceFiles.from(sources.getByName("cpp").getAll());
-
-      Method getRs = sources.getClass().getMethod("getRenderscript");
-      Object rs = getRs.invoke(sources);
-      if (rs != null) {
-        Method getAll = rs.getClass().getMethod("getAll");
-        sourceFiles.from(getAll.invoke(rs));
-      }
-    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | RuntimeException ignored) {
-      // We ignore the situations where C/C++ or renderscript sources are absent.
+    } catch (RuntimeException ignored) {
+      // We ignore the situations where C/C++ sources are absent.
     }
 
     return sourceFiles;
-  }
-
-  /**
-   * Get the manifest files for a component.
-   */
-  private Provider<List<RegularFile>> getManifestsProvider(Component component) {
-    Sources sources = component.getSources();
-    try {
-      // Try the modern Sources API (Added in AGP 8.3.1)
-      Method getManifestsMethod = sources.getClass().getMethod("getManifests");
-      Object manifestFiles = getManifestsMethod.invoke(sources);
-      Method getAllMethod = manifestFiles.getClass().getMethod("getAll");
-      return (Provider<List<RegularFile>>) getAllMethod.invoke(manifestFiles);
-    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-      LOGGER.debug("No manifest files found for Android component {} of project {}.", component.getName(), project.getName());
-      return project.provider(Collections::emptyList);
-    }
   }
 
   /**

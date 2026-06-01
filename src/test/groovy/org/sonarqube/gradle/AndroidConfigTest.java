@@ -237,7 +237,7 @@ class AndroidConfigTest {
    * Wires up the CommonExtension and NamedDomainObjectContainer chain so that getAndroidTests() can reach the legacy "test" source set.
    */
   private void stubLegacySourceSet(Object testSourceSet) {
-    CommonExtension<?, ?, ?, ?, ?> commonExt = mock(CommonExtension.class);
+    CommonExtension<?, ?, ?, ?, ?, ?> commonExt = mock(CommonExtension.class);
     NamedDomainObjectContainer<?> sourceSets = mock(NamedDomainObjectContainer.class);
     when(extensionContainer.getByType(CommonExtension.class)).thenReturn(commonExt);
     doReturn(sourceSets).when(commonExt).getSourceSets();
@@ -476,27 +476,27 @@ class AndroidConfigTest {
     SourceDirectories.Flat javaDirs = mock(SourceDirectories.Flat.class);
     Provider javaProvider = mock(Provider.class);
     when(sources.getJava()).thenReturn(javaDirs);
-    when(javaDirs.getAll()).thenReturn(javaProvider);
+    when(javaDirs.getStatic()).thenReturn(javaProvider);
 
     SourceDirectories.Flat kotlinDirs = mock(SourceDirectories.Flat.class);
     Provider kotlinProvider = mock(Provider.class);
     when(sources.getKotlin()).thenReturn(kotlinDirs);
-    when(kotlinDirs.getAll()).thenReturn(kotlinProvider);
+    when(kotlinDirs.getStatic()).thenReturn(kotlinProvider);
 
     SourceDirectories.Layered assetsDirs = mock(SourceDirectories.Layered.class);
     Provider assetsProvider = mock(Provider.class);
     when(sources.getAssets()).thenReturn(assetsDirs);
-    when(assetsDirs.getAll()).thenReturn(assetsProvider);
+    when(assetsDirs.getStatic()).thenReturn(assetsProvider);
 
     SourceDirectories.Layered resDirs = mock(SourceDirectories.Layered.class);
     Provider resProvider = mock(Provider.class);
     when(sources.getRes()).thenReturn(resDirs);
-    when(resDirs.getAll()).thenReturn(resProvider);
+    when(resDirs.getStatic()).thenReturn(resProvider);
 
     SourceDirectories.Flat aidlDirs = mock(SourceDirectories.Flat.class);
     Provider aidlProvider = mock(Provider.class);
     when(sources.getAidl()).thenReturn(aidlDirs);
-    when(aidlDirs.getAll()).thenReturn(aidlProvider);
+    when(aidlDirs.getStatic()).thenReturn(aidlProvider);
 
     AndroidConfig.of(project).getAndroidSources();
 
@@ -587,7 +587,7 @@ class AndroidConfigTest {
     SourceDirectories.Flat javaDirs = mock(SourceDirectories.Flat.class);
     Provider javaProvider = mock(Provider.class);
     when(sources.getJava()).thenReturn(javaDirs);
-    when(javaDirs.getAll()).thenReturn(javaProvider);
+    when(javaDirs.getStatic()).thenReturn(javaProvider);
 
     AndroidConfig.of(project).getAndroidTests();
 
