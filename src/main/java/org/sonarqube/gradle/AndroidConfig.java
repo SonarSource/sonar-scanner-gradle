@@ -388,13 +388,6 @@ public class AndroidConfig {
       sourceFiles.from(sources.getRenderscript().getStatic());
     }
 
-    try {
-      sourceFiles.from(sources.getByName("c").getStatic());
-      sourceFiles.from(sources.getByName("cpp").getStatic());
-    } catch (RuntimeException ignored) {
-      // We ignore the situations where C/C++ sources are absent.
-    }
-
     return sourceFiles;
   }
 

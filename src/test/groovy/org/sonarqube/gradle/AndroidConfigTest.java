@@ -539,23 +539,6 @@ class AndroidConfigTest {
   }
 
   @Test
-  void getAndroidSources_ignoresCppSources_whenGetByNameThrows() {
-    Variant debug = mockVariant("debug", 28, false);
-    stubOnVariants(debug);
-    mockObjectFactory();
-
-    Sources sources = mock(Sources.class);
-    ManifestFiles manifestFiles = mock(ManifestFiles.class);
-    when(debug.getSources()).thenReturn(sources);
-    when(sources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
-    when(sources.getByName(any())).thenThrow(new RuntimeException("C/C++ sources not available"));
-
-    // The exception is swallowed by the try/catch in getSources() and must not propagate
-    assertDoesNotThrow(() -> AndroidConfig.of(project).getAndroidSources());
-  }
-
-  @Test
   void getAndroidSources_usesSelectedVariant_notNestedTestComponents() {
     Variant debug = mockVariant("debug", 28, true);
     stubOnVariants(debug);
@@ -637,26 +620,6 @@ class AndroidConfigTest {
     when(sources.getManifests()).thenReturn(manifestFiles);
     when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
 
-    assertDoesNotThrow(() -> AndroidConfig.of(project).getAndroidTests());
-  }
-
-  @Test
-  void getAndroidTests_ignoresCppSources_whenGetByNameThrows() {
-    Variant debug = mockVariant("debug", 28, true);
-    stubOnVariants(debug);
-    mockObjectFactory();
-    ConfigurableFileCollection emptyFC = mockProjectFiles();
-    when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
-
-    AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
-    Sources sources = mock(Sources.class);
-    ManifestFiles manifestFiles = mock(ManifestFiles.class);
-    when(androidTest.getSources()).thenReturn(sources);
-    when(sources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
-    when(sources.getByName(any())).thenThrow(new RuntimeException("C/C++ sources not available"));
-
-    // The exception is caught by getSources() and indicates that no C or C++ sources were found, which is why ot shouldn't raise.
     assertDoesNotThrow(() -> AndroidConfig.of(project).getAndroidTests());
   }
 
