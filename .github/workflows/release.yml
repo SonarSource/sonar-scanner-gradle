@@ -95,14 +95,13 @@ jobs:
           PUBLISH_KEY: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_KEY }}
           PUBLISH_SECRET: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_SECRET }}
         run: |
-          sed -i.bak "s/^version=.*/version=${VERSION}/" gradle.properties
-          echo "Simulating release for version ${VERSION}"
+          source ./.github/scripts/set-build-number-and-version.sh
+          echo "Simulating release for ${VERSION}, build number ${BUILD_NUMBER}"
           
           ./gradlew \
             --info \
             --stacktrace \
             --console plain \
-            -DbuildNumber="${BUILD_NUMBER}" \
             -Dsimulate-publish=true \
             -Pgradle.publish.key="${PUBLISH_KEY}" \
             -Pgradle.publish.secret="${PUBLISH_SECRET}" \
@@ -112,7 +111,6 @@ jobs:
           --info \
           --stacktrace \
           --console plain \
-          -DbuildNumber="${BUILD_NUMBER}" \
           -Dvalidate-publish=true \
           -Pgradle.publish.key="${PUBLISH_KEY}" \
           -Pgradle.publish.secret="${PUBLISH_SECRET}" \
@@ -167,8 +165,7 @@ jobs:
       - name: Set version from build number
         run: |
           source ./.github/scripts/set-version-from-build-number.sh
-          echo "Release for build number ${BUILD_NUMBER}"
-          cat gradle.properties
+          echo "Release for ${NEW_VERSION}, build number ${BUILD_NUMBER}"
 
       - name: Release
         env:
@@ -195,7 +192,6 @@ jobs:
             --info \
             --stacktrace \
             --console plain \
-            -DbuildNumber="${BUILD_NUMBER}" \
             -Pgradle.publish.key="${PUBLISH_KEY}" \
             -Pgradle.publish.secret="${PUBLISH_SECRET}" \
             downloadMavenArtifactsAndPublishToGradlePluginPortal
