@@ -61,17 +61,6 @@ tasks.withType<Javadoc> {
     options.encoding = "UTF-8"
 }
 
-val buildNumber: String? = System.getProperty("buildNumber")
-ext {
-    set("buildNumber", buildNumber)
-}
-// Replaces the version defined in sources, usually x.y-SNAPSHOT, by a version identifying the build.
-if (project.version.toString().endsWith("-SNAPSHOT") && buildNumber != null) {
-    val versionSuffix =
-        if (project.version.toString().count { it == '.' } == 1) ".0.$buildNumber" else ".$buildNumber"
-    project.version = project.version.toString().replace("-SNAPSHOT", versionSuffix)
-}
-
 val junitVersion = "5.10.2"
 val sonarScannerJavaLibraryVersion = "4.1.1.1633"
 val archunitVersion = "1.2.1"
