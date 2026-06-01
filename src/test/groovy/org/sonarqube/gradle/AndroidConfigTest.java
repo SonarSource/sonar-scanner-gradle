@@ -24,6 +24,7 @@ import com.android.build.api.dsl.SdkComponents;
 import com.android.build.api.variant.AndroidComponentsExtension;
 import com.android.build.api.variant.AndroidTest;
 import com.android.build.api.variant.AndroidVersion;
+import com.android.build.api.variant.ManifestFiles;
 import com.android.build.api.variant.SourceDirectories;
 import com.android.build.api.variant.Sources;
 import com.android.build.api.variant.UnitTest;
@@ -457,7 +458,11 @@ class AndroidConfigTest {
     Variant debug = mockVariant("debug", 28, false);
     stubOnVariants(debug);
     ConfigurableFileCollection fileCollection = mockObjectFactory();
-    when(debug.getSources()).thenReturn(mock(Sources.class));
+    Sources sources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
+    when(debug.getSources()).thenReturn(sources);
+    when(sources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
 
     FileCollection result = AndroidConfig.of(project).getAndroidSources();
 
@@ -472,6 +477,11 @@ class AndroidConfigTest {
 
     Sources sources = mock(Sources.class);
     when(debug.getSources()).thenReturn(sources);
+
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
+    Provider manifestProvider = mock(Provider.class);
+    when(sources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(manifestProvider);
 
     SourceDirectories.Flat javaDirs = mock(SourceDirectories.Flat.class);
     Provider javaProvider = mock(Provider.class);
@@ -500,6 +510,7 @@ class AndroidConfigTest {
 
     AndroidConfig.of(project).getAndroidSources();
 
+    verify(fileCollection).from(manifestProvider);
     verify(fileCollection).from(javaProvider);
     verify(fileCollection).from(kotlinProvider);
     verify(fileCollection).from(assetsProvider);
@@ -519,7 +530,10 @@ class AndroidConfigTest {
     mockObjectFactory();
 
     Sources sources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(debug.getSources()).thenReturn(sources);
+    when(sources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
 
     assertDoesNotThrow(() -> AndroidConfig.of(project).getAndroidSources());
   }
@@ -531,7 +545,10 @@ class AndroidConfigTest {
     mockObjectFactory();
 
     Sources sources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(debug.getSources()).thenReturn(sources);
+    when(sources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
     when(sources.getByName(any())).thenThrow(new RuntimeException("C/C++ sources not available"));
 
     // The exception is swallowed by the try/catch in getSources() and must not propagate
@@ -545,7 +562,10 @@ class AndroidConfigTest {
     mockObjectFactory();
 
     Sources debugSources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(debug.getSources()).thenReturn(debugSources);
+    when(debugSources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
 
@@ -562,7 +582,12 @@ class AndroidConfigTest {
     ConfigurableFileCollection fileCollection = mockObjectFactory();
     ConfigurableFileCollection emptyFC = mockProjectFiles();
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
-    when(androidTest.getSources()).thenReturn(mock(Sources.class));
+
+    Sources debugSources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
+    when(androidTest.getSources()).thenReturn(debugSources);
+    when(debugSources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
 
     FileCollection resultFC = mock(FileCollection.class);
     when(emptyFC.plus(fileCollection)).thenReturn(resultFC);
@@ -582,7 +607,10 @@ class AndroidConfigTest {
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
     Sources sources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(androidTest.getSources()).thenReturn(sources);
+    when(sources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
 
     SourceDirectories.Flat javaDirs = mock(SourceDirectories.Flat.class);
     Provider javaProvider = mock(Provider.class);
@@ -603,7 +631,11 @@ class AndroidConfigTest {
     when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
-    when(androidTest.getSources()).thenReturn(mock(Sources.class));
+    Sources sources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
+    when(androidTest.getSources()).thenReturn(sources);
+    when(sources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
 
     assertDoesNotThrow(() -> AndroidConfig.of(project).getAndroidTests());
   }
@@ -618,7 +650,10 @@ class AndroidConfigTest {
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
     Sources sources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(androidTest.getSources()).thenReturn(sources);
+    when(sources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
     when(sources.getByName(any())).thenThrow(new RuntimeException("C/C++ sources not available"));
 
     // The exception is caught by getSources() and indicates that no C or C++ sources were found, which is why ot shouldn't raise.
@@ -633,11 +668,13 @@ class AndroidConfigTest {
     ConfigurableFileCollection emptyFC = mockProjectFiles();
     when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
 
-    Sources debugSources = mock(Sources.class);
-    when(debug.getSources()).thenReturn(debugSources);
-
+    Sources sources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
-    when(androidTest.getSources()).thenReturn(mock(Sources.class));
+    when(androidTest.getSources()).thenReturn(sources);
+    when(debug.getSources()).thenReturn(sources);
+    when(sources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
 
     AndroidConfig.of(project).getAndroidTests();
 
@@ -693,9 +730,15 @@ class AndroidConfigTest {
     when(debug.getMinSdk()).thenReturn(minSdk);
 
     UnitTest unitTest = mock(UnitTest.class);
+    Sources unitTestSources = mock(Sources.class);
+    Sources androidTestSources = mock(Sources.class);
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
     AndroidTest androidTest = mock(AndroidTest.class);
-    when(unitTest.getSources()).thenReturn(mock(Sources.class));
-    when(androidTest.getSources()).thenReturn(mock(Sources.class));
+    when(unitTest.getSources()).thenReturn(unitTestSources);
+    when(androidTest.getSources()).thenReturn(androidTestSources);
+    when(unitTestSources.getManifests()).thenReturn(manifestFiles);
+    when(androidTestSources.getManifests()).thenReturn(manifestFiles);
+    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
     when(debug.getNestedComponents()).thenReturn(List.of(unitTest, androidTest));
 
     stubOnVariants(debug);

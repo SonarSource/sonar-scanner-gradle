@@ -31,7 +31,6 @@ import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +46,6 @@ import org.gradle.api.attributes.java.TargetJvmEnvironment;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
@@ -368,9 +366,9 @@ public class AndroidConfig {
     Sources sources = component.getSources();
     ConfigurableFileCollection sourceFiles = project.getObjects().fileCollection();
 
-    if (sources.getManifests() != null) {
-      sourceFiles.from(sources.getManifests().getAll());
-    }
+    // The manifest files returned by `getManifests()` only include static manifests and not task generated ones, so we can safely call it here.
+    sourceFiles.from(sources.getManifests().getAll());
+
     if (sources.getJava() != null) {
       sourceFiles.from(sources.getJava().getStatic());
     }
