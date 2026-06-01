@@ -31,7 +31,6 @@ import com.android.build.gradle.internal.lint.AndroidLintTask;
 import com.android.build.gradle.internal.tasks.DeviceProviderInstrumentTestTask;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +46,6 @@ import org.gradle.api.attributes.java.TargetJvmEnvironment;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
@@ -368,56 +366,29 @@ public class AndroidConfig {
     Sources sources = component.getSources();
     ConfigurableFileCollection sourceFiles = project.getObjects().fileCollection();
 
-    sourceFiles.from(getManifestsProvider(component));
+    // The manifest files returned by `getManifests()` only include static manifests and not task generated ones, so we can safely call it here.
+    sourceFiles.from(sources.getManifests().getAll());
 
     if (sources.getJava() != null) {
-      sourceFiles.from(sources.getJava().getAll());
+      sourceFiles.from(sources.getJava().getStatic());
     }
     if (sources.getKotlin() != null) {
-      sourceFiles.from(sources.getKotlin().getAll());
+      sourceFiles.from(sources.getKotlin().getStatic());
     }
     if (sources.getAssets() != null) {
-      sourceFiles.from(sources.getAssets().getAll());
+      sourceFiles.from(sources.getAssets().getStatic());
     }
     if (sources.getRes() != null) {
-      sourceFiles.from(sources.getRes().getAll());
+      sourceFiles.from(sources.getRes().getStatic());
     }
     if (sources.getAidl() != null) {
-      sourceFiles.from(sources.getAidl().getAll());
+      sourceFiles.from(sources.getAidl().getStatic());
     }
-
-    try {
-      sourceFiles.from(sources.getByName("c").getAll());
-      sourceFiles.from(sources.getByName("cpp").getAll());
-
-      Method getRs = sources.getClass().getMethod("getRenderscript");
-      Object rs = getRs.invoke(sources);
-      if (rs != null) {
-        Method getAll = rs.getClass().getMethod("getAll");
-        sourceFiles.from(getAll.invoke(rs));
-      }
-    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | RuntimeException ignored) {
-      // We ignore the situations where C/C++ or renderscript sources are absent.
+    if (sources.getRenderscript() != null) {
+      sourceFiles.from(sources.getRenderscript().getStatic());
     }
 
     return sourceFiles;
-  }
-
-  /**
-   * Get the manifest files for a component.
-   */
-  private Provider<List<RegularFile>> getManifestsProvider(Component component) {
-    Sources sources = component.getSources();
-    try {
-      // Try the modern Sources API (Added in AGP 8.3.1)
-      Method getManifestsMethod = sources.getClass().getMethod("getManifests");
-      Object manifestFiles = getManifestsMethod.invoke(sources);
-      Method getAllMethod = manifestFiles.getClass().getMethod("getAll");
-      return (Provider<List<RegularFile>>) getAllMethod.invoke(manifestFiles);
-    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-      LOGGER.debug("No manifest files found for Android component {} of project {}.", component.getName(), project.getName());
-      return project.provider(Collections::emptyList);
-    }
   }
 
   /**

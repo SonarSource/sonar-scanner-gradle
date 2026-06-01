@@ -10,20 +10,14 @@
       </trusted-artifacts>
    </configuration>
    <components>
-      <component group="androidx.databinding" name="databinding-common" version="8.1.1">
-         <artifact name="databinding-common-8.1.1.jar">
+      <component group="androidx.databinding" name="databinding-common" version="8.4.2">
+         <artifact name="databinding-common-8.4.2.jar">
             <sha256 value="66cab82639dac0f6c2433464c093b074d608c4bb887ec38a9b8bc4ac98126732" origin="Verified"/>
          </artifact>
-         <artifact name="databinding-common-8.1.1.pom">
-            <sha256 value="503958f96c7c2e0b2847946fa0b6ca878b971bddb87ae682fc697dd86e7dd1ae" origin="Verified"/>
-         </artifact>
       </component>
-      <component group="androidx.databinding" name="databinding-compiler-common" version="8.1.1">
-         <artifact name="databinding-compiler-common-8.1.1.jar">
-            <sha256 value="5ace145c7e06289714877151339c55d9ffb6863517bdf5bcf3b9555f8c8d943e" origin="Verified"/>
-         </artifact>
-         <artifact name="databinding-compiler-common-8.1.1.pom">
-            <sha256 value="e085d7cebc08e7b385303c91043e3de747f9f8de046f498f1b59b7871a88fb3f" origin="Verified"/>
+      <component group="androidx.databinding" name="databinding-compiler-common" version="8.4.2">
+         <artifact name="databinding-compiler-common-8.4.2.jar">
+            <sha256 value="d08bf1bd322eccda3f8f71e04ef963a29b65bc040eba01daf1925d0f1e3bf14c" origin="Verified"/>
          </artifact>
       </component>
       <component group="aopalliance" name="aopalliance" version="1.0">
@@ -34,204 +28,129 @@
             <sha256 value="26e82330157d6b844b67a8064945e206581e772977183e3e31fec6058aa9a59b" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android" name="signflinger" version="8.1.1">
-         <artifact name="signflinger-8.1.1.jar">
+      <component group="com.android" name="signflinger" version="8.4.2">
+         <artifact name="signflinger-8.4.2.jar">
             <sha256 value="c1dca2c683634ee1a294298f9c7179578af6a86e080bdc40f961915bc5c8142f" origin="Verified"/>
          </artifact>
-         <artifact name="signflinger-8.1.1.pom">
-            <sha256 value="5df64206cdef94c51bbd328e977d05df62885e7b7e55123468115034d75560e4" origin="Verified"/>
+      </component>
+      <component group="com.android" name="zipflinger" version="8.4.2">
+         <artifact name="zipflinger-8.4.2.jar">
+            <sha256 value="81dd485618a509a3235929b9eb13091d884452661de6ce5a45cc38b1c555421c" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android" name="zipflinger" version="8.1.1">
-         <artifact name="zipflinger-8.1.1.jar">
-            <sha256 value="56589abf965af58ea1d31c15d676fe0d62b9db92983fbdfe8e72c983ea577dbb" origin="Verified"/>
-         </artifact>
-         <artifact name="zipflinger-8.1.1.pom">
-            <sha256 value="c23c87ce7e372cbc160cf73db824ac02faf79377bcd19209a71b928b3c418d6f" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="com.android.databinding" name="baseLibrary" version="8.1.1">
-         <artifact name="baseLibrary-8.1.1.jar">
+      <component group="com.android.databinding" name="baseLibrary" version="8.4.2">
+         <artifact name="baseLibrary-8.4.2.jar">
             <sha256 value="794113709dab21b06c262b3795e73cb708fbacae61715f34361e1af6237a1870" origin="Verified"/>
          </artifact>
-         <artifact name="baseLibrary-8.1.1.pom">
-            <sha256 value="79e2ccd9b51289cb6eb33d127914b347eb7c73880079a5d9decfb06025e8dbd8" origin="Verified"/>
+      </component>
+      <component group="com.android.tools" name="annotations" version="31.4.2">
+         <artifact name="annotations-31.4.2.jar">
+            <sha256 value="25e8825547de7146d08fa18f04ef934ee1e6aec52e4c97ffa510a8f0f44b07a0" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools" name="annotations" version="31.1.1">
-         <artifact name="annotations-31.1.1.jar">
-            <sha256 value="ee3bfd9cdb5012bdb61520f8654a785577e9bb337e5939c5c6149a446684ee16" origin="Verified"/>
-         </artifact>
-         <artifact name="annotations-31.1.1.pom">
-            <sha256 value="5dc0e70094c58881e7433b11dfaec27722799d20ffcf6c83c12a04deb5090435" origin="Verified"/>
+      <component group="com.android.tools" name="common" version="31.4.2">
+         <artifact name="common-31.4.2.jar">
+            <sha256 value="ad5a602603bdc34688c71dd14de85ba72851cb393bcc6bcfc6d0ff46bd77a40a" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools" name="common" version="31.1.1">
-         <artifact name="common-31.1.1.jar">
-            <sha256 value="03445e10c4b360838eab7af2389182733871390fbaba4fa99f1663e6e048d063" origin="Verified"/>
-         </artifact>
-         <artifact name="common-31.1.1.pom">
-            <sha256 value="242a3e969a665e2de6777b505501031e817f7b303a8fdeea0d843138b4694a7e" origin="Verified"/>
+      <component group="com.android.tools" name="dvlib" version="31.4.2">
+         <artifact name="dvlib-31.4.2.jar">
+            <sha256 value="bf962bea906e1dc8a3273b8129999eaea3bb16fcb2b9deea1450dc6fb2ef9073" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools" name="dvlib" version="31.1.1">
-         <artifact name="dvlib-31.1.1.jar">
-            <sha256 value="f6e31a2b7da1b62a401e5e3f0304426faa119dcfd1651f8f67a9a4c254d59faf" origin="Verified"/>
-         </artifact>
-         <artifact name="dvlib-31.1.1.pom">
-            <sha256 value="747ed0fe1dbf80ad404a73c3008ef639a473962a96ccfa43ab3a2a96d8d784da" origin="Verified"/>
+      <component group="com.android.tools" name="repository" version="31.4.2">
+         <artifact name="repository-31.4.2.jar">
+            <sha256 value="438597d95beb6d2c3bf17e012c4f46d533660b4f9f36c6181f455ec45cc21c68" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools" name="repository" version="31.1.1">
-         <artifact name="repository-31.1.1.jar">
-            <sha256 value="8fe8e9d6bcebe92dd4eee3e8f8e122b521f03a8f49e28f6a814b46e3822e4aaa" origin="Verified"/>
-         </artifact>
-         <artifact name="repository-31.1.1.pom">
-            <sha256 value="b0920a5724cc548aa4a830089705bacd4f904aeb493a3fa3d7129888a30b60bc" origin="Verified"/>
+      <component group="com.android.tools" name="sdk-common" version="31.4.2">
+         <artifact name="sdk-common-31.4.2.jar">
+            <sha256 value="f38eba4bbfb6d541dc8c2be38c31e7389d0acdc354b234f258b6ee89e8ddce6d" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools" name="sdk-common" version="31.1.1">
-         <artifact name="sdk-common-31.1.1.jar">
-            <sha256 value="47a63f3c957cc7a108000f945fdcff935148d5c213cb5887472cc091599a44c3" origin="Verified"/>
-         </artifact>
-         <artifact name="sdk-common-31.1.1.pom">
-            <sha256 value="2a0fc6dbfb234a07e7a91c0f707be52446b2235ed1eb937af8d5dfb99c0ba455" origin="Verified"/>
+      <component group="com.android.tools" name="sdklib" version="31.4.2">
+         <artifact name="sdklib-31.4.2.jar">
+            <sha256 value="51b499a01f398d6b671911f9d85b3114fde5e462f57b0040c5f0fcab1bdbfc22" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools" name="sdklib" version="31.1.1">
-         <artifact name="sdklib-31.1.1.jar">
-            <sha256 value="9b344f6587e890bd0d4b68667c8fb652be12227fbe4c21cd8824d292e4ed6ddb" origin="Verified"/>
-         </artifact>
-         <artifact name="sdklib-31.1.1.pom">
-            <sha256 value="4fcb437dbdc1d34843ddb80ae63d1c89c650e7106462d41d264bb0d1f029013e" origin="Verified"/>
+      <component group="com.android.tools.analytics-library" name="crash" version="31.4.2">
+         <artifact name="crash-31.4.2.jar">
+            <sha256 value="2c5c26420967675c074bc7140831fe3bff5bbabc7fbbc08ba29fdc3eadcc9510" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.analytics-library" name="crash" version="31.1.1">
-         <artifact name="crash-31.1.1.jar">
-            <sha256 value="cc5f028ac4fd037d57c0bb0cdc84ca37671852ea2370216b5ce6f45479f03261" origin="Verified"/>
-         </artifact>
-         <artifact name="crash-31.1.1.pom">
-            <sha256 value="b6ca4a93e94ad96f3d93c519e9e5563550365c7a18974e6ba7d109abd4c80587" origin="Verified"/>
+      <component group="com.android.tools.analytics-library" name="protos" version="31.4.2">
+         <artifact name="protos-31.4.2.jar">
+            <sha256 value="3cc17200f904645251cf6f67c1281a70691428cde8f417b9b6c54acf89bf1a8a" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.analytics-library" name="protos" version="31.1.1">
-         <artifact name="protos-31.1.1.jar">
-            <sha256 value="04dc44183b4a2b7f141590ac1b2dc53d6be615723a181a4818fd9550ad1d0263" origin="Verified"/>
-         </artifact>
-         <artifact name="protos-31.1.1.pom">
-            <sha256 value="40d4016c5447699cb8ba2166ce91bc3070b9ffac792ac070eab79cd1f0fba218" origin="Verified"/>
+      <component group="com.android.tools.analytics-library" name="shared" version="31.4.2">
+         <artifact name="shared-31.4.2.jar">
+            <sha256 value="971e224c62bb2f05ca8f4f37ed29ac8f91914b39eb8ac620ba92a2e0ea38bc7d" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.analytics-library" name="shared" version="31.1.1">
-         <artifact name="shared-31.1.1.jar">
-            <sha256 value="1c0059475ddac544e9f8f43ae018092dbb446c86970e2b5fe1e65931c780d42a" origin="Verified"/>
-         </artifact>
-         <artifact name="shared-31.1.1.pom">
-            <sha256 value="5775ba1ee1cd91d95799f6aa7889043433d6fc2a3833770e8b7f9e280869e063" origin="Verified"/>
+      <component group="com.android.tools.analytics-library" name="tracker" version="31.4.2">
+         <artifact name="tracker-31.4.2.jar">
+            <sha256 value="542c6c0070a7df6254050532f2a14aa9db5553a0fc2cb203fdba7b721523e716" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.analytics-library" name="tracker" version="31.1.1">
-         <artifact name="tracker-31.1.1.jar">
-            <sha256 value="02cc932f48012d8feae1d09f949697c6e2154e821d6d4649e1e39dc911c46977" origin="Verified"/>
-         </artifact>
-         <artifact name="tracker-31.1.1.pom">
-            <sha256 value="b95dbd1e5f29110fb68621026fc0c290488dc211c915b0fc1a62ea9189c4df47" origin="Verified"/>
+      <component group="com.android.tools.build" name="aapt2-proto" version="8.4.2-11315950">
+         <artifact name="aapt2-proto-8.4.2-11315950.jar">
+            <sha256 value="66a589c25b2aa3d9b3daa96f07f262e3a157e43e50024234ff419b0578439645" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="aapt2-proto" version="8.1.1-10154469">
-         <artifact name="aapt2-proto-8.1.1-10154469.jar">
-            <sha256 value="c61dda7dd86e9bb5bcc3e582abc9d11daa23a9ec48cdedbe2578226f432f767d" origin="Verified"/>
-         </artifact>
-         <artifact name="aapt2-proto-8.1.1-10154469.module">
-            <sha256 value="f37c1ebd02469741de74895fa8839848ebe29085eb4de3b1ea217e60e9283872" origin="Verified"/>
+      <component group="com.android.tools.build" name="aaptcompiler" version="8.4.2">
+         <artifact name="aaptcompiler-8.4.2.jar">
+            <sha256 value="c8089ca4458d0cca55cd4e296b6d39d9f9208d3ad5efee58dad59b0a17b4f902" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="aaptcompiler" version="8.1.1">
-         <artifact name="aaptcompiler-8.1.1.jar">
-            <sha256 value="33752307b0b9b7ebe3b957573e39b18c8c77165330ff973bebdc63b9ac6f2c24" origin="Verified"/>
-         </artifact>
-         <artifact name="aaptcompiler-8.1.1.module">
-            <sha256 value="728210092ebf58a8000da808a9bb28b8374331b1ed26c8a48674697236839a89" origin="Verified"/>
+      <component group="com.android.tools.build" name="apksig" version="8.4.2">
+         <artifact name="apksig-8.4.2.jar">
+            <sha256 value="c4f6fdf2148490296f422a7eb37647ea11d1c3b02f1f2349c33ce257f3c29b1f" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="apksig" version="8.1.1">
-         <artifact name="apksig-8.1.1.jar">
-            <sha256 value="468ee1852fa12461c6629608fe47be70e50f60be7c4744bb7f62ca48e85c0a6c" origin="Verified"/>
-         </artifact>
-         <artifact name="apksig-8.1.1.pom">
-            <sha256 value="d0810082ff856033d039112d953c2832c75f0b5d5c543c19fe21f610ca8870b9" origin="Verified"/>
+      <component group="com.android.tools.build" name="apkzlib" version="8.4.2">
+         <artifact name="apkzlib-8.4.2.jar">
+            <sha256 value="1c1a67d6f4f186427ac166ebaa0dd867f595d5144fc925252b05ffb9d1a156b7" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="apkzlib" version="8.1.1">
-         <artifact name="apkzlib-8.1.1.jar">
-            <sha256 value="ec6cdd0645c9923c733d38a0a68c1b47919a822f138d56dc99ba9c78c361fa00" origin="Verified"/>
-         </artifact>
-         <artifact name="apkzlib-8.1.1.pom">
-            <sha256 value="b2d81596513d2caf4713de85daa07307f3b5e4fa410809a2d68ef4a441be1d12" origin="Verified"/>
+      <component group="com.android.tools.build" name="builder" version="8.4.2">
+         <artifact name="builder-8.4.2.jar">
+            <sha256 value="63868694a98cd0f7bf7c4effbf03da770f5b7e8cd734484f4e548f5dd6b9ca70" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="builder" version="8.1.1">
-         <artifact name="builder-8.1.1.jar">
-            <sha256 value="70fab2771ce774022fc5419b82d48d4c9a0309fc727cc6aad4e57ae164f78de8" origin="Verified"/>
-         </artifact>
-         <artifact name="builder-8.1.1.module">
-            <sha256 value="9b89d342868b43ec95bc0ae46e4f62b71a2c73bc62aeacf25f46c3b3bc93a4d4" origin="Verified"/>
+      <component group="com.android.tools.build" name="builder-model" version="8.4.2">
+         <artifact name="builder-model-8.4.2.jar">
+            <sha256 value="8c94002357fe084f20440513685b31866e26f1e425dc6642a5f8c21522e39036" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="builder-model" version="8.1.1">
-         <artifact name="builder-model-8.1.1.jar">
-            <sha256 value="55ba5a39517d1e0047d257a0ef0e1c8324108a667ea2096c018cb8d0c9fa54c6" origin="Verified"/>
-         </artifact>
-         <artifact name="builder-model-8.1.1.module">
-            <sha256 value="0622cc4b40814bcd3d9dd60f1fd9e4729b68f1075931db97fdc893d2751ae860" origin="Verified"/>
+      <component group="com.android.tools.build" name="builder-test-api" version="8.4.2">
+         <artifact name="builder-test-api-8.4.2.jar">
+            <sha256 value="fccc64f5021ac47adb4df373a20d8ed04b8982441142aa809b4697083cde0f79" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="builder-test-api" version="8.1.1">
-         <artifact name="builder-test-api-8.1.1.jar">
-            <sha256 value="9a9b1c651a6e6136629f80d20795f559808dc58eb8d55419e54357943aae6d7f" origin="Verified"/>
-         </artifact>
-         <artifact name="builder-test-api-8.1.1.module">
-            <sha256 value="a9d486bf715368c4b5c844c7d2188625c6577eb6db14da8c9051bc95398349d1" origin="Verified"/>
+      <component group="com.android.tools.build" name="bundletool" version="1.15.6">
+         <artifact name="bundletool-1.15.6.jar">
+            <sha256 value="f66992e537adb12ffa6d181cdc536d564b1c4b4b4c5972b4891706c6533a4641" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="bundletool" version="1.14.0">
-         <artifact name="bundletool-1.14.0.jar">
-            <sha256 value="8e44e4b396f12dc2fa55d40985ceb08b1bed222077a5dedbafdeb46da8fb9d06" origin="Verified"/>
-         </artifact>
-         <artifact name="bundletool-1.14.0.pom">
-            <sha256 value="d3dea75f7d439d92a8290e541a99ddeced3ad8a42c7ba2ba02c0e9e0618847d0" origin="Verified"/>
+      <component group="com.android.tools.build" name="gradle" version="8.4.2">
+         <artifact name="gradle-8.4.2.jar">
+            <sha256 value="8c5c2e91872c44cceeb4c16f3134bea71ce94802866a515fee98e191332753b5" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="gradle" version="8.1.1">
-         <artifact name="gradle-8.1.1.jar">
-            <sha256 value="56177736d3f1571606d6495ab64190cf03394a14526bc4c0ccbcb61785d3a298" origin="Verified"/>
-         </artifact>
-         <artifact name="gradle-8.1.1.module">
-            <sha256 value="457db8bcbdd99db7d8ea2090b04bdfa5b8d713d3f216bc93a74f725652273d21" origin="Verified"/>
+      <component group="com.android.tools.build" name="gradle-api" version="8.4.2">
+         <artifact name="gradle-api-8.4.2.jar">
+            <sha256 value="c54df7dbff5e2e23922e7bb7df9e77709a425853e1af081b1d0824f829d8ee51" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="gradle-api" version="8.1.1">
-         <artifact name="gradle-api-8.1.1.jar">
-            <sha256 value="ef77ec9169f536dfd550ecf1816735a9e45bd358e95cf5ac9f25ef392aec57ea" origin="Verified"/>
-         </artifact>
-         <artifact name="gradle-api-8.1.1.module">
-            <sha256 value="fd8cc7024ccd66f0966009cbac22a7ea9bfc45a74fd5d5b2a0e857f6f0698617" origin="Verified"/>
+      <component group="com.android.tools.build" name="gradle-settings-api" version="8.4.2">
+         <artifact name="gradle-settings-api-8.4.2.jar">
+            <sha256 value="80f945de76fa05578318dd0e5bfc9393583df0adb0425c0b384f50bfeb690c87" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.build" name="gradle-settings-api" version="8.1.1">
-         <artifact name="gradle-settings-api-8.1.1.jar">
-            <sha256 value="1b35a0c9efd5fabae26c8df48c306ef4a802c56e32ad0f89ac66c322e8a561c8" origin="Verified"/>
-         </artifact>
-         <artifact name="gradle-settings-api-8.1.1.module">
-            <sha256 value="4f8793c97f9dcbe774c2f4c7b0a532511509722a5b58a7294b2183d1dbef9ba0" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="com.android.tools.build" name="manifest-merger" version="31.1.1">
-         <artifact name="manifest-merger-31.1.1.jar">
-            <sha256 value="87a189681a8c6af2171bad1cccf16c5a743bf2781126ade2ef8cdd04c6e48988" origin="Verified"/>
-         </artifact>
-         <artifact name="manifest-merger-31.1.1.module">
-            <sha256 value="fd19938899f3d6120007ad86a7d3a2423a472817265f9401608b5e138a4d096f" origin="Verified"/>
+      <component group="com.android.tools.build" name="manifest-merger" version="31.4.2">
+         <artifact name="manifest-merger-31.4.2.jar">
+            <sha256 value="0b55cf1d17710a66cf0a229d6a560392a6320bcf7b6b3690e10cd90a4cad4694" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.android.tools.build" name="transform-api" version="2.0.0-deprecated-use-gradle-api">
@@ -260,108 +179,69 @@
             <sha256 value="36c25576b19993df360170528cc62b7246c37776d6158154a67cdf8fc2d58e13" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.ddms" name="ddmlib" version="31.1.1">
-         <artifact name="ddmlib-31.1.1.jar">
-            <sha256 value="8c2fb144e61ca79aab8edc7c3ffe2c2b74bc6b23cb0cac6c8b7e066b5151e8ed" origin="Verified"/>
-         </artifact>
-         <artifact name="ddmlib-31.1.1.pom">
-            <sha256 value="3997249872905828b20e1b1dec4bc79ee1226fda851c712a34c6dac549ef6aa2" origin="Verified"/>
+      <component group="com.android.tools.ddms" name="ddmlib" version="31.4.2">
+         <artifact name="ddmlib-31.4.2.jar">
+            <sha256 value="f98b88cfe0fe729d755f0bf6d5fc21e20f89aea9e630860dc0f75dcbec6fec0b" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.layoutlib" name="layoutlib-api" version="31.1.1">
-         <artifact name="layoutlib-api-31.1.1.jar">
-            <sha256 value="2b8b35a2125b9e11c450bcdb5774aa698b199b4026ae49f28b07c1c2325b5868" origin="Verified"/>
-         </artifact>
-         <artifact name="layoutlib-api-31.1.1.pom">
-            <sha256 value="e2874352f66b980abec7c24c710de4a0b97a1bb9ce2bcd0939d3d4703d05528c" origin="Verified"/>
+      <component group="com.android.tools.layoutlib" name="layoutlib-api" version="31.4.2">
+         <artifact name="layoutlib-api-31.4.2.jar">
+            <sha256 value="3c9064c3c3ab0e73f3a5953d1c11c57dbf57a3297957c1d7d460c92e14cf34b2" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.lint" name="lint-model" version="31.1.1">
-         <artifact name="lint-model-31.1.1.jar">
-            <sha256 value="a37eb5447a242fc3c8ef54e2fa625be4324fcc7807076ddc80db6a08081d31d6" origin="Verified"/>
-         </artifact>
-         <artifact name="lint-model-31.1.1.pom">
-            <sha256 value="6a2608261dcc0de38f47d22c41ed2da22a0fdb77550ea9553df9a4e39f8f01e9" origin="Verified"/>
+      <component group="com.android.tools.lint" name="lint-model" version="31.4.2">
+         <artifact name="lint-model-31.4.2.jar">
+            <sha256 value="ae5b38460f3a59c0725930d779dbbb3372f08031a1a41faa59d9f8500b3e4641" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.lint" name="lint-typedef-remover" version="31.1.1">
-         <artifact name="lint-typedef-remover-31.1.1.jar">
+      <component group="com.android.tools.lint" name="lint-typedef-remover" version="31.4.2">
+         <artifact name="lint-typedef-remover-31.4.2.jar">
             <sha256 value="5b4f485215ca4d86ef2319fc398b5f2251e62f5446bc5fd0e00653648ddde318" origin="Verified"/>
          </artifact>
-         <artifact name="lint-typedef-remover-31.1.1.pom">
-            <sha256 value="d31f14170edc064efa4a4c6fe16d045f9a98de9d77d5ee30d950a550fec5a7d9" origin="Verified"/>
+      </component>
+      <component group="com.android.tools.utp" name="android-device-provider-ddmlib-proto" version="31.4.2">
+         <artifact name="android-device-provider-ddmlib-proto-31.4.2.jar">
+            <sha256 value="da9f3f3dae26544c90668549584765d5854a87c425d2cfe577cd34d3600ea097" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.utp" name="android-device-provider-ddmlib-proto" version="31.1.1">
-         <artifact name="android-device-provider-ddmlib-proto-31.1.1.jar">
-            <sha256 value="1a288dfd22f5baa036bffdfdd3ac7504664b94c86dbf6be36630e5587c22e8fe" origin="Verified"/>
-         </artifact>
-         <artifact name="android-device-provider-ddmlib-proto-31.1.1.pom">
-            <sha256 value="19bf3d95d6f3449c49b792a85854a1b2ed9a0f974412df6fb2c7b705dcc16fef" origin="Verified"/>
+      <component group="com.android.tools.utp" name="android-device-provider-gradle-proto" version="31.4.2">
+         <artifact name="android-device-provider-gradle-proto-31.4.2.jar">
+            <sha256 value="ad2342bb1d6f95563400a322493ea1c229cb93df3944f1261b7399f718494049" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.utp" name="android-device-provider-gradle-proto" version="31.1.1">
-         <artifact name="android-device-provider-gradle-proto-31.1.1.jar">
-            <sha256 value="10f9b620a8403fd6a9c9e9c635c63a7975337b1deb5c375b79a6960eb5af88d4" origin="Verified"/>
-         </artifact>
-         <artifact name="android-device-provider-gradle-proto-31.1.1.pom">
-            <sha256 value="dec7b94601e945003ea5093a918cb704e1ea7addf88ef31f9143bcdde1611eb9" origin="Verified"/>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-additional-test-output-proto" version="31.4.2">
+         <artifact name="android-test-plugin-host-additional-test-output-proto-31.4.2.jar">
+            <sha256 value="38450694de6328c2c4cba696f9c04ecdd5ce6952355f68c3a22f9541d1d6546f" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.utp" name="android-test-plugin-host-additional-test-output-proto" version="31.1.1">
-         <artifact name="android-test-plugin-host-additional-test-output-proto-31.1.1.jar">
-            <sha256 value="08d12e55fa91ab83dd1b757cdbca3d746809b0a50268f75cf52194f46a2c6673" origin="Verified"/>
-         </artifact>
-         <artifact name="android-test-plugin-host-additional-test-output-proto-31.1.1.pom">
-            <sha256 value="7994cbb3d79d287a87ce0093dd0e194770d44cceb5e853bed2ebd919830bbc82" origin="Verified"/>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-apk-installer-proto" version="31.4.2">
+         <artifact name="android-test-plugin-host-apk-installer-proto-31.4.2.jar">
+            <sha256 value="ced49aca4031aa2c57b51d3909ba815082e563c1d9a246bc23ede973782524f7" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.utp" name="android-test-plugin-host-apk-installer-proto" version="31.1.1">
-         <artifact name="android-test-plugin-host-apk-installer-proto-31.1.1.jar">
-            <sha256 value="abd2aac816a81e2af7705f3edff3de22bcd806212a1d158f432a39b06ae544e4" origin="Verified"/>
-         </artifact>
-         <artifact name="android-test-plugin-host-apk-installer-proto-31.1.1.pom">
-            <sha256 value="e7e4fb0b94e4845d00262600d355773653ce8773e71d4beaebfce90a11e76ef5" origin="Verified"/>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-coverage-proto" version="31.4.2">
+         <artifact name="android-test-plugin-host-coverage-proto-31.4.2.jar">
+            <sha256 value="efb4d7014aaa7355246a07c2e437a2231fb252540ff1bce6872c88dc8da89d12" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.utp" name="android-test-plugin-host-coverage-proto" version="31.1.1">
-         <artifact name="android-test-plugin-host-coverage-proto-31.1.1.jar">
-            <sha256 value="9ebc9c6279a32a453c90cf6b732b3a3f88a80498e746400850f2c66ea7933580" origin="Verified"/>
-         </artifact>
-         <artifact name="android-test-plugin-host-coverage-proto-31.1.1.pom">
-            <sha256 value="97d5b09faec2eb762b3331d8b2a48f73cda8a0a02c5c81c7a349e7db0cc94423" origin="Verified"/>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-emulator-control-proto" version="31.4.2">
+         <artifact name="android-test-plugin-host-emulator-control-proto-31.4.2.jar">
+            <sha256 value="aedec5ec4627d898cccdf42d8038db20eba4495753c53d1b0b378734491caf5f" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.utp" name="android-test-plugin-host-emulator-control-proto" version="31.1.1">
-         <artifact name="android-test-plugin-host-emulator-control-proto-31.1.1.jar">
-            <sha256 value="435438bc84016ec5d28c34c9d017b01365f37949168cffc81126d43757c53ca4" origin="Verified"/>
-         </artifact>
-         <artifact name="android-test-plugin-host-emulator-control-proto-31.1.1.pom">
-            <sha256 value="cc6d56eb3f054406e8cac368e9590c6c403b812562715723655db5dfd1f4c54c" origin="Verified"/>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-logcat-proto" version="31.4.2">
+         <artifact name="android-test-plugin-host-logcat-proto-31.4.2.jar">
+            <sha256 value="9129024bd8e38353bca3eb26dfd8e3628e058d57d6e9d8451ffc35f016751e63" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.utp" name="android-test-plugin-host-logcat-proto" version="31.1.1">
-         <artifact name="android-test-plugin-host-logcat-proto-31.1.1.jar">
-            <sha256 value="d31ca97afbfcd71a54749d265da11a424b122cf1cfbedbff2cb3d7362c579d3b" origin="Verified"/>
-         </artifact>
-         <artifact name="android-test-plugin-host-logcat-proto-31.1.1.pom">
-            <sha256 value="5b52291b76a171a87a18b00e3340ad2911be241ec4d5812d9da424bd1925de52" origin="Verified"/>
+      <component group="com.android.tools.utp" name="android-test-plugin-host-retention-proto" version="31.4.2">
+         <artifact name="android-test-plugin-host-retention-proto-31.4.2.jar">
+            <sha256 value="3db8ed38ef49b694caea466ae22e3b36cedc9557b3589d0e07c0cdd83294591c" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.android.tools.utp" name="android-test-plugin-host-retention-proto" version="31.1.1">
-         <artifact name="android-test-plugin-host-retention-proto-31.1.1.jar">
-            <sha256 value="4d1c3faaff5a38b29426f082e8e8c3f8b85a902086b90d18f706754ad93de04d" origin="Verified"/>
-         </artifact>
-         <artifact name="android-test-plugin-host-retention-proto-31.1.1.pom">
-            <sha256 value="7605daf424864dd521ec05309ec41a1236baa28db7eb57998375ce692951f47a" origin="Verified"/>
-         </artifact>
-      </component>
-      <component group="com.android.tools.utp" name="android-test-plugin-result-listener-gradle-proto" version="31.1.1">
-         <artifact name="android-test-plugin-result-listener-gradle-proto-31.1.1.jar">
-            <sha256 value="b1e49ff23fa357f8702aef1632b04405224a3846f4fe76654c76ef9bd7b5a601" origin="Verified"/>
-         </artifact>
-         <artifact name="android-test-plugin-result-listener-gradle-proto-31.1.1.pom">
-            <sha256 value="46153fa5325db87591d4c4c2f8f9e1aaf105c7bb632f0446efdffc457686e8ec" origin="Verified"/>
+      <component group="com.android.tools.utp" name="android-test-plugin-result-listener-gradle-proto" version="31.4.2">
+         <artifact name="android-test-plugin-result-listener-gradle-proto-31.4.2.jar">
+            <sha256 value="cbdf71bca60e14c30e7b2cf4b90f0f0a3e8c138f7cadd874b0d9c0ae082e0274" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.cyclonedx" name="cyclonedx-gradle-plugin" version="1.5.0">
@@ -541,12 +421,9 @@
             <sha256 value="e4bb54753c36a27a0e5d70154a5034fedd8feac4282295034bfd483d6c7aae78" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.google.api.grpc" name="proto-google-common-protos" version="2.0.1">
-         <artifact name="proto-google-common-protos-2.0.1.jar">
-            <sha256 value="5ce71656118618731e34a5d4c61aa3a031be23446dc7de8b5a5e77b66ebcd6ef" origin="Verified"/>
-         </artifact>
-         <artifact name="proto-google-common-protos-2.0.1.pom">
-            <sha256 value="8b62bfd85d693ebcffd828232af7424f34fd212c5e28e5ed99b0dc5d2bc7d4f5" origin="Verified"/>
+      <component group="com.google.api.grpc" name="proto-google-common-protos" version="2.17.0">
+         <artifact name="proto-google-common-protos-2.17.0.jar">
+            <sha256 value="4ef1fe0c327fc1521d1d753b0b1c4a875a54bd14ebded3afff0ca395320b6ea9" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.google.auto" name="auto-parent" version="6">
@@ -704,6 +581,11 @@
             <sha256 value="9193d07bf4f660108d7358e58b27d21b44e34e80d6734e98e21916376f270de2" origin="Verified"/>
          </artifact>
       </component>
+      <component group="com.google.guava" name="guava" version="32.0.1-jre">
+         <artifact name="guava-32.0.1-jre.jar">
+            <sha256 value="bd7fa227591fb8509677d0d1122cf95158f3b8a9f45653f58281d879f6dc48c5" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="com.google.guava" name="guava-parent" version="26.0-android">
          <artifact name="guava-parent-26.0-android.pom">
             <sha256 value="f8698ab46ca996ce889c1afc8ca4f25eb8ac6b034dc898d4583742360016cc04" origin="Verified"/>
@@ -740,12 +622,9 @@
             <sha256 value="f65f11a7f2c06859d00b166f6ec57354c1be92599d6c1525674e5ff64f8feeab" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.google.j2objc" name="j2objc-annotations" version="1.3">
-         <artifact name="j2objc-annotations-1.3.jar">
-            <sha256 value="21af30c92267bd6122c0e0b4d20cccb6641a37eaf956c6540ec471d584e64a7b" origin="Verified"/>
-         </artifact>
-         <artifact name="j2objc-annotations-1.3.pom">
-            <sha256 value="5faca824ba115bee458730337dfdb2fcea46ba2fd774d4304edbf30fa6a3f055" origin="Verified"/>
+      <component group="com.google.j2objc" name="j2objc-annotations" version="2.8">
+         <artifact name="j2objc-annotations-2.8.jar">
+            <sha256 value="f02a95fa1a5e95edb3ed859fd0fb7df709d121a35290eff8b74dce2ab7f4d6ed" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.google.jimfs" name="jimfs" version="1.1">
@@ -766,20 +645,14 @@
             <sha256 value="ade59718f49499265b2c435a0f18501f285cd9c310ddf06041b5f3922888ca44" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.google.protobuf" name="protobuf-java" version="3.19.3">
-         <artifact name="protobuf-java-3.19.3.jar">
-            <sha256 value="440642e3b526663d1c15b4a2071c2696f2a25f031332ac3eb43f63969d819b3d" origin="Verified"/>
-         </artifact>
-         <artifact name="protobuf-java-3.19.3.pom">
-            <sha256 value="68f3a9cc44963e31083993c10a49ebeb1652d7ef63cf516fcaafcc32595f3a8e" origin="Verified"/>
+      <component group="com.google.protobuf" name="protobuf-java" version="3.22.3">
+         <artifact name="protobuf-java-3.22.3.jar">
+            <sha256 value="59d388ea6a2d2d76ae8efff7fd4d0c60c6f0f464c3d3ab9be8e5add092975708" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.google.protobuf" name="protobuf-java-util" version="3.19.3">
-         <artifact name="protobuf-java-util-3.19.3.jar">
-            <sha256 value="1ec0733f32d49f8194fb5452613039370623715739568a6d3c987d9a7809c16c" origin="Verified"/>
-         </artifact>
-         <artifact name="protobuf-java-util-3.19.3.pom">
-            <sha256 value="a69047a1634afd9f01cf87e9b12d48583d9f9c717800160e4a6744cf6991abf0" origin="Verified"/>
+      <component group="com.google.protobuf" name="protobuf-java-util" version="3.22.3">
+         <artifact name="protobuf-java-util-3.22.3.jar">
+            <sha256 value="c615f76879dc5c303e4df5b94a6afa39534058c7545db2d483fd95d9f63c8bfe" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.google.protobuf" name="protobuf-parent" version="3.19.3">
@@ -787,12 +660,9 @@
             <sha256 value="3d60bcc78d6c4f3d9f763100c4b52d6d5f1ab8ed1c2fd5b56f25342438546993" origin="Verified"/>
          </artifact>
       </component>
-      <component group="com.google.testing.platform" name="core-proto" version="0.0.8-alpha08">
-         <artifact name="core-proto-0.0.8-alpha08.jar">
-            <sha256 value="3920575a74f1437975cdf45276f9b75e7ae41bafb8deb1d60e7d639f21d1b06c" origin="Verified"/>
-         </artifact>
-         <artifact name="core-proto-0.0.8-alpha08.pom">
-            <sha256 value="92ef271855871c1d46329138ca5e2bc6926f1d9be0607d2ffc0ca5fef25c7a0b" origin="Verified"/>
+      <component group="com.google.testing.platform" name="core-proto" version="0.0.9-alpha02">
+         <artifact name="core-proto-0.0.9-alpha02.jar">
+            <sha256 value="6d8a8906774150f43a8fad08ca64e25c6070c39bd8a6fc13b2593f289242fe95" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.googlecode.juniversalchardet" name="juniversalchardet" version="1.0.3">
@@ -1262,124 +1132,79 @@
             <sha256 value="235022424e12f33181f62ada19cc4428019b697657c3c392ce357160a422faa8" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.grpc" name="grpc-api" version="1.45.1">
-         <artifact name="grpc-api-1.45.1.jar">
-            <sha256 value="dc381fe018fb10bba8cc66f98db1050a70cee49a8270017c22ec6f77b10f13e5" origin="Verified"/>
-         </artifact>
-         <artifact name="grpc-api-1.45.1.pom">
-            <sha256 value="5b610027b9f691f63542479fb9c3510400fd11c1ee13182f31974df1701c056b" origin="Verified"/>
+      <component group="io.grpc" name="grpc-api" version="1.57.0">
+         <artifact name="grpc-api-1.57.0.jar">
+            <sha256 value="8d2c384299f84ee8aa7f670f00e7cb26b87e231cf3091474307b32b76910f71c" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.grpc" name="grpc-context" version="1.45.1">
-         <artifact name="grpc-context-1.45.1.jar">
-            <sha256 value="262b8d0d23551ccb0c814f89794c73e9b5333ce71eab28eec6a9fc530613e15e" origin="Verified"/>
-         </artifact>
-         <artifact name="grpc-context-1.45.1.pom">
-            <sha256 value="b56f9f46a11413672a58b034162211d61abe10ef1c133c7fe254280f30f1c119" origin="Verified"/>
+      <component group="io.grpc" name="grpc-context" version="1.57.0">
+         <artifact name="grpc-context-1.57.0.jar">
+            <sha256 value="953fcacd82f531e69b76e3834f5830bad4c22ae84144e058d71dc80a7430275d" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.grpc" name="grpc-core" version="1.45.1">
-         <artifact name="grpc-core-1.45.1.jar">
-            <sha256 value="8dd8353e2a55678581ec92415c2b92cc8dafb437647dee57a49e36d1e8345b9e" origin="Verified"/>
-         </artifact>
-         <artifact name="grpc-core-1.45.1.pom">
-            <sha256 value="6039fc5f3c897ea140940c129075c828833ce31334f134347db15991cda21ec9" origin="Verified"/>
+      <component group="io.grpc" name="grpc-core" version="1.57.0">
+         <artifact name="grpc-core-1.57.0.jar">
+            <sha256 value="3bee48c73bc4c5b55bed79be0e484adf26ba56bebbe5798ddbf34714ef1e1cea" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.grpc" name="grpc-netty" version="1.45.1">
-         <artifact name="grpc-netty-1.45.1.jar">
-            <sha256 value="0fef3ca6747242624cad219fdd13b5dbca121de04ea122f5cb1cb5082d998313" origin="Verified"/>
-         </artifact>
-         <artifact name="grpc-netty-1.45.1.pom">
-            <sha256 value="35103fe65cfcd5ddc8fbedaeead923150d539d31a884235c716ec5c9bbb9a196" origin="Verified"/>
+      <component group="io.grpc" name="grpc-netty" version="1.57.0">
+         <artifact name="grpc-netty-1.57.0.jar">
+            <sha256 value="81d43f2d4ed18fa341bd840a3735f1403a70074a046e157e27f679b721b4c9ad" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.grpc" name="grpc-protobuf" version="1.45.1">
-         <artifact name="grpc-protobuf-1.45.1.jar">
-            <sha256 value="f59fe662030e30923a91c5d80bf3a25486be2740d08b6757575e7c4213782694" origin="Verified"/>
-         </artifact>
-         <artifact name="grpc-protobuf-1.45.1.pom">
-            <sha256 value="83ae80dda378b24741da2380edd4b0a86932570137a8c1e7c14050e840cc9ed2" origin="Verified"/>
+      <component group="io.grpc" name="grpc-protobuf" version="1.57.0">
+         <artifact name="grpc-protobuf-1.57.0.jar">
+            <sha256 value="49f986d4eab12610fdba4a6890fca52d5eb653598916fdb863a366d5e28eecf7" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.grpc" name="grpc-protobuf-lite" version="1.45.1">
-         <artifact name="grpc-protobuf-lite-1.45.1.jar">
-            <sha256 value="874afc4cac1161fdd38121ffd56e58e8c85f5149c13954ab672d6b4ae24c8b9f" origin="Verified"/>
-         </artifact>
-         <artifact name="grpc-protobuf-lite-1.45.1.pom">
-            <sha256 value="be21472b47897ef686c1a9768ee94c6c0ad76df54796cf7bb2124458379d5c0a" origin="Verified"/>
+      <component group="io.grpc" name="grpc-protobuf-lite" version="1.57.0">
+         <artifact name="grpc-protobuf-lite-1.57.0.jar">
+            <sha256 value="2c507c02d981b84a21763d44e09af4f279881dd3e25be3080f6361258607f198" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.grpc" name="grpc-stub" version="1.45.1">
-         <artifact name="grpc-stub-1.45.1.jar">
-            <sha256 value="4d9d82c59b90383c17f152ba03123c6b4b5a885f933da9a05a05f5f2c9e5b4a0" origin="Verified"/>
-         </artifact>
-         <artifact name="grpc-stub-1.45.1.pom">
-            <sha256 value="63d008f7e41e62947807d0460c6c16971e73cf2dcbab60b88b3602deca90bb4a" origin="Verified"/>
+      <component group="io.grpc" name="grpc-stub" version="1.57.0">
+         <artifact name="grpc-stub-1.57.0.jar">
+            <sha256 value="6e6ee141539fa14d9fa479f7f511605544443c7e011e78e273cf9468aa183060" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-buffer" version="4.1.72.Final">
-         <artifact name="netty-buffer-4.1.72.Final.jar">
-            <sha256 value="568ff7cd9d8e2284ec980730c88924f686642929f8f219a74518b4e64755f3a1" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-buffer-4.1.72.Final.pom">
-            <sha256 value="459301da749cb5eaf721b5cac39c0660b2d59fc66264091536e121cb18d8b413" origin="Verified"/>
+      <component group="io.netty" name="netty-buffer" version="4.1.93.Final">
+         <artifact name="netty-buffer-4.1.93.Final.jar">
+            <sha256 value="007c7d9c378df02d390567d0d7ddf542ffddb021b7313dbf502392113ffabb08" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-codec" version="4.1.72.Final">
-         <artifact name="netty-codec-4.1.72.Final.jar">
-            <sha256 value="5d8591ca271a1e9c224e8de3873aa9936acb581ee0db514e7dc18523df36d16c" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-codec-4.1.72.Final.pom">
-            <sha256 value="2d88d1a230acca4797454782c5226e1612721d4e73927c142fde95a29d49542a" origin="Verified"/>
+      <component group="io.netty" name="netty-codec" version="4.1.93.Final">
+         <artifact name="netty-codec-4.1.93.Final.jar">
+            <sha256 value="990c378168dc6364c6ff569701f4f2f122fffe8998b3e189eba4c4d868ed1084" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-codec-http" version="4.1.72.Final">
-         <artifact name="netty-codec-http-4.1.72.Final.jar">
-            <sha256 value="fa6fec88010bfaf6a7415b5364671b6b18ffb6b35a986ab97b423fd8c3a0174b" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-codec-http-4.1.72.Final.pom">
-            <sha256 value="a8cd15659a5720013918843fc8bf29f38a81b83e34816f82e397a4db3c864f53" origin="Verified"/>
+      <component group="io.netty" name="netty-codec-http" version="4.1.93.Final">
+         <artifact name="netty-codec-http-4.1.93.Final.jar">
+            <sha256 value="dacf78ce78ab2d29570325db4cd2451ea589639807de95881a0fa7155a9e6b55" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-codec-http2" version="4.1.72.Final">
-         <artifact name="netty-codec-http2-4.1.72.Final.jar">
-            <sha256 value="c89a70500f59e8563e720aaa808263a514bd9e2bd91ba84eab8c2ccb45f234b2" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-codec-http2-4.1.72.Final.pom">
-            <sha256 value="bfbac371e903e3c72206d985a621fdc85070b383cd954c426ff963e512675914" origin="Verified"/>
+      <component group="io.netty" name="netty-codec-http2" version="4.1.93.Final">
+         <artifact name="netty-codec-http2-4.1.93.Final.jar">
+            <sha256 value="d96cc09045a1341c6d47494352aa263b87b72fb1d2ea9eca161aa73820bfe8bb" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-codec-socks" version="4.1.72.Final">
-         <artifact name="netty-codec-socks-4.1.72.Final.jar">
-            <sha256 value="33c4cd134858aabc5afe5dc440c8880186017dc4dc541f34c8e16bffc5546d07" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-codec-socks-4.1.72.Final.pom">
-            <sha256 value="b3eb467e64b7db5d09f55c58b87d1b31aeb6a9f42c28c2d68e1f131fd9aa167b" origin="Verified"/>
+      <component group="io.netty" name="netty-codec-socks" version="4.1.93.Final">
+         <artifact name="netty-codec-socks-4.1.93.Final.jar">
+            <sha256 value="0ea47b5ba23ca1da8eb9146c8fc755c1271414633b1e2be2ce1df764ba0fff2a" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-common" version="4.1.72.Final">
-         <artifact name="netty-common-4.1.72.Final.jar">
-            <sha256 value="8adb4c291260ceb2859a68c49f0adeed36bf49587608e2b81ecff6aaf06025e9" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-common-4.1.72.Final.pom">
-            <sha256 value="d6d302491f39848bf1889bf2137e6e7e77d96c394af5baf8ac6a0901572cda75" origin="Verified"/>
+      <component group="io.netty" name="netty-common" version="4.1.93.Final">
+         <artifact name="netty-common-4.1.93.Final.jar">
+            <sha256 value="443bb316599fb16e3baeba2fb58881814d7ff0b7af176fe76e38071a6e86f8c0" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-handler" version="4.1.72.Final">
-         <artifact name="netty-handler-4.1.72.Final.jar">
-            <sha256 value="9cb6012af7e06361d738ac4e3bdc49a158f8cf87d9dee0f2744056b7d99c28d5" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-handler-4.1.72.Final.pom">
-            <sha256 value="2849ebc75cc07cad1391de74fcff47b42f055bb67678585c69c2c1b12b323ee9" origin="Verified"/>
+      <component group="io.netty" name="netty-handler" version="4.1.93.Final">
+         <artifact name="netty-handler-4.1.93.Final.jar">
+            <sha256 value="4e5f563ae14ed713381816d582f5fcfd0615aefb29203486cdfb782d8a00a02b" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-handler-proxy" version="4.1.72.Final">
-         <artifact name="netty-handler-proxy-4.1.72.Final.jar">
-            <sha256 value="ce1123250450d2b17815748177fd36843690b8cd703b47e6dc12d159d86da30d" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-handler-proxy-4.1.72.Final.pom">
-            <sha256 value="41d76f919b4738237da368c90d0aefbf44863b6bba7487ecb97d6c23f74b9338" origin="Verified"/>
+      <component group="io.netty" name="netty-handler-proxy" version="4.1.93.Final">
+         <artifact name="netty-handler-proxy-4.1.93.Final.jar">
+            <sha256 value="2ac5f7fbefa0b73ef783889069344d5515505a14b2303be693c5002c486df2b4" origin="Verified"/>
          </artifact>
       </component>
       <component group="io.netty" name="netty-parent" version="4.1.72.Final">
@@ -1387,12 +1212,9 @@
             <sha256 value="ed4132e36eda981fa7990376dafc7d7d680371260ed920b2c041d6b1ed230d85" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-resolver" version="4.1.72.Final">
-         <artifact name="netty-resolver-4.1.72.Final.jar">
-            <sha256 value="6474598aab7cc9d8d6cfa06c05bd1b19adbf7f8451dbdd73070b33a6c60b1b90" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-resolver-4.1.72.Final.pom">
-            <sha256 value="e5014c5e1e7f1845c2c6f5a060fa38debd7b67f011612dfc0239aa28e005fe14" origin="Verified"/>
+      <component group="io.netty" name="netty-resolver" version="4.1.93.Final">
+         <artifact name="netty-resolver-4.1.93.Final.jar">
+            <sha256 value="e59770b66e81822e5d111ac4e544d7eb0c543e0a285f52628e53941acd8ed759" origin="Verified"/>
          </artifact>
       </component>
       <component group="io.netty" name="netty-tcnative-classes" version="2.0.46.Final">
@@ -1408,20 +1230,19 @@
             <sha256 value="c6b5ee3a01a44d969b18a478a8764619f33a68e4fb5c0bbf6dddc5f6a611376e" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.netty" name="netty-transport" version="4.1.72.Final">
-         <artifact name="netty-transport-4.1.72.Final.jar">
-            <sha256 value="c5fb68e9a65b6e8a516adfcb9fa323479ee7b4d9449d8a529d2ecab3d3711d5a" origin="Verified"/>
-         </artifact>
-         <artifact name="netty-transport-4.1.72.Final.pom">
-            <sha256 value="cf29bd872a8c2afbcdb74b27a9e90e67195685f57011d5dfc475a4f261794db4" origin="Verified"/>
+      <component group="io.netty" name="netty-transport" version="4.1.93.Final">
+         <artifact name="netty-transport-4.1.93.Final.jar">
+            <sha256 value="a5a78019bc1cd43dbc3c7b7cdd3801912ca26d1f498fb560514fee497864ba96" origin="Verified"/>
          </artifact>
       </component>
-      <component group="io.perfmark" name="perfmark-api" version="0.23.0">
-         <artifact name="perfmark-api-0.23.0.jar">
-            <sha256 value="c705b5c10c18ff3032b9e81742bc2f6b0e5607f6a6dfc0c8ad0cff75d4913042" origin="Verified"/>
+      <component group="io.netty" name="netty-transport-native-unix-common" version="4.1.93.Final">
+         <artifact name="netty-transport-native-unix-common-4.1.93.Final.jar">
+            <sha256 value="774165a1c4dbaacb17f9c1ad666b3569a6a59715ae828e7c3d47703f479a53e7" origin="Verified"/>
          </artifact>
-         <artifact name="perfmark-api-0.23.0.module">
-            <sha256 value="84a12f34817d1f2f79df810bcbaacb29900678384d3dd0502df0bd963a4f3fdb" origin="Verified"/>
+      </component>
+      <component group="io.perfmark" name="perfmark-api" version="0.26.0">
+         <artifact name="perfmark-api-0.26.0.jar">
+            <sha256 value="b7d23e93a34537ce332708269a0d1404788a5b5e1949e82f5535fce51b3ea95b" origin="Verified"/>
          </artifact>
       </component>
       <component group="jakarta.activation" name="jakarta.activation-api" version="1.2.1">
@@ -2046,12 +1867,9 @@
             <sha256 value="13128ccf90fb31f18d8109b484516649d5db0e47284d860e71a4cf3148153ed8" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.bouncycastle" name="bcpkix-jdk15on" version="1.67">
-         <artifact name="bcpkix-jdk15on-1.67.jar">
-            <sha256 value="efbca754880ce3922ca47a43c1f0b72c45731450a0ef193b9db33bf4bb38ce5f" origin="Verified"/>
-         </artifact>
-         <artifact name="bcpkix-jdk15on-1.67.pom">
-            <sha256 value="a9bb30bd987dc305b05ee53e9f27e6e902fc10ce3c6e99618cff0362d796b04d" origin="Verified"/>
+      <component group="org.bouncycastle" name="bcpkix-jdk18on" version="1.77">
+         <artifact name="bcpkix-jdk18on-1.77.jar">
+            <sha256 value="1ac7fe8efd5b2f38cdc165be5a0675734fe44808dab92707201f03a535d6f1b8" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.bouncycastle" name="bcprov-jdk15on" version="1.67">
@@ -2091,17 +1909,19 @@
             <sha256 value="64d6c5a6121fcd927152dd182cbed39afe0fda641a970d9bcc0c9cb1858b2731" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.bouncycastle" name="bcutil-jdk18on" version="1.77">
+         <artifact name="bcutil-jdk18on-1.77.jar">
+            <sha256 value="947673bcbc5a8dde2d2fa688a5b7598d0ca6e2a74a7ea30cd93f04f6b3ad68f8" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.checkerframework" name="checker-qual" version="2.5.8">
          <artifact name="checker-qual-2.5.8.pom">
             <sha256 value="33ac6a0f1341ae96647c7d4465f4aa3d24fe97d2697bcee2ceae6fc8b5ef2c3c" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.checkerframework" name="checker-qual" version="3.12.0">
-         <artifact name="checker-qual-3.12.0.jar">
-            <sha256 value="ff10785ac2a357ec5de9c293cb982a2cbb605c0309ea4cc1cb9b9bc6dbe7f3cb" origin="Verified"/>
-         </artifact>
-         <artifact name="checker-qual-3.12.0.pom">
-            <sha256 value="775b7ae36e62820b3b86dc1aa39af37c0ac4b85ff48f7fe485a922a2790f46b9" origin="Verified"/>
+      <component group="org.checkerframework" name="checker-qual" version="3.33.0">
+         <artifact name="checker-qual-3.33.0.jar">
+            <sha256 value="e316255bbfcd9fe50d165314b85abb2b33cb2a66a93c491db648e498a82c2de1" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.checkerframework" name="checker-qual" version="3.5.0">
@@ -2120,12 +1940,9 @@
             <sha256 value="db8650a65499a560ea670963e587fcae990f5cb3bc4323d7361c425dd331918b" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.codehaus.mojo" name="animal-sniffer-annotations" version="1.19">
-         <artifact name="animal-sniffer-annotations-1.19.jar">
-            <sha256 value="e67ec27ceeaf13ab5d54cf5fdbcc544c41b4db8d02d9f006678cca2c7c13ee9d" origin="Verified"/>
-         </artifact>
-         <artifact name="animal-sniffer-annotations-1.19.pom">
-            <sha256 value="3a9d5113d80dcc19c5c8e641bd7068ba0a2df804201f5688ad27d0094c6cf1d2" origin="Verified"/>
+      <component group="org.codehaus.mojo" name="animal-sniffer-annotations" version="1.23">
+         <artifact name="animal-sniffer-annotations-1.23.jar">
+            <sha256 value="9ffe526bf43a6348e9d8b33b9cd6f580a7f5eed0cf055913007eda263de974d0" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.codehaus.mojo" name="animal-sniffer-parent" version="1.19">
@@ -2387,8 +2204,10 @@
          <artifact name="annotations-13.0.jar">
             <sha256 value="ace2a10dc8e2d5fd34925ecac03e4988b2c0f851650c94b8cef49ba1bd111478" origin="Verified"/>
          </artifact>
-         <artifact name="annotations-13.0.pom">
-            <sha256 value="965aeb2bedff369819bdde1bf7a0b3b89b8247dd69c88b86375d76163bb8c397" origin="Verified"/>
+      </component>
+      <component group="org.jetbrains" name="annotations" version="23.0.0">
+         <artifact name="annotations-23.0.0.jar">
+            <sha256 value="7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jetbrains.intellij.deps" name="trove4j" version="1.0.20200330">
@@ -2530,12 +2349,9 @@
             <sha256 value="00b9a1afe0436f17af1ce590e4797c9fefc0c921fb7851b35f57219045f8c453" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.jetbrains.kotlin" name="kotlin-reflect" version="1.8.20-RC2">
-         <artifact name="kotlin-reflect-1.8.20-RC2.jar">
-            <sha256 value="688de34ee30a0bcffd9fccdefa0f4c28af158bcf639d221502c3ea7c38e6a0a0" origin="Verified"/>
-         </artifact>
-         <artifact name="kotlin-reflect-1.8.20-RC2.pom">
-            <sha256 value="7df1a5d890c819c6b683e8330aaed8656171c4a09b8e361af1888b89efc87d1c" origin="Verified"/>
+      <component group="org.jetbrains.kotlin" name="kotlin-reflect" version="1.9.20">
+         <artifact name="kotlin-reflect-1.9.20.jar">
+            <sha256 value="49b66f9a89d50fd2954c2e8aeac80e4f488b0a09322a25efad6261576713dc0f" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jetbrains.kotlin" name="kotlin-scripting-common" version="1.8.21">
@@ -2593,12 +2409,9 @@
             <sha256 value="fe0cd9e32193e453333fd2b1f577e662fb5abc6907102bb967817bc131280fd7" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.jetbrains.kotlin" name="kotlin-stdlib" version="1.9.10">
-         <artifact name="kotlin-stdlib-1.9.10.jar">
-            <sha256 value="55e989c512b80907799f854309f3bc7782c5b3d13932442d0379d5c472711504" origin="Verified"/>
-         </artifact>
-         <artifact name="kotlin-stdlib-1.9.10.pom">
-            <sha256 value="7e29fbf73fdf71e0679d3dee7e680fd573464fa01644a4f58ab819d2c088d3d2" origin="Verified"/>
+      <component group="org.jetbrains.kotlin" name="kotlin-stdlib" version="1.9.20">
+         <artifact name="kotlin-stdlib-1.9.20.jar">
+            <sha256 value="28a35bcdff46d864f80f346a617e486284b208d17378c41900dfb1de95a90e6c" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jetbrains.kotlin" name="kotlin-stdlib" version="1.9.23">
@@ -2673,12 +2486,9 @@
             <sha256 value="9bb107d5d5e3930bc5977f007a43cd20b7d24d91b1c1e528ea6ee0f248f14d36" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk7" version="1.9.10">
-         <artifact name="kotlin-stdlib-jdk7-1.9.10.jar">
-            <sha256 value="ac6361bf9ad1ed382c2103d9712c47cdec166232b4903ed596e8876b0681c9b7" origin="Verified"/>
-         </artifact>
-         <artifact name="kotlin-stdlib-jdk7-1.9.10.pom">
-            <sha256 value="c7fa67c7961320b89d85a3ca59a2e18c2c65850845595dcae4b46af6945edcd5" origin="Verified"/>
+      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk7" version="1.9.20">
+         <artifact name="kotlin-stdlib-jdk7-1.9.20.jar">
+            <sha256 value="c5451d67a27f33afd09913c67e1ceba3897ae70884b24ef0ff71157e55b60865" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.8.20-RC2">
@@ -2694,12 +2504,9 @@
             <sha256 value="3839d728d7c309a5c368b0270b44b4f1c7878ff5ca5d32a9a204faa3491459d8" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.9.10">
-         <artifact name="kotlin-stdlib-jdk8-1.9.10.jar">
-            <sha256 value="a4c74d94d64ce1abe53760fe0389dd941f6fc558d0dab35e47c085a11ec80f28" origin="Verified"/>
-         </artifact>
-         <artifact name="kotlin-stdlib-jdk8-1.9.10.pom">
-            <sha256 value="5f4b94dd3065a7764c37fa15de2ad6d81f40d59f8cb33f17d181c6384fb7a72e" origin="Verified"/>
+      <component group="org.jetbrains.kotlin" name="kotlin-stdlib-jdk8" version="1.9.20">
+         <artifact name="kotlin-stdlib-jdk8-1.9.20.jar">
+            <sha256 value="f833fcc94f0bb1c31b9e78bd4bda7ea23f579ff3408ae1a94e2eb5747086a2ab" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jetbrains.kotlin" name="kotlin-tooling-core" version="1.8.21">
@@ -2918,12 +2725,9 @@
             <sha256 value="c683a90dd68f2b1788cbdfc4647ea9405ef5925b371c199f8fd39d44d3cede8d" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.ow2.asm" name="asm" version="9.2">
-         <artifact name="asm-9.2.jar">
-            <sha256 value="b9d4fe4d71938df38839f0eca42aaaa64cf8b313d678da036f0cb3ca199b47f5" origin="Verified"/>
-         </artifact>
-         <artifact name="asm-9.2.pom">
-            <sha256 value="dfb12a1b224bf01be1fd604020466f894241bcb645dcce395edd8cd6f8a50df4" origin="Verified"/>
+      <component group="org.ow2.asm" name="asm" version="9.6">
+         <artifact name="asm-9.6.jar">
+            <sha256 value="3c6fac2424db3d4a853b669f4e3d1d9c3c552235e19a319673f887083c2303a1" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.ow2.asm" name="asm" version="9.9">
@@ -2939,20 +2743,14 @@
             <sha256 value="ac5454c11b03431ca951df71fb4e86c8c4c80df6979f95b757caed3ab0f47156" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.ow2.asm" name="asm-analysis" version="9.2">
-         <artifact name="asm-analysis-9.2.jar">
-            <sha256 value="878fbe521731c072d14d2d65b983b1beae6ad06fda0007b6a8bae81f73f433c4" origin="Verified"/>
-         </artifact>
-         <artifact name="asm-analysis-9.2.pom">
-            <sha256 value="773cc1a2bfc14c6c4a979c51a075c0234a0bf694fc3abe4facf454f37a145f1b" origin="Verified"/>
+      <component group="org.ow2.asm" name="asm-analysis" version="9.6">
+         <artifact name="asm-analysis-9.6.jar">
+            <sha256 value="d92832d7c37edc07c60e2559ac6118b31d642e337a6671edcb7ba9fae68edbbb" origin="Verified"/>
          </artifact>
       </component>
-     <component group="org.ow2.asm" name="asm-commons" version="9.2">
-         <artifact name="asm-commons-9.2.jar">
-            <sha256 value="be4ce53138a238bb522cd781cf91f3ba5ce2f6ca93ec62d46a162a127225e0a6" origin="Verified"/>
-         </artifact>
-         <artifact name="asm-commons-9.2.pom">
-            <sha256 value="02824e839f2a2f0e72959fdd30b4897240f05afc43de42d7ba0b18437601c070" origin="Verified"/>
+      <component group="org.ow2.asm" name="asm-commons" version="9.6">
+         <artifact name="asm-commons-9.6.jar">
+            <sha256 value="7aefd0d5c0901701c69f7513feda765fb6be33af2ce7aa17c5781fc87657c511" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.ow2.asm" name="asm-commons" version="9.9">
@@ -2960,12 +2758,9 @@
             <sha256 value="db2f6f26150bbe7c126606b4a1151836bcc22a1e05a423b3585698bece995ff8" origin="Verified"/>
          </artifact>
       </component>
-     <component group="org.ow2.asm" name="asm-tree" version="9.2">
-         <artifact name="asm-tree-9.2.jar">
-            <sha256 value="aabf9bd23091a4ebfc109c1f3ee7cf3e4b89f6ba2d3f51c5243f16b3cffae011" origin="Verified"/>
-         </artifact>
-         <artifact name="asm-tree-9.2.pom">
-            <sha256 value="f61f3ebea5520ddf19f452b03c426c7231bdd8a81d7ac28765cb5271225ac378" origin="Verified"/>
+      <component group="org.ow2.asm" name="asm-tree" version="9.6">
+         <artifact name="asm-tree-9.6.jar">
+            <sha256 value="c43ecf17b539c777e15da7b5b86553b377e2d39a683de6285567d5283888e7ef" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.ow2.asm" name="asm-tree" version="9.9">
@@ -2973,12 +2768,9 @@
             <sha256 value="42178f3775c9c63f9e5e1446747d29b4eca4d91bd6e75e5c43cfa372a47d38c6" origin="Verified"/>
          </artifact>
       </component>
-      <component group="org.ow2.asm" name="asm-util" version="9.2">
-         <artifact name="asm-util-9.2.jar">
-            <sha256 value="ff5b3cd331ae8a9a804768280da98f50f424fef23dd3c788bb320e08c94ee598" origin="Verified"/>
-         </artifact>
-         <artifact name="asm-util-9.2.pom">
-            <sha256 value="ddd06913f147d70ae68e7a6e4356a55b33f14dde6162dbff2bd0e289581f1ad2" origin="Verified"/>
+      <component group="org.ow2.asm" name="asm-util" version="9.6">
+         <artifact name="asm-util-9.6.jar">
+            <sha256 value="c635a7402f4aa9bf66b2f4230cea62025a0fe1cd63e8729adefc9b1994fac4c3" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.slf4j" name="slf4j-api" version="1.7.30">
