@@ -391,8 +391,8 @@ public class AndroidConfig {
     }
 
     try {
-      sourceFiles.from(sources.getByName("c").getAll());
-      sourceFiles.from(sources.getByName("cpp").getAll());
+      sourceFiles.from(sources.getByName("c").getStatic());
+      sourceFiles.from(sources.getByName("cpp").getStatic());
     } catch (RuntimeException ignored) {
       // We ignore the situations where C/C++ sources are absent.
     }
