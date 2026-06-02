@@ -51,6 +51,7 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
+import org.gradle.work.DisableCachingByDefault;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.sonarqube.gradle.properties.SonarProperty;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
@@ -75,6 +76,7 @@ import static org.sonarqube.gradle.properties.SonarProperty.VERBOSE;
  * For more information on how to configure the SonarQube Scanner, and on which properties are available, see the
  * <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner documentation</a>.
  */
+@DisableCachingByDefault
 public class SonarTask extends ConventionTask {
 
   private static class DefaultLogOutput implements LogOutput {

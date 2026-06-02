@@ -42,7 +42,6 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.plugins.DslObject;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
@@ -156,11 +155,17 @@ public class SonarUtils {
   @Nullable
   @SuppressWarnings("java:S1874")
   private static SourceSetContainer getSourceSetsGradleLegacy(Project project) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().findPlugin(JavaPluginConvention.class);
-    if (javaPluginConvention == null) {
+    try {
+      Class<?> javaPluginConventionClass = Class.forName("org.gradle.api.plugins.JavaPluginConvention");
+      Object convention = DslObject.class.getMethod("getConvention").invoke(new DslObject(project));
+      Object javaPluginConvention = convention.getClass().getMethod("findPlugin", Class.class).invoke(convention, javaPluginConventionClass);
+      if (javaPluginConvention == null) {
+        return null;
+      }
+      return (SourceSetContainer) javaPluginConventionClass.getMethod("getSourceSets").invoke(javaPluginConvention);
+    } catch (ReflectiveOperationException e) {
       return null;
     }
-    return javaPluginConvention.getSourceSets();
   }
 
   static boolean isCompatibleWithJavaPluginExtension(GradleVersion version) {
