@@ -82,7 +82,7 @@ public class ProjectProperties {
    */
   public final List<String> androidTests;
 
-  public ProjectProperties(Builder builder) {
+  private ProjectProperties(Builder builder) {
     this.projectName = builder.projectName;
     this.isRootProject = builder.isRootProject;
     this.compileClasspath = builder.compileClasspath;
