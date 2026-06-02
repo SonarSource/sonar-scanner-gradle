@@ -61,27 +61,23 @@ tasks.withType<Javadoc> {
     options.encoding = "UTF-8"
 }
 
-val junitVersion = "5.10.2"
-val sonarScannerJavaLibraryVersion = "4.1.1.1633"
-val archunitVersion = "1.2.1"
-
 dependencies {
-    implementation("org.sonarsource.scanner.lib:sonar-scanner-java-library:$sonarScannerJavaLibraryVersion")
-    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
-    compileOnly("com.android.tools.build:gradle:8.13.2")
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
-    testImplementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.21")
-    testImplementation("com.android.tools.build:gradle:8.13.2")
+    implementation(libs.sonar.scanner.library)
+    compileOnly(libs.findbugs.jsr305)
+    compileOnly(libs.android.gradle)
+    compileOnly(libs.kotlin.gradle)
+    testImplementation(libs.kotlin.gradle)
+    testImplementation(libs.android.gradle)
     testImplementation(localGroovy())
-    testImplementation("org.assertj:assertj-core:3.26.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
-    testImplementation("org.hamcrest:hamcrest-all:1.3")
-    testImplementation("org.mockito:mockito-core:5.12.0")
-    testImplementation("org.spockframework:spock-core:2.3-groovy-3.0") {
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.jupiter.engine)
+    testImplementation(libs.jupiter.params)
+    testImplementation(libs.hamcrest.all)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.spock.core) {
         exclude(module = "groovy-all")
     }
-    testImplementation("com.tngtech.archunit:archunit-junit5:$archunitVersion")
+    testImplementation(libs.archunit.junit5)
 }
 
 gradlePlugin {
@@ -184,7 +180,7 @@ tasks.register<DownloadMavenArtifactsAndPublishToGradlePluginPortal>("downloadMa
     validationOnly = "true".equals(System.getProperty("validate-publish"))
     // If it is not a simulation or a validation, only download artifacts that have been successfully released in repox
     mavenSourceRepositoryUrl = if (simulatePublication || validationOnly)
-         "https://repox.jfrog.io/repox/sonarsource"
+        "https://repox.jfrog.io/repox/sonarsource"
     else "https://repox.jfrog.io/artifactory/sonarsource-public-releases"
     mavenAuthorizationToken = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
     groupId = project.group as String
@@ -239,14 +235,14 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     setRequired {
-      doArtifactsRequireSignature()
+        doArtifactsRequireSignature()
     }
     sign(publishing.publications)
 }
 
 tasks.withType<Sign> {
     onlyIf {
-      doArtifactsRequireSignature()
+        doArtifactsRequireSignature()
     }
 }
 
