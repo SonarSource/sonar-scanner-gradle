@@ -90,9 +90,7 @@ class ResolutionSerializerTest {
   @Test
   void testWriteReadWithoutProperties() throws IOException {
     File file = tempDir.resolve("test.json").toFile();
-    ProjectProperties properties = new ProjectProperties.Builder(TEST_PROJECT_NAME, false)
-      .build();
-
+    ProjectProperties properties = new ProjectProperties.Builder(TEST_PROJECT_NAME, false).build();
     ResolutionSerializer.write(file, properties);
     Optional<ProjectProperties> readProperties = ResolutionSerializer.read(file);
 

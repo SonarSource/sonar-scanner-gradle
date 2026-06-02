@@ -34,8 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SonarTaskTest {
 
-  private final ProjectProperties projectProperties = new ProjectProperties.Builder("", true)
-    .build();
+  private final ProjectProperties projectProperties = new ProjectProperties.Builder("", true).build();
 
   @Test
   void resolveSonarJavaLibraries_skips_resolution_when_no_configuration_provided() {
@@ -65,8 +64,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false)
-      .build();
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false).build();
     SonarTask.resolveSonarJavaLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
       .hasSize(2)
@@ -118,8 +116,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false)
-      .build();
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false).build();
     SonarTask.resolveSonarJavaTestLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
       .hasSize(1)
@@ -214,8 +211,7 @@ class SonarTaskTest {
     File sourceDirectory = new File(tempDir, "src/main/java");
     sourceDirectory.mkdirs();
     List<File> fileCollection = List.of(sourceDirectory);
-    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false)
-      .build();
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false).build();
     SonarTask.resolveAndroidSources(subprojectProperties, fileCollection, properties, false);
     assertThat(properties)
       .hasSize(1)
