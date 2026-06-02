@@ -53,7 +53,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   private Provider<Boolean> skipProject;
 
   @Inject
-  protected SonarResolverTask() {
+  public SonarResolverTask() {
     super();
     // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
     this.getOutputs().upToDateWhen(task -> false);

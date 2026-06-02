@@ -302,7 +302,7 @@ class SonarTaskTest {
       .projectName("")
       .isRootProject(true)
       .compileClasspath(List.of(lib1.toAbsolutePath().toString(), lib2.toAbsolutePath().toString()))
-      .testCompileClasspath( List.of(testLib1.toAbsolutePath().toString()))
+      .testCompileClasspath(List.of(testLib1.toAbsolutePath().toString()))
       .mainLibraries(List.of())
       .testLibraries(List.of())
       .androidSources(List.of())
