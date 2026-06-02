@@ -53,7 +53,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   private Provider<Boolean> skipProject;
 
   @Inject
-  public SonarResolverTask() {
+  protected SonarResolverTask() {
     super();
     // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
     this.getOutputs().upToDateWhen(task -> false);
@@ -189,16 +189,16 @@ public abstract class SonarResolverTask extends DefaultTask {
     Provider<FileCollection> androidTestsProvider = getAndroidTests();
     List<String> androidTestsFilenames = androidTestsProvider == null ? Collections.emptyList() : getAbsolutePaths(androidTestsProvider);
 
-    ProjectProperties projectProperties = new ProjectProperties(
-      getProjectName(),
-      isTopLevelProject(),
-      compileClasspathFilenames,
-      testCompileClasspathFilenames,
-      mainLibrariesFilenames,
-      testLibrariesFilenames,
-      androidSourcesFilenames,
-      androidTestsFilenames
-    );
+    ProjectProperties projectProperties = new ProjectProperties.Builder()
+      .projectName(getProjectName())
+      .isRootProject(isTopLevelProject())
+      .compileClasspath(compileClasspathFilenames)
+      .testCompileClasspath(testCompileClasspathFilenames)
+      .mainLibraries(mainLibrariesFilenames)
+      .testLibraries(testLibrariesFilenames)
+      .androidSources(androidSourcesFilenames)
+      .androidTests(androidTestsFilenames)
+      .build();
 
     outputDirectory.mkdirs();
     ResolutionSerializer.write(
