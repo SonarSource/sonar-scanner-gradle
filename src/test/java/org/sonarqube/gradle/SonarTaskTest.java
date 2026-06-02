@@ -34,15 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SonarTaskTest {
 
-  private final ProjectProperties projectProperties = new ProjectProperties.Builder()
-    .projectName("")
-    .isRootProject(true)
-    .compileClasspath(List.of())
-    .testCompileClasspath(List.of())
-    .mainLibraries(List.of())
-    .testLibraries(List.of())
-    .androidSources(List.of())
-    .androidTests(List.of())
+  private final ProjectProperties projectProperties = new ProjectProperties.Builder("", true)
     .build();
 
   @Test
@@ -73,15 +65,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties.Builder()
-      .projectName(":subproject")
-      .isRootProject(false)
-      .compileClasspath(List.of())
-      .testCompileClasspath(List.of())
-      .mainLibraries(List.of())
-      .testLibraries(List.of())
-      .androidSources(List.of())
-      .androidTests(List.of())
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false)
       .build();
     SonarTask.resolveSonarJavaLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
@@ -134,15 +118,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties.Builder()
-      .projectName(":subproject")
-      .isRootProject(false)
-      .compileClasspath(List.of())
-      .testCompileClasspath(List.of())
-      .mainLibraries(List.of())
-      .testLibraries(List.of())
-      .androidSources(List.of())
-      .androidTests(List.of())
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false)
       .build();
     SonarTask.resolveSonarJavaTestLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
@@ -238,15 +214,7 @@ class SonarTaskTest {
     File sourceDirectory = new File(tempDir, "src/main/java");
     sourceDirectory.mkdirs();
     List<File> fileCollection = List.of(sourceDirectory);
-    ProjectProperties subprojectProperties = new ProjectProperties.Builder()
-      .projectName(":subproject")
-      .isRootProject(false)
-      .compileClasspath(List.of())
-      .testCompileClasspath(List.of())
-      .mainLibraries(List.of())
-      .testLibraries(List.of())
-      .androidSources(List.of())
-      .androidTests(List.of())
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false)
       .build();
     SonarTask.resolveAndroidSources(subprojectProperties, fileCollection, properties, false);
     assertThat(properties)
@@ -298,15 +266,9 @@ class SonarTaskTest {
     Path lib2 = Files.createFile(tempDir.toPath().resolve("lib2.jar"));
     Path testLib1 = Files.createFile(tempDir.toPath().resolve("testlib1.jar"));
 
-    ProjectProperties props = new ProjectProperties.Builder()
-      .projectName("")
-      .isRootProject(true)
+    ProjectProperties props = new ProjectProperties.Builder("", true)
       .compileClasspath(List.of(lib1.toAbsolutePath().toString(), lib2.toAbsolutePath().toString()))
       .testCompileClasspath(List.of(testLib1.toAbsolutePath().toString()))
-      .mainLibraries(List.of())
-      .testLibraries(List.of())
-      .androidSources(List.of())
-      .androidTests(List.of())
       .build();
     ResolutionSerializer.write(resolverFile, props);
     SonarTask.processResolverFile(resolverFile, result);

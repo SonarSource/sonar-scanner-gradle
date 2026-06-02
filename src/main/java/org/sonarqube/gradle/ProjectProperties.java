@@ -94,23 +94,18 @@ public class ProjectProperties {
   }
 
   public static class Builder {
-    private String projectName;
-    private Boolean isRootProject;
-    private List<String> compileClasspath;
-    private List<String> testCompileClasspath;
-    private List<String> mainLibraries;
-    private List<String> testLibraries;
-    private List<String> androidSources;
-    private List<String> androidTests;
+    private final String projectName;
+    private final Boolean isRootProject;
+    private List<String> compileClasspath = List.of();
+    private List<String> testCompileClasspath = List.of();
+    private List<String> mainLibraries = List.of();
+    private List<String> testLibraries = List.of();
+    private List<String> androidSources = List.of();
+    private List<String> androidTests = List.of();
 
-    public Builder projectName(String projectName) {
+    public Builder(String projectName, Boolean isRootProject) {
       this.projectName = projectName;
-      return this;
-    }
-
-    public Builder isRootProject(Boolean isRootProject) {
       this.isRootProject = isRootProject;
-      return this;
     }
 
     public Builder compileClasspath(List<String> compileClasspath) {
@@ -143,7 +138,9 @@ public class ProjectProperties {
       return this;
     }
 
-    public ProjectProperties build() {return new ProjectProperties(this);}
+    public ProjectProperties build() {
+      return new ProjectProperties(this);
+    }
 
   }
 
