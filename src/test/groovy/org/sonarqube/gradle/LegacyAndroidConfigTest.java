@@ -52,6 +52,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -85,7 +86,7 @@ class LegacyAndroidConfigTest {
     when(appExtension.getTestBuildType()).thenReturn("debug");
     when(appExtension.getBootClasspath()).thenReturn(new ArrayList<>());
     when(appExtension.getApplicationVariants()).thenReturn(domainObjectSet); //Overriding final method here, be careful
-    when(appExtension.getProductFlavors()).thenReturn(productFlavors);
+    doReturn(productFlavors).when(appExtension).getProductFlavors();
     when(domainObjectSet.toArray()).thenReturn(baseVariants);
     when(productFlavors.stream()).thenReturn(Stream.of(flavor));
     when(baseVariant.getBuildType()).thenReturn(buildType);
