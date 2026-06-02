@@ -53,16 +53,14 @@ class ResolutionSerializerTest {
     List<String> androidTests
   ) throws IOException {
     File file = tempDir.resolve("test.json").toFile();
-    ProjectProperties properties = new ProjectProperties(
-      TEST_PROJECT_NAME,
-      true,
-      compileClasspath,
-      testCompileClasspath,
-      mainLibraries,
-      testLibraries,
-      androidSources,
-      androidTests
-    );
+    ProjectProperties properties = new ProjectProperties.Builder(TEST_PROJECT_NAME, true)
+      .compileClasspath(compileClasspath)
+      .testCompileClasspath(testCompileClasspath)
+      .mainLibraries(mainLibraries)
+      .testLibraries(testLibraries)
+      .androidSources(androidSources)
+      .androidTests(androidTests)
+      .build();
 
     ResolutionSerializer.write(file, properties);
     Optional<ProjectProperties> readProperties = ResolutionSerializer.read(file);
@@ -92,9 +90,7 @@ class ResolutionSerializerTest {
   @Test
   void testWriteReadWithoutProperties() throws IOException {
     File file = tempDir.resolve("test.json").toFile();
-    List<String> emptyList = Collections.emptyList();
-    ProjectProperties properties = new ProjectProperties(TEST_PROJECT_NAME, false, emptyList, emptyList, emptyList, emptyList, emptyList, emptyList);
-
+    ProjectProperties properties = new ProjectProperties.Builder(TEST_PROJECT_NAME, false).build();
     ResolutionSerializer.write(file, properties);
     Optional<ProjectProperties> readProperties = ResolutionSerializer.read(file);
 

@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SonarTaskTest {
 
-  private final ProjectProperties projectProperties = new ProjectProperties("", true, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+  private final ProjectProperties projectProperties = new ProjectProperties.Builder("", true).build();
 
   @Test
   void resolveSonarJavaLibraries_skips_resolution_when_no_configuration_provided() {
@@ -64,7 +64,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false).build();
     SonarTask.resolveSonarJavaLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
       .hasSize(2)
@@ -116,7 +116,7 @@ class SonarTaskTest {
     File emptyJar = new File(tempDir, "empty.jar");
     emptyJar.createNewFile();
     List<File> fileCollection = List.of(emptyJar);
-    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false).build();
     SonarTask.resolveSonarJavaTestLibraries(subprojectProperties, fileCollection, properties);
     assertThat(properties)
       .hasSize(1)
@@ -211,7 +211,7 @@ class SonarTaskTest {
     File sourceDirectory = new File(tempDir, "src/main/java");
     sourceDirectory.mkdirs();
     List<File> fileCollection = List.of(sourceDirectory);
-    ProjectProperties subprojectProperties = new ProjectProperties(":subproject", false, List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false).build();
     SonarTask.resolveAndroidSources(subprojectProperties, fileCollection, properties, false);
     assertThat(properties)
       .hasSize(1)
@@ -262,13 +262,10 @@ class SonarTaskTest {
     Path lib2 = Files.createFile(tempDir.toPath().resolve("lib2.jar"));
     Path testLib1 = Files.createFile(tempDir.toPath().resolve("testlib1.jar"));
 
-    ProjectProperties props = new ProjectProperties("", true,
-      List.of(lib1.toAbsolutePath().toString(), lib2.toAbsolutePath().toString()),
-      List.of(testLib1.toAbsolutePath().toString()),
-      List.of(),
-      List.of(),
-      List.of(),
-      List.of());
+    ProjectProperties props = new ProjectProperties.Builder("", true)
+      .compileClasspath(List.of(lib1.toAbsolutePath().toString(), lib2.toAbsolutePath().toString()))
+      .testCompileClasspath(List.of(testLib1.toAbsolutePath().toString()))
+      .build();
     ResolutionSerializer.write(resolverFile, props);
     SonarTask.processResolverFile(resolverFile, result);
     assertThat(result)

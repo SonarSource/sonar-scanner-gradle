@@ -82,35 +82,66 @@ public class ProjectProperties {
    */
   public final List<String> androidTests;
 
-  /**
-   * Creates a new immutable ProjectProperties instance.
-   *
-   * @param projectName          the Gradle project name
-   * @param isRootProject        whether this is the root project
-   * @param compileClasspath     resolved compile classpath as absolute paths
-   * @param testCompileClasspath resolved test compile classpath as absolute paths
-   * @param mainLibraries        filtered main libraries for analysis
-   * @param testLibraries        filtered test libraries for analysis
-   */
-  @SuppressWarnings("java:S107")
-  public ProjectProperties(
-    String projectName,
-    Boolean isRootProject,
-    List<String> compileClasspath,
-    List<String> testCompileClasspath,
-    List<String> mainLibraries,
-    List<String> testLibraries,
-    List<String> androidSources,
-    List<String> androidTests
-  ) {
-    this.projectName = projectName;
-    this.isRootProject = isRootProject;
-    this.compileClasspath = compileClasspath;
-    this.testCompileClasspath = testCompileClasspath;
-    this.mainLibraries = mainLibraries;
-    this.testLibraries = testLibraries;
-    this.androidSources = androidSources;
-    this.androidTests = androidTests;
+  private ProjectProperties(Builder builder) {
+    this.projectName = builder.projectName;
+    this.isRootProject = builder.isRootProject;
+    this.compileClasspath = builder.compileClasspath;
+    this.testCompileClasspath = builder.testCompileClasspath;
+    this.mainLibraries = builder.mainLibraries;
+    this.testLibraries = builder.testLibraries;
+    this.androidSources = builder.androidSources;
+    this.androidTests = builder.androidTests;
+  }
+
+  public static class Builder {
+    private final String projectName;
+    private final Boolean isRootProject;
+    private List<String> compileClasspath = List.of();
+    private List<String> testCompileClasspath = List.of();
+    private List<String> mainLibraries = List.of();
+    private List<String> testLibraries = List.of();
+    private List<String> androidSources = List.of();
+    private List<String> androidTests = List.of();
+
+    public Builder(String projectName, Boolean isRootProject) {
+      this.projectName = projectName;
+      this.isRootProject = isRootProject;
+    }
+
+    public Builder compileClasspath(List<String> compileClasspath) {
+      this.compileClasspath = compileClasspath;
+      return this;
+    }
+
+    public Builder testCompileClasspath(List<String> testCompileClasspath) {
+      this.testCompileClasspath = testCompileClasspath;
+      return this;
+    }
+
+    public Builder mainLibraries(List<String> mainLibraries) {
+      this.mainLibraries = mainLibraries;
+      return this;
+    }
+
+    public Builder testLibraries(List<String> testLibraries) {
+      this.testLibraries = testLibraries;
+      return this;
+    }
+
+    public Builder androidSources(List<String> androidSources) {
+      this.androidSources = androidSources;
+      return this;
+    }
+
+    public Builder androidTests(List<String> androidTests) {
+      this.androidTests = androidTests;
+      return this;
+    }
+
+    public ProjectProperties build() {
+      return new ProjectProperties(this);
+    }
+
   }
 
 }

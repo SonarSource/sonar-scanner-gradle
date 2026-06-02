@@ -189,16 +189,14 @@ public abstract class SonarResolverTask extends DefaultTask {
     Provider<FileCollection> androidTestsProvider = getAndroidTests();
     List<String> androidTestsFilenames = androidTestsProvider == null ? Collections.emptyList() : getAbsolutePaths(androidTestsProvider);
 
-    ProjectProperties projectProperties = new ProjectProperties(
-      getProjectName(),
-      isTopLevelProject(),
-      compileClasspathFilenames,
-      testCompileClasspathFilenames,
-      mainLibrariesFilenames,
-      testLibrariesFilenames,
-      androidSourcesFilenames,
-      androidTestsFilenames
-    );
+    ProjectProperties projectProperties = new ProjectProperties.Builder(getProjectName(), isTopLevelProject())
+      .compileClasspath(compileClasspathFilenames)
+      .testCompileClasspath(testCompileClasspathFilenames)
+      .mainLibraries(mainLibrariesFilenames)
+      .testLibraries(testLibrariesFilenames)
+      .androidSources(androidSourcesFilenames)
+      .androidTests(androidTestsFilenames)
+      .build();
 
     outputDirectory.mkdirs();
     ResolutionSerializer.write(
