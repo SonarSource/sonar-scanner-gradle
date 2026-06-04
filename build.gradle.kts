@@ -139,35 +139,33 @@ val bomArtifact = artifacts.add("archives", bomFile.get().asFile) {
 }
 
 publishing {
-    publications {
-        create<MavenPublication>("pluginMaven") {
-            pom {
-                name.set(projectTitle)
-                description.set(project.description)
-                url.set(docUrl)
-                organization {
-                    name.set("SonarSource")
-                    url.set("http://www.sonarqube.org/")
-                }
-                licenses {
-                    license {
-                        name.set("GNU LPGL 3")
-                        url.set("http://www.gnu.org/licenses/lgpl.txt")
-                        distribution.set("repo")
-                    }
-                }
-                scm {
-                    url.set(githubUrl)
-                }
-                developers {
-                    developer {
-                        id.set("sonarsource-team")
-                        name.set("SonarSource Team")
-                    }
+    publications.withType<MavenPublication>().configureEach {
+        pom {
+            name.set(projectTitle)
+            description.set(project.description)
+            url.set(docUrl)
+            organization {
+                name.set("SonarSource")
+                url.set("http://www.sonarqube.org/")
+            }
+            licenses {
+                license {
+                    name.set("GNU LPGL 3")
+                    url.set("http://www.gnu.org/licenses/lgpl.txt")
+                    distribution.set("repo")
                 }
             }
-            artifact(bomArtifact)
+            scm {
+                url.set(githubUrl)
+            }
+            developers {
+                developer {
+                    id.set("sonarsource-team")
+                    name.set("SonarSource Team")
+                }
+            }
         }
+        artifact(bomArtifact)
     }
 }
 
@@ -244,7 +242,7 @@ signing {
     sign(publishing.publications)
 }
 
-tasks.withType<Sign> {
+tasks.withType<Sign>().configureEach {
     onlyIf {
         doArtifactsRequireSignature()
     }
