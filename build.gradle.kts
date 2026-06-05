@@ -13,10 +13,10 @@ plugins {
     groovy
     jacoco
     `maven-publish`
-    id("com.jfrog.artifactory") version "6.0.4"
-    id("com.github.hierynomus.license") version "0.16.1"
-    id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
-    id("org.cyclonedx.bom") version "1.5.0"
+    alias(libs.plugins.artifactory)
+    alias(libs.plugins.cyclonedx)
+    alias(libs.plugins.license)
+    alias(libs.plugins.testkit)
     signing
 }
 
@@ -132,10 +132,14 @@ tasks.cyclonedxBom {
     outputs.upToDateWhen { false }
 }
 
-val bomArtifact = artifacts.add("archives", bomFile.get().asFile) {
+val bomArtifact = artifacts.add("archives", bomFile) {
     type = "json"
     classifier = "cyclonedx"
-    builtBy("cyclonedxBom")
+    builtBy(tasks.named("cyclonedxBom"))
+}
+
+tasks.artifactoryPublish {
+    mustRunAfter(getTasksByName("cyclonedxBom", true))
 }
 
 publishing {

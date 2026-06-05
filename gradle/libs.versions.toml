@@ -11,6 +11,11 @@ mockito = "5.12.0"
 sonar-scanner = "4.1.1.1633"
 spock = "2.3-groovy-4.0"
 
+artifactory = "6.0.4"
+cyclonedx = "1.5.0"
+license = "0.16.1"
+testkit = "1.0.12"
+
 [libraries]
 android-gradle = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
 archunit-junit5 = { group = "com.tngtech.archunit", name = "archunit-junit5", version.ref = "archunit" }
@@ -24,3 +29,9 @@ kotlin-gradle = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin",
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 sonar-scanner-library = { group = "org.sonarsource.scanner.lib", name = "sonar-scanner-java-library", version.ref = "sonar-scanner" }
 spock-core = { group = "org.spockframework", name = "spock-core", version.ref = "spock" }
+
+[plugins]
+artifactory = { id = "com.jfrog.artifactory", version.ref = "artifactory" }
+cyclonedx = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
+license = { id = "com.github.hierynomus.license", version.ref = "license" }
+testkit = { id = "pl.droidsonroids.jacoco.testkit", version.ref = "testkit" }
