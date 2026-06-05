@@ -325,6 +325,11 @@
             <sha256 value="d255b4b863ff8ec714a8f96fa55c34621d43dbb82b82d3f57476496a4c09e1e7" origin="Verified"/>
          </artifact>
       </component>
+      <component group="com.fasterxml.jackson.core" name="jackson-annotations" version="2.15.4">
+         <artifact name="jackson-annotations-2.15.4.jar">
+            <sha256 value="f204ebbd552614a22b8531ffe350d47f8fd42c45bb60517c07974dc27a5a1dd3" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="com.fasterxml.jackson.core" name="jackson-core" version="2.10.5">
          <artifact name="jackson-core-2.10.5.pom">
             <sha256 value="8f015c8456e24cddbd5b8fe442a4d04635ded8fcc62a07005ca1518a7d3e153a" origin="Verified"/>
@@ -341,6 +346,11 @@
       <component group="com.fasterxml.jackson.core" name="jackson-core" version="2.14.1">
          <artifact name="jackson-core-2.14.1.jar">
             <sha256 value="0114187e296b34c931c1bf9e5a84152b62bfab7d182f5623f3982dc2da35e526" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="com.fasterxml.jackson.core" name="jackson-core" version="2.15.4">
+         <artifact name="jackson-core-2.15.4.jar">
+            <sha256 value="8dc9210dd285db366f45f518dd1e6a9ccfeb0f1a8e184a899fe96d29edf1fd94" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.fasterxml.jackson.core" name="jackson-databind" version="2.10.5.1">
@@ -361,6 +371,11 @@
             <sha256 value="423a0c806de4b3fa5eb4a28698305e3a3777c731e1bcfa1b2f3a3760c7b6e773" origin="Verified"/>
          </artifact>
       </component>
+      <component group="com.fasterxml.jackson.core" name="jackson-databind" version="2.15.4">
+         <artifact name="jackson-databind-2.15.4.jar">
+            <sha256 value="0f99ff7719eef3ee85608b3dee6ecf3c698003fe9d6e34eabbfabccdc9b5ac2c" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="com.fasterxml.jackson.dataformat" name="jackson-dataformat-xml" version="2.12.4">
          <artifact name="jackson-dataformat-xml-2.12.4.jar">
             <sha256 value="4f9e98e3aaab049cfd67c410881031ccea2c2c289e8656499bc55187c80e5503" origin="Verified"/>
@@ -372,6 +387,11 @@
       <component group="com.fasterxml.jackson.dataformat" name="jackson-dataformat-xml" version="2.14.1">
          <artifact name="jackson-dataformat-xml-2.14.1.jar">
             <sha256 value="90fa6199c194cf3bad58073d3913b3e8a812d06a5db16faa554ba10f5d859436" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="com.fasterxml.jackson.dataformat" name="jackson-dataformat-xml" version="2.15.4">
+         <artifact name="jackson-dataformat-xml-2.15.4.jar">
+            <sha256 value="90d8109cda7b90c494a7bfde44e96e2fa25021191b67a5924dfa5cbd698025c3" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.fasterxml.jackson.module" name="jackson-module-jaxb-annotations" version="2.12.4">
@@ -393,6 +413,11 @@
       <component group="com.fasterxml.woodstox" name="woodstox-core" version="6.4.0">
          <artifact name="woodstox-core-6.4.0.jar">
             <sha256 value="d6eb9f2f40049a7a808baf11ffba0737648e62ff52fde9271d808e5d57a27279" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="com.fasterxml.woodstox" name="woodstox-core" version="6.5.1">
+         <artifact name="woodstox-core-6.5.1.jar">
+            <sha256 value="c928d60665c6415fb1c39775cf95cfc44f7f4580cf5ab01b1c380ebffd76887f" origin="Verified"/>
          </artifact>
       </component>
       <component group="com.github.hierynomus.license" name="com.github.hierynomus.license.gradle.plugin" version="0.16.1">
@@ -2637,6 +2662,11 @@
       <component group="org.jfrog.buildinfo" name="build-info-extractor-gradle" version="5.2.5">
          <artifact name="build-info-extractor-gradle-5.2.5.jar">
             <sha256 value="11dfff60a6b351034a589e08f148c1007ec24a08237b62e5c0c8be043b723f64" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="org.jfrog.buildinfo" name="build-info-extractor-gradle" version="6.0.4">
+         <artifact name="build-info-extractor-gradle-6.0.4.jar">
+            <sha256 value="600c9fea2dfc79d6b7939cd3038d9dbaa7a408c7c5542d63be0f12c73527421c" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.jfrog.filespecs" name="file-specs-java" version="1.1.0">

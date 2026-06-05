@@ -13,7 +13,7 @@ plugins {
     groovy
     jacoco
     `maven-publish`
-    id("com.jfrog.artifactory") version "5.2.5"
+    id("com.jfrog.artifactory") version "6.0.4"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
     id("org.cyclonedx.bom") version "1.5.0"
@@ -187,42 +187,39 @@ tasks.register<DownloadMavenArtifactsAndPublishToGradlePluginPortal>("downloadMa
     version = project.version as String
 }
 
-// `afterEvaluate` is required to inject configurable properties; see https://github.com/jfrog/artifactory-gradle-plugin/issues/71#issuecomment-1734977528
-project.afterEvaluate {
-    artifactory {
-        clientConfig.isIncludeEnvVars = true
-        clientConfig.envVarsExcludePatterns =
-            "*password*,*PASSWORD*,*secret*,*MAVEN_CMD_LINE_ARGS*,sun.java.command,*token*,*TOKEN*,*LOGIN*,*login*,*KEY*,*signing*"
-        setContextUrl(System.getenv("ARTIFACTORY_URL"))
-        publish {
-            repository {
-                setRepoKey(System.getenv("ARTIFACTORY_DEPLOY_REPO"))
-                setUsername(System.getenv("ARTIFACTORY_DEPLOY_USERNAME"))
-                setPassword(System.getenv("ARTIFACTORY_DEPLOY_PASSWORD"))
-            }
-            defaults {
-                setProperty(
-                    "properties",
-                    mapOf(
-                        "build.name" to "sonar-scanner-gradle",
-                        "build.number" to System.getenv("BUILD_NUMBER"),
-                        "pr.branch.target" to System.getenv("PULL_REQUEST_BRANCH_TARGET"),
-                        "pr.number" to System.getenv("PULL_REQUEST_NUMBER"),
-                        "vcs.branch" to System.getenv("GIT_BRANCH"),
-                        "vcs.revision" to System.getenv("GIT_COMMIT"),
-                        "version" to project.version as String,
-                    )
-                )
-                publications("pluginMaven")
-                setPublishPom(true)
-                setPublishIvy(false)
-            }
+artifactory {
+    clientConfig.isIncludeEnvVars = true
+    clientConfig.envVarsExcludePatterns =
+        "*password*,*PASSWORD*,*secret*,*MAVEN_CMD_LINE_ARGS*,sun.java.command,*token*,*TOKEN*,*LOGIN*,*login*,*KEY*,*signing*"
+    setContextUrl(System.getenv("ARTIFACTORY_URL"))
+    publish {
+        repository {
+            setRepoKey(System.getenv("ARTIFACTORY_DEPLOY_REPO"))
+            setUsername(System.getenv("ARTIFACTORY_DEPLOY_USERNAME"))
+            setPassword(System.getenv("ARTIFACTORY_DEPLOY_PASSWORD"))
         }
-        clientConfig.info.buildName = "sonar-scanner-gradle"
-        clientConfig.info.buildNumber = System.getenv("BUILD_NUMBER")
-        // The name of this variable is important because it's used by the delivery process when extracting version from Artifactory build info.
-        clientConfig.info.addEnvironmentProperty("PROJECT_VERSION", version.toString())
+        defaults {
+            setProperty(
+                "properties",
+                mapOf(
+                    "build.name" to "sonar-scanner-gradle",
+                    "build.number" to System.getenv("BUILD_NUMBER"),
+                    "pr.branch.target" to System.getenv("PULL_REQUEST_BRANCH_TARGET"),
+                    "pr.number" to System.getenv("PULL_REQUEST_NUMBER"),
+                    "vcs.branch" to System.getenv("GIT_BRANCH"),
+                    "vcs.revision" to System.getenv("GIT_COMMIT"),
+                    "version" to project.version as String,
+                )
+            )
+            publications("pluginMaven")
+            setPublishPom(true)
+            setPublishIvy(false)
+        }
     }
+    clientConfig.info.buildName = "sonar-scanner-gradle"
+    clientConfig.info.buildNumber = System.getenv("BUILD_NUMBER")
+    // The name of this variable is important because it's used by the delivery process when extracting version from Artifactory build info.
+    clientConfig.info.addEnvironmentProperty("PROJECT_VERSION", version.toString())
 }
 
 tasks.processResources {
