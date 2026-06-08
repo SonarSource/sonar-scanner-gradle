@@ -244,12 +244,7 @@ signing {
     setRequired {
         doArtifactsRequireSignature()
     }
-}
-
-plugins.withId("maven-publish") {
-    signing {
-        sign(publishing.publications)
-    }
+    sign(publishing.publications)
 }
 
 tasks.withType<Sign>().configureEach {
@@ -258,7 +253,7 @@ tasks.withType<Sign>().configureEach {
     }
 }
 
-tasks.named("artifactoryPublish").configure {
+tasks.named("artifactoryPublish") {
     dependsOn(tasks.withType<Sign>())
 }
 
