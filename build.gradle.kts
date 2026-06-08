@@ -247,7 +247,7 @@ signing {
     sign(publishing.publications)
 }
 
-tasks.withType<Sign>().configureEach {
+tasks.withType<Sign>() {
     onlyIf {
         doArtifactsRequireSignature()
     }
