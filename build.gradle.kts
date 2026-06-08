@@ -132,10 +132,10 @@ tasks.cyclonedxBom {
     outputs.upToDateWhen { false }
 }
 
-val bomArtifact = artifacts.add("archives", bomFile) {
+val bomArtifact = artifacts.add("archives", bomFile.get().asFile) {
     type = "json"
     classifier = "cyclonedx"
-    builtBy(tasks.named("cyclonedxBom"))
+    builtBy("cyclonedxBom")
 }
 
 tasks.artifactoryPublish {
@@ -143,33 +143,35 @@ tasks.artifactoryPublish {
 }
 
 publishing {
-    publications.withType<MavenPublication>().configureEach {
-        pom {
-            name.set(projectTitle)
-            description.set(project.description)
-            url.set(docUrl)
-            organization {
-                name.set("SonarSource")
-                url.set("http://www.sonarqube.org/")
-            }
-            licenses {
-                license {
-                    name.set("GNU LPGL 3")
-                    url.set("http://www.gnu.org/licenses/lgpl.txt")
-                    distribution.set("repo")
+    publications {
+        create<MavenPublication>("pluginMaven") {
+            pom {
+                name.set(projectTitle)
+                description.set(project.description)
+                url.set(docUrl)
+                organization {
+                    name.set("SonarSource")
+                    url.set("http://www.sonarqube.org/")
+                }
+                licenses {
+                    license {
+                        name.set("GNU LPGL 3")
+                        url.set("http://www.gnu.org/licenses/lgpl.txt")
+                        distribution.set("repo")
+                    }
+                }
+                scm {
+                    url.set(githubUrl)
+                }
+                developers {
+                    developer {
+                        id.set("sonarsource-team")
+                        name.set("SonarSource Team")
+                    }
                 }
             }
-            scm {
-                url.set(githubUrl)
-            }
-            developers {
-                developer {
-                    id.set("sonarsource-team")
-                    name.set("SonarSource Team")
-                }
-            }
+            artifact(bomArtifact)
         }
-        artifact(bomArtifact)
     }
 }
 
