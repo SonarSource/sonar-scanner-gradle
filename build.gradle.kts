@@ -138,10 +138,6 @@ val bomArtifact = artifacts.add("archives", bomFile.get().asFile) {
     builtBy("cyclonedxBom")
 }
 
-tasks.artifactoryPublish {
-    mustRunAfter(getTasksByName("cyclonedxBom", true))
-}
-
 publishing {
     publications {
         create<MavenPublication>("pluginMaven") {
