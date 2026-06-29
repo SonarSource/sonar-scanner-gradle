@@ -1,5 +1,5 @@
 [tools]
-java = ["21", "17", "11"]
+java = ["21", "17", "11", "8"]
 maven = "3.9"
 gradle = "9"
 
@@ -7,3 +7,4 @@ gradle = "9"
 "11" = "corretto-11"
 "17" = "corretto-17"
 "21" = "corretto-21"
+"8" = "corretto-8.492.09.2"
