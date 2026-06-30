@@ -22,6 +22,7 @@ package org.sonarqube.gradle
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.IgnoreIf
+import spock.lang.Requires
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -800,37 +801,40 @@ class FunctionalTests extends Specification {
 
   }
 
+  @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
   def "KMP Android resolver sources do not duplicate KMP source directories"() {
     given:
-    def kmpAndroidProjectDir = projectDir("kmp-android-double-indexing")
+    // KMP Android uses AGP 9 APIs that the plugin under test cannot see through TestKit's usual withPluginClasspath() classloader.
+    // This fixture keeps Sonar and AGP on the buildscript classpath so the public sonar task can exercise the real resolver flow.
+    def kmpAndroidProjectDir = kmpAndroidProject()
 
     when:
     def result = GradleRunner.create()
       .withProjectDir(kmpAndroidProjectDir.toFile())
       .withGradleVersion("9.5.1")
       .forwardOutput()
-      .withArguments(':neem:sonarResolver', '--info')
-      .withPluginClasspath()
+      .withArguments(
+        'sonar',
+        '--info',
+        '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(),
+        '-DsonarPluginClasspath=' + pluginClasspath()
+      )
       .build()
 
     then:
-    result.task(":neem:sonarResolver").getOutcome() == SUCCESS
+    result.task(":sonar").getOutcome() == SUCCESS
 
-    def androidMain = kmpAndroidProjectDir.resolve("neem/src/androidMain/kotlin").toAbsolutePath().toString()
-    def commonMain = kmpAndroidProjectDir.resolve("neem/src/commonMain/kotlin").toAbsolutePath().toString()
-    def androidUnitTest = kmpAndroidProjectDir.resolve("neem/src/androidUnitTest/kotlin").toAbsolutePath().toString()
-    def properties = [
-      ":neem.sonar.sources": [androidMain, commonMain].join(","),
-      ":neem.sonar.tests"  : androidUnitTest
-    ] as Map<String, String>
+    def props = new Properties()
+    props.load(outFile.newDataInputStream())
 
-    SonarTask.processResolverFile(kmpAndroidProjectDir.resolve("neem/build/sonar-resolver/properties").toFile(), properties)
+    def androidMain = kmpAndroidProjectDir.resolve("neem/src/androidMain/kotlin").toAbsolutePath().normalize().toString()
+    def commonMain = kmpAndroidProjectDir.resolve("neem/src/commonMain/kotlin").toAbsolutePath().normalize().toString()
+    def androidUnitTest = kmpAndroidProjectDir.resolve("neem/src/androidUnitTest/kotlin").toAbsolutePath().normalize().toString()
+    def sources = dumpedPaths(props, ":neem.sonar.sources")
+    def tests = dumpedPaths(props, ":neem.sonar.tests")
 
-    def sources = normalizedPaths(properties.get(":neem.sonar.sources"))
-    def tests = normalizedPaths(properties.get(":neem.sonar.tests"))
-
-    assertThat(sources).contains(Path.of(androidMain).normalize().toString())
-    assertThat(tests).contains(Path.of(androidUnitTest).normalize().toString())
+    assertThat(sources).contains(androidMain, commonMain)
+    assertThat(tests).contains(androidUnitTest)
     assertThat(sources).doesNotHaveDuplicates()
     assertThat(tests).doesNotHaveDuplicates()
   }
@@ -866,10 +870,55 @@ class FunctionalTests extends Specification {
     return Path.of("src", "test", "projects", project)
   }
 
-  private static List<String> normalizedPaths(String paths) {
-    return SonarUtils.splitAsCsv(paths)
+  private Path kmpAndroidProject() {
+    def fixtureDir = projectDir("kmp-android-double-indexing")
+    def targetDir = projectDir.resolve("kmp-android-double-indexing")
+    Files.createDirectories(targetDir)
+    Files.copy(fixtureDir.resolve("settings.gradle.kts"), targetDir.resolve("settings.gradle.kts"))
+    Files.copy(fixtureDir.resolve("gradle.properties"), targetDir.resolve("gradle.properties"))
+    Files.copy(fixtureDir.resolve("build.gradle.kts"), targetDir.resolve("build.gradle.kts"))
+    Files.createDirectories(targetDir.resolve("neem"))
+    Files.copy(fixtureDir.resolve("neem/build.gradle.kts"), targetDir.resolve("neem/build.gradle.kts"))
+    copyDirectory(fixtureDir.resolve("neem/src"), targetDir.resolve("neem/src"))
+    // Android SDK locations are machine-local, so the checked-in fixture must not hardcode one.
+    targetDir.resolve("local.properties") << "sdk.dir=${androidSdkPath()}\n"
+    return targetDir
+  }
+
+  private String pluginClasspath() {
+    return getClass().classLoader.getResource("plugin-under-test-metadata.properties")
+      .withInputStream { stream ->
+        def props = new Properties()
+        props.load(stream)
+        return props.getProperty("implementation-classpath")
+      }
+  }
+
+  private static List<String> dumpedPaths(Properties properties, String propertyName) {
+    return properties.getProperty(propertyName, "").split(",")
       .findAll { !it.isBlank() }
       .collect { Path.of(it).toAbsolutePath().normalize().toString() }
+  }
+
+  private static String androidSdkPath() {
+    return (System.getenv("ANDROID_HOME")
+      ?: System.getenv("ANDROID_SDK_ROOT")
+      ?: Path.of(System.getProperty("user.home"), "Android", "Sdk").toString())
+      .replace("\\", "\\\\")
+  }
+
+  private static void copyDirectory(Path sourceDir, Path targetDir) {
+    Files.walk(sourceDir).withCloseable { paths ->
+      paths.forEach { source ->
+        def target = targetDir.resolve(sourceDir.relativize(source).toString())
+        if (Files.isDirectory(source)) {
+          Files.createDirectories(target)
+        } else {
+          Files.createDirectories(target.parent)
+          Files.copy(source, target)
+        }
+      }
+    }
   }
 
   // some analyzer accept and expand path containing wildcards, they must not be removed
