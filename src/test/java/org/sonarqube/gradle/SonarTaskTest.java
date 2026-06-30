@@ -27,8 +27,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -241,6 +245,51 @@ class SonarTaskTest {
       Map.of(
         "sonar.sources", expectedValue
       )
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("deduplicatedAndroidSourcePaths")
+  void resolveAndroidSources_deduplicatesExistingPaths(String existingPath, String resolvedPath, @TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+
+    File sourceDirectory = new File(tempDir, existingPath);
+    sourceDirectory.mkdirs();
+    properties.put("sonar.sources", sourceDirectory.getAbsolutePath());
+
+    File sameDirectory = new File(tempDir, resolvedPath);
+    SonarTask.resolveAndroidSources(projectProperties, List.of(sameDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+      .containsExactly(sourceDirectory.getAbsolutePath());
+  }
+
+  static Stream<Arguments> deduplicatedAndroidSourcePaths() {
+    return Stream.of(
+      Arguments.of("src/main/java", "src/main/java"),
+      Arguments.of("src/main/java", "src/main/../main/java")
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("notNormalizedExistingAndroidSourcePaths")
+  void resolveAndroidSources_preservesExistingPathWhenItCannotBeNormalized(String existingPath, @TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("sonar.sources", existingPath);
+
+    File sourceDirectory = new File(tempDir, "src/main/java");
+    sourceDirectory.mkdirs();
+
+    SonarTask.resolveAndroidSources(projectProperties, List.of(sourceDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+      .containsExactly(existingPath, sourceDirectory.getAbsolutePath());
+  }
+
+  static Stream<Arguments> notNormalizedExistingAndroidSourcePaths() {
+    return Stream.of(
+      Arguments.of("**/*"),
+      Arguments.of("invalid\0path")
     );
   }
 
