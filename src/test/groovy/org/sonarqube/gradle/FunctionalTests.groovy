@@ -800,6 +800,41 @@ class FunctionalTests extends Specification {
 
   }
 
+  def "KMP Android resolver sources do not duplicate KMP source directories"() {
+    given:
+    def kmpAndroidProjectDir = projectDir("kmp-android-double-indexing")
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(kmpAndroidProjectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withArguments(':neem:sonarResolver', '--info')
+      .withPluginClasspath()
+      .build()
+
+    then:
+    result.task(":neem:sonarResolver").getOutcome() == SUCCESS
+
+    def androidMain = kmpAndroidProjectDir.resolve("neem/src/androidMain/kotlin").toAbsolutePath().toString()
+    def commonMain = kmpAndroidProjectDir.resolve("neem/src/commonMain/kotlin").toAbsolutePath().toString()
+    def androidUnitTest = kmpAndroidProjectDir.resolve("neem/src/androidUnitTest/kotlin").toAbsolutePath().toString()
+    def properties = [
+      ":neem.sonar.sources": [androidMain, commonMain].join(","),
+      ":neem.sonar.tests"  : androidUnitTest
+    ] as Map<String, String>
+
+    SonarTask.processResolverFile(kmpAndroidProjectDir.resolve("neem/build/sonar-resolver/properties").toFile(), properties)
+
+    def sources = normalizedPaths(properties.get(":neem.sonar.sources"))
+    def tests = normalizedPaths(properties.get(":neem.sonar.tests"))
+
+    assertThat(sources).contains(Path.of(androidMain).normalize().toString())
+    assertThat(tests).contains(Path.of(androidUnitTest).normalize().toString())
+    assertThat(sources).doesNotHaveDuplicates()
+    assertThat(tests).doesNotHaveDuplicates()
+  }
+
    def "check sonar and sonarResolver are not up to date"() {
      given:
      settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -829,6 +864,12 @@ class FunctionalTests extends Specification {
 
   private Path projectDir(String project) {
     return Path.of("src", "test", "projects", project)
+  }
+
+  private static List<String> normalizedPaths(String paths) {
+    return SonarUtils.splitAsCsv(paths)
+      .findAll { !it.isBlank() }
+      .collect { Path.of(it).toAbsolutePath().normalize().toString() }
   }
 
   // some analyzer accept and expand path containing wildcards, they must not be removed
