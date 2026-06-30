@@ -827,7 +827,7 @@ class FunctionalTests extends Specification {
    }
 
   private Path projectDir(String project) {
-    return Path.of(this.class.getResource("/projects/"+project).toURI())
+    return Path.of("src", "test", "projects", project)
   }
 
   // some analyzer accept and expand path containing wildcards, they must not be removed
