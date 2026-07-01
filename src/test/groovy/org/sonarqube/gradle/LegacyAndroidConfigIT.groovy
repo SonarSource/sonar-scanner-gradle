@@ -32,58 +32,68 @@ import java.nio.file.Path
  * Integration tests for AndroidUtils. Uses gradle testkit to run tests against real Gradle builds.
  */
 class LegacyAndroidConfigIT extends Specification {
-    @TempDir
-    Path projectDir
-    Path settingsFile
-    Path buildFile
-    Path outFile
-    Path manifestFile
+  @TempDir
+  Path projectDir
+  Path settingsFile
+  Path buildFile
+  Path outFile
+  Path manifestFile
 
-    def setup() {
-        settingsFile = projectDir.resolve('settings.gradle')
-        buildFile = projectDir.resolve('build.gradle')
-        outFile = projectDir.resolve('out.properties')
-        def manifestDir = projectDir.resolve('src').resolve('main')
-        manifestDir.toFile().mkdirs()
-        manifestFile = manifestDir.resolve('AndroidManifest.xml')
-    }
+  def setup() {
+    settingsFile = projectDir.resolve('settings.gradle')
+    buildFile = projectDir.resolve('build.gradle')
+    outFile = projectDir.resolve('out.properties')
+    def manifestDir = projectDir.resolve('src').resolve('main')
+    manifestDir.toFile().mkdirs()
+    manifestFile = manifestDir.resolve('AndroidManifest.xml')
+  }
 
-    /**
-     * Gets the combined classpath including both the plugin under test and Android Gradle Plugin.
-     * This is needed because Android classes must be visible to the SonarQube plugin during the test.
-     */
-    private List<File> getPluginClasspathWithAndroid() {
-        def pluginClasspath = getClass().classLoader.getResource("plugin-under-test-metadata.properties")
-            .withInputStream { stream ->
-                def props = new Properties()
-                props.load(stream)
-                props.getProperty("implementation-classpath")
-                    .split(File.pathSeparator)
-                    .collect { new File(it) }
-            }
+  /**
+   * Gets the combined classpath including both the plugin under test and Android Gradle Plugin.
+   * This is needed because Android classes must be visible to the SonarQube plugin during the test.
+   */
+  private List<File> getPluginClasspathWithAndroid() {
+    def pluginClasspath = getClass().classLoader.getResource("plugin-under-test-metadata.properties")
+      .withInputStream { stream ->
+        def props = new Properties()
+        props.load(stream)
+        props.getProperty("implementation-classpath")
+          .split(File.pathSeparator)
+          .collect { new File(it) }
+      }
 
-        // Add ALL jars from the test classpath to ensure Android plugin has all its dependencies
-        def testClasspath = System.getProperty("java.class.path")
-            .split(File.pathSeparator)
-            .collect { new File(it) }
-            .findAll { file ->
-                // Only include jar files and class directories (exclude gradle wrapper, etc.)
-                file.name.endsWith(".jar") || file.isDirectory()
-            }
+    // Add jars from the test classpath so AGP types are visible to the SonarQube plugin classloader (TestKit's withPluginClasspath alone wouldn't see AGP from the innerbuild's
+    // buildscript classpath). We exclude things that belong to the host build only: the host Gradle distribution's generated jars (TestKit's inner Gradle brings its own), the
+    // Groovy runtime (idem), and the test frameworks (Spock/JUnit/etc. would clash withthe inner Gradle's Groovy version).
+    def excludedNamePrefixes = [
+      "spock-",
+      "groovy-",
+      "junit-",
+      "assertj-",
+      "mockito-"
+    ]
+    def testClasspath = System.getProperty("java.class.path")
+      .split(File.pathSeparator)
+      .collect { new File(it) }
+      .findAll { file ->
+        (file.name.endsWith(".jar") || file.isDirectory()) &&
+          !file.absolutePath.contains(File.separator + "generated-gradle-jars" + File.separator) &&
+          !excludedNamePrefixes.any { prefix -> file.name.startsWith(prefix) }
+      }
 
-        return (pluginClasspath + testClasspath).unique()
-    }
+    return (pluginClasspath + testClasspath).unique()
+  }
 
-    @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
-    def "Libraries of android project are correctly retrieved"() {
-        given: "a simple android project"
-        settingsFile << "rootProject.name = 'java-task-toolchains'"
-        manifestFile << """<?xml version="1.0" encoding="utf-8"?>
+  @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
+  def "Libraries of android project are correctly retrieved"() {
+    given: "a simple android project"
+    settingsFile << "rootProject.name = 'java-task-toolchains'"
+    manifestFile << """<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
           </manifest>
         """
 
-        buildFile << """
+    buildFile << """
 
         buildscript {
             repositories {
@@ -115,64 +125,66 @@ class LegacyAndroidConfigIT extends Specification {
         }
         """
 
-        when: "run sonarResolver task"
-        // Agent are not supported with Gradle TestKit and configuration cache
-        if (!useConfigCache) {
-            FunctionalTests.configureJacocoGradleTestkitPlugin(projectDir)
-        }
-        def result = GradleRunner.create()
-          .withProjectDir(projectDir.toFile())
-          .forwardOutput()
-          .withArguments([useConfigCache ? '--configuration-cache' : null, '--stacktrace', ':sonarResolver'].findAll { it != null })
-          .withPluginClasspath(getPluginClasspathWithAndroid())
-          .build()
-
-        then: "sonarResolver task is successful"
-        result.task(":sonarResolver").outcome == TaskOutcome.SUCCESS
-
-        when: "Read properties from where sonarResolver actually writes them (JSON format)"
-        def propertiesFile = projectDir.resolve('build').resolve('sonar-resolver').resolve('properties').toFile()
-        def json = new JsonSlurper().parse(propertiesFile)
-
-        then: "properties file exists and contains expected values"
-        propertiesFile.exists()
-        json.projectName == ":"
-        json.mainLibraries != null
-        json.mainLibraries.any { it.contains("android.jar") }
-        json.mainLibraries.any { it.contains("joda-time-2.7") }
-        json.mainLibraries.every { !it.contains("junit-4.12") }
-
-        json.testLibraries != null
-        json.testLibraries.any { it.contains("android.jar") }
-        json.testLibraries.any { it.contains("joda-time-2.7") }
-        json.testLibraries.any { it.contains("junit-4.12") }
-
-        when: "Run sonar task"
-
-        def arguments = [useConfigCache ? '--configuration-cache' : null, '--stacktrace', 'sonar',
-                         '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath()].findAll { it != null }
-        def sonarResult = GradleRunner.create()
-          .withProjectDir(projectDir.toFile())
-          .forwardOutput()
-          .withArguments(arguments)
-          .withPluginClasspath(getPluginClasspathWithAndroid())
-          .build()
-
-        then: "sonar task is successful"
-        sonarResult.task(":sonar").outcome == TaskOutcome.SUCCESS
-
-        then: "output file contains expected values"
-        def props = new Properties()
-        props.load(outFile.newDataInputStream())
-        props."sonar.java.libraries".contains("android.jar")
-        props."sonar.java.libraries".contains("joda-time-2.7")
-        !props."sonar.java.libraries".contains("junit-4.12")
-
-        props."sonar.java.test.libraries".contains("android.jar")
-        props."sonar.java.test.libraries".contains("joda-time-2.7")
-        props."sonar.java.test.libraries".contains("junit-4.12")
-
-        where:
-        useConfigCache << [true, false]
+    when: "run sonarResolver task"
+    // Agent are not supported with Gradle TestKit and configuration cache
+    if (!useConfigCache) {
+      FunctionalTests.configureJacocoGradleTestkitPlugin(projectDir)
     }
+    def result = GradleRunner.create()
+      .withGradleVersion("8.14")
+      .withProjectDir(projectDir.toFile())
+      .forwardOutput()
+      .withArguments([useConfigCache ? '--configuration-cache' : null, '--stacktrace', ':sonarResolver'].findAll { it != null })
+      .withPluginClasspath(getPluginClasspathWithAndroid())
+      .build()
+
+    then: "sonarResolver task is successful"
+    result.task(":sonarResolver").outcome == TaskOutcome.SUCCESS
+
+    when: "Read properties from where sonarResolver actually writes them (JSON format)"
+    def propertiesFile = projectDir.resolve('build').resolve('sonar-resolver').resolve('properties').toFile()
+    def json = new JsonSlurper().parse(propertiesFile)
+
+    then: "properties file exists and contains expected values"
+    propertiesFile.exists()
+    json.projectName == ":"
+    json.mainLibraries != null
+    json.mainLibraries.any { it.contains("android.jar") }
+    json.mainLibraries.any { it.contains("joda-time-2.7") }
+    json.mainLibraries.every { !it.contains("junit-4.12") }
+
+    json.testLibraries != null
+    json.testLibraries.any { it.contains("android.jar") }
+    json.testLibraries.any { it.contains("joda-time-2.7") }
+    json.testLibraries.any { it.contains("junit-4.12") }
+
+    when: "Run sonar task"
+
+    def arguments = [useConfigCache ? '--configuration-cache' : null, '--stacktrace', 'sonar',
+                     '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath()].findAll { it != null }
+    def sonarResult = GradleRunner.create()
+      .withGradleVersion("8.14")
+      .withProjectDir(projectDir.toFile())
+      .forwardOutput()
+      .withArguments(arguments)
+      .withPluginClasspath(getPluginClasspathWithAndroid())
+      .build()
+
+    then: "sonar task is successful"
+    sonarResult.task(":sonar").outcome == TaskOutcome.SUCCESS
+
+    then: "output file contains expected values"
+    def props = new Properties()
+    props.load(outFile.newDataInputStream())
+    props."sonar.java.libraries".contains("android.jar")
+    props."sonar.java.libraries".contains("joda-time-2.7")
+    !props."sonar.java.libraries".contains("junit-4.12")
+
+    props."sonar.java.test.libraries".contains("android.jar")
+    props."sonar.java.test.libraries".contains("joda-time-2.7")
+    props."sonar.java.test.libraries".contains("junit-4.12")
+
+    where:
+    useConfigCache << [true, false]
+  }
 }
