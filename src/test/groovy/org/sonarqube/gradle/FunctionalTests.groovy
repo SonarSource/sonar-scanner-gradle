@@ -800,7 +800,7 @@ class FunctionalTests extends Specification {
 
   }
 
-   def "check sonar and sonarResolver are not up to date"() {
+   def "check sonarResolver can be up to date while sonar is not"() {
      given:
      settingsFile << "rootProject.name = 'java-task-toolchains'"
      buildFile << """
@@ -823,7 +823,7 @@ class FunctionalTests extends Specification {
      then:
      assert run1.task(":sonar").getOutcome() == SUCCESS
      assert run2.task(":sonar").getOutcome() == SUCCESS
-     assert run2.getOutput().contains("':sonarResolver' is not up-to-date")
+     assert run2.task(":sonarResolver").getOutcome() == UP_TO_DATE
      assert run2.getOutput().contains("':sonar' is not up-to-date")
    }
 
