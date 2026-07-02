@@ -827,14 +827,12 @@ class FunctionalTests extends Specification {
     def props = new Properties()
     props.load(outFile.newDataInputStream())
 
-    def androidMain = kmpAndroidProjectDir.resolve("neem/src/androidMain/kotlin").toAbsolutePath().normalize().toString()
-    def commonMain = kmpAndroidProjectDir.resolve("neem/src/commonMain/kotlin").toAbsolutePath().normalize().toString()
-    def androidUnitTest = kmpAndroidProjectDir.resolve("neem/src/androidUnitTest/kotlin").toAbsolutePath().normalize().toString()
-    def sources = dumpedPaths(props, ":neem.sonar.sources")
-    def tests = dumpedPaths(props, ":neem.sonar.tests")
+    def kmpModuleDir = kmpAndroidProjectDir.resolve("neem")
+    def sources = dumpedPathsRelativeTo(props, ":neem.sonar.sources", kmpModuleDir)
+    def tests = dumpedPathsRelativeTo(props, ":neem.sonar.tests", kmpModuleDir)
 
-    assertThat(sources).contains(androidMain, commonMain)
-    assertThat(tests).contains(androidUnitTest)
+    assertThat(sources).contains("src/androidMain/kotlin", "src/commonMain/kotlin")
+    assertThat(tests).contains("src/androidUnitTest/kotlin")
     assertThat(sources).doesNotHaveDuplicates()
     assertThat(tests).doesNotHaveDuplicates()
   }
@@ -898,6 +896,19 @@ class FunctionalTests extends Specification {
     return properties.getProperty(propertyName, "").split(",")
       .findAll { !it.isBlank() }
       .collect { Path.of(it).toAbsolutePath().normalize().toString() }
+  }
+
+  private static List<String> dumpedPathsRelativeTo(Properties properties, String propertyName, Path baseDir) {
+    def normalizedBaseDir = baseDir.toRealPath()
+    return dumpedPaths(properties, propertyName)
+      .collect { existingRealPathOrNormalizedPath(it) }
+      .findAll { it.startsWith(normalizedBaseDir) }
+      .collect { normalizedBaseDir.relativize(it).toString().replace(File.separator, '/') }
+  }
+
+  private static Path existingRealPathOrNormalizedPath(String path) {
+    def normalizedPath = Path.of(path).toAbsolutePath().normalize()
+    return Files.exists(normalizedPath) ? normalizedPath.toRealPath() : normalizedPath
   }
 
   private static String androidSdkPath() {
