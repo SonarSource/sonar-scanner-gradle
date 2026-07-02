@@ -26,12 +26,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -242,10 +244,36 @@ public class SonarTask extends ConventionTask {
     String property = isTest ? PROJECT_TEST_DIRS : PROJECT_SOURCE_DIRS;
     String propertyKey = isTopLevelProject ? property : (projectProperties.projectName + "." + property);
 
-    String sourcesString = properties.getOrDefault(propertyKey, "");
-    sourcesString = sourcesString.isEmpty() ? resolvedAsAString : (sourcesString + "," + resolvedAsAString);
-
+    String sourcesString = mergePathCsvWithoutDuplicates(properties.getOrDefault(propertyKey, ""), resolvedAsAString);
     properties.put(propertyKey, sourcesString);
+  }
+
+  private static String mergePathCsvWithoutDuplicates(String existingPaths, String resolvedPaths) {
+    Map<String, String> pathsByNormalizedPath = new LinkedHashMap<>();
+    List<String> paths = new ArrayList<>();
+    paths.addAll(SonarUtils.splitAsCsv(existingPaths));
+    paths.addAll(SonarUtils.splitAsCsv(resolvedPaths));
+
+    for (String path : paths) {
+      if (path.isBlank()) {
+        continue;
+      }
+      pathsByNormalizedPath.putIfAbsent(deduplicationKey(path), path);
+    }
+
+    return SonarUtils.joinAsCsv(new ArrayList<>(pathsByNormalizedPath.values()));
+  }
+
+  private static String deduplicationKey(String path) {
+    if (containsWildcard(path)) {
+      return path;
+    }
+
+    try {
+      return Path.of(path).toAbsolutePath().normalize().toString();
+    } catch (InvalidPathException e) {
+      return path;
+    }
   }
 
   /**
@@ -472,7 +500,7 @@ public class SonarTask extends ConventionTask {
 
   private static boolean isCompliantPath(String value, Predicate<Path> filter, boolean userDefined) {
     // We shouldn't filter paths containing wildcards, no matter if they were user-defined or not.
-    if (Set.of("*", "?", "${").stream().anyMatch(value::contains)) {
+    if (containsWildcard(value)) {
       return true;
     }
 
@@ -482,6 +510,10 @@ public class SonarTask extends ConventionTask {
     }
 
     return filter.test(Path.of(value));
+  }
+
+  private static boolean containsWildcard(String value) {
+    return Set.of("*", "?", "${").stream().anyMatch(value::contains);
   }
 
   private static boolean containsValidSources(Path path) {

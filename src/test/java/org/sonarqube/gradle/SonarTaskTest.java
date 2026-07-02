@@ -245,6 +245,94 @@ class SonarTaskTest {
   }
 
   @Test
+  void resolveAndroidSources_deduplicatesExistingSourcePaths(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+
+    File sourceDirectory = new File(tempDir, "src/main/java");
+    sourceDirectory.mkdirs();
+    properties.put("sonar.sources", sourceDirectory.getAbsolutePath());
+
+    SonarTask.resolveAndroidSources(projectProperties, List.of(sourceDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+      .containsExactly(sourceDirectory.getAbsolutePath());
+  }
+
+  @Test
+  void resolveAndroidSources_deduplicatesExistingTestPaths(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+
+    File testDirectory = new File(tempDir, "src/test/java");
+    testDirectory.mkdirs();
+    properties.put("sonar.tests", testDirectory.getAbsolutePath());
+
+    SonarTask.resolveAndroidSources(projectProperties, List.of(testDirectory), properties, true);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.tests")))
+      .containsExactly(testDirectory.getAbsolutePath());
+  }
+
+  @Test
+  void resolveAndroidSources_deduplicatesExistingSourcePathsForSubproject(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+    ProjectProperties subprojectProperties = new ProjectProperties.Builder(":subproject", false).build();
+
+    File sourceDirectory = new File(tempDir, "src/main/java");
+    sourceDirectory.mkdirs();
+    properties.put(":subproject.sonar.sources", sourceDirectory.getAbsolutePath());
+
+    SonarTask.resolveAndroidSources(subprojectProperties, List.of(sourceDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get(":subproject.sonar.sources")))
+      .containsExactly(sourceDirectory.getAbsolutePath());
+  }
+
+  @Test
+  void resolveAndroidSources_deduplicatesNormalizedSourcePaths(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+
+    File sourceDirectory = new File(tempDir, "src/main/java");
+    sourceDirectory.mkdirs();
+    properties.put("sonar.sources", sourceDirectory.getAbsolutePath());
+
+    File sameDirectory = new File(tempDir, "src/main/../main/java");
+    SonarTask.resolveAndroidSources(projectProperties, List.of(sameDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+      .containsExactly(sourceDirectory.getAbsolutePath());
+  }
+
+  @Test
+  void resolveAndroidSources_preservesExistingSourcePathWithWildcard(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+    String sourceWithWildcard = "**/*";
+    properties.put("sonar.sources", sourceWithWildcard);
+
+    File sourceDirectory = new File(tempDir, "src/main/java");
+    sourceDirectory.mkdirs();
+
+    SonarTask.resolveAndroidSources(projectProperties, List.of(sourceDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+      .containsExactly(sourceWithWildcard, sourceDirectory.getAbsolutePath());
+  }
+
+  @Test
+  void resolveAndroidSources_preservesExistingSourcePathWhenPathIsInvalid(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+    String invalidSourcePath = "invalid\0path";
+    properties.put("sonar.sources", invalidSourcePath);
+
+    File sourceDirectory = new File(tempDir, "src/main/java");
+    sourceDirectory.mkdirs();
+
+    SonarTask.resolveAndroidSources(projectProperties, List.of(sourceDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+      .containsExactly(invalidSourcePath, sourceDirectory.getAbsolutePath());
+  }
+
+  @Test
   void processResolverFile_skips_when_file_does_not_exist() {
     Map<String, String> result = new HashMap<>();
     File nonExistentFile = new File("non-existent-file.json");

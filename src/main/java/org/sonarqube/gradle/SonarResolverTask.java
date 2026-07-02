@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
@@ -157,7 +159,10 @@ public abstract class SonarResolverTask extends DefaultTask {
    * Returns the absolute paths of the files in the given FileCollection provider.
    * If the provider is null or the collection is empty, returns an empty list.
    */
-  private static List<String> getAbsolutePaths(Provider<FileCollection> fileCollection) {
+  private static List<String> getAbsolutePaths(@Nullable Provider<FileCollection> fileCollection) {
+    if (fileCollection == null) {
+      return Collections.emptyList();
+    }
     var collection = fileCollection.getOrNull();
     if (collection == null) {
       return Collections.emptyList();
