@@ -132,10 +132,15 @@ public abstract class SonarResolverTask extends DefaultTask {
    * Returns the absolute paths of the files in the given FileCollection.
    */
   private static List<String> getAbsolutePaths(FileCollection fileCollection) {
-    return SonarUtils.exists(fileCollection)
-      .stream()
-      .map(File::getAbsolutePath)
-      .collect(Collectors.toList());
+    try {
+      return SonarUtils.exists(fileCollection)
+        .stream()
+        .map(File::getAbsolutePath)
+        .collect(Collectors.toList());
+    } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING, "Failed to resolve file collection input; skipping it.", e);
+      return Collections.emptyList();
+    }
   }
 
   private static List<String> getAbsolutePaths(Provider<FileCollection> filesProvider) {
