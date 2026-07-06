@@ -46,6 +46,8 @@ public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_DESCRIPTION = "Resolves and serializes project information and classpath for SonarQube analysis.";
   private static final Logger LOGGER = Logger.getLogger(SonarResolverTask.class.getName());
 
+  private final ConfigurableFileCollection trackedCompileClasspath;
+  private final ConfigurableFileCollection trackedTestCompileClasspath;
   private Provider<FileCollection> compileClasspath;
   private Provider<FileCollection> testCompileClasspath;
   private Provider<FileCollection> legacyMainLibraries;
@@ -55,6 +57,8 @@ public abstract class SonarResolverTask extends DefaultTask {
   @Inject
   public SonarResolverTask() {
     super();
+    this.trackedCompileClasspath = getProject().files();
+    this.trackedTestCompileClasspath = getProject().files();
   }
 
 
@@ -66,10 +70,12 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
+    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getExistingRegularFiles));
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
+    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getExistingRegularFiles));
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
@@ -80,6 +86,16 @@ public abstract class SonarResolverTask extends DefaultTask {
   public void setLegacyTestLibraries(Provider<FileCollection> legacyTestLibraries) {
     this.legacyTestLibraries = legacyTestLibraries;
     this.getOutputs().upToDateWhen(task -> false);
+  }
+
+  @Classpath
+  public ConfigurableFileCollection getCompileClasspath() {
+    return trackedCompileClasspath;
+  }
+
+  @Classpath
+  public ConfigurableFileCollection getTestCompileClasspath() {
+    return trackedTestCompileClasspath;
   }
 
   @Classpath
@@ -129,6 +145,16 @@ public abstract class SonarResolverTask extends DefaultTask {
       }
       return SonarUtils.exists(files).stream()
         .map(File::getAbsolutePath)
+        .collect(Collectors.toList());
+    } catch (RuntimeException e) {
+      return Collections.emptyList();
+    }
+  }
+
+  private static List<File> getExistingRegularFiles(FileCollection fileCollection) {
+    try {
+      return SonarUtils.exists(fileCollection).stream()
+        .filter(File::isFile)
         .collect(Collectors.toList());
     } catch (RuntimeException e) {
       return Collections.emptyList();

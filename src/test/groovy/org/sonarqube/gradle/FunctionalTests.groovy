@@ -28,6 +28,8 @@ import spock.lang.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
 
 import static java.util.Objects.nonNull
 import static org.assertj.core.api.Assertions.assertThat
@@ -826,8 +828,60 @@ class FunctionalTests extends Specification {
      assert run2.getOutput().contains("':sonar' is not up-to-date")
    }
 
+   def "sonarResolver is not up to date when compile classpath changes"() {
+     given:
+     settingsFile << "rootProject.name = 'java-task-toolchains'"
+     def compileOnlyJar = projectDir.resolve("libs/compile-only.jar")
+     def testCompileOnlyJar = projectDir.resolve("libs/test-compile-only.jar")
+     writeJar(compileOnlyJar, "initial/CompileOnly.txt", "initial compile classpath")
+     writeJar(testCompileOnlyJar, "initial/TestCompileOnly.txt", "initial test compile classpath")
+     buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java'
+        }
+
+        dependencies {
+            compileOnly files('libs/compile-only.jar')
+            testCompileOnly files('libs/test-compile-only.jar')
+        }
+        """
+
+     when:
+     def command = GradleRunner.create()
+       .withProjectDir(projectDir.toFile())
+       .forwardOutput()
+       .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '--info')
+       .withPluginClasspath()
+
+     def run1 = command.build()
+     def run2 = command.build()
+     writeJar(compileOnlyJar, "changed/CompileOnly.txt", "changed compile classpath contents")
+     writeJar(testCompileOnlyJar, "changed/TestCompileOnly.txt", "changed test compile classpath contents")
+     def run3 = command.build()
+
+     then:
+     assert run1.task(":sonar").getOutcome() == SUCCESS
+     assert run2.task(":sonar").getOutcome() == SUCCESS
+     assert run2.task(":sonarResolver").getOutcome() == UP_TO_DATE
+     assert run3.task(":sonar").getOutcome() == SUCCESS
+     assert run3.task(":sonarResolver").getOutcome() == SUCCESS
+   }
+
   private Path projectDir(String project) {
     return Path.of(this.class.getResource("/projects/"+project).toURI())
+  }
+
+  private static void writeJar(Path jar, String entryName, String content) {
+    Files.createDirectories(jar.getParent())
+    Files.deleteIfExists(jar)
+    jar.toFile().withOutputStream { output ->
+      new JarOutputStream(output).withCloseable { jarOutput ->
+        jarOutput.putNextEntry(new JarEntry(entryName))
+        jarOutput.write(content.getBytes("UTF-8"))
+        jarOutput.closeEntry()
+      }
+    }
   }
 
   // some analyzer accept and expand path containing wildcards, they must not be removed
