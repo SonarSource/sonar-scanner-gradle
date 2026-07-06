@@ -21,6 +21,7 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -47,6 +48,8 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   private Provider<FileCollection> compileClasspath;
   private Provider<FileCollection> testCompileClasspath;
+  private Provider<FileCollection> legacyMainLibraries;
+  private Provider<FileCollection> legacyTestLibraries;
   private File outputDirectory;
 
   @Inject
@@ -67,6 +70,16 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
+  }
+
+  public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
+    this.legacyMainLibraries = legacyMainLibraries;
+    this.getOutputs().upToDateWhen(task -> false);
+  }
+
+  public void setLegacyTestLibraries(Provider<FileCollection> legacyTestLibraries) {
+    this.legacyTestLibraries = legacyTestLibraries;
+    this.getOutputs().upToDateWhen(task -> false);
   }
 
   @Classpath
@@ -122,6 +135,14 @@ public abstract class SonarResolverTask extends DefaultTask {
     }
   }
 
+  private static List<String> getAbsolutePaths(FileCollection fileCollection, Provider<FileCollection> additionalFilesProvider) {
+    List<String> filenames = new ArrayList<>(getAbsolutePaths(fileCollection));
+    if (additionalFilesProvider != null) {
+      filenames.addAll(getAbsolutePaths(additionalFilesProvider));
+    }
+    return filenames;
+  }
+
   @TaskAction
   void run() throws IOException {
     if (Boolean.TRUE.equals(getSkipProject().getOrElse(false))) {
@@ -135,8 +156,8 @@ public abstract class SonarResolverTask extends DefaultTask {
 
     List<String> compileClasspathFilenames = getAbsolutePaths(compileClasspath);
     List<String> testCompileClasspathFilenames = getAbsolutePaths(testCompileClasspath);
-    List<String> mainLibrariesFilenames = getAbsolutePaths(getMainLibraries());
-    List<String> testLibrariesFilenames = getAbsolutePaths(getTestLibraries());
+    List<String> mainLibrariesFilenames = getAbsolutePaths(getMainLibraries(), legacyMainLibraries);
+    List<String> testLibrariesFilenames = getAbsolutePaths(getTestLibraries(), legacyTestLibraries);
     List<String> androidSourcesFilenames = getAbsolutePaths(getAndroidSources());
     List<String> androidTestsFilenames = getAbsolutePaths(getAndroidTests());
 

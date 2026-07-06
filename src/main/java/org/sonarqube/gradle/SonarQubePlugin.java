@@ -136,8 +136,8 @@ public class SonarQubePlugin implements Plugin<Project> {
         );
       } else {
         resolverTaskProvider.configure(resolverTask -> {
-          resolverTask.getMainLibraries().setFrom(project.provider(() -> LegacyAndroidConfig.findMainLibraries(project)));
-          resolverTask.getTestLibraries().setFrom(project.provider(() -> LegacyAndroidConfig.findTestLibraries(project)));
+          resolverTask.setLegacyMainLibraries(project.provider(() -> LegacyAndroidConfig.findMainLibraries(project)));
+          resolverTask.setLegacyTestLibraries(project.provider(() -> LegacyAndroidConfig.findTestLibraries(project)));
           resolverTask.mustRunAfter(getAndroidTasks(project));
         });
       }
