@@ -147,6 +147,7 @@ public abstract class SonarResolverTask extends DefaultTask {
         .map(File::getAbsolutePath)
         .collect(Collectors.toList());
     } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING, "Failed to resolve file collection input; skipping it.", e);
       return Collections.emptyList();
     }
   }
@@ -157,6 +158,7 @@ public abstract class SonarResolverTask extends DefaultTask {
         .filter(File::isFile)
         .collect(Collectors.toList());
     } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING, "Failed to resolve file collection input; skipping it.", e);
       return Collections.emptyList();
     }
   }
