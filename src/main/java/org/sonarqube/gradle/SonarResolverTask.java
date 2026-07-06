@@ -35,6 +35,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
@@ -105,11 +106,11 @@ public abstract class SonarResolverTask extends DefaultTask {
   public abstract ConfigurableFileCollection getTestLibraries();
 
   @PathSensitive(PathSensitivity.RELATIVE)
-  @org.gradle.api.tasks.InputFiles
+  @InputFiles
   public abstract ConfigurableFileCollection getAndroidSources();
 
   @PathSensitive(PathSensitivity.RELATIVE)
-  @org.gradle.api.tasks.InputFiles
+  @InputFiles
   public abstract ConfigurableFileCollection getAndroidTests();
 
   public void setOutputDirectory(File outputDirectory) {
