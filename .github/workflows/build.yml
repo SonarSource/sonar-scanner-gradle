@@ -97,7 +97,10 @@ jobs:
       matrix:
         item:
         # Make sure to move `&latest-gradle-version` when adding a new test case with a new version.
-          - gradle_version: &latest-gradle-version "9.5.1"
+          - gradle_version: &latest-gradle-version "9.6.1"
+            android_gradle_version: "9.2.0"
+            java_version: "21"
+          - gradle_version: "9.5.1"
             android_gradle_version: "9.2.0"
             java_version: "21"
           - gradle_version: "9.4.1"

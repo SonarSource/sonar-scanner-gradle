@@ -26,7 +26,6 @@ import spock.lang.TempDir
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 
 class GradleKtsTests extends Specification {
     @TempDir
@@ -37,9 +36,7 @@ class GradleKtsTests extends Specification {
 
     def setup() {
         outFile = testProjectDir.resolve('out.properties')
-        // For JaCoCo coverage, see https://github.com/koral--/jacoco-gradle-testkit-plugin
-        InputStream is = GradleKtsTests.class.getClassLoader().getResourceAsStream('testkit-gradle.properties')
-        Files.copy(is, testProjectDir.resolve('gradle.properties'), StandardCopyOption.REPLACE_EXISTING)
+        TestKitGradleProperties.configure(testProjectDir)
     }
 
     def "add build and settings gradle files to sources when both are in kotlin dsl"() {
@@ -285,4 +282,3 @@ class GradleKtsTests extends Specification {
         return subProjectBuildFile
     }
 }
-
