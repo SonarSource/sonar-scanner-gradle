@@ -158,6 +158,14 @@ public abstract class SonarResolverTask extends DefaultTask {
     }
   }
 
+  private static List<String> getAbsolutePaths(FileCollection fileCollection, Provider<FileCollection> additionalFilesProvider) {
+    List<String> filenames = new ArrayList<>(getAbsolutePaths(fileCollection));
+    if (additionalFilesProvider != null) {
+      filenames.addAll(getAbsolutePaths(additionalFilesProvider));
+    }
+    return filenames;
+  }
+
   private static List<File> getExistingClasspathEntries(FileCollection fileCollection) {
     try {
       return SonarUtils.exists(fileCollection);
@@ -165,14 +173,6 @@ public abstract class SonarResolverTask extends DefaultTask {
       LOGGER.log(Level.WARNING, "Failed to resolve file collection input; skipping it.", e);
       return Collections.emptyList();
     }
-  }
-
-  private static List<String> getAbsolutePaths(FileCollection fileCollection, Provider<FileCollection> additionalFilesProvider) {
-    List<String> filenames = new ArrayList<>(getAbsolutePaths(fileCollection));
-    if (additionalFilesProvider != null) {
-      filenames.addAll(getAbsolutePaths(additionalFilesProvider));
-    }
-    return filenames;
   }
 
   @TaskAction
