@@ -248,6 +248,11 @@ public class SonarTask extends ConventionTask {
     properties.put(propertyKey, sourcesString);
   }
 
+  /**
+   * Merges existing entries before resolved entries so earlier values keep their original form when two paths
+   * deduplicate to the same key. Blank tokens are discarded. Wildcard paths and paths that cannot be normalized
+   * are deduplicated on their raw string value.
+   */
   private static String mergePathCsvWithoutDuplicates(String existingPaths, String resolvedPaths) {
     Map<String, String> pathsByNormalizedPath = new LinkedHashMap<>();
     List<String> paths = new ArrayList<>();
@@ -272,6 +277,7 @@ public class SonarTask extends ConventionTask {
     try {
       return Path.of(path).toAbsolutePath().normalize().toString();
     } catch (InvalidPathException e) {
+      LOGGER.debug("Could not normalize path '{}'; using raw value for deduplication.", path, e);
       return path;
     }
   }

@@ -250,25 +250,65 @@ class SonarTaskTest {
 
   @ParameterizedTest
   @MethodSource("deduplicatedAndroidSourcePaths")
-  void resolveAndroidSources_deduplicatesExistingPaths(String existingPath, String resolvedPath, @TempDir File tempDir) {
+  void resolveAndroidSources_deduplicatesExistingPathsAcrossProjectScopesAndPropertyTypes(String projectName, boolean isRootProject,
+    boolean isTest, String propertyKey, String existingPath, String resolvedPath, @TempDir File tempDir) {
     Map<String, String> properties = new HashMap<>();
+    ProjectProperties scopedProjectProperties = new ProjectProperties.Builder(projectName, isRootProject).build();
 
     File sourceDirectory = new File(tempDir, existingPath);
     sourceDirectory.mkdirs();
-    properties.put("sonar.sources", sourceDirectory.getAbsolutePath());
+    properties.put(propertyKey, sourceDirectory.getAbsolutePath());
 
     File sameDirectory = new File(tempDir, resolvedPath);
-    SonarTask.resolveAndroidSources(projectProperties, List.of(sameDirectory), properties, false);
+    SonarTask.resolveAndroidSources(scopedProjectProperties, List.of(sameDirectory), properties, isTest);
 
-    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+    assertThat(SonarUtils.splitAsCsv(properties.get(propertyKey)))
       .containsExactly(sourceDirectory.getAbsolutePath());
   }
 
   static Stream<Arguments> deduplicatedAndroidSourcePaths() {
     return Stream.of(
-      Arguments.of("src/main/java", "src/main/java"),
-      Arguments.of("src/main/java", "src/main/../main/java")
+      Arguments.of("", true, false, "sonar.sources", "src/main/java", "src/main/java"),
+      Arguments.of("", true, false, "sonar.sources", "src/main/java", "src/main/../main/java"),
+      Arguments.of("", true, true, "sonar.tests", "src/test/java", "src/test/java"),
+      Arguments.of("", true, true, "sonar.tests", "src/test/java", "src/test/../test/java"),
+      Arguments.of(":subproject", false, false, ":subproject.sonar.sources", "src/main/java", "src/main/java"),
+      Arguments.of(":subproject", false, false, ":subproject.sonar.sources", "src/main/java", "src/main/../main/java"),
+      Arguments.of(":subproject", false, true, ":subproject.sonar.tests", "src/test/java", "src/test/java"),
+      Arguments.of(":subproject", false, true, ":subproject.sonar.tests", "src/test/java", "src/test/../test/java")
     );
+  }
+
+  @Test
+  void resolveAndroidSources_keepsEarlierExistingEntryWhenEquivalentResolvedPathIsAdded(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+
+    File normalizedSourceDirectory = new File(tempDir, "src/main/java");
+    normalizedSourceDirectory.mkdirs();
+    String existingPath = new File(tempDir, "src/main/../main/java").getAbsolutePath();
+    properties.put("sonar.sources", existingPath);
+
+    SonarTask.resolveAndroidSources(projectProperties, List.of(normalizedSourceDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+      .containsExactly(existingPath);
+  }
+
+  @Test
+  void resolveAndroidSources_discardsBlankEntriesWhenMerging(@TempDir File tempDir) {
+    Map<String, String> properties = new HashMap<>();
+
+    File existingSourceDirectory = new File(tempDir, "src/main/java");
+    existingSourceDirectory.mkdirs();
+    properties.put("sonar.sources", "," + existingSourceDirectory.getAbsolutePath() + ",,   ,");
+
+    File resolvedSourceDirectory = new File(tempDir, "src/main/kotlin");
+    resolvedSourceDirectory.mkdirs();
+
+    SonarTask.resolveAndroidSources(projectProperties, List.of(resolvedSourceDirectory), properties, false);
+
+    assertThat(SonarUtils.splitAsCsv(properties.get("sonar.sources")))
+      .containsExactly(existingSourceDirectory.getAbsolutePath(), resolvedSourceDirectory.getAbsolutePath());
   }
 
   @ParameterizedTest
