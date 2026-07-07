@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -51,7 +52,9 @@ public abstract class SonarResolverTask extends DefaultTask {
   private final ConfigurableFileCollection trackedTestCompileClasspath;
   private Provider<FileCollection> compileClasspath;
   private Provider<FileCollection> testCompileClasspath;
+  @Nullable
   private Provider<FileCollection> legacyMainLibraries;
+  @Nullable
   private Provider<FileCollection> legacyTestLibraries;
   private File outputDirectory;
 
@@ -158,7 +161,7 @@ public abstract class SonarResolverTask extends DefaultTask {
     }
   }
 
-  private static List<String> getAbsolutePaths(FileCollection fileCollection, Provider<FileCollection> additionalFilesProvider) {
+  private static List<String> getAbsolutePaths(FileCollection fileCollection, @Nullable Provider<FileCollection> additionalFilesProvider) {
     List<String> filenames = new ArrayList<>(getAbsolutePaths(fileCollection));
     if (additionalFilesProvider != null) {
       filenames.addAll(getAbsolutePaths(additionalFilesProvider));
