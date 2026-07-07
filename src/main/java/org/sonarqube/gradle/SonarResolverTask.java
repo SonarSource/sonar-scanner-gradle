@@ -71,12 +71,12 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
-    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getExistingRegularFiles));
+    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getExistingClasspathEntries));
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
-    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getExistingRegularFiles));
+    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getExistingClasspathEntries));
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
@@ -158,11 +158,9 @@ public abstract class SonarResolverTask extends DefaultTask {
     }
   }
 
-  private static List<File> getExistingRegularFiles(FileCollection fileCollection) {
+  private static List<File> getExistingClasspathEntries(FileCollection fileCollection) {
     try {
-      return SonarUtils.exists(fileCollection).stream()
-        .filter(File::isFile)
-        .collect(Collectors.toList());
+      return SonarUtils.exists(fileCollection);
     } catch (RuntimeException e) {
       LOGGER.log(Level.WARNING, "Failed to resolve file collection input; skipping it.", e);
       return Collections.emptyList();

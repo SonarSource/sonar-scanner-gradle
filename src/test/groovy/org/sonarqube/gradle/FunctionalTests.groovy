@@ -869,8 +869,53 @@ class FunctionalTests extends Specification {
      assert run3.task(":sonarResolver").getOutcome() == SUCCESS
    }
 
+   def "sonarResolver is not up to date when compile classpath directory changes"() {
+     given:
+     settingsFile << "rootProject.name = 'java-task-toolchains'"
+     def compileOnlyDir = projectDir.resolve("libs/compile-only-dir")
+     def testCompileOnlyDir = projectDir.resolve("libs/test-compile-only-dir")
+     writeFile(compileOnlyDir.resolve("initial/CompileOnly.class"), "initial compile classpath")
+     writeFile(testCompileOnlyDir.resolve("initial/TestCompileOnly.class"), "initial test compile classpath")
+     buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java'
+        }
+
+        dependencies {
+            compileOnly files('libs/compile-only-dir')
+            testCompileOnly files('libs/test-compile-only-dir')
+        }
+        """
+
+     when:
+     def command = GradleRunner.create()
+       .withProjectDir(projectDir.toFile())
+       .forwardOutput()
+       .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(), '--info')
+       .withPluginClasspath()
+
+     def run1 = command.build()
+     def run2 = command.build()
+     writeFile(compileOnlyDir.resolve("changed/CompileOnly.class"), "changed compile classpath contents")
+     writeFile(testCompileOnlyDir.resolve("changed/TestCompileOnly.class"), "changed test compile classpath contents")
+     def run3 = command.build()
+
+     then:
+     assert run1.task(":sonar").getOutcome() == SUCCESS
+     assert run2.task(":sonar").getOutcome() == SUCCESS
+     assert run2.task(":sonarResolver").getOutcome() == UP_TO_DATE
+     assert run3.task(":sonar").getOutcome() == SUCCESS
+     assert run3.task(":sonarResolver").getOutcome() == SUCCESS
+   }
+
   private Path projectDir(String project) {
     return Path.of("src", "test", "projects", project)
+  }
+
+  private static void writeFile(Path file, String content) {
+    Files.createDirectories(file.getParent())
+    Files.writeString(file, content)
   }
 
   private static void writeJar(Path jar, String entryName, String content) {
