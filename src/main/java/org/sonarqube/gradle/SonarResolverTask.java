@@ -47,6 +47,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
   public static final String TASK_DESCRIPTION = "Resolves and serializes project information and classpath for SonarQube analysis.";
   private static final Logger LOGGER = Logger.getLogger(SonarResolverTask.class.getName());
+  private static final String FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE = "Failed to resolve file collection input; skipping it.";
 
   private final ConfigurableFileCollection trackedCompileClasspath;
   private final ConfigurableFileCollection trackedTestCompileClasspath;
@@ -141,7 +142,7 @@ public abstract class SonarResolverTask extends DefaultTask {
         .map(File::getAbsolutePath)
         .collect(Collectors.toList());
     } catch (RuntimeException e) {
-      LOGGER.log(Level.WARNING, "Failed to resolve file collection input; skipping it.", e);
+      LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
       return Collections.emptyList();
     }
   }
@@ -156,7 +157,7 @@ public abstract class SonarResolverTask extends DefaultTask {
         .map(File::getAbsolutePath)
         .collect(Collectors.toList());
     } catch (RuntimeException e) {
-      LOGGER.log(Level.WARNING, "Failed to resolve file collection input; skipping it.", e);
+      LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
       return Collections.emptyList();
     }
   }
@@ -173,7 +174,7 @@ public abstract class SonarResolverTask extends DefaultTask {
     try {
       return SonarUtils.exists(fileCollection);
     } catch (RuntimeException e) {
-      LOGGER.log(Level.WARNING, "Failed to resolve file collection input; skipping it.", e);
+      LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
       return Collections.emptyList();
     }
   }
