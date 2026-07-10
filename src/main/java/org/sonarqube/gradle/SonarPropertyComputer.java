@@ -469,22 +469,23 @@ public class SonarPropertyComputer {
 
   private static void configureSourceDirsAndJavaClasspath(Project project, Map<String, Object> properties, boolean addForGroovy) {
     SourceSetContainer sourceSets = getSourceSets(project);
+    if (sourceSets != null) {
+      SourceSet main = sourceSets.getAt("main");
+      Collection<File> sourceDirectories = getJavaSourceFiles(main);
+      if (sourceDirectories != null) {
+        SonarUtils.appendSourcesProp(properties, sourceDirectories, false);
+      }
 
-    SourceSet main = sourceSets.getAt("main");
-    Collection<File> sourceDirectories = getJavaSourceFiles(main);
-    if (sourceDirectories != null) {
-      SonarUtils.appendSourcesProp(properties, sourceDirectories, false);
-    }
+      SourceSet test = sourceSets.getAt("test");
+      Collection<File> testDirectories = getJavaSourceFiles(test);
+      if (testDirectories != null) {
+        SonarUtils.appendSourcesProp(properties, testDirectories, true);
+      }
 
-    SourceSet test = sourceSets.getAt("test");
-    Collection<File> testDirectories = getJavaSourceFiles(test);
-    if (testDirectories != null) {
-      SonarUtils.appendSourcesProp(properties, testDirectories, true);
-    }
-
-    if (sourceDirectories != null || testDirectories != null) {
-      configureSourceEncoding(project, properties);
-      extractTestProperties(project, properties);
+      if (sourceDirectories != null || testDirectories != null) {
+        configureSourceEncoding(project, properties);
+        extractTestProperties(project, properties);
+      }
     }
 
     configureJavaClasspath(project, properties, addForGroovy);
