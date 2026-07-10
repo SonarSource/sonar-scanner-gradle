@@ -830,9 +830,8 @@ class FunctionalTests extends Specification {
     def props = new Properties()
     props.load(outFile.newDataInputStream())
 
-    def kmpModuleDir = kmpAndroidProjectDir.resolve("neem")
-    def sources = dumpedPathsRelativeTo(props, ":neem.sonar.sources", kmpModuleDir)
-    def tests = dumpedPathsRelativeTo(props, ":neem.sonar.tests", kmpModuleDir)
+    def sources = dumpedPathsRelativeTo(props, "sonar.sources", kmpAndroidProjectDir)
+    def tests = dumpedPathsRelativeTo(props, "sonar.tests", kmpAndroidProjectDir)
 
     assertThat(sources).contains("src/androidMain/kotlin", "src/commonMain/kotlin")
     assertThat(tests).contains("src/androidUnitTest/kotlin")
@@ -975,9 +974,7 @@ class FunctionalTests extends Specification {
     Files.copy(fixtureDir.resolve("settings.gradle.kts"), targetDir.resolve("settings.gradle.kts"))
     Files.copy(fixtureDir.resolve("gradle.properties"), targetDir.resolve("gradle.properties"))
     Files.copy(fixtureDir.resolve("build.gradle.kts"), targetDir.resolve("build.gradle.kts"))
-    Files.createDirectories(targetDir.resolve("neem"))
-    Files.copy(fixtureDir.resolve("neem/build.gradle.kts"), targetDir.resolve("neem/build.gradle.kts"))
-    copyDirectory(fixtureDir.resolve("neem/src"), targetDir.resolve("neem/src"))
+    copyDirectory(fixtureDir.resolve("src"), targetDir.resolve("src"))
     // Android SDK locations are machine-local, so the checked-in fixture must not hardcode one.
     targetDir.resolve("local.properties") << "sdk.dir=${androidSdkPath()}\n"
     return targetDir

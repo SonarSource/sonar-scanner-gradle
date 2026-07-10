@@ -20,9 +20,20 @@ buildscript {
 // https://github.com/gradle/gradle/issues/22466
 // Keeping the Sonar and Android plugins on the buildscript classpath exercises the public sonar task without that split.
 apply(plugin = "org.sonarqube")
-
 extensions.configure(org.sonarqube.gradle.SonarExtension::class.java) {
     properties {
         property("sonar.projectKey", "kmp-android-double-indexing")
     }
+}
+
+apply(plugin = "org.jetbrains.kotlin.multiplatform")
+apply(plugin = "com.android.library")
+
+extensions.configure(org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension::class.java) {
+    androidTarget()
+}
+
+extensions.configure(com.android.build.api.dsl.LibraryExtension::class.java) {
+    namespace = "com.example.minimal"
+    compileSdk = 36
 }

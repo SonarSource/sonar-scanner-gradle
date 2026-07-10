@@ -15,5 +15,3 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "kmp-android-double-indexing"
-
-include(":neem")

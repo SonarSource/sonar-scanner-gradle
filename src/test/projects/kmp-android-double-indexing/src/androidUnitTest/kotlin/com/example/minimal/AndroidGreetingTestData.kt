@@ -1,3 +1,3 @@
-package com.example.neem
+package com.example.minimal
 
 val androidGreetingTestData = androidGreeting()
