@@ -839,6 +839,41 @@ class FunctionalTests extends Specification {
     assertThat(tests).doesNotHaveDuplicates()
   }
 
+  @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
+  def "Android KMP new DSL fixture exposes current unsupported library resolution behavior"() {
+    given:
+    def kmpAndroidProjectDir = kmpAndroidProjectNewDsl()
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(kmpAndroidProjectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withArguments(
+        'sonar',
+        '--info',
+        '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(),
+        '-DsonarPluginClasspath=' + pluginClasspath()
+      )
+      .build()
+
+    then:
+    result.task(":sonar").getOutcome() == SUCCESS
+
+    def props = new Properties()
+    props.load(outFile.newDataInputStream())
+
+    def sources = dumpedPathsRelativeTo(props, "sonar.sources", kmpAndroidProjectDir)
+    def tests = dumpedPathsRelativeTo(props, "sonar.tests", kmpAndroidProjectDir)
+
+    assertThat(sources).contains("src/androidMain/kotlin", "src/commonMain/kotlin")
+    assertThat(tests).contains("src/androidHostTest/kotlin")
+    assertThat(sources).doesNotHaveDuplicates()
+    assertThat(tests).doesNotHaveDuplicates()
+    assertThat(props.getProperty("sonar.java.libraries", "")).isEmpty()
+    assertThat(props.getProperty("sonar.java.test.libraries", "")).isEmpty()
+  }
+
    def "check sonarResolver can be up to date while sonar is not"() {
      given:
      settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -968,8 +1003,16 @@ class FunctionalTests extends Specification {
   }
 
   private Path kmpAndroidProject() {
-    def fixtureDir = projectDir("kmp-android-double-indexing")
-    def targetDir = projectDir.resolve("kmp-android-double-indexing")
+    return copiedFixtureProject("kmp-android-double-indexing")
+  }
+
+  private Path kmpAndroidProjectNewDsl() {
+    return copiedFixtureProject("kmp-android-double-indexing-new-dsl")
+  }
+
+  private Path copiedFixtureProject(String fixtureName) {
+    def fixtureDir = projectDir(fixtureName)
+    def targetDir = projectDir.resolve(fixtureName)
     Files.createDirectories(targetDir)
     Files.copy(fixtureDir.resolve("settings.gradle.kts"), targetDir.resolve("settings.gradle.kts"))
     Files.copy(fixtureDir.resolve("gradle.properties"), targetDir.resolve("gradle.properties"))
