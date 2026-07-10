@@ -804,9 +804,10 @@ class FunctionalTests extends Specification {
   }
 
   @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
-  def "KMP Android resolver sources do not duplicate KMP source directories"() {
+  def "Android resolved sources do not duplicate KMP source directories"() {
     given:
-    // KMP Android uses AGP 9 APIs that the plugin under test cannot see through TestKit's usual withPluginClasspath() classloader.
+    // Gradle TestKit isolates the plugin under test from the test project's other plugins when using withPluginClasspath():
+    // https://github.com/gradle/gradle/issues/22466
     // This fixture keeps Sonar and AGP on the buildscript classpath so the public sonar task can exercise the real resolver flow.
     def kmpAndroidProjectDir = kmpAndroidProject()
 

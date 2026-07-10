@@ -16,7 +16,8 @@ buildscript {
     }
 }
 
-// TestKit's withPluginClasspath() puts the plugin under test in a classloader that cannot see AGP 9 APIs.
+// Gradle TestKit isolates the plugin under test from the test project's other plugins when using withPluginClasspath():
+// https://github.com/gradle/gradle/issues/22466
 // Keeping the Sonar and Android plugins on the buildscript classpath exercises the public sonar task without that split.
 apply(plugin = "org.sonarqube")
 

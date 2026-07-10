@@ -312,7 +312,7 @@ class SonarTaskTest {
   }
 
   @ParameterizedTest
-  @MethodSource("notNormalizedExistingAndroidSourcePaths")
+  @MethodSource("nonNormalizablePaths")
   void resolveAndroidSources_preservesExistingPathWhenItCannotBeNormalized(String existingPath, @TempDir File tempDir) {
     Map<String, String> properties = new HashMap<>();
     properties.put("sonar.sources", existingPath);
@@ -326,7 +326,7 @@ class SonarTaskTest {
       .containsExactly(existingPath, sourceDirectory.getAbsolutePath());
   }
 
-  static Stream<Arguments> notNormalizedExistingAndroidSourcePaths() {
+  static Stream<Arguments> nonNormalizablePaths() {
     return Stream.of(
       Arguments.of("**/*"),
       Arguments.of("invalid\0path")
