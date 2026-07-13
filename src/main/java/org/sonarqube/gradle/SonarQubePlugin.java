@@ -105,6 +105,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       }
       resolverTask.setCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME)));
       resolverTask.setTestCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.TEST_SOURCE_SET_NAME)));
+      resolverTask.mustRunAfter(getJavaCompileTasksForProject(project));
       if (!isAndroidProject(project)) {
         resolverTask.getMainLibraries().from(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
         resolverTask.getTestLibraries().from(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
@@ -207,6 +208,16 @@ public class SonarQubePlugin implements Plugin<Project> {
       .filter(p -> p.getPlugins().hasPlugin(JavaPlugin.class) && SonarUtils.notSkipped(p))
       .flatMap(p -> Stream.of(p.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME), p.getTasks().getByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME)))
       .collect(Collectors.toList());
+  }
+
+  private static Callable<Iterable<? extends Task>> getJavaCompileTasksForProject(Project project) {
+    return () -> {
+      if (!project.getPlugins().hasPlugin(JavaPlugin.class)) {
+        return new ArrayList<>();
+      }
+      return Stream.of(project.getTasks().getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME), project.getTasks().getByName(JavaPlugin.COMPILE_TEST_JAVA_TASK_NAME))
+        .collect(Collectors.toList());
+    };
   }
 
   private static Callable<Iterable<? extends Task>> getClassPathResolverTasks(Project project) {

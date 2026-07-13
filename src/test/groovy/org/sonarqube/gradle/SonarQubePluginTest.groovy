@@ -163,6 +163,28 @@ class SonarQubePluginTest extends Specification {
     ])
   }
 
+  def "makes sonar resolver task run after compile tasks without depending on them"() {
+    when:
+    parentProject.pluginManager.apply(JavaPlugin)
+    childProject.pluginManager.apply(JavaPlugin)
+    childProject.sonar.skipProject = true
+
+    then:
+    def parentResolverTask = parentProject.tasks.sonarResolver
+    mustRunAfterTasks(parentResolverTask).containsAll([
+      "parent:compileJava",
+      "parent:compileTestJava",
+    ])
+    dependsOnTasks(parentResolverTask).isEmpty()
+
+    def skippedChildResolverTask = childProject.tasks.sonarResolver
+    mustRunAfterTasks(skippedChildResolverTask).containsAll([
+      "child:compileJava",
+      "child:compileTestJava",
+    ])
+    dependsOnTasks(skippedChildResolverTask).isEmpty()
+  }
+
   def "doesn't make sonar task depend on test task of skipped projects"() {
     when:
     rootProject.pluginManager.apply(JavaPlugin)
