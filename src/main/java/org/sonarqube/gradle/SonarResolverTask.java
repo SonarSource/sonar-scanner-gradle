@@ -21,18 +21,25 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 
 
@@ -40,97 +47,75 @@ public abstract class SonarResolverTask extends DefaultTask {
   public static final String TASK_NAME = "sonarResolver";
   public static final String TASK_DESCRIPTION = "Resolves and serializes project information and classpath for SonarQube analysis.";
   private static final Logger LOGGER = Logger.getLogger(SonarResolverTask.class.getName());
+  private static final String FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE = "Failed to resolve file collection input; skipping it.";
 
-  private String projectName;
-  private boolean isTopLevelProject;
-  private Provider<FileCollection> mainLibraries;
-  private Provider<FileCollection> testLibraries;
+  private final ConfigurableFileCollection trackedCompileClasspath;
+  private final ConfigurableFileCollection trackedTestCompileClasspath;
   private Provider<FileCollection> compileClasspath;
   private Provider<FileCollection> testCompileClasspath;
-  private Provider<FileCollection> androidSources;
-  private Provider<FileCollection> androidTests;
+  @Nullable
+  private Provider<FileCollection> legacyMainLibraries;
+  @Nullable
+  private Provider<FileCollection> legacyTestLibraries;
   private File outputDirectory;
-  private Provider<Boolean> skipProject;
 
   @Inject
   public SonarResolverTask() {
     super();
-    // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
-    this.getOutputs().upToDateWhen(task -> false);
+    this.trackedCompileClasspath = getProject().files();
+    this.trackedTestCompileClasspath = getProject().files();
   }
 
 
   @Input
-  public String getProjectName() {
-    return projectName;
-  }
-
-  public void setProjectName(String name) {
-    this.projectName = name;
-  }
+  public abstract Property<String> getProjectName();
 
   @Input
-  public boolean isTopLevelProject() {
-    return isTopLevelProject;
-  }
-
-  public void setTopLevelProject(boolean topLevelProject) {
-    this.isTopLevelProject = topLevelProject;
-  }
-
-  @Internal
-  FileCollection getCompileClasspath() {
-    return this.compileClasspath.get();
-  }
+  public abstract Property<Boolean> getTopLevelProject();
 
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
-  }
-
-  @Internal
-  Provider<FileCollection> getTestCompileClasspath() {
-    return this.testCompileClasspath;
+    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getExistingClasspathEntries));
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
+    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getExistingClasspathEntries));
   }
 
-  @Internal
-  Provider<FileCollection> getMainLibraries() {
-    return this.mainLibraries;
+  public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
+    this.legacyMainLibraries = legacyMainLibraries;
+    this.getOutputs().upToDateWhen(task -> false);
   }
 
-  public void setMainLibraries(Provider<FileCollection> mainLibraries) {
-    this.mainLibraries = mainLibraries;
+  public void setLegacyTestLibraries(Provider<FileCollection> legacyTestLibraries) {
+    this.legacyTestLibraries = legacyTestLibraries;
+    this.getOutputs().upToDateWhen(task -> false);
   }
 
-  @Internal
-  Provider<FileCollection> getTestLibraries() {
-    return this.testLibraries;
+  @Classpath
+  public ConfigurableFileCollection getCompileClasspath() {
+    return trackedCompileClasspath;
   }
 
-  public void setTestLibraries(Provider<FileCollection> testLibraries) {
-    this.testLibraries = testLibraries;
+  @Classpath
+  public ConfigurableFileCollection getTestCompileClasspath() {
+    return trackedTestCompileClasspath;
   }
 
-  @Internal
-  Provider<FileCollection> getAndroidSources() {
-    return this.androidSources;
-  }
+  @Classpath
+  public abstract ConfigurableFileCollection getMainLibraries();
 
-  public void setAndroidSources(Provider<FileCollection> androidSources) {
-    this.androidSources = androidSources;
-  }
+  @Classpath
+  public abstract ConfigurableFileCollection getTestLibraries();
 
-  @Internal
-  Provider<FileCollection> getAndroidTests() {
-    return this.androidTests;
-  }
+  @PathSensitive(PathSensitivity.RELATIVE)
+  @InputFiles
+  public abstract ConfigurableFileCollection getAndroidSources();
 
-  public void setAndroidTests(Provider<FileCollection> androidTests) {
-    this.androidTests = androidTests;
-  }
+  @PathSensitive(PathSensitivity.RELATIVE)
+  @InputFiles
+  public abstract ConfigurableFileCollection getAndroidTests();
 
   public void setOutputDirectory(File outputDirectory) {
     this.outputDirectory = outputDirectory;
@@ -145,51 +130,74 @@ public abstract class SonarResolverTask extends DefaultTask {
   }
 
   @Input
-  public Provider<Boolean> getSkipProject() {
-    return skipProject;
-  }
-
-  public void setSkipProject(Provider<Boolean> skipProject) {
-    this.skipProject = skipProject;
-  }
+  public abstract Property<Boolean> getSkipProject();
 
   /**
-   * Returns the absolute paths of the files in the given FileCollection provider.
-   * If the provider is null or the collection is empty, returns an empty list.
+   * Returns the absolute paths of the files in the given FileCollection.
    */
-  private static List<String> getAbsolutePaths(Provider<FileCollection> fileCollection) {
-    var collection = fileCollection.getOrNull();
-    if (collection == null) {
+  private static List<String> getAbsolutePaths(FileCollection fileCollection) {
+    try {
+      return SonarUtils.exists(fileCollection)
+        .stream()
+        .map(File::getAbsolutePath)
+        .collect(Collectors.toList());
+    } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
       return Collections.emptyList();
     }
-    return SonarUtils.exists(collection)
-      .stream()
-      .map(File::getAbsolutePath)
-      .collect(Collectors.toList());
+  }
+
+  private static List<String> getAbsolutePaths(Provider<FileCollection> filesProvider) {
+    try {
+      FileCollection files = filesProvider.getOrNull();
+      if (files == null) {
+        return Collections.emptyList();
+      }
+      return SonarUtils.exists(files).stream()
+        .map(File::getAbsolutePath)
+        .collect(Collectors.toList());
+    } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
+      return Collections.emptyList();
+    }
+  }
+
+  private static List<String> getAbsolutePaths(FileCollection fileCollection, @Nullable Provider<FileCollection> additionalFilesProvider) {
+    List<String> filenames = new ArrayList<>(getAbsolutePaths(fileCollection));
+    if (additionalFilesProvider != null) {
+      filenames.addAll(getAbsolutePaths(additionalFilesProvider));
+    }
+    return filenames;
+  }
+
+  private static List<File> getExistingClasspathEntries(FileCollection fileCollection) {
+    try {
+      return SonarUtils.exists(fileCollection);
+    } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
+      return Collections.emptyList();
+    }
   }
 
   @TaskAction
   void run() throws IOException {
-    if (Boolean.TRUE.equals(this.skipProject.get())) {
+    if (Boolean.TRUE.equals(getSkipProject().getOrElse(false))) {
       return;
     }
 
-    String displayName = getProjectName();
+    String displayName = getProjectName().get();
     if (LOGGER.isLoggable(Level.INFO)) {
       LOGGER.info("Resolving properties for " + displayName + ".");
     }
 
     List<String> compileClasspathFilenames = getAbsolutePaths(compileClasspath);
     List<String> testCompileClasspathFilenames = getAbsolutePaths(testCompileClasspath);
-    List<String> mainLibrariesFilenames = getAbsolutePaths(getMainLibraries());
-    List<String> testLibrariesFilenames = getAbsolutePaths(getTestLibraries());
+    List<String> mainLibrariesFilenames = getAbsolutePaths(getMainLibraries(), legacyMainLibraries);
+    List<String> testLibrariesFilenames = getAbsolutePaths(getTestLibraries(), legacyTestLibraries);
+    List<String> androidSourcesFilenames = getAbsolutePaths(getAndroidSources());
+    List<String> androidTestsFilenames = getAbsolutePaths(getAndroidTests());
 
-    Provider<FileCollection> androidSourcesProvider = getAndroidSources();
-    List<String> androidSourcesFilenames = androidSourcesProvider == null ? Collections.emptyList() : getAbsolutePaths(androidSourcesProvider);
-    Provider<FileCollection> androidTestsProvider = getAndroidTests();
-    List<String> androidTestsFilenames = androidTestsProvider == null ? Collections.emptyList() : getAbsolutePaths(androidTestsProvider);
-
-    ProjectProperties projectProperties = new ProjectProperties.Builder(getProjectName(), isTopLevelProject())
+    ProjectProperties projectProperties = new ProjectProperties.Builder(displayName, getTopLevelProject().getOrElse(false))
       .compileClasspath(compileClasspathFilenames)
       .testCompileClasspath(testCompileClasspathFilenames)
       .mainLibraries(mainLibrariesFilenames)

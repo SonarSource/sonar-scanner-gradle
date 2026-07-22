@@ -140,6 +140,9 @@ public final class SnapshotCases {
       c("android-gradle9", "--console=plain")
         .minGradle("9.0.0")
         .requiresAndroid(),
+      c("android-gradle9-resvalues", "--console=plain")
+        .minGradle("9.0.0")
+        .requiresAndroid(),
       c("java-gradle-simple", "compileJava", "compileTestJava")
         .maxGradleExclusive("9.0.0"),
       c("java-gradle-custom-config", "compileJava", "compileTestJava")
