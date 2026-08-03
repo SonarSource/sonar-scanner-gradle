@@ -467,7 +467,8 @@ class AndroidConfigTest {
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(debug.getSources()).thenReturn(sources);
     when(sources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
+    Provider provider = mock(Provider.class);
+    when(manifestFiles.getAll()).thenReturn(provider);
 
     FileCollection result = AndroidConfig.of(project).getAndroidSources();
 
@@ -538,7 +539,8 @@ class AndroidConfigTest {
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(debug.getSources()).thenReturn(sources);
     when(sources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
+    Provider manifestProvider = mock(Provider.class);
+    when(manifestFiles.getAll()).thenReturn(manifestProvider);
 
     assertDoesNotThrow(() -> AndroidConfig.of(project).getAndroidSources());
   }
@@ -553,7 +555,8 @@ class AndroidConfigTest {
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(debug.getSources()).thenReturn(debugSources);
     when(debugSources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
+    Provider provider = mock(Provider.class);
+    when(manifestFiles.getAll()).thenReturn(provider);
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
 
@@ -575,7 +578,8 @@ class AndroidConfigTest {
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(androidTest.getSources()).thenReturn(debugSources);
     when(debugSources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
+    Provider provider = mock(Provider.class);
+    when(manifestFiles.getAll()).thenReturn(provider);
 
     FileCollection resultFC = mock(FileCollection.class);
     when(emptyFC.plus(fileCollection)).thenReturn(resultFC);
@@ -598,7 +602,8 @@ class AndroidConfigTest {
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(androidTest.getSources()).thenReturn(sources);
     when(sources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
+    Provider manifestProvider = mock(Provider.class);
+    when(manifestFiles.getAll()).thenReturn(manifestProvider);
 
     SourceDirectories.Flat javaDirs = mock(SourceDirectories.Flat.class);
     Provider javaProvider = mock(Provider.class);
@@ -623,7 +628,8 @@ class AndroidConfigTest {
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(androidTest.getSources()).thenReturn(sources);
     when(sources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
+    Provider manifestProvider = mock(Provider.class);
+    when(manifestFiles.getAll()).thenReturn(manifestProvider);
 
     assertDoesNotThrow(() -> AndroidConfig.of(project).getAndroidTests());
   }
@@ -642,7 +648,8 @@ class AndroidConfigTest {
     when(androidTest.getSources()).thenReturn(sources);
     when(debug.getSources()).thenReturn(sources);
     when(sources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
+    Provider manifestProvider = mock(Provider.class);
+    when(manifestFiles.getAll()).thenReturn(manifestProvider);
 
     AndroidConfig.of(project).getAndroidTests();
 
@@ -706,7 +713,8 @@ class AndroidConfigTest {
     when(androidTest.getSources()).thenReturn(androidTestSources);
     when(unitTestSources.getManifests()).thenReturn(manifestFiles);
     when(androidTestSources.getManifests()).thenReturn(manifestFiles);
-    when(manifestFiles.getAll()).thenReturn(mock(Provider.class));
+    Provider provider = mock(Provider.class);
+    when(manifestFiles.getAll()).thenReturn(provider);
     when(debug.getNestedComponents()).thenReturn(List.of(unitTest, androidTest));
 
     stubOnVariants(debug);
