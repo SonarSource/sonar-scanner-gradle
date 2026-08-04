@@ -576,12 +576,11 @@ class AndroidConfigTest {
 
     Sources debugSources = mock(Sources.class);
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
+    Provider provider = mock(Provider.class);
+    FileCollection resultFC = mock(FileCollection.class);
     when(androidTest.getSources()).thenReturn(debugSources);
     when(debugSources.getManifests()).thenReturn(manifestFiles);
-    Provider provider = mock(Provider.class);
     when(manifestFiles.getAll()).thenReturn(provider);
-
-    FileCollection resultFC = mock(FileCollection.class);
     when(emptyFC.plus(fileCollection)).thenReturn(resultFC);
 
     FileCollection result = AndroidConfig.of(project).getAndroidTests();
@@ -595,7 +594,8 @@ class AndroidConfigTest {
     stubOnVariants(debug);
     ConfigurableFileCollection fileCollection = mockObjectFactory();
     ConfigurableFileCollection emptyFC = mockProjectFiles();
-    when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection fileCollectionMock = mock(FileCollection.class);
+    when(emptyFC.plus(any())).thenReturn(fileCollectionMock);
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
     Sources sources = mock(Sources.class);
@@ -621,7 +621,8 @@ class AndroidConfigTest {
     stubOnVariants(debug);
     mockObjectFactory();
     ConfigurableFileCollection emptyFC = mockProjectFiles();
-    when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection fileCollection = mock(FileCollection.class);
+    when(emptyFC.plus(any())).thenReturn(fileCollection);
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
     Sources sources = mock(Sources.class);
@@ -640,7 +641,8 @@ class AndroidConfigTest {
     stubOnVariants(debug);
     mockObjectFactory();
     ConfigurableFileCollection emptyFC = mockProjectFiles();
-    when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection fileCollection = mock(FileCollection.class);
+    when(emptyFC.plus(any())).thenReturn(fileCollection);
 
     Sources sources = mock(Sources.class);
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
@@ -698,24 +700,22 @@ class AndroidConfigTest {
 
   @Test
   void getAndroidTests_combinesSourcesFromMultipleTestComponents() {
-    Variant debug = mock(Variant.class);
-    when(debug.getName()).thenReturn("debug");
-    AndroidVersion minSdk = mock(AndroidVersion.class);
-    when(minSdk.getApiLevel()).thenReturn(28);
-    when(debug.getMinSdk()).thenReturn(minSdk);
+    Variant debug = mockVariantWithUnitTestAndAndroidTest("debug");
+    UnitTest unitTest = (UnitTest) debug.getNestedComponents().get(0);
+    AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(1);
 
-    UnitTest unitTest = mock(UnitTest.class);
     Sources unitTestSources = mock(Sources.class);
-    Sources androidTestSources = mock(Sources.class);
-    ManifestFiles manifestFiles = mock(ManifestFiles.class);
-    AndroidTest androidTest = mock(AndroidTest.class);
     when(unitTest.getSources()).thenReturn(unitTestSources);
+
+    Sources androidTestSources = mock(Sources.class);
     when(androidTest.getSources()).thenReturn(androidTestSources);
+
+    ManifestFiles manifestFiles = mock(ManifestFiles.class);
     when(unitTestSources.getManifests()).thenReturn(manifestFiles);
     when(androidTestSources.getManifests()).thenReturn(manifestFiles);
+
     Provider provider = mock(Provider.class);
     when(manifestFiles.getAll()).thenReturn(provider);
-    when(debug.getNestedComponents()).thenReturn(List.of(unitTest, androidTest));
 
     stubOnVariants(debug);
     mockObjectFactory();
