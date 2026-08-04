@@ -22,6 +22,7 @@ package org.sonarqube.gradle
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.IgnoreIf
+import spock.lang.Requires
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -802,6 +803,77 @@ class FunctionalTests extends Specification {
 
   }
 
+  @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
+  def "Android resolved sources do not duplicate KMP source directories"() {
+    given:
+    // Gradle TestKit isolates the plugin under test from the test project's other plugins when using withPluginClasspath():
+    // https://github.com/gradle/gradle/issues/22466
+    // This fixture keeps Sonar and AGP on the buildscript classpath so the public sonar task can exercise the real resolver flow.
+    def kmpAndroidProjectDir = kmpAndroidProject()
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(kmpAndroidProjectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withArguments(
+        'sonar',
+        '--info',
+        '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(),
+        '-DsonarPluginClasspath=' + pluginClasspath()
+      )
+      .build()
+
+    then:
+    result.task(":sonar").getOutcome() == SUCCESS
+
+    def props = new Properties()
+    props.load(outFile.newDataInputStream())
+
+    def sources = dumpedPathsRelativeTo(props, "sonar.sources", kmpAndroidProjectDir)
+    def tests = dumpedPathsRelativeTo(props, "sonar.tests", kmpAndroidProjectDir)
+
+    assertThat(sources).contains("src/androidMain/kotlin", "src/commonMain/kotlin")
+    assertThat(tests).contains("src/androidUnitTest/kotlin")
+    assertThat(sources).doesNotHaveDuplicates()
+    assertThat(tests).doesNotHaveDuplicates()
+  }
+
+  @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
+  def "Android KMP new DSL fixture exposes current unsupported library resolution behavior"() {
+    given:
+    def kmpAndroidProjectDir = kmpAndroidProjectNewDsl()
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(kmpAndroidProjectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withArguments(
+        'sonar',
+        '--info',
+        '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath(),
+        '-DsonarPluginClasspath=' + pluginClasspath()
+      )
+      .build()
+
+    then:
+    result.task(":sonar").getOutcome() == SUCCESS
+
+    def props = new Properties()
+    props.load(outFile.newDataInputStream())
+
+    def sources = dumpedPathsRelativeTo(props, "sonar.sources", kmpAndroidProjectDir)
+    def tests = dumpedPathsRelativeTo(props, "sonar.tests", kmpAndroidProjectDir)
+
+    assertThat(sources).contains("src/androidMain/kotlin", "src/commonMain/kotlin")
+    assertThat(tests).contains("src/androidHostTest/kotlin")
+    assertThat(sources).doesNotHaveDuplicates()
+    assertThat(tests).doesNotHaveDuplicates()
+    assertThat(props.getProperty("sonar.java.libraries", "")).isEmpty()
+    assertThat(props.getProperty("sonar.java.test.libraries", "")).isEmpty()
+  }
+
    def "check sonarResolver can be up to date while sonar is not"() {
      given:
      settingsFile << "rootProject.name = 'java-task-toolchains'"
@@ -926,6 +998,76 @@ class FunctionalTests extends Specification {
         jarOutput.putNextEntry(new JarEntry(entryName))
         jarOutput.write(content.getBytes("UTF-8"))
         jarOutput.closeEntry()
+      }
+    }
+  }
+
+  private Path kmpAndroidProject() {
+    return copiedFixtureProject("kmp-android-double-indexing")
+  }
+
+  private Path kmpAndroidProjectNewDsl() {
+    return copiedFixtureProject("kmp-android-double-indexing-new-dsl")
+  }
+
+  private Path copiedFixtureProject(String fixtureName) {
+    def fixtureDir = projectDir(fixtureName)
+    def targetDir = projectDir.resolve(fixtureName)
+    Files.createDirectories(targetDir)
+    Files.copy(fixtureDir.resolve("settings.gradle.kts"), targetDir.resolve("settings.gradle.kts"))
+    Files.copy(fixtureDir.resolve("gradle.properties"), targetDir.resolve("gradle.properties"))
+    Files.copy(fixtureDir.resolve("build.gradle.kts"), targetDir.resolve("build.gradle.kts"))
+    copyDirectory(fixtureDir.resolve("src"), targetDir.resolve("src"))
+    // Android SDK locations are machine-local, so the checked-in fixture must not hardcode one.
+    targetDir.resolve("local.properties") << "sdk.dir=${androidSdkPath()}\n"
+    return targetDir
+  }
+
+  private String pluginClasspath() {
+    return getClass().classLoader.getResource("plugin-under-test-metadata.properties")
+      .withInputStream { stream ->
+        def props = new Properties()
+        props.load(stream)
+        return props.getProperty("implementation-classpath")
+      }
+  }
+
+  private static List<String> dumpedPaths(Properties properties, String propertyName) {
+    return properties.getProperty(propertyName, "").split(",")
+      .findAll { !it.isBlank() }
+      .collect { Path.of(it).toAbsolutePath().normalize().toString() }
+  }
+
+  private static List<String> dumpedPathsRelativeTo(Properties properties, String propertyName, Path baseDir) {
+    def normalizedBaseDir = baseDir.toRealPath()
+    return dumpedPaths(properties, propertyName)
+      .collect { existingRealPathOrNormalizedPath(it) }
+      .findAll { it.startsWith(normalizedBaseDir) }
+      .collect { normalizedBaseDir.relativize(it).toString().replace(File.separator, '/') }
+  }
+
+  private static Path existingRealPathOrNormalizedPath(String path) {
+    def normalizedPath = Path.of(path).toAbsolutePath().normalize()
+    return Files.exists(normalizedPath) ? normalizedPath.toRealPath() : normalizedPath
+  }
+
+  private static String androidSdkPath() {
+    return (System.getenv("ANDROID_HOME")
+      ?: System.getenv("ANDROID_SDK_ROOT")
+      ?: Path.of(System.getProperty("user.home"), "Android", "Sdk").toString())
+      .replace("\\", "\\\\")
+  }
+
+  private static void copyDirectory(Path sourceDir, Path targetDir) {
+    Files.walk(sourceDir).withCloseable { paths ->
+      paths.forEach { source ->
+        def target = targetDir.resolve(sourceDir.relativize(source).toString())
+        if (Files.isDirectory(source)) {
+          Files.createDirectories(target)
+        } else {
+          Files.createDirectories(target.parent)
+          Files.copy(source, target)
+        }
       }
     }
   }
