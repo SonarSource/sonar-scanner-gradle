@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle
 
+import groovy.json.JsonSlurper
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.IgnoreIf
@@ -980,6 +981,89 @@ class FunctionalTests extends Specification {
      assert run3.task(":sonar").getOutcome() == SUCCESS
      assert run3.task(":sonarResolver").getOutcome() == SUCCESS
    }
+
+  def "sonarResolver tracks Java resource outputs through their producer"() {
+    given:
+    settingsFile << "rootProject.name = 'root'"
+    buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java-library'
+        }
+        """
+    writeFile(projectDir.resolve("src/main/resources/f.txt"), "x")
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':processResources', ':sonarResolver')
+      .build()
+
+    then:
+    result.task(":processResources").getOutcome() == SUCCESS
+    result.task(":sonarResolver").getOutcome() == SUCCESS
+    def resolverPropertiesFile = projectDir.resolve("build/sonar-resolver/properties").toFile()
+    def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    def resourcesOutput = projectDir.resolve("build/resources/main").toAbsolutePath().toString()
+    new File(resourcesOutput).exists()
+    resolverProperties.testCompileClasspath.contains(resourcesOutput)
+  }
+
+  def "sonarResolver tracks a Kotlin Multiplatform JVM artifact through jvmJar"() {
+    given:
+    settingsFile << """
+        pluginManagement { repositories { gradlePluginPortal(); mavenCentral() } }
+        rootProject.name = 'root'
+        include 'consumer', 'subdependency'
+        """
+    buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'org.jetbrains.kotlin.multiplatform' version '2.2.20' apply false
+        }
+
+        allprojects { repositories { mavenCentral() } }
+
+        project(':subdependency') {
+            apply plugin: 'org.jetbrains.kotlin.multiplatform'
+            kotlin { jvm() }
+        }
+
+        project(':consumer') {
+            apply plugin: 'java-library'
+            dependencies { implementation project(':subdependency') }
+        }
+        """
+    writeFile(
+      projectDir.resolve("subdependency/src/commonMain/kotlin/example/Dependency.kt"),
+      "package example\nclass Dependency"
+    )
+    writeFile(
+      projectDir.resolve("consumer/src/main/java/example/Consumer.java"),
+      "package example;\npublic class Consumer {}"
+    )
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':consumer:sonarResolver')
+      .build()
+
+    then:
+    result.task(":subdependency:jvmJar").getOutcome() == SUCCESS
+    result.task(":consumer:sonarResolver").getOutcome() == SUCCESS
+    def resolverPropertiesFile = projectDir.resolve("consumer/build/sonar-resolver/properties").toFile()
+    def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    resolverProperties.compileClasspath.any {
+      it.startsWith(projectDir.resolve("subdependency/build/libs").toAbsolutePath().toString()) && it.endsWith(".jar")
+    }
+  }
 
   private Path projectDir(String project) {
     return Path.of("src", "test", "projects", project)

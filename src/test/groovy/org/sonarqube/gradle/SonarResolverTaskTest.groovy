@@ -31,6 +31,29 @@ class SonarResolverTaskTest extends Specification {
   @TempDir
   Path projectDir
 
+  def "tracked classpaths retain producer dependencies while filtering missing entries"() {
+    given:
+    def project = ProjectBuilder.builder().withProjectDir(projectDir.toFile()).build()
+    def compileProducer = project.tasks.register("compileProducer")
+    def testProducer = project.tasks.register("testProducer")
+    def existingCompileEntry = Files.createFile(projectDir.resolve("compile-entry.jar")).toFile()
+    def missingCompileEntry = projectDir.resolve("missing-compile-entry.jar").toFile()
+    def existingTestEntry = Files.createFile(projectDir.resolve("test-entry.jar")).toFile()
+    def missingTestEntry = projectDir.resolve("missing-test-entry.jar").toFile()
+    def compileClasspath = project.files(existingCompileEntry, missingCompileEntry).builtBy(compileProducer)
+    def testCompileClasspath = project.files(existingTestEntry, missingTestEntry).builtBy(testProducer)
+    def task = project.tasks.create(SonarResolverTask.TASK_NAME, SonarResolverTask)
+
+    when:
+    task.setCompileClasspath(project.provider { compileClasspath })
+    task.setTestCompileClasspath(project.provider { testCompileClasspath })
+
+    then:
+    task.compileClasspath.files == [existingCompileEntry] as Set
+    task.testCompileClasspath.files == [existingTestEntry] as Set
+    task.taskDependencies.getDependencies(task).containsAll(compileProducer.get(), testProducer.get())
+  }
+
   def "run skips file collection inputs that fail to resolve"() {
     given:
     def project = ProjectBuilder.builder().withProjectDir(projectDir.toFile()).build()

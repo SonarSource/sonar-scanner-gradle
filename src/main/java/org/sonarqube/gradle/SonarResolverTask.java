@@ -76,12 +76,12 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
-    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getExistingClasspathEntries));
+    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::filterExistingClasspathEntries));
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
-    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getExistingClasspathEntries));
+    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::filterExistingClasspathEntries));
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
@@ -171,13 +171,8 @@ public abstract class SonarResolverTask extends DefaultTask {
     return filenames;
   }
 
-  private static List<File> getExistingClasspathEntries(FileCollection fileCollection) {
-    try {
-      return SonarUtils.exists(fileCollection);
-    } catch (RuntimeException e) {
-      LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
-      return Collections.emptyList();
-    }
+  private static FileCollection filterExistingClasspathEntries(FileCollection fileCollection) {
+    return fileCollection.filter(File::exists);
   }
 
   @TaskAction
