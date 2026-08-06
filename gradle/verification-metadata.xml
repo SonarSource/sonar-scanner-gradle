@@ -28,6 +28,11 @@
             <sha256 value="26e82330157d6b844b67a8064945e206581e772977183e3e31fec6058aa9a59b" origin="Verified"/>
          </artifact>
       </component>
+      <component group="com.adarshr" name="gradle-test-logger-plugin" version="4.0.0">
+         <artifact name="gradle-test-logger-plugin-4.0.0.jar">
+            <sha256 value="e678683a33d2bc835671bdd4e58710004ad1d9316aa9f9a54cfe22419a4f6ef9" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="com.android" name="signflinger" version="8.13.2">
          <artifact name="signflinger-8.13.2.jar">
             <sha256 value="c1dca2c683634ee1a294298f9c7179578af6a86e080bdc40f961915bc5c8142f" origin="Verified"/>
@@ -1927,6 +1932,9 @@
          <artifact name="bcprov-jdk18on-1.84.jar">
             <sha256 value="64d6c5a6121fcd927152dd182cbed39afe0fda641a970d9bcc0c9cb1858b2731" origin="Verified"/>
          </artifact>
+         <artifact name="bcprov-jdk18on-1.84.pom">
+            <sha256 value="ce7abb4a91ba5d2a73fdf17a3df4762e3605a0392cc7983ef2f1ae16cd384cc3" origin="Verified"/>
+         </artifact>
       </component>
       <component group="org.bouncycastle" name="bcutil-jdk18on" version="1.79">
          <artifact name="bcutil-jdk18on-1.79.jar">
@@ -2116,6 +2124,11 @@
       <component group="org.eclipse.sisu" name="sisu-plexus" version="0.3.3">
          <artifact name="sisu-plexus-0.3.3.pom">
             <sha256 value="5f3668799cb6936767868cc2267038eb7e4031bad59d2cf5e5223b8462eca731" origin="Verified"/>
+         </artifact>
+      </component>
+      <component group="org.fusesource.jansi" name="jansi" version="2.4.0">
+         <artifact name="jansi-2.4.0.jar">
+            <sha256 value="6cd91991323dd7b2fb28ca93d7ac12af5a86a2f53279e2b35827b30313fd0b9f" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.glassfish" name="javax.json" version="1.1.4">
@@ -2946,6 +2959,11 @@
             <sha256 value="d1c22a9ae0b08de5a5092c27faf6ab7447263b7b90af7c40dc5352343089443c" origin="Verified"/>
          </artifact>
       </component>
+      <component group="org.sonarsource.scanner.gradle" name="sonarqube-gradle-plugin" version="7.4.0.8496">
+         <artifact name="sonarqube-gradle-plugin-7.4.0.8496.jar">
+            <sha256 value="3944b0343fbdc5cb1f9126d6f2539e39fed6e4d56afee8660391a3d328c417bb" origin="Verified"/>
+         </artifact>
+      </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-download-cache" version="4.0.1.1587">
          <artifact name="sonar-scanner-download-cache-4.0.1.1587.jar">
             <sha256 value="d64cc2cee46c48fffac89ee68a9be3c93484b00b01c721d11cb709aa59a01c01" origin="Verified"/>
@@ -2954,6 +2972,9 @@
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-download-cache" version="4.1.1.1633">
          <artifact name="sonar-scanner-download-cache-4.1.1.1633.jar">
             <sha256 value="ea4a37e5907186236b53cb679d416663112f5b2862893ca693ea7108e1a75927" origin="Verified"/>
+         </artifact>
+         <artifact name="sonar-scanner-download-cache-4.1.1.1633.pom">
+            <sha256 value="c812b31e02b0dda06972cdc5a1f0c40a6cc64bb8ab9b6a21b0385cc919f8f030" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library" version="4.0.1.1587">
@@ -2965,6 +2986,9 @@
          <artifact name="sonar-scanner-java-library-4.1.1.1633.jar">
             <sha256 value="1f3d0263e4a49dffbf1683c18524357774628fe812cf907fd559bd68d551a562" origin="Verified"/>
          </artifact>
+         <artifact name="sonar-scanner-java-library-4.1.1.1633.pom">
+            <sha256 value="93fe8eeae55943e76cf540f08f80d4d09a2829a80fffea758300e7f0ee462f7d" origin="Verified"/>
+         </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="4.0.1.1587">
          <artifact name="sonar-scanner-java-library-batch-interface-4.0.1.1587.jar">
@@ -2974,6 +2998,9 @@
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-batch-interface" version="4.1.1.1633">
          <artifact name="sonar-scanner-java-library-batch-interface-4.1.1.1633.jar">
             <sha256 value="a080a9e0d8bf9f4293503f8802ce3c1b9455f1d8eb0a051b5e8f1cffb63c35ce" origin="Verified"/>
+         </artifact>
+         <artifact name="sonar-scanner-java-library-batch-interface-4.1.1.1633.pom">
+            <sha256 value="99731454c28ad49877885802c883b3ee86b8f20af4209c0c104c1a6c76436928" origin="Verified"/>
          </artifact>
       </component>
       <component group="org.sonarsource.scanner.lib" name="sonar-scanner-java-library-parent" version="3.1.1.261">
