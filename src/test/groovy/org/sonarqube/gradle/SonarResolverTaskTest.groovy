@@ -31,6 +31,44 @@ class SonarResolverTaskTest extends Specification {
   @TempDir
   Path projectDir
 
+  def "tracked classpaths retain producer ordering and missing entries without adding dependencies"() {
+    given:
+    def project = ProjectBuilder.builder().withProjectDir(projectDir.toFile()).build()
+    def compileDependency = project.tasks.register("compileDependency")
+    def testDependency = project.tasks.register("testDependency")
+    def compileProducer = project.tasks.register("compileProducer")
+    def testProducer = project.tasks.register("testProducer")
+    compileProducer.configure { dependsOn(compileDependency) }
+    testProducer.configure { dependsOn(testDependency) }
+    def existingCompileEntry = Files.createFile(projectDir.resolve("compile-entry.jar")).toFile()
+    def missingCompileEntry = projectDir.resolve("missing-compile-entry.jar").toFile()
+    def existingTestEntry = Files.createFile(projectDir.resolve("test-entry.jar")).toFile()
+    def missingTestEntry = projectDir.resolve("missing-test-entry.jar").toFile()
+    def compileClasspath = project.files(existingCompileEntry, missingCompileEntry).builtBy(compileProducer)
+    def testCompileClasspath = project.files(existingTestEntry, missingTestEntry).builtBy(testProducer)
+    def task = project.tasks.register(SonarResolverTask.TASK_NAME, SonarResolverTask).get()
+    task.projectName.set(":")
+    task.topLevelProject.set(true)
+    task.skipProject.set(false)
+    task.setOutputDirectory(projectDir.resolve("sonar-resolver").toFile())
+
+    when:
+    task.setCompileClasspath(project.provider { compileClasspath })
+    task.setTestCompileClasspath(project.provider { testCompileClasspath })
+    task.run()
+
+    then:
+    task.compileClasspath.files == [existingCompileEntry, missingCompileEntry] as Set
+    task.testCompileClasspath.files == [existingTestEntry, missingTestEntry] as Set
+    task.mustRunAfter.getDependencies(task).containsAll(
+      compileProducer.get(), compileDependency.get(), testProducer.get(), testDependency.get()
+    )
+    task.taskDependencies.getDependencies(task).isEmpty()
+    def properties = ResolutionSerializer.read(task.outputFile).get()
+    properties.compileClasspath == [existingCompileEntry.absolutePath]
+    properties.testCompileClasspath == [existingTestEntry.absolutePath]
+  }
+
   def "run skips file collection inputs that fail to resolve"() {
     given:
     def project = ProjectBuilder.builder().withProjectDir(projectDir.toFile()).build()

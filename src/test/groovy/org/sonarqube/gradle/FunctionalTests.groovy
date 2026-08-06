@@ -19,6 +19,7 @@
  */
 package org.sonarqube.gradle
 
+import groovy.json.JsonSlurper
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.IgnoreIf
@@ -46,6 +47,11 @@ class FunctionalTests extends Specification {
     Path outFile
 
     def setup() {
+        // Gradle canonicalizes the project directory it is given, while @TempDir derives from java.io.tmpdir.
+        // On Windows CI those differ: java.io.tmpdir uses the 8.3 short name (C:\Users\RUNNER~1\...) whereas
+        // every path reported by the build uses the long name (C:\Users\runneradmin\...). Normalize once here so
+        // that paths built from projectDir can be compared with paths coming out of the build.
+        projectDir = projectDir.toRealPath()
         settingsFile = projectDir.resolve('settings.gradle')
         buildFile = projectDir.resolve('build.gradle')
         projectDir.resolve('integrationTests').toFile().mkdir()
@@ -799,7 +805,7 @@ class FunctionalTests extends Specification {
     then:
     def sonarResolver = multiModuleProjectDir.resolve("module-1/build/sonar-resolver")
     assert result.task(":sonar").getOutcome() == SUCCESS
-    assert Files.list(sonarResolver).count() == 0
+    assert Files.notExists(sonarResolver.resolve("properties"))
 
   }
 
@@ -980,6 +986,152 @@ class FunctionalTests extends Specification {
      assert run3.task(":sonar").getOutcome() == SUCCESS
      assert run3.task(":sonarResolver").getOutcome() == SUCCESS
    }
+
+  def "sonarResolver tracks Java resource outputs through their producer"() {
+    given:
+    settingsFile << "rootProject.name = 'root'"
+    buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java-library'
+        }
+        """
+    writeFile(projectDir.resolve("src/main/resources/f.txt"), "x")
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':sonarResolver', ':processResources')
+      .build()
+
+    then:
+    result.task(":processResources").getOutcome() == SUCCESS
+    result.task(":sonarResolver").getOutcome() == SUCCESS
+    result.tasks*.path.indexOf(":processResources") < result.tasks*.path.indexOf(":sonarResolver")
+    def resolverPropertiesFile = projectDir.resolve("build/sonar-resolver/properties").toFile()
+    def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    def resourcesOutput = projectDir.resolve("build/resources/main").toAbsolutePath().toString()
+    new File(resourcesOutput).exists()
+    resolverProperties.testCompileClasspath.contains(resourcesOutput)
+  }
+
+  def "sonarResolver skips compile classpaths that fail to resolve"() {
+    given:
+    settingsFile << "rootProject.name = 'root'"
+    Files.createDirectories(projectDir.resolve("empty-repository"))
+    def existingLibrary = projectDir.resolve("existing-library.txt")
+    writeFile(existingLibrary, "existing library")
+    buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java-library'
+        }
+
+        repositories {
+            maven { url = uri('empty-repository') }
+        }
+
+        dependencies {
+            implementation 'invalid.example:missing-artifact:1.0'
+        }
+
+        tasks.named('sonarResolver') {
+            mainLibraries.from(file('existing-library.txt'))
+        }
+        """
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':sonarResolver')
+      .build()
+
+    then:
+    result.task(":sonarResolver").getOutcome() == SUCCESS
+    result.output.contains("Failed to resolve file collection input; skipping it.")
+    def resolverPropertiesFile = projectDir.resolve("build/sonar-resolver/properties").toFile()
+    def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    resolverProperties.compileClasspath.isEmpty()
+    resolverProperties.testCompileClasspath.isEmpty()
+    resolverProperties.mainLibraries == [existingLibrary.toString()]
+  }
+
+  def "sonarResolver tracks a Kotlin Multiplatform JVM artifact through jvmJar"() {
+    given:
+    settingsFile << """
+        pluginManagement { repositories { gradlePluginPortal(); mavenCentral() } }
+        rootProject.name = 'root'
+        include 'consumer', 'subdependency'
+        """
+    buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'org.jetbrains.kotlin.multiplatform' version '2.2.20' apply false
+        }
+
+        allprojects { repositories { mavenCentral() } }
+
+        project(':subdependency') {
+            apply plugin: 'org.jetbrains.kotlin.multiplatform'
+            kotlin { jvm() }
+        }
+
+        project(':consumer') {
+            apply plugin: 'java-library'
+            dependencies { implementation project(':subdependency') }
+        }
+        """
+    writeFile(
+      projectDir.resolve("subdependency").resolve("src").resolve("commonMain").resolve("kotlin").resolve("example").resolve("Dependency.kt"),
+      "package example\nclass Dependency"
+    )
+    writeFile(
+      projectDir.resolve("consumer").resolve("src").resolve("main").resolve("java").resolve("example").resolve("Consumer.java"),
+      "package example;\npublic class Consumer {}"
+    )
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':consumer:sonarResolver', ':subdependency:jvmJar')
+      .build()
+
+    then:
+    result.task(":subdependency:jvmJar").getOutcome() == SUCCESS
+    result.task(":consumer:sonarResolver").getOutcome() == SUCCESS
+    result.tasks*.path.indexOf(":subdependency:jvmJar") < result.tasks*.path.indexOf(":consumer:sonarResolver")
+    def resolverPropertiesFile = projectDir.resolve("consumer").resolve("build").resolve("sonar-resolver").resolve("properties").toFile()
+    def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    def jvmJarPath = resolverProperties.compileClasspath.find {
+      it.startsWith(projectDir.resolve("subdependency").resolve("build").resolve("libs").toAbsolutePath().toString()) && it.endsWith(".jar")
+    }
+    jvmJarPath != null
+
+    when:
+    Files.delete(resolverPropertiesFile.toPath())
+    def resolverOnlyResult = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':consumer:sonarResolver', '--rerun-tasks')
+      .build()
+
+    then:
+    resolverOnlyResult.task(":subdependency:jvmJar") == null
+    resolverOnlyResult.task(":consumer:sonarResolver").getOutcome() == SUCCESS
+    def resolverOnlyProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    resolverOnlyProperties.compileClasspath.contains(jvmJarPath)
+  }
 
   private Path projectDir(String project) {
     return Path.of("src", "test", "projects", project)

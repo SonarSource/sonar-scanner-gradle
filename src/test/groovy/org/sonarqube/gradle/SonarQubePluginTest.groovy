@@ -163,7 +163,7 @@ class SonarQubePluginTest extends Specification {
     ])
   }
 
-  def "makes sonar resolver task run after compile tasks without depending on them"() {
+  def "makes sonar resolver task run after classpath producers without depending on them"() {
     when:
     parentProject.pluginManager.apply(JavaPlugin)
     childProject.pluginManager.apply(JavaPlugin)
@@ -183,6 +183,38 @@ class SonarQubePluginTest extends Specification {
       "child:compileTestJava",
     ])
     dependsOnTasks(skippedChildResolverTask).isEmpty()
+  }
+
+  def "sonar resolver retains the complete source set classpaths"() {
+    when:
+    def project = ProjectBuilder.builder().withName("root").withProjectDir(new File("src/test/projects/java-project")).build()
+    project.pluginManager.apply(SonarQubePlugin)
+    project.pluginManager.apply(JavaPlugin)
+    setOutputDirs(project, "classes/main", "classes/test")
+    project.sourceSets.main.output.setResourcesDir(new File(project.buildDir, "resources/main"))
+    project.sourceSets.test.output.setResourcesDir(new File(project.buildDir, "resources/test"))
+    def ownOutputDirs = []
+    ownOutputDirs.addAll(project.sourceSets.main.output.classesDirs.files)
+    ownOutputDirs.add(project.sourceSets.main.output.resourcesDir)
+    ownOutputDirs.addAll(project.sourceSets.test.output.classesDirs.files)
+    ownOutputDirs.add(project.sourceSets.test.output.resourcesDir)
+    ownOutputDirs.each { it.mkdirs() }
+    // A test classpath can contain output dirs of any source set.
+    project.sourceSets.test.compileClasspath += project.files(ownOutputDirs)
+    project.sourceSets.main.compileClasspath += project.files("lib/SomeLib.jar")
+    project.sourceSets.test.compileClasspath += project.files("lib/junit.jar")
+
+    then:
+    def resolverTask = project.tasks.sonarResolver
+    def mainClasspath = resolverTask.compileClasspath.files*.absolutePath
+    def testClasspath = resolverTask.testCompileClasspath.files*.absolutePath
+    def ownOutputPaths = ownOutputDirs*.absolutePath as Set
+
+    testClasspath.containsAll(ownOutputPaths)
+
+    // External dependencies must still be present.
+    mainClasspath.any { it.endsWith("lib${File.separator}SomeLib.jar") }
+    testClasspath.any { it.endsWith("lib${File.separator}junit.jar") }
   }
 
   def "doesn't make sonar task depend on test task of skipped projects"() {
