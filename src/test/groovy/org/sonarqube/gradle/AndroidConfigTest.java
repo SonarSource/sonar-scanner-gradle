@@ -116,7 +116,8 @@ class AndroidConfigTest {
     when(project.getLayout()).thenReturn(defaultProjectLayout);
     when(defaultProjectLayout.getBuildDirectory()).thenReturn(directoryProperty);
     when(defaultDirProvider.get()).thenReturn(defaultDir);
-    when(defaultDir.getAsFile()).thenReturn(mock(File.class));
+    File defaultFile = mock(File.class);
+    when(defaultDir.getAsFile()).thenReturn(defaultFile);
     when(project.provider(any())).thenAnswer(inv -> {
       Callable<?> callable = inv.getArgument(0);
       try {
@@ -595,7 +596,8 @@ class AndroidConfigTest {
     stubOnVariants(debug);
     ConfigurableFileCollection fileCollection = mockObjectFactory();
     ConfigurableFileCollection emptyFC = mockProjectFiles();
-    when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection fileCollectionMock = mock(FileCollection.class);
+    when(emptyFC.plus(any())).thenReturn(fileCollectionMock);
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
     Sources sources = mock(Sources.class);
@@ -621,7 +623,8 @@ class AndroidConfigTest {
     stubOnVariants(debug);
     mockObjectFactory();
     ConfigurableFileCollection emptyFC = mockProjectFiles();
-    when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection fileCollection = mock(FileCollection.class);
+    when(emptyFC.plus(any())).thenReturn(fileCollection);
 
     AndroidTest androidTest = (AndroidTest) debug.getNestedComponents().get(0);
     Sources sources = mock(Sources.class);
@@ -640,7 +643,8 @@ class AndroidConfigTest {
     stubOnVariants(debug);
     mockObjectFactory();
     ConfigurableFileCollection emptyFC = mockProjectFiles();
-    when(emptyFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection fileCollection = mock(FileCollection.class);
+    when(emptyFC.plus(any())).thenReturn(fileCollection);
 
     Sources sources = mock(Sources.class);
     ManifestFiles manifestFiles = mock(ManifestFiles.class);
@@ -758,7 +762,8 @@ class AndroidConfigTest {
     when(configuration.getIncoming()).thenReturn(incoming);
     ArtifactView artifactView = mock(ArtifactView.class);
     when(incoming.artifactView(any())).thenReturn(artifactView);
-    when(artifactView.getFiles()).thenReturn(mock(FileCollection.class));
+    FileCollection files = mock(FileCollection.class);
+    when(artifactView.getFiles()).thenReturn(files);
     ObjectFactory objectFactory = mock(ObjectFactory.class);
     when(project.getObjects()).thenReturn(objectFactory);
     when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(mock(TargetJvmEnvironment.class));
