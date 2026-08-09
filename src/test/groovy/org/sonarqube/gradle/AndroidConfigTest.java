@@ -761,10 +761,12 @@ class AndroidConfigTest {
     when(artifactView.getFiles()).thenReturn(mock(FileCollection.class));
     ObjectFactory objectFactory = mock(ObjectFactory.class);
     when(project.getObjects()).thenReturn(objectFactory);
-    when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(mock(TargetJvmEnvironment.class));
+    TargetJvmEnvironment env = mock(TargetJvmEnvironment.class);
+    when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(env);
 
     ConfigurableFileCollection bootFC = mock(ConfigurableFileCollection.class);
-    when(bootFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection resultFC = mock(FileCollection.class);
+    when(bootFC.plus(any())).thenReturn(resultFC);
     when(project.files(any())).thenReturn(bootFC);
 
     AndroidConfig.of(project).getMainLibraries();
@@ -787,7 +789,8 @@ class AndroidConfigTest {
 
     // Capture and execute the ArtifactView configuration action to verify attribute setup
     ArtifactView artifactView = mock(ArtifactView.class);
-    when(artifactView.getFiles()).thenReturn(mock(FileCollection.class));
+    FileCollection artifactViewFiles = mock(FileCollection.class);
+    when(artifactView.getFiles()).thenReturn(artifactViewFiles);
     AttributeContainer attrs = mock(AttributeContainer.class);
     when(attrs.attribute(any(), any())).thenReturn(attrs);
     ArtifactView.ViewConfiguration viewConfig = mock(ArtifactView.ViewConfiguration.class);
@@ -802,10 +805,12 @@ class AndroidConfigTest {
 
     ObjectFactory objectFactory = mock(ObjectFactory.class);
     when(project.getObjects()).thenReturn(objectFactory);
-    when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(mock(TargetJvmEnvironment.class));
+    TargetJvmEnvironment targetJvmEnvironment = mock(TargetJvmEnvironment.class);
+    when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(targetJvmEnvironment);
 
     ConfigurableFileCollection bootFC = mock(ConfigurableFileCollection.class);
-    when(bootFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection bootPlusFiles = mock(FileCollection.class);
+    when(bootFC.plus(any())).thenReturn(bootPlusFiles);
     when(project.files(any())).thenReturn(bootFC);
 
     AndroidConfig.of(project).getMainLibraries();
