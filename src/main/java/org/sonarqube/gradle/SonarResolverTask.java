@@ -42,6 +42,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskDependency;
 
 
 public abstract class SonarResolverTask extends DefaultTask {
@@ -76,12 +77,14 @@ public abstract class SonarResolverTask extends DefaultTask {
 
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
-    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::filterExistingClasspathEntries));
+    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getClasspathEntries));
+    this.getCompileClasspath().builtBy(getBuildDependencies(compileClasspath));
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
-    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::filterExistingClasspathEntries));
+    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getClasspathEntries));
+    this.getTestCompileClasspath().builtBy(getBuildDependencies(testCompileClasspath));
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
@@ -171,8 +174,28 @@ public abstract class SonarResolverTask extends DefaultTask {
     return filenames;
   }
 
-  private static FileCollection filterExistingClasspathEntries(FileCollection fileCollection) {
-    return fileCollection.filter(File::exists);
+  private static List<File> getClasspathEntries(FileCollection fileCollection) {
+    try {
+      // Keep missing producer outputs in the tracked value so configuration-cache state does not depend on
+      // whether those outputs exist while Gradle constructs the task graph. Serialization filters them later.
+      return new ArrayList<>(fileCollection.getFiles());
+    } catch (RuntimeException e) {
+      LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
+      return Collections.emptyList();
+    }
+  }
+
+  private static TaskDependency getBuildDependencies(Provider<FileCollection> filesProvider) {
+    return task -> {
+      try {
+        // Preserve producer tasks independently from the guarded classpath value resolution above.
+        FileCollection files = filesProvider.getOrNull();
+        return files == null ? Collections.emptySet() : files.getBuildDependencies().getDependencies(task);
+      } catch (RuntimeException e) {
+        LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
+        return Collections.emptySet();
+      }
+    };
   }
 
   @TaskAction

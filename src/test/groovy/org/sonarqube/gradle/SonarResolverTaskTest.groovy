@@ -31,7 +31,7 @@ class SonarResolverTaskTest extends Specification {
   @TempDir
   Path projectDir
 
-  def "tracked classpaths retain producer dependencies while filtering missing entries"() {
+  def "tracked classpaths retain producer dependencies and missing entries"() {
     given:
     def project = ProjectBuilder.builder().withProjectDir(projectDir.toFile()).build()
     def compileProducer = project.tasks.register("compileProducer")
@@ -43,15 +43,23 @@ class SonarResolverTaskTest extends Specification {
     def compileClasspath = project.files(existingCompileEntry, missingCompileEntry).builtBy(compileProducer)
     def testCompileClasspath = project.files(existingTestEntry, missingTestEntry).builtBy(testProducer)
     def task = project.tasks.create(SonarResolverTask.TASK_NAME, SonarResolverTask)
+    task.projectName.set(":")
+    task.topLevelProject.set(true)
+    task.skipProject.set(false)
+    task.setOutputDirectory(projectDir.resolve("sonar-resolver").toFile())
 
     when:
     task.setCompileClasspath(project.provider { compileClasspath })
     task.setTestCompileClasspath(project.provider { testCompileClasspath })
+    task.run()
 
     then:
-    task.compileClasspath.files == [existingCompileEntry] as Set
-    task.testCompileClasspath.files == [existingTestEntry] as Set
+    task.compileClasspath.files == [existingCompileEntry, missingCompileEntry] as Set
+    task.testCompileClasspath.files == [existingTestEntry, missingTestEntry] as Set
     task.taskDependencies.getDependencies(task).containsAll(compileProducer.get(), testProducer.get())
+    def properties = ResolutionSerializer.read(task.outputFile).get()
+    properties.compileClasspath == [existingCompileEntry.absolutePath]
+    properties.testCompileClasspath == [existingTestEntry.absolutePath]
   }
 
   def "run skips file collection inputs that fail to resolve"() {

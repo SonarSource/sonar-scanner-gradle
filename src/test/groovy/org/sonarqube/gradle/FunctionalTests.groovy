@@ -1012,6 +1012,48 @@ class FunctionalTests extends Specification {
     resolverProperties.testCompileClasspath.contains(resourcesOutput)
   }
 
+  def "sonarResolver skips compile classpaths that fail to resolve"() {
+    given:
+    settingsFile << "rootProject.name = 'root'"
+    Files.createDirectories(projectDir.resolve("empty-repository"))
+    writeFile(projectDir.resolve("existing-library.txt"), "existing library")
+    buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java-library'
+        }
+
+        repositories {
+            maven { url = uri('empty-repository') }
+        }
+
+        dependencies {
+            implementation 'invalid.example:missing-artifact:1.0'
+        }
+
+        tasks.named('sonarResolver') {
+            mainLibraries.from(file('existing-library.txt'))
+        }
+        """
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':sonarResolver')
+      .build()
+
+    then:
+    result.task(":sonarResolver").getOutcome() == SUCCESS
+    result.output.contains("Failed to resolve file collection input; skipping it.")
+    def resolverPropertiesFile = projectDir.resolve("build/sonar-resolver/properties").toFile()
+    def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    resolverProperties.compileClasspath.isEmpty()
+    resolverProperties.testCompileClasspath.isEmpty()
+  }
+
   def "sonarResolver tracks a Kotlin Multiplatform JVM artifact through jvmJar"() {
     given:
     settingsFile << """
