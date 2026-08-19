@@ -800,7 +800,7 @@ class FunctionalTests extends Specification {
     then:
     def sonarResolver = multiModuleProjectDir.resolve("module-1/build/sonar-resolver")
     assert result.task(":sonar").getOutcome() == SUCCESS
-    assert Files.list(sonarResolver).count() == 0
+    assert Files.notExists(sonarResolver)
 
   }
 
@@ -1005,6 +1005,7 @@ class FunctionalTests extends Specification {
     then:
     result.task(":processResources").getOutcome() == SUCCESS
     result.task(":sonarResolver").getOutcome() == SUCCESS
+    result.tasks*.path.indexOf(":processResources") < result.tasks*.path.indexOf(":sonarResolver")
     def resolverPropertiesFile = projectDir.resolve("build/sonar-resolver/properties").toFile()
     def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
     def resourcesOutput = projectDir.resolve("build/resources/main").toAbsolutePath().toString()
@@ -1094,15 +1095,33 @@ class FunctionalTests extends Specification {
       .withGradleVersion("9.5.1")
       .forwardOutput()
       .withPluginClasspath()
-      .withArguments(':consumer:sonarResolver')
+      .withArguments(':consumer:sonarResolver', ':subdependency:jvmJar')
       .build()
 
     then:
     result.task(":subdependency:jvmJar").getOutcome() == SUCCESS
     result.task(":consumer:sonarResolver").getOutcome() == SUCCESS
+    result.tasks*.path.indexOf(":subdependency:jvmJar") < result.tasks*.path.indexOf(":consumer:sonarResolver")
     def resolverPropertiesFile = projectDir.resolve("consumer/build/sonar-resolver/properties").toFile()
     def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
     resolverProperties.compileClasspath.any {
+      it.startsWith(projectDir.resolve("subdependency/build/libs").toAbsolutePath().toString()) && it.endsWith(".jar")
+    }
+
+    when:
+    def resolverOnlyResult = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':consumer:sonarResolver', '--rerun-tasks')
+      .build()
+
+    then:
+    resolverOnlyResult.task(":subdependency:jvmJar") == null
+    resolverOnlyResult.task(":consumer:sonarResolver").getOutcome() == SUCCESS
+    def resolverOnlyProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    resolverOnlyProperties.compileClasspath.any {
       it.startsWith(projectDir.resolve("subdependency/build/libs").toAbsolutePath().toString()) && it.endsWith(".jar")
     }
   }

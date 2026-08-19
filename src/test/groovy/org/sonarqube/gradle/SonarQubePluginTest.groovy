@@ -163,7 +163,7 @@ class SonarQubePluginTest extends Specification {
     ])
   }
 
-  def "makes sonar resolver task depend on classpath producers and run after compile tasks"() {
+  def "makes sonar resolver task run after classpath producers without depending on them"() {
     when:
     parentProject.pluginManager.apply(JavaPlugin)
     childProject.pluginManager.apply(JavaPlugin)
@@ -175,20 +175,14 @@ class SonarQubePluginTest extends Specification {
       "parent:compileJava",
       "parent:compileTestJava",
     ])
-    dependsOnTasks(parentResolverTask).containsAll([
-      "classes",
-      "compileJava",
-    ])
+    dependsOnTasks(parentResolverTask).isEmpty()
 
     def skippedChildResolverTask = childProject.tasks.sonarResolver
     mustRunAfterTasks(skippedChildResolverTask).containsAll([
       "child:compileJava",
       "child:compileTestJava",
     ])
-    dependsOnTasks(skippedChildResolverTask).containsAll([
-      "classes",
-      "compileJava",
-    ])
+    dependsOnTasks(skippedChildResolverTask).isEmpty()
   }
 
   def "sonar resolver retains the complete source set classpaths"() {

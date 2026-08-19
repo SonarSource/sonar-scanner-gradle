@@ -21,9 +21,13 @@ package org.sonarqube.gradle;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -31,6 +35,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Property;
@@ -78,13 +83,13 @@ public abstract class SonarResolverTask extends DefaultTask {
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
     this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getClasspathEntries));
-    this.getCompileClasspath().builtBy(getBuildDependencies(compileClasspath));
+    this.mustRunAfter(getClasspathProducerOrdering(compileClasspath));
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
     this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getClasspathEntries));
-    this.getTestCompileClasspath().builtBy(getBuildDependencies(testCompileClasspath));
+    this.mustRunAfter(getClasspathProducerOrdering(testCompileClasspath));
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
@@ -185,17 +190,41 @@ public abstract class SonarResolverTask extends DefaultTask {
     }
   }
 
-  private static TaskDependency getBuildDependencies(Provider<FileCollection> filesProvider) {
+  /**
+   * Lazily finds all tasks that may produce the classpath.
+   * <p>
+   * A FileCollection can expose an aggregate producer such as {@code classes}. If only one of its dependencies, such
+   * as {@code processResources}, is selected, the aggregate task is absent from the task graph. Ordering sonarResolver
+   * only after the aggregate task would therefore not satisfy Gradle's implicit-dependency validation.
+   * <p>
+   * Including transitive task dependencies ensures every selected concrete producer is ordered before sonarResolver,
+   * without making it a task dependency.
+   */
+  private static TaskDependency getClasspathProducerOrdering(Provider<FileCollection> filesProvider) {
     return task -> {
       try {
-        // Preserve producer tasks independently from the guarded classpath value resolution above.
         FileCollection files = filesProvider.getOrNull();
-        return files == null ? Collections.emptySet() : files.getBuildDependencies().getDependencies(task);
+        if (files == null) {
+          return Collections.emptySet();
+        }
+        return collectTransitiveTaskDependencies(task, files.getBuildDependencies().getDependencies(task));
       } catch (RuntimeException e) {
         LOGGER.log(Level.WARNING, FILE_COLLECTION_RESOLUTION_FAILURE_MESSAGE, e);
         return Collections.emptySet();
       }
     };
+  }
+
+  private static Set<Task> collectTransitiveTaskDependencies(Task consumer, Set<? extends Task> producerTasks) {
+    Set<Task> orderedProducers = new HashSet<>();
+    Queue<Task> queue = new ArrayDeque<>(producerTasks);
+    while (!queue.isEmpty()) {
+      Task producer = queue.remove();
+      if (producer != consumer && orderedProducers.add(producer)) {
+        queue.addAll(producer.getTaskDependencies().getDependencies(producer));
+      }
+    }
+    return orderedProducers;
   }
 
   @TaskAction
