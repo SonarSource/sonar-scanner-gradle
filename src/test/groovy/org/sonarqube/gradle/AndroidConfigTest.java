@@ -860,7 +860,8 @@ class AndroidConfigTest {
     stubOnVariants(debug);
 
     ConfigurableFileCollection bootFC = stubBootClasspath();
-    when(bootFC.plus(any())).thenReturn(mock(FileCollection.class));
+    FileCollection bootPlusResult = mock(FileCollection.class);
+    when(bootFC.plus(any())).thenReturn(bootPlusResult);
 
     ConfigurationContainer configurations = mock(ConfigurationContainer.class);
     when(project.getConfigurations()).thenReturn(configurations);
@@ -870,10 +871,12 @@ class AndroidConfigTest {
     when(configuration.getIncoming()).thenReturn(incoming);
     ArtifactView artifactView = mock(ArtifactView.class);
     when(incoming.artifactView(any())).thenReturn(artifactView);
-    when(artifactView.getFiles()).thenReturn(mock(FileCollection.class));
+    FileCollection artifactFiles = mock(FileCollection.class);
+    when(artifactView.getFiles()).thenReturn(artifactFiles);
     ObjectFactory objectFactory = mock(ObjectFactory.class);
     when(project.getObjects()).thenReturn(objectFactory);
-    when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(mock(TargetJvmEnvironment.class));
+    TargetJvmEnvironment env = mock(TargetJvmEnvironment.class);
+    when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(env);
 
     AndroidConfig.of(project).getTestLibraries();
 
@@ -901,7 +904,8 @@ class AndroidConfigTest {
     when(project.getConfigurations()).thenReturn(configurations);
     ObjectFactory objectFactory = mock(ObjectFactory.class);
     when(project.getObjects()).thenReturn(objectFactory);
-    when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(mock(TargetJvmEnvironment.class));
+    TargetJvmEnvironment targetJvmEnvironment = mock(TargetJvmEnvironment.class);
+    when(objectFactory.named(eq(TargetJvmEnvironment.class), any())).thenReturn(targetJvmEnvironment);
 
     FileCollection unitTestFC = mock(FileCollection.class);
     Configuration unitTestConfig = mock(Configuration.class);
