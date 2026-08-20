@@ -19,9 +19,9 @@
  */
 package org.sonarqube.gradle.snapshot;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+import org.sonarsource.scanner.lib.internal.shaded.com.google.gson.Gson;
+import org.sonarsource.scanner.lib.internal.shaded.com.google.gson.GsonBuilder;
+import org.sonarsource.scanner.lib.internal.shaded.com.google.gson.reflect.TypeToken;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
