@@ -1106,11 +1106,13 @@ class FunctionalTests extends Specification {
     result.tasks*.path.indexOf(":subdependency:jvmJar") < result.tasks*.path.indexOf(":consumer:sonarResolver")
     def resolverPropertiesFile = projectDir.resolve("consumer/build/sonar-resolver/properties").toFile()
     def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
-    resolverProperties.compileClasspath.any {
+    def jvmJarPath = resolverProperties.compileClasspath.find {
       it.startsWith(projectDir.resolve("subdependency/build/libs").toAbsolutePath().toString()) && it.endsWith(".jar")
     }
+    jvmJarPath != null
 
     when:
+    Files.delete(resolverPropertiesFile.toPath())
     def resolverOnlyResult = GradleRunner.create()
       .withProjectDir(projectDir.toFile())
       .withGradleVersion("9.5.1")
@@ -1123,9 +1125,7 @@ class FunctionalTests extends Specification {
     resolverOnlyResult.task(":subdependency:jvmJar") == null
     resolverOnlyResult.task(":consumer:sonarResolver").getOutcome() == SUCCESS
     def resolverOnlyProperties = new JsonSlurper().parse(resolverPropertiesFile)
-    resolverOnlyProperties.compileClasspath.any {
-      it.startsWith(projectDir.resolve("subdependency/build/libs").toAbsolutePath().toString()) && it.endsWith(".jar")
-    }
+    resolverOnlyProperties.compileClasspath.contains(jvmJarPath)
   }
 
   private Path projectDir(String project) {
