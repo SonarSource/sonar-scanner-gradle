@@ -46,7 +46,7 @@ class SonarResolverTaskTest extends Specification {
     def missingTestEntry = projectDir.resolve("missing-test-entry.jar").toFile()
     def compileClasspath = project.files(existingCompileEntry, missingCompileEntry).builtBy(compileProducer)
     def testCompileClasspath = project.files(existingTestEntry, missingTestEntry).builtBy(testProducer)
-    def task = project.tasks.create(SonarResolverTask.TASK_NAME, SonarResolverTask)
+    def task = project.tasks.register(SonarResolverTask.TASK_NAME, SonarResolverTask).get()
     task.projectName.set(":")
     task.topLevelProject.set(true)
     task.skipProject.set(false)
