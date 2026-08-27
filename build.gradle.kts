@@ -65,7 +65,6 @@ dependencies {
     implementation(libs.sonar.scanner.library)
     compileOnly(libs.findbugs.jsr305)
     compileOnly(libs.android.gradle)
-    compileOnly(libs.kotlin.gradle)
     testImplementation(libs.kotlin.gradle)
     testImplementation(libs.android.gradle)
     testImplementation(localGroovy())
