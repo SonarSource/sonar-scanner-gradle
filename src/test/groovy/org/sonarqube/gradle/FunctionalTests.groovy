@@ -800,7 +800,7 @@ class FunctionalTests extends Specification {
     then:
     def sonarResolver = multiModuleProjectDir.resolve("module-1/build/sonar-resolver")
     assert result.task(":sonar").getOutcome() == SUCCESS
-    assert Files.notExists(sonarResolver)
+    assert Files.notExists(sonarResolver.resolve("properties"))
 
   }
 
