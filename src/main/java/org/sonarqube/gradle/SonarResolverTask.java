@@ -216,15 +216,15 @@ public abstract class SonarResolverTask extends DefaultTask {
   }
 
   private static Set<Task> collectTransitiveTaskDependencies(Task consumer, Set<? extends Task> producerTasks) {
-    Set<Task> orderedProducers = new HashSet<>();
+    Set<Task> producersToOrderAfter = new HashSet<>();
     Queue<Task> queue = new ArrayDeque<>(producerTasks);
     while (!queue.isEmpty()) {
       Task producer = queue.remove();
-      if (producer != consumer && orderedProducers.add(producer)) {
+      if (producer != consumer && producersToOrderAfter.add(producer)) {
         queue.addAll(producer.getTaskDependencies().getDependencies(producer));
       }
     }
-    return orderedProducers;
+    return producersToOrderAfter;
   }
 
   @TaskAction
