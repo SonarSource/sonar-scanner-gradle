@@ -1017,7 +1017,8 @@ class FunctionalTests extends Specification {
     given:
     settingsFile << "rootProject.name = 'root'"
     Files.createDirectories(projectDir.resolve("empty-repository"))
-    writeFile(projectDir.resolve("existing-library.txt"), "existing library")
+    def existingLibrary = projectDir.resolve("existing-library.txt")
+    writeFile(existingLibrary, "existing library")
     buildFile << """
         plugins {
             id 'org.sonarqube'
@@ -1053,6 +1054,7 @@ class FunctionalTests extends Specification {
     def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
     resolverProperties.compileClasspath.isEmpty()
     resolverProperties.testCompileClasspath.isEmpty()
+    resolverProperties.mainLibraries == [existingLibrary.toAbsolutePath().toString()]
   }
 
   def "sonarResolver tracks a Kotlin Multiplatform JVM artifact through jvmJar"() {
