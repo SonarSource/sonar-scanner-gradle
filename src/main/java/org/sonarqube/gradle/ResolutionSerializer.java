@@ -19,8 +19,8 @@
  */
 package org.sonarqube.gradle;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import org.sonarsource.scanner.lib.internal.shaded.com.google.gson.Gson;
+import org.sonarsource.scanner.lib.internal.shaded.com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
