@@ -1008,9 +1008,10 @@ class FunctionalTests extends Specification {
     result.tasks*.path.indexOf(":processResources") < result.tasks*.path.indexOf(":sonarResolver")
     def resolverPropertiesFile = projectDir.resolve("build/sonar-resolver/properties").toFile()
     def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
-    def resourcesOutput = projectDir.resolve("build/resources/main").toAbsolutePath().toString()
-    new File(resourcesOutput).exists()
-    resolverProperties.testCompileClasspath.contains(resourcesOutput)
+    def resourcesOutput = projectDir.resolve("build/resources/main").toRealPath()
+    resolverProperties.testCompileClasspath
+      .collect { existingRealPathOrNormalizedPath(it) }
+      .contains(resourcesOutput)
   }
 
   def "sonarResolver skips compile classpaths that fail to resolve"() {
@@ -1054,7 +1055,7 @@ class FunctionalTests extends Specification {
     def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
     resolverProperties.compileClasspath.isEmpty()
     resolverProperties.testCompileClasspath.isEmpty()
-    resolverProperties.mainLibraries == [existingLibrary.toAbsolutePath().toString()]
+    resolverProperties.mainLibraries.collect { existingRealPathOrNormalizedPath(it) } == [existingLibrary.toRealPath()]
   }
 
   def "sonarResolver tracks a Kotlin Multiplatform JVM artifact through jvmJar"() {
@@ -1106,8 +1107,10 @@ class FunctionalTests extends Specification {
     result.tasks*.path.indexOf(":subdependency:jvmJar") < result.tasks*.path.indexOf(":consumer:sonarResolver")
     def resolverPropertiesFile = projectDir.resolve("consumer/build/sonar-resolver/properties").toFile()
     def resolverProperties = new JsonSlurper().parse(resolverPropertiesFile)
+    def jvmJarDirectory = projectDir.resolve("subdependency/build/libs").toRealPath()
     def jvmJarPath = resolverProperties.compileClasspath.find {
-      it.startsWith(projectDir.resolve("subdependency/build/libs").toAbsolutePath().toString()) && it.endsWith(".jar")
+      def classpathEntry = existingRealPathOrNormalizedPath(it)
+      classpathEntry.parent == jvmJarDirectory && classpathEntry.fileName.toString().endsWith(".jar")
     }
     jvmJarPath != null
 

@@ -213,8 +213,8 @@ class SonarQubePluginTest extends Specification {
     testClasspath.containsAll(ownOutputPaths)
 
     // External dependencies must still be present.
-    mainClasspath.any { it.endsWith("lib/SomeLib.jar") }
-    testClasspath.any { it.endsWith("lib/junit.jar") }
+    mainClasspath.any { Path.of(it).endsWith(Path.of("lib", "SomeLib.jar")) }
+    testClasspath.any { Path.of(it).endsWith(Path.of("lib", "junit.jar")) }
   }
 
   def "doesn't make sonar task depend on test task of skipped projects"() {
