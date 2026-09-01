@@ -38,6 +38,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
@@ -192,7 +193,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   }
 
   /**
-   * Lazily finds all tasks that may produce the classpath.
+   * Lazily finds all tasks of the consumer's own build that may produce the classpath.
    * <p>
    * A FileCollection can expose an aggregate producer such as {@code classes}. If only one of its dependencies, such
    * as {@code processResources}, is selected, the aggregate task is absent from the task graph. Ordering sonarResolver
@@ -200,6 +201,10 @@ public abstract class SonarResolverTask extends DefaultTask {
    * <p>
    * Including transitive task dependencies ensures every selected concrete producer is ordered before sonarResolver,
    * without making it a task dependency.
+   * <p>
+   * Tasks of an included build are left out: Gradle rejects {@code mustRunAfter} references to them with
+   * "Cannot use mustRunAfter to reference tasks from another build", and walking their dependencies resolves
+   * configurations of a build whose state lock we do not hold.
    */
   private static TaskDependency getClasspathProducerOrdering(Provider<FileCollection> filesProvider) {
     return task -> {
@@ -217,15 +222,20 @@ public abstract class SonarResolverTask extends DefaultTask {
   }
 
   private static Set<Task> collectTransitiveTaskDependencies(Task consumer, Set<? extends Task> producerTasks) {
+    Gradle consumerBuild = consumer.getProject().getGradle();
     Set<Task> producersToOrderAfter = new HashSet<>();
     Queue<Task> queue = new ArrayDeque<>(producerTasks);
     while (!queue.isEmpty()) {
       Task producer = queue.remove();
-      if (producer != consumer && producersToOrderAfter.add(producer)) {
+      if (producer != consumer && isPartOfBuild(producer, consumerBuild) && producersToOrderAfter.add(producer)) {
         queue.addAll(producer.getTaskDependencies().getDependencies(producer));
       }
     }
     return producersToOrderAfter;
+  }
+
+  private static boolean isPartOfBuild(Task task, Gradle build) {
+    return task.getProject().getGradle() == build;
   }
 
   @TaskAction
