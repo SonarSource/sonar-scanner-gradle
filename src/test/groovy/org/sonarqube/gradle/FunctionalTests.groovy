@@ -1133,6 +1133,51 @@ class FunctionalTests extends Specification {
     resolverOnlyProperties.compileClasspath.contains(jvmJarPath)
   }
 
+  def "sonarResolver ignores classpath producers coming from an included build"() {
+    given:
+    settingsFile << """
+        rootProject.name = 'root'
+        includeBuild('included-lib') {
+            dependencySubstitution {
+                substitute module('com.example:included-lib') using project(':')
+            }
+        }
+        """
+    buildFile << """
+        plugins {
+            id 'org.sonarqube'
+            id 'java-library'
+        }
+
+        dependencies { implementation 'com.example:included-lib:1.0' }
+        """
+    writeFile(projectDir.resolve("included-lib/settings.gradle"), "rootProject.name = 'included-lib'")
+    writeFile(projectDir.resolve("included-lib/build.gradle"), """
+        plugins { id 'java-library' }
+        group = 'com.example'
+        version = '1.0'
+        """)
+    writeFile(projectDir.resolve("included-lib/src/main/java/example/Library.java"), "package example;\npublic class Library {}")
+    writeFile(projectDir.resolve("src/main/java/example/Consumer.java"), "package example;\npublic class Consumer {}")
+
+    when:
+    def result = GradleRunner.create()
+      .withProjectDir(projectDir.toFile())
+      .withGradleVersion("9.5.1")
+      .forwardOutput()
+      .withPluginClasspath()
+      .withArguments(':compileJava', ':sonarResolver')
+      .build()
+
+    then:
+    result.task(":sonarResolver").getOutcome() == SUCCESS
+    !result.output.contains("Failed to resolve classpath producer tasks")
+    !result.output.contains("Failed to resolve file collection input")
+    def resolverProperties = new JsonSlurper().parse(projectDir.resolve("build/sonar-resolver/properties").toFile())
+    def includedBuildOutput = projectDir.resolve("included-lib/build/classes/java/main").toString()
+    resolverProperties.compileClasspath.contains(includedBuildOutput)
+  }
+
   private Path projectDir(String project) {
     return Path.of("src", "test", "projects", project)
   }
