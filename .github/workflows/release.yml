@@ -16,7 +16,7 @@ on:
 jobs:
   prepare_release:
     name: Prepare Release
-    runs-on: github-ubuntu-latest-s
+    runs-on: sonar-xs
     permissions:
       id-token: write
       contents: read
@@ -55,7 +55,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     needs:
       - prepare_release
-    runs-on: github-ubuntu-latest-s
+    runs-on: sonar-xs
     permissions:
       id-token: write
       contents: write
@@ -119,7 +119,7 @@ jobs:
   release:
     name: Release
     if: github.event_name != 'workflow_dispatch'
-    runs-on: github-ubuntu-latest-s
+    runs-on: sonar-xs
     needs:
       - prepare_release
     permissions:
