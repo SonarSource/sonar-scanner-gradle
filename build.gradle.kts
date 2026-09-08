@@ -76,6 +76,9 @@ dependencies {
     testImplementation(libs.assertj.core)
     testImplementation(libs.jupiter.engine)
     testImplementation(libs.jupiter.params)
+    // Repox's developer and CI endpoints expose different JUnit runtime metadata.
+    // Declare this module to keep strict locks consistent.
+    testRuntimeOnly(libs.apiguardian.api)
     testImplementation(libs.hamcrest.all)
     testImplementation(libs.mockito.core)
     testImplementation(libs.spock.core) {

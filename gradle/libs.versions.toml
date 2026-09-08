@@ -1,5 +1,6 @@
 [versions]
 agp = "8.13.2"
+apiguardian = "1.1.2"
 archunit = "1.2.1"
 assertj = "3.26.0"
 findbugs = "3.0.2"
@@ -12,6 +13,7 @@ spock = "2.3-groovy-3.0"
 
 [libraries]
 android-gradle = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+apiguardian-api = { group = "org.apiguardian", name = "apiguardian-api", version.ref = "apiguardian" }
 archunit-junit5 = { group = "com.tngtech.archunit", name = "archunit-junit5", version.ref = "archunit" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 findbugs-jsr305 = { group = "com.google.code.findbugs", name = "jsr305", version.ref = "findbugs" }
