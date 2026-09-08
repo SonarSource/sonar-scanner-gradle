@@ -23,6 +23,16 @@ runs:
     - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
       with:
         version: 2026.4.25
+    - name: Expose mise JDKs to Gradle
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        # Gradle auto-detects asdf installations, but not mise's directory.
+        # Expose every installed JDK through asdf's expected path.
+        mkdir -p "${HOME}/.asdf/installs"
+        ln -sfnT "$(dirname "$(mise where java@11)")" "${HOME}/.asdf/installs/java"
+    - uses: ./.github/actions/setup-android
+      if: runner.os == 'Linux' && inputs.android-gradle-version != 'NOT_AVAILABLE'
     - name: Set Java version
       shell: bash
       env:

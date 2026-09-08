@@ -1,0 +1,20 @@
+name: Setup Android SDK
+description: Configure the Android SDK required by the build and QA tests
+
+runs:
+  using: composite
+  steps:
+    - name: Accept Android SDK licenses
+      shell: bash
+      run: |
+        # sdkmanager exits before yes, so pipefail would turn successful license acceptance into a failure.
+        set +o pipefail
+        yes 2> /dev/null | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses > /dev/null
+        set -o pipefail
+    - name: Install Android SDK packages
+      shell: bash
+      run: |
+        sdkmanager --sdk_root="${ANDROID_HOME}" \
+          "platform-tools" \
+          "platforms;android-36" \
+          "build-tools;36.0.0"

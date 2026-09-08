@@ -2,6 +2,7 @@
 java = ["21", "17", "11"]
 maven = "3.9"
 gradle = "9"
+android-sdk = { version = "20.0", os = ["linux"] }
 
 [alias.java.versions]
 "11" = "corretto-11"

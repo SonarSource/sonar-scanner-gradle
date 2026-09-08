@@ -58,14 +58,13 @@ To build the plugin and run the tests, you will need Java 21 and android SDK.
 
 Prerequisites:
 ```bash
-# install java, mvn, gradle
+# install java, Maven, Gradle and Android SDK command-line tools
 mise install
 # use java 21
 mise shell java@21
 # install android platform
-mise install android-sdk@20.0
-export ANDROID_HOME="${HOME}/.local/share/mise/installs/android-sdk/20.0"
-"${ANDROID_HOME}/cmdline-tools/20.0/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+yes 2> /dev/null | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses
+sdkmanager --sdk_root="${ANDROID_HOME}" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 ```
 
 Build and install a SNAPSHOT in the local Maven repository:
