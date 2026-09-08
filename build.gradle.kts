@@ -20,6 +20,11 @@ plugins {
     signing
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.STRICT
+}
+
 apply(plugin = "com.gradle.plugin-publish")
 
 val projectTitle: String by project
