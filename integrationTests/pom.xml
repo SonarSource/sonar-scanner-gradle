@@ -71,13 +71,13 @@
     <dependency>
       <groupId>org.sonarsource.orchestrator</groupId>
       <artifactId>sonar-orchestrator</artifactId>
-      <version>5.5.0.2535</version>
+      <version>6.4.3.4676</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.sonarsource.orchestrator</groupId>
       <artifactId>sonar-orchestrator-junit4</artifactId>
-      <version>5.6.2.2625</version>
+      <version>6.4.3.4676</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -130,6 +130,31 @@
           <scope>test</scope>
         </dependency>
       </dependencies>
+    </profile>
+    <profile>
+      <!--
+        sonar-orchestrator is compiled for Java 17, so javac 11 can't read its class files.
+        BootstrapTest is the only test using it and it is skipped at runtime below Java 21
+        anyway (see BootstrapTest#checkOrchestrator), so exclude it from compilation when
+        building with an older JDK.
+      -->
+      <id>exclude-orchestrator-tests</id>
+      <activation>
+        <jdk>(,17)</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <testExcludes>
+                <testExclude>**/BootstrapTest.java</testExclude>
+              </testExcludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
     <profile>
       <id>use-javac-release</id>
