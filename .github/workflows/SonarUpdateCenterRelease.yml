@@ -24,7 +24,7 @@ on:
 
 jobs:
   update-center-release:
-    runs-on: github-ubuntu-latest-s
+    runs-on: sonar-xs
     name: Sonar Update Center Release
     permissions:
       id-token: write

@@ -250,7 +250,7 @@ tasks.named("artifactoryPublish") {
 }
 
 tasks.withType<Test>().configureEach {
-    doLast {
-        Thread.sleep(2000) // https://github.com/gradle/gradle/issues/16603
+    if (org.gradle.internal.os.OperatingSystem.current().isWindows) {
+        doNotTrackState("JaCoCo TestKit locks test.exec on Windows: https://github.com/gradle/gradle/issues/16603")
     }
 }
