@@ -1,5 +1,5 @@
 name: Setup Android SDK
-description: Configure the Android SDK required by the build and QA tests
+description: Configure the Android SDK required by the build and QA tests. Requires Android command-line tools such as sdkmanager to be installed (using mise or otherwise).
 
 runs:
   using: composite

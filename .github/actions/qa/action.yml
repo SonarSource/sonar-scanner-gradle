@@ -27,10 +27,13 @@ runs:
       if: runner.os == 'Linux'
       shell: bash
       run: |
-        # Gradle auto-detects asdf installations, but not mise's directory.
-        # Expose every installed JDK through asdf's expected path.
+        # Gradle auto-detects JDKs in asdf's directory, but not mise's:
+        # https://docs.gradle.org/9.7.1/userguide/toolchains.html#sec:auto_detection
+        # The active Java installation locates mise's shared directory containing every installed JDK.
         mkdir -p "${HOME}/.asdf/installs"
-        ln -sfnT "$(dirname "$(mise where java@11)")" "${HOME}/.asdf/installs/java"
+        ln --force --symbolic --no-dereference --no-target-directory \
+          "$(dirname "$(mise where java)")" \
+          "${HOME}/.asdf/installs/java"
     - uses: ./.github/actions/setup-android
       if: runner.os == 'Linux' && inputs.android-gradle-version != 'NOT_AVAILABLE'
     - name: Set Java version
