@@ -1,0 +1,7 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.gradle.publish:plugin-publish-plugin:1.3.1=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.apache.maven:maven-model:3.9.9=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.codehaus.plexus:plexus-utils:3.6.1=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+empty=annotationProcessor,testAnnotationProcessor

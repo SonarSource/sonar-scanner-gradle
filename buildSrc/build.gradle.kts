@@ -1,7 +1,14 @@
 repositories {
-    mavenLocal()
+    if (!providers.gradleProperty("skipMavenLocal").isPresent()) {
+        mavenLocal()
+    }
     gradlePluginPortal()
     mavenCentral()
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.STRICT
 }
 
 dependencies {
