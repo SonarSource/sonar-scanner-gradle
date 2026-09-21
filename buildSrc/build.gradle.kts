@@ -1,7 +1,4 @@
 repositories {
-    if (!providers.gradleProperty("skipMavenLocal").isPresent()) {
-        mavenLocal()
-    }
     gradlePluginPortal()
     mavenCentral()
 }

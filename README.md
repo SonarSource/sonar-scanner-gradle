@@ -76,11 +76,11 @@ Build and install a SNAPSHOT in the local Maven repository:
 When dependencies change, regenerate all lockfiles by resolving the project dependencies,
 buildscript and plugin classpath, `buildSrc` dependencies, and CycloneDX configurations:
 ```bash
-./gradlew -PskipMavenLocal :buildSrc:dependencies dependencies buildEnvironment cyclonedxBom --write-locks
+./gradlew :buildSrc:dependencies dependencies buildEnvironment cyclonedxBom --write-locks
 git diff -- gradle.lockfile buildscript-gradle.lockfile buildSrc/gradle.lockfile
 ```
-Skipping Maven Local ensures the lockfiles are generated from the same Gradle module metadata used on CI,
-rather than POM-only metadata that may be present in a developer's local Maven repository.
+Maven Local is excluded from build dependency resolution so normal builds, CI, and lockfile generation use
+consistent published metadata rather than POM-only metadata that may be present in a developer's local repository.
 
 ### How the plugin works
 When the plugin is applied to a project, it will add to that project the Sonar task. It will also add to the project and all its subprojects the Sonar extension.

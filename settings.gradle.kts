@@ -9,11 +9,7 @@ pluginManagement {
         System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
     val repoxRepository: java.net.URI =
         uri("https://repox.jfrog.io/repox/" + (if (providers.gradleProperty("qa").isPresent()) "sonarsource-qa" else "sonarsource"))
-    val skipMavenLocal = providers.gradleProperty("skipMavenLocal").isPresent()
     repositories {
-        if (!skipMavenLocal) {
-            mavenLocal()
-        }
         if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
             maven {
                 url = repoxRepository
