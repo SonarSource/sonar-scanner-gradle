@@ -1,7 +1,11 @@
 repositories {
-    mavenLocal()
     gradlePluginPortal()
     mavenCentral()
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.STRICT
 }
 
 dependencies {

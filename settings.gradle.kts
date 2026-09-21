@@ -10,7 +10,6 @@ pluginManagement {
     val repoxRepository: java.net.URI =
         uri("https://repox.jfrog.io/repox/" + (if (providers.gradleProperty("qa").isPresent()) "sonarsource-qa" else "sonarsource"))
     repositories {
-        mavenLocal()
         if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
             maven {
                 url = repoxRepository

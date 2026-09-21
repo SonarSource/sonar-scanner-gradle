@@ -2,6 +2,10 @@ import com.gradle.publish.DownloadMavenArtifactsAndPublishToGradlePluginPortal
 import com.hierynomus.gradle.license.tasks.LicenseCheck
 
 buildscript {
+    configurations.classpath {
+        resolutionStrategy.activateDependencyLocking()
+    }
+
     dependencies {
         classpath("com.gradle.publish:plugin-publish-plugin:1.3.1")
     }
@@ -18,6 +22,11 @@ plugins {
     id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
     id("org.cyclonedx.bom") version "1.5.0"
     signing
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+    lockMode = LockMode.STRICT
 }
 
 apply(plugin = "com.gradle.plugin-publish")
