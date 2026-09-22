@@ -23,7 +23,7 @@ extensions.configure(org.sonarqube.gradle.SonarExtension::class.java) {
 }
 
 plugins {
-    id("org.jetbrains.kotlin.multiplatform") version "2.3.0"
+    id("org.jetbrains.kotlin.multiplatform") version "2.4.20"
     id("com.android.kotlin.multiplatform.library") version "9.2.1"
 }
 

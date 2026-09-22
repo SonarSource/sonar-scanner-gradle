@@ -5,7 +5,7 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.20")
         classpath("com.android.tools.build:gradle:9.2.1")
 
         val sonarPluginClasspath = System.getProperty("sonarPluginClasspath")
