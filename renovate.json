@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>SonarSource/renovate-config"
+  ],
+  "enabledManagers": [
+    "github-actions",
+    "gradle",
+    "gradle-wrapper",
+    "mise"
+  ],
+  "ignorePaths": [
+    "integrationTests/**",
+    "property-dump-plugin/**",
+    "src/test/projects/**"
+  ]
+}
