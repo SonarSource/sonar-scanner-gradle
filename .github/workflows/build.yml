@@ -30,7 +30,7 @@ jobs:
       build-number: ${{ steps.build-gradle.outputs.BUILD_NUMBER }}
       deployed: ${{ steps.build-gradle.outputs.deployed }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         with:
           version: 2026.4.25
@@ -39,13 +39,13 @@ jobs:
         run: |
           mvn -f property-dump-plugin/pom.xml -B install
       - name: Configure Gradle
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           # Parameters matching those invoked by build-gradle
           develocity-injection-enabled: false
           cache-disabled: true
           develocity-plugin-version: '4.0'
-      - uses: SonarSource/ci-github-actions/build-gradle@v1
+      - uses: SonarSource/ci-github-actions/build-gradle@v2
         id: build-gradle
         with:
           deploy-pull-request: true
@@ -68,17 +68,17 @@ jobs:
     steps:
       - name: Configure Long Paths
         run: git config --global core.longpaths true
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         with:
           version: 2026.4.25
       - name: Configure Gradle
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           develocity-injection-enabled: false
           cache-disabled: true
           develocity-plugin-version: '4.0'
-      - uses: SonarSource/ci-github-actions/build-gradle@v1
+      - uses: SonarSource/ci-github-actions/build-gradle@v2
         id: build-step
         with:
           deploy-pull-request: false
@@ -150,7 +150,7 @@ jobs:
     env:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/qa
         with:
           gradle-version: ${{ matrix.item.gradle_version }}
@@ -176,7 +176,7 @@ jobs:
       # Windows needs this.
       - name: Configure Long Paths
         run: git config --global core.longpaths true
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/qa
         with:
           gradle-version: *latest-gradle-version
@@ -201,6 +201,6 @@ jobs:
     env:
       BUILD_NUMBER: ${{ needs.build.outputs.build-number }}
     steps:
-      - uses: SonarSource/ci-github-actions/promote@v1
+      - uses: SonarSource/ci-github-actions/promote@v2
         with:
           promote-pull-request: true
