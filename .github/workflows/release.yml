@@ -64,12 +64,12 @@ jobs:
       VERSION: ${{ needs.prepare_release.outputs.VERSION }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Mise
-        uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # v3.5.1
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          version: 2025.12.10
+          version: 2026.9.11
 
       - name: Cache Gradle packages
         uses: SonarSource/gh-action_cache@v1
@@ -130,12 +130,12 @@ jobs:
       REPO_NAME: ${{ github.event.repository.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Mise (and JFrog CLI)
-        uses: jdx/mise-action@146a28175021df8ca24f8ee1828cc2a60f980bd5 # v3.5.1
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          version: 2025.12.10
+          version: 2026.9.11
           tool_versions: |
             jfrog-cli 2.92.0
 
