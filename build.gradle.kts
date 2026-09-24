@@ -20,7 +20,7 @@ plugins {
     id("com.jfrog.artifactory") version "5.2.5"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
-    id("org.cyclonedx.bom") version "1.5.0"
+    id("org.cyclonedx.bom") version "1.10.0"
     signing
 }
 
@@ -119,7 +119,7 @@ tasks.withType<LicenseCheck>().configureEach {
 }
 
 jacoco {
-    toolVersion = "0.8.14"
+    toolVersion = "0.8.15"
 }
 
 tasks.jacocoTestReport {
