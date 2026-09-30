@@ -225,13 +225,10 @@ public class SonarUtils {
    * Filters a collection files returning only the existing ones.
    */
   static List<File> exists(Iterable<File> files) {
-    List<File> list = new ArrayList<>();
-    for (File file : files) {
-      if (!list.contains(file) && file.exists()) {
-        list.add(file);
-      }
-    }
-    return list;
+    return StreamSupport.stream(files.spliterator(), false)
+      .distinct()
+      .filter(File::exists)
+      .collect(Collectors.toList());
   }
 
   static void appendProps(Map<String, Object> properties, String key, Iterable<?> valuesToAppend) {
@@ -242,9 +239,7 @@ public class SonarUtils {
     } else if (previousValue != null) {
       newList.add(previousValue);
     }
-    for (Object value : valuesToAppend) {
-      newList.add(value);
-    }
+    valuesToAppend.forEach(newList::add);
     properties.put(key, newList);
   }
 
