@@ -86,7 +86,7 @@ class SonarTaskTest {
     toBeResolved.createNewFile();
     List<File> fileCollection = List.of(toBeResolved);
     SonarTask.resolveSonarJavaLibraries(projectProperties, fileCollection, properties);
-    String expectedValue = String.format("%s,%s", known.getAbsolutePath(), toBeResolved.getAbsolutePath());
+    String expectedValue = known.getAbsolutePath() + "," + toBeResolved.getAbsolutePath();
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
       Map.of(
         "sonar.java.libraries", expectedValue,
@@ -140,11 +140,7 @@ class SonarTaskTest {
     List<File> fileCollection = List.of(toBeResolved);
     SonarTask.resolveSonarJavaTestLibraries(projectProperties, fileCollection, properties);
 
-    String expectedValue = String.format(
-      "%s,%s",
-      known.getAbsolutePath(),
-      toBeResolved.getAbsolutePath()
-    );
+    String expectedValue = known.getAbsolutePath() + "," + toBeResolved.getAbsolutePath();
 
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
       Map.of(
@@ -170,12 +166,7 @@ class SonarTaskTest {
     List<File> fileCollection = List.of(toBeResolved);
     SonarTask.resolveSonarJavaTestLibraries(projectProperties, fileCollection, properties);
 
-    String expectedValue = String.format(
-      "%s,%s,%s",
-      buildFolder.getAbsolutePath(),
-      known.getAbsolutePath(),
-      toBeResolved.getAbsolutePath()
-    );
+    String expectedValue = buildFolder.getAbsolutePath() + "," + known.getAbsolutePath() + "," + toBeResolved.getAbsolutePath();
 
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
       Map.of(
@@ -235,11 +226,7 @@ class SonarTaskTest {
     List<File> fileCollection = List.of(toBeResolved);
     SonarTask.resolveAndroidSources(projectProperties, fileCollection, properties, false);
 
-    String expectedValue = String.format(
-      "%s,%s",
-      known.getAbsolutePath(),
-      toBeResolved.getAbsolutePath()
-    );
+    String expectedValue = known.getAbsolutePath() + "," + toBeResolved.getAbsolutePath();
 
     assertThat(properties).containsExactlyInAnyOrderEntriesOf(
       Map.of(
