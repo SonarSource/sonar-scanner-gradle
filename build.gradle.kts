@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.gradle.publish:plugin-publish-plugin:1.3.1")
+        classpath("com.gradle.publish:plugin-publish-plugin:2.2.1")
     }
 }
 
@@ -17,10 +17,10 @@ plugins {
     groovy
     jacoco
     `maven-publish`
-    id("com.jfrog.artifactory") version "5.2.5"
+    id("com.jfrog.artifactory") version "6.0.4"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
-    id("org.cyclonedx.bom") version "1.5.0"
+    id("org.cyclonedx.bom") version "3.4.1"
     signing
 }
 
