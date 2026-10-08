@@ -20,7 +20,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+    - uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
       with:
         version: 2026.4.25
     - name: Expose mise JDKs to Gradle
@@ -49,7 +49,7 @@ runs:
           development/github/token/licenses-ro token | GITHUB_TOKEN;
           development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
     - name: Configure Maven
-      uses: SonarSource/ci-github-actions/config-maven@v1
+      uses: SonarSource/ci-github-actions/config-maven@v2
       with:
         artifactory-reader-role: private-reader
         working-directory: integrationTests
