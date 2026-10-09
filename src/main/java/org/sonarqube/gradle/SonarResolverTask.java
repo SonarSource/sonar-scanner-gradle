@@ -36,6 +36,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
+import org.gradle.api.internal.StartParameterInternal;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.invocation.Gradle;
@@ -49,6 +50,7 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.util.GradleVersion;
 
 
 public abstract class SonarResolverTask extends DefaultTask {
@@ -85,13 +87,22 @@ public abstract class SonarResolverTask extends DefaultTask {
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
     this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getClasspathEntries));
-    this.mustRunAfter(getClasspathProducerOrdering(compileClasspath));
+    if (!isIsolatedProjects()) {
+      this.mustRunAfter(getClasspathProducerOrdering(compileClasspath));
+    }
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
     this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getClasspathEntries));
-    this.mustRunAfter(getClasspathProducerOrdering(testCompileClasspath));
+    if (!isIsolatedProjects()) {
+      this.mustRunAfter(getClasspathProducerOrdering(testCompileClasspath));
+    }
+  }
+
+  private boolean isIsolatedProjects() {
+    return GradleVersion.current().compareTo(GradleVersion.version("9.7")) >= 0
+      && Boolean.TRUE.equals(((StartParameterInternal) getProject().getGradle().getStartParameter()).getIsolatedProjects().get());
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {

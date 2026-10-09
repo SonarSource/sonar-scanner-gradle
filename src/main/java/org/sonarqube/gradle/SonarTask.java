@@ -43,18 +43,23 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.file.Directory;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.sonarqube.gradle.properties.SonarProperty;
+import org.sonarsource.scanner.lib.EnvironmentConfig;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapResult;
 import org.sonarsource.scanner.lib.ScannerEngineBootstrapper;
 import org.sonarsource.scanner.lib.ScannerEngineFacade;
@@ -77,7 +82,7 @@ import static org.sonarqube.gradle.properties.SonarProperty.VERBOSE;
  * For more information on how to configure the SonarQube Scanner, and on which properties are available, see the
  * <a href="http://docs.sonarqube.org/display/SCAN/Analyzing+with+SonarQube+Scanner+for+Gradle">SonarQube Scanner documentation</a>.
  */
-public class SonarTask extends ConventionTask {
+public abstract class SonarTask extends ConventionTask {
 
   private static class DefaultLogOutput implements LogOutput {
     @Override
@@ -146,6 +151,8 @@ public class SonarTask extends ConventionTask {
   private Provider<Set<String>> userDefinedKeys;
   private Provider<Directory> buildSonar;
   private Set<File> resolverFiles;
+  private String isolatedAnalysisRootPath;
+  private Provider<Map<String, String>> isolatedSensitiveProperties;
 
   private static void logEnvironmentInformation() {
     if (LOGGER.isInfoEnabled()) {
@@ -181,6 +188,10 @@ public class SonarTask extends ConventionTask {
    */
   @VisibleForTesting
   static void processResolverFile(File resolverFile, Map<String, String> result) {
+    processResolverFile(resolverFile, result, null);
+  }
+
+  private static void processResolverFile(File resolverFile, Map<String, String> result, @Nullable String analysisRootPath) {
     LOGGER.info("Looking at file: {}", resolverFile);
     try {
       var prop = ResolutionSerializer.read(resolverFile);
@@ -188,6 +199,17 @@ public class SonarTask extends ConventionTask {
         return;
       }
       ProjectProperties resolvedProperties = prop.get();
+      if (analysisRootPath != null
+        && resolvedProperties.projectName.equals(SonarUtils.constructPrefixedProjectName(analysisRootPath))) {
+        resolvedProperties = new ProjectProperties.Builder(resolvedProperties.projectName, true)
+          .compileClasspath(resolvedProperties.compileClasspath)
+          .testCompileClasspath(resolvedProperties.testCompileClasspath)
+          .mainLibraries(resolvedProperties.mainLibraries)
+          .testLibraries(resolvedProperties.testLibraries)
+          .androidSources(resolvedProperties.androidSources)
+          .androidTests(resolvedProperties.androidTests)
+          .build();
+      }
 
       if (resolvedProperties.androidSources != null) {
         List<File> sources = resolvedProperties.androidSources.stream().map(File::new).collect(Collectors.toList());
@@ -537,6 +559,8 @@ public class SonarTask extends ConventionTask {
   }
 
   @Inject
+  // Gradle requires a public injectable constructor for task instantiation.
+  @SuppressWarnings("java:S5993")
   public SonarTask() {
     super();
     // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
@@ -559,6 +583,32 @@ public class SonarTask extends ConventionTask {
 
   public void setResolverFiles(Set<File> resolverFiles) {
     this.resolverFiles = resolverFiles;
+  }
+
+  @InputFiles
+  @PathSensitive(PathSensitivity.NONE)
+  public abstract ConfigurableFileCollection getIsolatedMetadataFiles();
+
+  @InputFiles
+  @PathSensitive(PathSensitivity.NONE)
+  public abstract ConfigurableFileCollection getIsolatedResolverFiles();
+
+  @Internal
+  public String getIsolatedAnalysisRootPath() {
+    return isolatedAnalysisRootPath;
+  }
+
+  public void setIsolatedAnalysisRootPath(String isolatedAnalysisRootPath) {
+    this.isolatedAnalysisRootPath = isolatedAnalysisRootPath;
+  }
+
+  @Internal
+  public Provider<Map<String, String>> getIsolatedSensitiveProperties() {
+    return isolatedSensitiveProperties;
+  }
+
+  public void setIsolatedSensitiveProperties(Provider<Map<String, String>> isolatedSensitiveProperties) {
+    this.isolatedSensitiveProperties = isolatedSensitiveProperties;
   }
 
   /**
@@ -617,7 +667,17 @@ public class SonarTask extends ConventionTask {
       LOGGER.warn("Task 'sonarqube' is deprecated. Use 'sonar' instead.");
     }
 
-    Map<String, String> mapProperties = getProperties().get();
+    Map<String, String> mapProperties;
+    Set<String> explicitKeys;
+    if (isolatedAnalysisRootPath != null) {
+      ComputedProperties aggregate = readIsolatedMetadata(getIsolatedMetadataFiles().getFiles(), isolatedAnalysisRootPath, isolatedGlobalOverrides());
+      mapProperties = aggregate.properties.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()));
+      explicitKeys = aggregate.userDefinedKeys;
+    } else {
+      mapProperties = getProperties().get();
+      explicitKeys = this.userDefinedKeys.get();
+    }
     if (mapProperties.isEmpty()) {
       LOGGER.warn("Skipping Sonar analysis: no properties configured, was it skipped in all projects?");
       return;
@@ -634,7 +694,7 @@ public class SonarTask extends ConventionTask {
     }
 
     mapProperties = resolveFiles(mapProperties);
-    filterPathProperties(mapProperties, this.userDefinedKeys.get());
+    filterPathProperties(mapProperties, explicitKeys);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -657,6 +717,30 @@ public class SonarTask extends ConventionTask {
     }
   }
 
+  private Map<String, String> isolatedGlobalOverrides() {
+    Map<String, String> globalOverrides = new HashMap<>(getIsolatedSensitiveProperties().get());
+    globalOverrides.putAll(EnvironmentConfig.load());
+    for (String key : System.getProperties().stringPropertyNames()) {
+      if (key.startsWith("sonar")) {
+        globalOverrides.put(key, System.getProperty(key));
+      }
+    }
+    return globalOverrides;
+  }
+
+  @VisibleForTesting
+  static ComputedProperties readIsolatedMetadata(Collection<File> files, String analysisRootPath, Map<String, String> globalOverrides) {
+    List<SonarProjectMetadata> metadata = new ArrayList<>();
+    for (File file : files) {
+      try {
+        metadata.add(SonarMetadataSerializer.read(file));
+      } catch (IOException e) {
+        throw new AnalysisException(new IOException("Could not read Sonar project metadata from " + file, e));
+      }
+    }
+    return SonarPropertyComputer.aggregateIsolatedProperties(metadata, analysisRootPath, globalOverrides);
+  }
+
   /**
    * Finish the configuration of `sonar.sources`, `sonar.tests`, `sonar.java.libraries` and `sonar.java.test.libraries` by resolving the Android sources and class paths that
    * were attached to the task at configuration time.
@@ -670,8 +754,9 @@ public class SonarTask extends ConventionTask {
     final Map<String, String> result = new HashMap<>(properties);
 
     LOGGER.info("About to look at resolver files: {}", getResolverFiles());
-    for (File resolverFile : getResolverFiles()) {
-      processResolverFile(resolverFile, result);
+    Iterable<File> files = isolatedAnalysisRootPath == null ? getResolverFiles() : getIsolatedResolverFiles();
+    for (File resolverFile : files) {
+      processResolverFile(resolverFile, result, isolatedAnalysisRootPath);
     }
 
     if (LOGGER.isDebugEnabled()) {
