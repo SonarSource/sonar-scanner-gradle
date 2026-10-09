@@ -48,6 +48,31 @@ public class IsolatedProjectsTest extends AbstractGradleIT {
     assertThat(second.getLog()).contains("Reusing configuration cache", "SONAR_METADATA=:,:child");
   }
 
+  @Test
+  public void scannerAggregatesChildPropertiesUnderIsolation() throws Exception {
+    ignoreThisTestIfGradleVersionIsLessThan("9.7.0");
+    Map<String, String> env = Map.of("GRADLE_USER_HOME", temp.newFolder("isolated-gradle-home").getAbsolutePath());
+
+    String dumpArg = "-Dsonar.scanner.internal.dumpToFile=" + temp.newFile().getAbsolutePath();
+    RunResult first = runGradlewWithEnvQuietly("/isolated-java-projects", env, noExtraConfiguration(),
+      ":child:classes", ":sonar", ISOLATION, dumpArg);
+    RunResult second = runGradlewWithEnvQuietly("/isolated-java-projects", env, noExtraConfiguration(),
+      ":child:classes", ":sonar", ISOLATION, dumpArg);
+
+    assertThat(first.getExitValue()).as(first.getLog()).isZero();
+    assertThat(first.getLog()).contains("> Task :child:sonarResolver", "> Task :sonar");
+    assertThat(second.getExitValue()).isZero();
+    assertThat(second.getLog()).contains("Reusing configuration cache");
+
+    Properties properties = second.getDumpedProperties().orElseThrow();
+    assertThat(properties).containsEntry("sonar.projectKey", "isolated-java-root")
+      .containsEntry("sonar.modules", ":child")
+      .containsEntry(":child.sonar.projectName", "Isolated child")
+      .containsEntry(":child.sonar.moduleKey", "isolated-java-root:child");
+    assertThat(properties.getProperty(":child.sonar.sources").replace('\\', '/')).contains("src/main/java");
+    assertThat(properties.getProperty(":child.sonar.java.binaries")).contains("classes");
+  }
+
   private static RunConfigurationList noExtraConfiguration() {
     return new RunConfigurationList(List.of());
   }

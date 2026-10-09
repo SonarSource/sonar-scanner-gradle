@@ -18,6 +18,19 @@ Parameterize at least:
 
 To make plugin resolution work in test projects, reuse the setup from `integrationTests/src/test/resources/gradle-9-example/settings.gradle.kts`.
 
+### Gradle 9.7 Isolated Projects
+
+`IsolatedProjectsTest` uses two fixtures: `isolated-metadata-aggregation` verifies that Gradle can exchange task-produced metadata across isolated projects, and `isolated-java-projects` verifies that the scanner aggregates a child module during an isolated `:sonar` run. Both tests also check configuration-cache reuse. They run in the Gradle 9.7 QA job; older Gradle jobs skip them.
+
+To run them locally after publishing the plugin to Maven local:
+
+```sh
+./gradlew publishToMavenLocal
+SONARSOURCE_QA=true mvn -f integrationTests/pom.xml test \
+  -Dtest=IsolatedProjectsTest -Dgradle.version=9.7.0 \
+  -DandroidGradle.version=NOT_AVAILABLE
+```
+
 ### Property Snapshots
 
 `PropertySnapshotTest` verifies the scanner properties produced for a set of sample projects.
