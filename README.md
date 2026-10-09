@@ -94,15 +94,29 @@ Maven Local is excluded from build dependency resolution so normal builds, CI, a
 consistent published metadata rather than POM-only metadata that may be present in a developer's local repository.
 
 ### How the plugin works
-When the plugin is applied to a project, it will add to that project the Sonar task. It will also add to the project and all its subprojects the Sonar extension.
-For multi-module projects, the plugin will only apply to the first project where it gets called. The goal is to allow the usage of `allprojects {}`, for example.
+In a conventional build, applying the plugin to a project adds a Sonar task to that project and a Sonar extension to that project and its subprojects. This keeps the existing root-only application pattern for builds without Gradle Isolated Projects.
+
+With Gradle 9.7 or newer and `--isolated-projects`, apply the plugin in the build script of **every project** that contributes to the analysis, including intermediate projects with children. Gradle does not permit a root project's plugin to register tasks or extensions in another project during isolated configuration. For example:
+
+```groovy
+// Root build.gradle and each subproject's build.gradle
+plugins {
+  id 'org.sonarqube'
+}
+```
+
+The isolated path is validated on Gradle 9.7.0 multi-project Java and Android builds and a Kotlin Multiplatform JVM build. The Android fixture uses Android Gradle Plugin 9.2.1 and Android SDK 36; the Kotlin fixture uses Kotlin Gradle Plugin 2.4.20. Selected local custom classpath producers and Kotlin JVM Jar tasks run before analysis without being added as task dependencies.
+
+Run the root analysis explicitly with `./gradlew :sonar --isolated-projects`. The leading `:` selects the root task; an unqualified `sonar` command can select the task in every project where the plugin is applied. Root-only application in an isolated multi-project build is unsupported and reports the missing project application instead of analyzing an incomplete module set. Builds without Isolated Projects retain the root-only behavior above.
+
+If Gradle reports that a child project has no `sonarResolverElements` or `sonarMetadataElements` variant, apply `org.sonarqube` in that child's build script (and in any intermediate project with children). This error means the root analysis cannot receive that project's data.
 
 **Sonar extension**
 The `sonar` extension enables an easy configuration of a project with the Domain Specific Language.
 
 **Sonar task**
 The Sonar task has the name `sonar`, so it can be executed by calling `./gradlew sonar`. It collects information from the project and all its subprojects, generating the properties for the analysis. Then, it runs the SonarScanner analysis using all those properties.
-The task depends on all compile and test tasks of all projects (except for skipped projects).
+The task consumes each participating project's resolver output and runs after relevant producer tasks when they are scheduled.
 If all projects are skipped (by adding `skipProject=true` to the sonar DSL), the analysis won't execute.
 
 

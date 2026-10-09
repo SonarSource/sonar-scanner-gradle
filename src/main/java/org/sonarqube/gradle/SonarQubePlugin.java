@@ -22,6 +22,7 @@ package org.sonarqube.gradle;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +34,9 @@ import java.util.stream.Stream;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.StartParameterInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -43,6 +46,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
@@ -55,6 +59,12 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
  */
 public class SonarQubePlugin implements Plugin<Project> {
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
+  private static final String METADATA_ELEMENTS = "sonarMetadataElements";
+  private static final String METADATA_INPUTS = "sonarMetadataInputs";
+  private static final String RESOLVER_ELEMENTS = "sonarResolverElements";
+  private static final String RESOLVER_INPUTS = "sonarResolverInputs";
+  private static final String ANALYSIS_DESCRIPTION_PREFIX = "Analyzes ";
+  private static final String SONAR_BUILD_DIRECTORY = "sonar";
 
   private static ActionBroadcast<SonarProperties> addBroadcaster(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Project project) {
     return actionBroadcastMap.computeIfAbsent(project.getPath(), ignored -> new ActionBroadcast<>());
@@ -100,7 +110,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       resolverTask.getSkipProject().convention(project.provider(() -> SonarUtils.isSkipped(project)));
       resolverTask.getProjectName().convention(SonarUtils.constructPrefixedProjectName(project.getPath()));
       resolverTask.getTopLevelProject().convention(false);
-      if (project == topLevelProject) {
+      if (project == topLevelProject && (!isIsolatedProjects(project) || project.getPath().equals(":"))) {
         resolverTask.getTopLevelProject().set(true);
       }
       resolverTask.setCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME)));
@@ -139,7 +149,7 @@ public class SonarQubePlugin implements Plugin<Project> {
         resolverTaskProvider.configure(resolverTask -> {
           resolverTask.setLegacyMainLibraries(project.provider(() -> LegacyAndroidConfig.findMainLibraries(project)));
           resolverTask.setLegacyTestLibraries(project.provider(() -> LegacyAndroidConfig.findTestLibraries(project)));
-          resolverTask.mustRunAfter(getAndroidTasks(project));
+          resolverTask.mustRunAfter(isIsolatedProjects(project) ? getAndroidTasksForProject(project) : getAndroidTasks(project));
         });
       }
     } catch (NoClassDefFoundError ignored) {
@@ -226,35 +236,163 @@ public class SonarQubePlugin implements Plugin<Project> {
       .collect(Collectors.toList());
   }
 
+  private static Callable<Iterable<? extends Task>> getJavaTestTasksForProject(Project project) {
+    return () -> project.getPlugins().hasPlugin(JavaPlugin.class) && SonarUtils.notSkipped(project)
+      ? List.of(project.getTasks().getByName(JavaPlugin.TEST_TASK_NAME)) : Collections.emptyList();
+  }
+
+  private static Callable<Iterable<? extends Task>> getJavaResourceTasksForProject(Project project) {
+    return () -> project.getPlugins().hasPlugin(JavaPlugin.class) && SonarUtils.notSkipped(project)
+      ? List.of(project.getTasks().getByName(JavaPlugin.PROCESS_RESOURCES_TASK_NAME),
+        project.getTasks().getByName(JavaPlugin.PROCESS_TEST_RESOURCES_TASK_NAME)) : Collections.emptyList();
+  }
+
+  private static Callable<Iterable<? extends Task>> getJacocoTasksForProject(Project project) {
+    return () -> project.getPlugins().hasPlugin(JacocoPlugin.class) && SonarUtils.notSkipped(project)
+      ? new ArrayList<>(project.getTasks().withType(JacocoReport.class)) : Collections.emptyList();
+  }
+
   private static Callable<Iterable<? extends Task>> getAndroidTasks(Project project) {
     return () -> project.getAllprojects().stream()
       .filter(p -> isAndroidProject(p) && SonarUtils.notSkipped(p))
-      .map(p -> {
-        LegacyAndroidConfig.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidConfig.findVariantAndExtension(p, SonarUtils.getConfiguredAndroidVariant(p));
-
-        List<Task> allTasks = new ArrayList<>();
-        if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
-          String variantName = SonarUtils.capitalize(androidVariantAndExtension.getVariant().getName());
-          final String compileTaskPrefix = "compile" + variantName;
-          boolean unitTestTaskDepAdded = SonarUtils.addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
-          boolean androidTestTaskDepAdded = SonarUtils.addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
-          // Unit test compilation and android test compilation tasks already depend on main code compilation, so we don't add a useless dependency
-          // that would lead to run the main compilation task several times.
-          if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
-            SonarUtils.addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
-          }
-
-          final String testTaskPrefix = "test" + variantName;
-          SonarUtils.addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
-        }
-        return allTasks;
-      })
+      .map(SonarQubePlugin::queryAndroidTasks)
       .flatMap(List::stream)
       .collect(Collectors.toList());
   }
 
+  private static Callable<Iterable<? extends Task>> getAndroidTasksForProject(Project project) {
+    return () -> isAndroidProject(project) && SonarUtils.notSkipped(project)
+      ? queryAndroidTasks(project) : Collections.emptyList();
+  }
+
+  private static List<Task> queryAndroidTasks(Project p) {
+    LegacyAndroidConfig.AndroidVariantAndExtension androidVariantAndExtension = LegacyAndroidConfig.findVariantAndExtension(p, SonarUtils.getConfiguredAndroidVariant(p));
+
+    List<Task> allTasks = new ArrayList<>();
+    if (androidVariantAndExtension != null && androidVariantAndExtension.getVariant() != null) {
+      String variantName = SonarUtils.capitalize(androidVariantAndExtension.getVariant().getName());
+      final String compileTaskPrefix = "compile" + variantName;
+      boolean unitTestTaskDepAdded = SonarUtils.addTaskByName(p, compileTaskPrefix + "UnitTestJavaWithJavac", allTasks);
+      boolean androidTestTaskDepAdded = SonarUtils.addTaskByName(p, compileTaskPrefix + "AndroidTestJavaWithJavac", allTasks);
+      // Unit test compilation and android test compilation tasks already depend on main code compilation, so we don't add a useless dependency
+      // that would lead to run the main compilation task several times.
+      if (!unitTestTaskDepAdded && !androidTestTaskDepAdded) {
+        SonarUtils.addTaskByName(p, compileTaskPrefix + "JavaWithJavac", allTasks);
+      }
+
+      final String testTaskPrefix = "test" + variantName;
+      SonarUtils.addTaskByName(p, testTaskPrefix + "UnitTest", allTasks);
+    }
+    return allTasks;
+  }
+
+  /** Gradle 9.7 exposes this option through StartParameterInternal, but not through the public StartParameter API. */
+  private static boolean isIsolatedProjects(Project project) {
+    if (!isGradleVersionGreaterOrEqualTo("9.7")) {
+      return false;
+    }
+    return Boolean.TRUE.equals(((StartParameterInternal) project.getGradle().getStartParameter()).getIsolatedProjects().get());
+  }
+
+  private static Configuration createOutgoing(Project project, String name) {
+    Configuration configuration = project.getConfigurations().create(name);
+    configuration.setCanBeConsumed(true);
+    configuration.setCanBeResolved(false);
+    return configuration;
+  }
+
+  private static Configuration createIncoming(Project project, String name, String elements, Set<String> childPaths) {
+    Configuration configuration = project.getConfigurations().create(name);
+    configuration.setCanBeConsumed(false);
+    configuration.setCanBeResolved(true);
+    for (String path : childPaths) {
+      project.getDependencies().add(name, project.getDependencies().project(Map.of("path", path, "configuration", elements)));
+    }
+    return configuration;
+  }
+
+  private static void configureIsolatedProjects(Project project) {
+    Map<String, ActionBroadcast<SonarProperties>> broadcasters = new HashMap<>();
+    Map<String, AndroidConfig> androidConfigs = new HashMap<>();
+    registerSonarExtensions(project, broadcasters);
+
+    Set<File> resolverFiles = new HashSet<>();
+    TaskProvider<SonarResolverTask> resolver = registerResolverTask(project, project, resolverFiles);
+    configureAndroid(project, androidConfigs, resolver);
+    resolver.configure(task -> {
+      task.mustRunAfter(getJavaTestTasksForProject(project));
+      task.mustRunAfter(getJavaResourceTasksForProject(project));
+      task.mustRunAfter(getJacocoTasksForProject(project));
+      // Artifact tasks such as Kotlin Multiplatform's jvmJar may be selected alongside sonar.
+      // Keep the ordering local to this project; the root sonar task consumes this resolver's artifact.
+      task.mustRunAfter(project.getTasks().withType(Jar.class));
+    });
+
+    Provider<ComputedProperties> moduleProperties = project.provider(() ->
+      new SonarPropertyComputer(broadcasters, androidConfigs, project).computeLocalSonarProperties(false));
+    Provider<ComputedProperties> rootProperties = project.provider(() ->
+      new SonarPropertyComputer(broadcasters, androidConfigs, project).computeLocalSonarProperties(true));
+    Provider<Map<String, String>> sensitiveProperties = project.provider(() ->
+      new SonarPropertyComputer(broadcasters, androidConfigs, project).computeLocalSensitiveProperties());
+    TaskProvider<SonarMetadataTask> metadata = project.getTasks().register(SonarMetadataTask.TASK_NAME, SonarMetadataTask.class, task -> {
+      task.getProjectPath().set(project.getPath());
+      task.getProjectDirectory().set(project.getProjectDir().getAbsolutePath());
+      task.getBuildFile().set(project.getBuildFile().getAbsolutePath());
+      task.getSkipped().set(project.provider(() -> SonarUtils.isSkipped(project)));
+      task.getProperties().set(moduleProperties.map(computed -> computed.properties.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()))));
+      task.getUserDefinedKeys().set(moduleProperties.map(computed -> new ArrayList<>(computed.userDefinedKeys)));
+      task.getRootProperties().set(rootProperties.map(computed -> computed.properties.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()))));
+      task.getRootUserDefinedKeys().set(rootProperties.map(computed -> new ArrayList<>(computed.userDefinedKeys)));
+      task.getScanAllSourcesOverridden().set(project.provider(() ->
+        new SonarPropertyComputer(broadcasters, androidConfigs, project).hasExplicitSourceOverride()));
+      task.getDefaultProjectKey().set(project.provider(() -> {
+        if (!project.getPath().equals(":")) {
+          return "";
+        }
+        String group = project.getGroup().toString();
+        return group.isEmpty() ? project.getName() : (group + ":" + project.getName());
+      }));
+      task.getMetadataFile().set(project.getLayout().getBuildDirectory().file("sonar-metadata/properties.json"));
+    });
+
+    createOutgoing(project, METADATA_ELEMENTS).getOutgoing().artifact(metadata.flatMap(SonarMetadataTask::getMetadataFile), artifact -> artifact.builtBy(metadata));
+    createOutgoing(project, RESOLVER_ELEMENTS).getOutgoing().artifact(project.provider(() -> resolver.get().getOutputFile()), artifact -> artifact.builtBy(resolver));
+
+    // Reading only project paths is safe in Gradle's isolated mode. Each child must apply this plugin locally.
+    Set<String> childPaths = project.getAllprojects().stream().map(Project::getPath)
+      .filter(path -> !path.equals(project.getPath())).collect(Collectors.toSet());
+    Set<String> metadataPaths = new HashSet<>(childPaths);
+    if (!project.getPath().equals(":")) {
+      metadataPaths.add(":");
+    }
+    Configuration metadataInputs = createIncoming(project, METADATA_INPUTS, METADATA_ELEMENTS, metadataPaths);
+    Configuration resolverInputs = createIncoming(project, RESOLVER_INPUTS, RESOLVER_ELEMENTS, childPaths);
+
+    TaskContainer tasks = project.getTasks();
+    for (String taskName : List.of(SonarExtension.SONAR_TASK_NAME, SonarExtension.SONAR_DEPRECATED_TASK_NAME)) {
+      tasks.register(taskName, SonarTask.class, task -> {
+        task.setDescription(ANALYSIS_DESCRIPTION_PREFIX + project + " and its subprojects with Sonar."
+          + (taskName.equals(SonarExtension.SONAR_DEPRECATED_TASK_NAME) ? " This task is deprecated. Use 'sonar' instead." : ""));
+        task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
+        task.setBuildSonar(project.getLayout().getBuildDirectory().dir(SONAR_BUILD_DIRECTORY));
+        task.setProperties(project.provider(Collections::emptyMap), project.provider(Collections::emptySet));
+        task.setResolverFiles(Collections.emptySet());
+        task.setIsolatedAnalysisRootPath(project.getPath());
+        task.setIsolatedSensitiveProperties(sensitiveProperties);
+        task.getIsolatedMetadataFiles().from(metadata, metadataInputs);
+        task.getIsolatedResolverFiles().from(resolver, resolverInputs);
+      });
+    }
+  }
+
   @Override
   public void apply(Project project) {
+    if (isIsolatedProjects(project)) {
+      configureIsolatedProjects(project);
+      return;
+    }
     // Don't try to see if the task was added to any project in the hierarchy. If you do it, it will try to recursively resolve the configuration of all
     // the projects, failing if a project has a sonarqube configuration since the extension wasn't added to it yet.
     if (project.getExtensions().findByName(SonarExtension.SONAR_EXTENSION_NAME) == null) {
@@ -266,19 +404,19 @@ public class SonarQubePlugin implements Plugin<Project> {
       LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_DEPRECATED_TASK_NAME, project);
       TaskContainer tasks = project.getTasks();
       tasks.register(SonarExtension.SONAR_DEPRECATED_TASK_NAME, SonarTask.class, task -> {
-        task.setDescription("Analyzes " + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
+        task.setDescription(ANALYSIS_DESCRIPTION_PREFIX + project + " and its subprojects with Sonar. This task is deprecated. Use 'sonar' instead.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         task.setResolverFiles(resolverFiles);
-        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
+        task.setBuildSonar(project.getLayout().getBuildDirectory().dir(SONAR_BUILD_DIRECTORY));
         configureTask(task, project, actionBroadcastMap, androidConfigMap);
       });
 
       LOGGER.debug("Adding '{}' task to '{}'", SonarExtension.SONAR_TASK_NAME, project);
       tasks.register(SonarExtension.SONAR_TASK_NAME, SonarTask.class, task -> {
-        task.setDescription("Analyzes " + project + " and its subprojects with Sonar.");
+        task.setDescription(ANALYSIS_DESCRIPTION_PREFIX + project + " and its subprojects with Sonar.");
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
         task.setResolverFiles(resolverFiles);
-        task.setBuildSonar(project.getLayout().getBuildDirectory().dir("sonar"));
+        task.setBuildSonar(project.getLayout().getBuildDirectory().dir(SONAR_BUILD_DIRECTORY));
         configureTask(task, project, actionBroadcastMap, androidConfigMap);
       });
     }

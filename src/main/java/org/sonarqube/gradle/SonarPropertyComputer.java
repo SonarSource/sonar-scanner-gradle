@@ -84,6 +84,9 @@ public class SonarPropertyComputer {
   private static final String SONAR = "sonar";
   private static final String MAIN_SOURCE_SET_SUFFIX = "main";
   private static final String TEST_SOURCE_SET_SUFFIX = "test";
+  private static final Set<String> SENSITIVE_PROPERTIES = Set.of(
+    "sonar.login", "sonar.password", "sonar.token", "sonar.scanner.proxypassword",
+    "sonar.scanner.truststorepassword", "sonar.scanner.keystorepassword");
 
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Map<String, AndroidConfig> androidConfigMap;
@@ -107,6 +110,201 @@ public class SonarPropertyComputer {
     }
 
     return computedProperties;
+  }
+
+  /** Computes only this project's properties, without reading another Gradle project model. */
+  public ComputedProperties computeLocalSonarProperties(boolean analysisRoot) {
+    return computeLocalSonarProperties(analysisRoot, false);
+  }
+
+  /** Sensitive values stay in the analysis task and are never written to project metadata outputs. */
+  public Map<String, String> computeLocalSensitiveProperties() {
+    ComputedProperties computed = computeLocalSonarProperties(true, true);
+    Map<String, String> sensitive = new LinkedHashMap<>();
+    computed.properties.forEach((key, value) -> {
+      if (isSensitiveProperty(key)) {
+        sensitive.put(key, (String) value);
+      }
+    });
+    return sensitive;
+  }
+
+  private ComputedProperties computeLocalSonarProperties(boolean analysisRoot, boolean includeSensitive) {
+    ComputedProperties computed = new ComputedProperties(new LinkedHashMap<>(), new LinkedHashSet<>());
+    if (SonarUtils.isSkipped(targetProject)) {
+      return computed;
+    }
+    Map<String, Object> raw = new LinkedHashMap<>();
+    Set<String> userDefined = new LinkedHashSet<>();
+    addGradleDefaults(targetProject, raw, analysisRoot);
+    if (isAndroidProject(targetProject)) {
+      if (AndroidConfig.usesAndroidGradlePlugin9OrGreater()) {
+        androidConfigMap.get(targetProject.getPath()).configureProperties(raw);
+      } else {
+        LegacyAndroidConfig.configureForAndroid(targetProject, SonarUtils.getConfiguredAndroidVariant(targetProject), raw);
+      }
+    }
+    if (analysisRoot) {
+      addGithubFolder(targetProject, raw);
+      // Kotlin build scripts are added by the aggregator, using each project's own metadata.
+    }
+    overrideWithUserDefinedProperties(targetProject, raw, userDefined, analysisRoot, false);
+    raw.putIfAbsent(SonarProperty.PROJECT_SOURCE_DIRS, "");
+    raw.putIfAbsent(SonarProperty.PROJECT_TEST_DIRS, "");
+    if (analysisRoot && targetProject.getPath().equals(":")) {
+      raw.putIfAbsent(SonarProperty.PROJECT_KEY, computeProjectKey());
+      raw.put(SonarProperty.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getProjectDir().getAbsolutePath());
+    }
+    convertProperties(raw, "", computed.properties);
+    computed.userDefinedKeys.addAll(userDefined);
+    if (!includeSensitive) {
+      computed.properties.keySet().removeIf(SonarPropertyComputer::isSensitiveProperty);
+      computed.userDefinedKeys.removeIf(SonarPropertyComputer::isSensitiveProperty);
+    }
+    return computed;
+  }
+
+  static boolean isSensitiveProperty(String key) {
+    return SENSITIVE_PROPERTIES.contains(key.toLowerCase(Locale.ROOT));
+  }
+
+  /** Whether a sonar DSL block explicitly supplies a source or test location. */
+  public boolean hasExplicitSourceOverride() {
+    ActionBroadcast<SonarProperties> actions = actionBroadcastMap.get(targetProject.getPath());
+    if (actions == null) {
+      return false;
+    }
+    SonarProperties configured = new SonarProperties(new HashMap<>());
+    actions.execute(configured);
+    Map<String, Object> values = configured.getProperties();
+    return values.containsKey(SonarProperty.PROJECT_SOURCE_DIRS) || values.containsKey(SonarProperty.PROJECT_TEST_DIRS);
+  }
+
+  /** Combines serialized project outputs without accessing Gradle's project model. */
+  public static ComputedProperties aggregateIsolatedProperties(Collection<SonarProjectMetadata> metadata, String analysisRootPath) {
+    return aggregateIsolatedProperties(metadata, analysisRootPath, Map.of());
+  }
+
+  /** Global overrides are applied before scanAll so system and environment settings retain their precedence. */
+  public static ComputedProperties aggregateIsolatedProperties(Collection<SonarProjectMetadata> metadata, String analysisRootPath,
+    Map<String, String> globalOverrides) {
+    Map<String, SonarProjectMetadata> allByPath = metadata.stream().collect(Collectors.toMap(p -> p.projectPath, p -> p));
+    Map<String, SonarProjectMetadata> byPath = selectAnalysisMetadata(metadata, analysisRootPath);
+    SonarProjectMetadata root = byPath.get(analysisRootPath);
+    if (root == null) {
+      throw new IllegalArgumentException("Missing Sonar metadata for analysis project " + analysisRootPath);
+    }
+    ComputedProperties result = new ComputedProperties(new LinkedHashMap<>(), new LinkedHashSet<>());
+    if (root.skipped) {
+      return result;
+    }
+    SonarProjectMetadata gradleRoot = allByPath.get(":");
+    String defaultKey = root.defaultProjectKey;
+    String gradleRootDirectory = root.projectDirectory;
+    if (!analysisRootPath.equals(":")) {
+      if (gradleRoot == null || gradleRoot.defaultProjectKey.isEmpty()) {
+        throw new IllegalArgumentException("Missing root project metadata for analysis project " + analysisRootPath);
+      }
+      defaultKey = gradleRoot.defaultProjectKey + analysisRootPath;
+      gradleRootDirectory = gradleRoot.projectDirectory;
+    }
+    String rootKey = globalOverrides.getOrDefault(SonarProperty.PROJECT_KEY,
+      root.rootProperties.getOrDefault(SonarProperty.PROJECT_KEY, defaultKey));
+    appendIsolatedProject(root, "", byPath, result, rootKey, true);
+    result.properties.putIfAbsent(SonarProperty.PROJECT_KEY, rootKey);
+    if (!root.rootUserDefinedKeys.contains(SonarProperty.PROJECT_SOURCE_DIRS)) {
+      addIsolatedKotlinBuildScripts(root, byPath, result.properties);
+    }
+    result.properties.putAll(globalOverrides);
+    result.userDefinedKeys.addAll(globalOverrides.keySet());
+    result.properties.computeIfPresent(SonarProperty.PROJECT_BASE_DIR, (k, v) -> findProjectBaseDir(result.properties));
+    applyIsolatedScanAll(root, byPath, globalOverrides, result);
+    result.properties.put(SonarProperty.KOTLIN_GRADLE_PROJECT_ROOT, gradleRootDirectory);
+    return result;
+  }
+
+  private static Map<String, SonarProjectMetadata> selectAnalysisMetadata(Collection<SonarProjectMetadata> metadata, String analysisRootPath) {
+    Map<String, SonarProjectMetadata> byPath = new LinkedHashMap<>();
+    String descendantPrefix = analysisRootPath.equals(":") ? ":" : (analysisRootPath + ":");
+    for (SonarProjectMetadata project : metadata) {
+      if (!(project.projectPath.equals(analysisRootPath) || project.projectPath.startsWith(descendantPrefix))) {
+        continue;
+      }
+      if (byPath.put(project.projectPath, project) != null) {
+        throw new IllegalArgumentException("Duplicate Sonar metadata for project " + project.projectPath);
+      }
+    }
+    return byPath;
+  }
+
+  private static void applyIsolatedScanAll(SonarProjectMetadata root, Map<String, SonarProjectMetadata> byPath,
+    Map<String, String> globalOverrides, ComputedProperties result) {
+    if ("true".equalsIgnoreCase(((String) result.properties.getOrDefault(SonarProperty.GRADLE_SCAN_ALL, "false")).trim())) {
+      if (root.scanAllSourcesOverridden || root.rootUserDefinedKeys.contains(SonarProperty.PROJECT_SOURCE_DIRS)
+        || root.rootUserDefinedKeys.contains(SonarProperty.PROJECT_TEST_DIRS)
+        || globalOverrides.containsKey(SonarProperty.PROJECT_SOURCE_DIRS)
+        || globalOverrides.containsKey(SonarProperty.PROJECT_TEST_DIRS)) {
+        LOGGER.warn("Parameter sonar.gradle.scanAll is enabled but the scanner will not collect additional sources because sonar.sources or sonar.tests has been overridden.");
+      } else {
+        LOGGER.info("Parameter sonar.gradle.scanAll is enabled. The scanner will attempt to collect additional sources.");
+        Set<Path> skippedDirs = byPath.values().stream().filter(p -> p.skipped || hasSkippedAncestor(p.projectPath, byPath))
+          .map(p -> Paths.get(p.projectDirectory)).collect(Collectors.toSet());
+        computeScanAllProperties(Paths.get(root.projectDirectory), skippedDirs, result.properties);
+      }
+    }
+  }
+
+  private static void appendIsolatedProject(SonarProjectMetadata project, String prefix, Map<String, SonarProjectMetadata> byPath,
+    ComputedProperties result, String rootKey, boolean rootView) {
+    Map<String, String> properties = rootView ? project.rootProperties : project.properties;
+    List<String> userDefinedKeys = rootView ? project.rootUserDefinedKeys : project.userDefinedKeys;
+    properties.forEach((key, value) -> result.properties.put(convertKey(key, prefix), value));
+    userDefinedKeys.forEach(key -> result.userDefinedKeys.add(convertKey(key, prefix)));
+    if (!prefix.isEmpty()) {
+      result.properties.putIfAbsent(convertKey(SonarProperty.MODULE_KEY, prefix), rootKey + project.projectPath);
+    }
+    List<SonarProjectMetadata> children = byPath.values().stream()
+      .filter(candidate -> !candidate.skipped && !candidate.projectPath.equals(project.projectPath)
+        && project.projectPath.equals(parentPath(candidate.projectPath)))
+      .sorted((a, b) -> a.projectPath.compareTo(b.projectPath))
+      .collect(Collectors.toList());
+    if (!children.isEmpty()) {
+      List<String> ids = new ArrayList<>();
+      for (SonarProjectMetadata child : children) {
+        ids.add(child.projectPath);
+        appendIsolatedProject(child, convertKey(child.projectPath, prefix), byPath, result, rootKey, false);
+      }
+      result.properties.put(convertKey(SonarProperty.MODULES, prefix), String.join(",", ids));
+    }
+  }
+
+  private static String parentPath(String path) {
+    int lastColon = path.lastIndexOf(':');
+    return lastColon <= 0 ? ":" : path.substring(0, lastColon);
+  }
+
+  private static boolean hasSkippedAncestor(String path, Map<String, SonarProjectMetadata> byPath) {
+    String current = path;
+    while (!current.equals(":")) {
+      current = parentPath(current);
+      SonarProjectMetadata parent = byPath.get(current);
+      if (parent != null && parent.skipped) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static void addIsolatedKotlinBuildScripts(SonarProjectMetadata root, Map<String, SonarProjectMetadata> byPath,
+    Map<String, Object> properties) {
+    List<String> scripts = byPath.values().stream()
+      .filter(p -> !p.skipped && !hasSkippedAncestor(p.projectPath, byPath))
+      .map(p -> p.buildFile).filter(p -> p.endsWith(".kts"))
+      .collect(Collectors.toList());
+    scripts.add(Paths.get(root.projectDirectory, "settings.gradle.kts").toString());
+    String previous = (String) properties.getOrDefault(SonarProperty.PROJECT_SOURCE_DIRS, "");
+    properties.put(SonarProperty.PROJECT_SOURCE_DIRS,
+      SonarUtils.joinCsvStringsWithoutDuplicates(previous, SonarUtils.joinAsCsv(scripts)));
   }
 
   private void computeSonarProperties(Project project, ComputedProperties computedProperties) {
@@ -244,6 +442,14 @@ public class SonarPropertyComputer {
   }
 
   private static void computeScanAllProperties(Project project, Map<String, Object> properties) {
+    Set<Path> skippedDirs = skippedProjects(project)
+      .map(Project::getProjectDir)
+      .map(File::toPath)
+      .collect(Collectors.toSet());
+    computeScanAllProperties(project.getProjectDir().toPath(), skippedDirs, properties);
+  }
+
+  private static void computeScanAllProperties(Path projectDir, Set<Path> skippedDirs, Map<String, Object> properties) {
     // Collecting the existing sources from all modules, i.e. 'sonar.sources' and all 'submodule.sonar.sources'
     Set<Path> allModulesExistingSourcesAndTests = properties.entrySet()
       .stream()
@@ -256,22 +462,16 @@ public class SonarPropertyComputer {
       .map(Paths::get)
       .collect(Collectors.toSet());
 
-    Set<Path> skippedDirs = skippedProjects(project)
-      .map(Project::getProjectDir)
-      .map(File::toPath)
-      .collect(Collectors.toSet());
-
     Set<Path> excludedFiles = computeReportPaths(properties);
 
     SourceCollector visitor = SourceCollector.builder()
-      .setRoot(project.getProjectDir().toPath())
+      .setRoot(projectDir)
       .setExistingSources(allModulesExistingSourcesAndTests)
       .setExcludedFiles(excludedFiles)
       .setDirectoriesToIgnore(skippedDirs)
       .build();
 
 
-    Path projectDir = project.getProjectDir().toPath();
     try {
       Files.walkFileTree(projectDir, visitor);
     } catch (IOException e) {
@@ -308,6 +508,11 @@ public class SonarPropertyComputer {
   }
 
   private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties, Set<String> userDefinedKeys) {
+    overrideWithUserDefinedProperties(project, rawProperties, userDefinedKeys, isRootProject(project), true);
+  }
+
+  private void overrideWithUserDefinedProperties(Project project, Map<String, Object> rawProperties, Set<String> userDefinedKeys,
+    boolean analysisRoot, boolean includeGlobalOverrides) {
     ActionBroadcast<SonarProperties> actionBroadcast = actionBroadcastMap.get(project.getPath());
     if (actionBroadcast != null) {
       Map<String, Object> defaultProperties = new LinkedHashMap<>(rawProperties);
@@ -321,7 +526,7 @@ public class SonarPropertyComputer {
         }
       }
     }
-    if (isRootProject(project)) {
+    if (analysisRoot && includeGlobalOverrides) {
       Map<String, String> environmentProperties = getSonarEnvironmentVariables(project);
       rawProperties.putAll(environmentProperties);
       userDefinedKeys.addAll(environmentProperties.keySet());
@@ -555,12 +760,16 @@ public class SonarPropertyComputer {
   }
 
   private void addGradleDefaults(final Project project, final Map<String, Object> properties) {
+    addGradleDefaults(project, properties, project.equals(targetProject));
+  }
+
+  private static void addGradleDefaults(final Project project, final Map<String, Object> properties, boolean analysisRoot) {
     properties.put(SonarProperty.PROJECT_NAME, project.getName());
     properties.put(SonarProperty.PROJECT_DESCRIPTION, project.getDescription());
     properties.put(SonarProperty.PROJECT_VERSION, project.getVersion());
     properties.put(SonarProperty.PROJECT_BASE_DIR, project.getProjectDir());
 
-    if (project.equals(targetProject)) {
+    if (analysisRoot) {
       // Root project of the analysis
       Provider<Directory> workingDir = project.getLayout().getBuildDirectory().dir(SONAR);
       properties.put(SonarProperty.WORKING_DIRECTORY, workingDir.get().getAsFile());
