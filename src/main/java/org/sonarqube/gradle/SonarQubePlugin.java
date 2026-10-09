@@ -46,6 +46,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.testing.jacoco.plugins.JacocoPlugin;
 import org.gradle.testing.jacoco.tasks.JacocoReport;
 import org.gradle.util.GradleVersion;
@@ -322,6 +323,9 @@ public class SonarQubePlugin implements Plugin<Project> {
       task.mustRunAfter(getJavaTestTasksForProject(project));
       task.mustRunAfter(getJavaResourceTasksForProject(project));
       task.mustRunAfter(getJacocoTasksForProject(project));
+      // Artifact tasks such as Kotlin Multiplatform's jvmJar may be selected alongside sonar.
+      // Keep the ordering local to this project; the root sonar task consumes this resolver's artifact.
+      task.mustRunAfter(project.getTasks().withType(Jar.class));
     });
 
     Provider<ComputedProperties> moduleProperties = project.provider(() ->
