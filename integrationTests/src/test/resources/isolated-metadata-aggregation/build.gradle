@@ -1,0 +1,17 @@
+apply from: 'metadata.gradle'
+
+configurations.create('sonarMetadata') {
+  canBeConsumed = false
+  canBeResolved = true
+}
+dependencies {
+  sonarMetadata project(path: ':child', configuration: 'sonarMetadataElements')
+}
+tasks.register('aggregateSonarMetadata') {
+  def metadataFiles = files(tasks.named('writeSonarMetadata').flatMap { it.metadataFile }, configurations.sonarMetadata)
+  inputs.files(metadataFiles)
+  dependsOn(metadataFiles)
+  doLast {
+    println 'SONAR_METADATA=' + metadataFiles.files.collect { it.text.trim() }.sort().join(',')
+  }
+}

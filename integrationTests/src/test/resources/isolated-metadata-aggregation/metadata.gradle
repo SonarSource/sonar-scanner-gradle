@@ -1,0 +1,26 @@
+import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
+
+abstract class MetadataTask extends DefaultTask {
+  @Input abstract Property<String> getModulePath()
+  @OutputFile abstract RegularFileProperty getMetadataFile()
+  @TaskAction void writeMetadata() {
+    metadataFile.get().asFile.withWriter { it.println(modulePath.get()) }
+  }
+}
+
+def metadata = tasks.register('writeSonarMetadata', MetadataTask) {
+  modulePath = project.path
+  metadataFile = layout.buildDirectory.file('sonar/metadata.txt')
+}
+configurations.create('sonarMetadataElements') {
+  canBeConsumed = true
+  canBeResolved = false
+}
+artifacts.add('sonarMetadataElements', metadata.flatMap { it.metadataFile }) {
+  builtBy(metadata)
+}
