@@ -7,10 +7,34 @@ runs:
     - name: Accept Android SDK licenses
       shell: bash
       run: |
-        # sdkmanager exits before yes, so pipefail would turn successful license acceptance into a failure.
-        set +o pipefail
-        yes 2> /dev/null | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses > /dev/null
-        set -o pipefail
+        license_log="$(mktemp)"
+        (
+          sleep 30
+          echo "SDK manager processes after 30 seconds:"
+          ps -eo pid,ppid,etime,args | grep '[s]dkmanager' || true
+          sdkmanager_pid="$(jcmd -l | awk '/SdkManagerCli/ { print $1; exit }')"
+          if [[ -n "$sdkmanager_pid" ]]; then
+            echo "SDK manager JVM thread dump:"
+            timeout 10s jcmd "$sdkmanager_pid" Thread.print | head -n 120 || true
+          fi
+          echo "Android repository connectivity:"
+          timeout 10s curl --head --silent --show-error https://dl.google.com/android/repository/repository2-1.xml | head -n 10 || true
+        ) &
+        diagnostics_pid=$!
+
+        # Keep the same license command as the failing job while limiting this diagnostic run.
+        if timeout --kill-after=10s 90s bash -c 'yes 2>/dev/null | sdkmanager --sdk_root="$ANDROID_HOME" --licenses' > "$license_log" 2>&1; then
+          status=0
+        else
+          status=$?
+        fi
+
+        kill "$diagnostics_pid" 2>/dev/null || true
+        wait "$diagnostics_pid" 2>/dev/null || true
+        echo "Last SDK manager output:"
+        tail -n 10 "$license_log"
+        rm -f "$license_log"
+        exit "$status"
     - name: Install Android SDK packages
       shell: bash
       run: |
