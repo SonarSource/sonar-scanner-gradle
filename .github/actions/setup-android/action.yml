@@ -24,9 +24,9 @@ runs:
         ) &
         diagnostics_pid=$!
 
-        # Show the bare license command's output and allow remote metadata to finish loading.
+        # Accept licenses while showing SDK output in this bounded diagnostic run.
         set -o pipefail
-        if timeout --kill-after=10s 10m sdkmanager --sdk_root="$ANDROID_HOME" --licenses 2>&1 | tee "$license_log"; then
+        if timeout --kill-after=10s 5m bash -c 'yes 2>/dev/null | sdkmanager --sdk_root="$ANDROID_HOME" --licenses' 2>&1 | tee "$license_log"; then
           status=0
         else
           status=$?
