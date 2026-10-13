@@ -8,6 +8,13 @@ runs:
       shell: bash
       run: |
         license_log="$(mktemp)"
+        for version in 6 5 4 3 2 1; do
+          url="https://dl.google.com/android/repository/addons_list-${version}.xml"
+          echo "Probe $url"
+          timeout 12s curl --http1.1 --location --silent --show-error --output /dev/null \
+            --write-out 'HTTP %{http_code}; connect %{time_connect}s; TLS %{time_appconnect}s; first byte %{time_starttransfer}s\n' \
+            "$url" || true
+        done
         (
           sleep 30
           echo "SDK manager processes after 30 seconds:"
@@ -16,6 +23,8 @@ runs:
           if [[ -n "$sdkmanager_pid" ]]; then
             echo "SDK manager JVM thread dump:"
             timeout 10s jcmd "$sdkmanager_pid" Thread.print | head -n 120 || true
+            echo "SDK manager proxy properties:"
+            timeout 10s jcmd "$sdkmanager_pid" VM.system_properties | grep -Ei '(^|\.)[a-z]+proxy(host|port|user)=' | sed -E 's/=.*/=<set>/' || true
           fi
           echo "Android repository connectivity:"
           timeout 10s curl --head --silent --show-error https://dl.google.com/android/repository/repository2-1.xml | head -n 10 || true
