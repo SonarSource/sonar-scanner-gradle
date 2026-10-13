@@ -45,8 +45,9 @@ runs:
         ) &
         diagnostics_pid=$!
 
-        # Keep the same license command as the failing job while limiting this diagnostic run.
-        if timeout --kill-after=10s 90s bash -c 'yes 2>/dev/null | sdkmanager --sdk_root="$ANDROID_HOME" --licenses' > "$license_log" 2>&1; then
+        # Show the bare license command's output while limiting this diagnostic run.
+        set -o pipefail
+        if timeout --kill-after=10s 90s sdkmanager --sdk_root="$ANDROID_HOME" --licenses 2>&1 | tee "$license_log"; then
           status=0
         else
           status=$?
