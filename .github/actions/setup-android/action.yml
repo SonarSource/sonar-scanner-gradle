@@ -8,27 +8,6 @@ runs:
       shell: bash
       run: |
         license_log="$(mktemp)"
-        for url in \
-          https://dl.google.com/android/repository/addons_list-6.xml \
-          https://dl.google.com/android/repository/repository2-1.xml; do
-          for method in HEAD GET; do
-            for protocol in --http1.1 --http2; do
-              echo "Probe $method $protocol $url"
-              if [[ "$method" == HEAD ]]; then
-                curl_args=(--head)
-              else
-                curl_args=()
-              fi
-              if timeout 8s curl "$protocol" "${curl_args[@]}" --silent --show-error --output /dev/null \
-                --write-out 'HTTP %{http_code}; connect %{time_connect}s; TLS %{time_appconnect}s; first byte %{time_starttransfer}s\n' \
-                "$url"; then
-                echo "Probe succeeded"
-              else
-                echo "Probe failed: $?"
-              fi
-            done
-          done
-        done
         (
           sleep 30
           echo "SDK manager processes after 30 seconds:"
@@ -45,9 +24,9 @@ runs:
         ) &
         diagnostics_pid=$!
 
-        # Show the bare license command's output while limiting this diagnostic run.
+        # Show the bare license command's output and allow remote metadata to finish loading.
         set -o pipefail
-        if timeout --kill-after=10s 90s sdkmanager --sdk_root="$ANDROID_HOME" --licenses 2>&1 | tee "$license_log"; then
+        if timeout --kill-after=10s 10m sdkmanager --sdk_root="$ANDROID_HOME" --licenses 2>&1 | tee "$license_log"; then
           status=0
         else
           status=$?
