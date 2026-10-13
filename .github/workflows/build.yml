@@ -4,11 +4,16 @@ on:
 
 jobs:
   build:
-    name: Diagnose Android SDK
-    runs-on: sonar-l
+    name: Probe Android network on ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [sonar-l, sonar-m, github-ubuntu-latest-s]
+    runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
-        with:
-          version: 2026.4.25
-      - uses: ./.github/actions/setup-android
+      - name: Probe Android repository over HTTP/1.1
+        shell: bash
+        run: |
+          curl --http1.1 --max-time 15 --silent --show-error --output /dev/null \
+            --write-out 'HTTP %{http_code}; first byte %{time_starttransfer}s\n' \
+            https://dl.google.com/android/repository/addons_list-6.xml
