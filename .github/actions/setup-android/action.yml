@@ -8,12 +8,26 @@ runs:
       shell: bash
       run: |
         license_log="$(mktemp)"
-        for version in 6 5 4 3 2 1; do
-          url="https://dl.google.com/android/repository/addons_list-${version}.xml"
-          echo "Probe $url"
-          timeout 12s curl --http1.1 --location --silent --show-error --output /dev/null \
-            --write-out 'HTTP %{http_code}; connect %{time_connect}s; TLS %{time_appconnect}s; first byte %{time_starttransfer}s\n' \
-            "$url" || true
+        for url in \
+          https://dl.google.com/android/repository/addons_list-6.xml \
+          https://dl.google.com/android/repository/repository2-1.xml; do
+          for method in HEAD GET; do
+            for protocol in --http1.1 --http2; do
+              echo "Probe $method $protocol $url"
+              if [[ "$method" == HEAD ]]; then
+                curl_args=(--head)
+              else
+                curl_args=()
+              fi
+              if timeout 8s curl "$protocol" "${curl_args[@]}" --silent --show-error --output /dev/null \
+                --write-out 'HTTP %{http_code}; connect %{time_connect}s; TLS %{time_appconnect}s; first byte %{time_starttransfer}s\n' \
+                "$url"; then
+                echo "Probe succeeded"
+              else
+                echo "Probe failed: $?"
+              fi
+            done
+          done
         done
         (
           sleep 30
