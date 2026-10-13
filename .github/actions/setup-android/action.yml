@@ -7,10 +7,28 @@ runs:
     - name: Accept Android SDK licenses
       shell: bash
       run: |
-        # sdkmanager exits before yes, so pipefail would turn successful license acceptance into a failure.
-        set +o pipefail
-        yes 2> /dev/null | sdkmanager --sdk_root="${ANDROID_HOME}" --licenses > /dev/null
-        set -o pipefail
+        license_log="$(mktemp)"
+        trap 'rm -f "$license_log"' EXIT
+
+        for attempt in 1 2 3; do
+          echo "Accepting Android SDK licenses (attempt ${attempt}/3)"
+          # A stalled sdkmanager has previously blocked the build for an hour.
+          # Run the pipeline in a shell without pipefail because yes exits with SIGPIPE on success.
+          if timeout --kill-after=10s 180s bash -c 'yes 2>/dev/null | sdkmanager --sdk_root="$ANDROID_HOME" --licenses' > "$license_log" 2>&1; then
+            tail -n 1 "$license_log"
+            exit 0
+          else
+            status=$?
+          fi
+
+          tail -n 20 "$license_log"
+          if [[ "$attempt" -lt 3 ]]; then
+            echo "::warning::Android SDK license acceptance exited with status ${status}; retrying"
+          else
+            echo "::error::Android SDK license acceptance failed after 3 attempts (status ${status})"
+            exit "$status"
+          fi
+        done
     - name: Install Android SDK packages
       shell: bash
       run: |
