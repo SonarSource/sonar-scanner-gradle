@@ -21,7 +21,7 @@ env:
 jobs:
   build:
     # Build takes over 30 minutes on "s" and around 5 minutes on "m".
-    runs-on: sonar-l
+    runs-on: github-ubuntu-latest-s
     name: Build
     permissions:
       id-token: write  # Required for Vault OIDC authentication
@@ -143,7 +143,7 @@ jobs:
     name: >
       QA J${{ matrix.item.java_version }} - Gradle ${{ matrix.item.gradle_version }}
       ${{ matrix.item.android_gradle_version && format(' AGP {0}', matrix.item.android_gradle_version) || '' }}
-    runs-on: 'sonar-l'
+    runs-on: ${{ matrix.item.android_gradle_version && 'github-ubuntu-latest-s' || 'sonar-l' }}
     permissions:
       id-token: write
       contents: write
