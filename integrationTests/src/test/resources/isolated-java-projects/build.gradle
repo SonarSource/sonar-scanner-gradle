@@ -1,0 +1,9 @@
+plugins {
+  id 'org.sonarqube' version '${version}'
+}
+
+sonar {
+  properties {
+    property 'sonar.projectKey', 'isolated-java-root'
+  }
+}

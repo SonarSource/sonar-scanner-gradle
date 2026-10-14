@@ -36,6 +36,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
+import org.gradle.api.internal.StartParameterInternal;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.invocation.Gradle;
@@ -48,7 +49,9 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.util.GradleVersion;
 
 
 public abstract class SonarResolverTask extends DefaultTask {
@@ -85,13 +88,22 @@ public abstract class SonarResolverTask extends DefaultTask {
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
     this.compileClasspath = compileClasspath;
     this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getClasspathEntries));
-    this.mustRunAfter(getClasspathProducerOrdering(compileClasspath));
+    this.mustRunAfter(isIsolatedProjects()
+      ? getLocalClasspathOutputProducers(compileClasspath)
+      : getClasspathProducerOrdering(compileClasspath));
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
     this.testCompileClasspath = testCompileClasspath;
     this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getClasspathEntries));
-    this.mustRunAfter(getClasspathProducerOrdering(testCompileClasspath));
+    this.mustRunAfter(isIsolatedProjects()
+      ? getLocalClasspathOutputProducers(testCompileClasspath)
+      : getClasspathProducerOrdering(testCompileClasspath));
+  }
+
+  private boolean isIsolatedProjects() {
+    return GradleVersion.current().compareTo(GradleVersion.version("9.7")) >= 0
+      && Boolean.TRUE.equals(((StartParameterInternal) getProject().getGradle().getStartParameter()).getIsolatedProjects().get());
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
@@ -219,6 +231,27 @@ public abstract class SonarResolverTask extends DefaultTask {
         return Collections.emptySet();
       }
     };
+  }
+
+  /**
+   * Project isolation forbids traversing a task's dependencies directly. Match the classpath against outputs of
+   * local tasks instead, so an explicitly selected producer runs first without making it a resolver dependency.
+   */
+  private TaskCollection<Task> getLocalClasspathOutputProducers(Provider<FileCollection> filesProvider) {
+    return getProject().getTasks().matching(candidate -> {
+      try {
+        FileCollection classpath = filesProvider.getOrNull();
+        if (classpath == null) {
+          return false;
+        }
+        Set<File> outputs = candidate.getOutputs().getFiles().getFiles();
+        return classpath.getFiles().stream().anyMatch(entry -> outputs.stream()
+          .anyMatch(output -> entry.toPath().toAbsolutePath().normalize().startsWith(output.toPath().toAbsolutePath().normalize())));
+      } catch (RuntimeException e) {
+        LOGGER.log(Level.WARNING, PRODUCER_ORDERING_FAILURE_MESSAGE, e);
+        return false;
+      }
+    });
   }
 
   private static Set<Task> collectTransitiveTaskDependencies(Task consumer, Set<? extends Task> producerTasks) {

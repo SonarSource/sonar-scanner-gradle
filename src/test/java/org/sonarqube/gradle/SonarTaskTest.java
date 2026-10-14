@@ -35,6 +35,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SonarTaskTest {
 
@@ -339,6 +340,32 @@ class SonarTaskTest {
     File nonExistentFile = new File("non-existent-file.json");
     SonarTask.processResolverFile(nonExistentFile, result);
     assertThat(result).isEmpty();
+  }
+
+  @Test
+  void readIsolatedMetadataMergesSerializedPropertiesAndExecutionOverrides(@TempDir File tempDir) throws IOException {
+    File metadataFile = new File(tempDir, "metadata.json");
+    SonarMetadataSerializer.write(metadataFile, new SonarProjectMetadata(":", false,
+      Map.of("sonar.projectKey", "root", "sonar.sources", "src"), List.of(),
+      tempDir.toString(), new File(tempDir, "build.gradle").toString()));
+
+    ComputedProperties properties = SonarTask.readIsolatedMetadata(List.of(metadataFile), ":",
+      Map.of("sonar.projectKey", "overridden", "sonar.token", "runtime-secret"));
+
+    assertThat(properties.properties).containsEntry("sonar.projectKey", "overridden")
+      .containsEntry("sonar.token", "runtime-secret");
+    assertThat(properties.userDefinedKeys).contains("sonar.projectKey", "sonar.token");
+  }
+
+  @Test
+  void readIsolatedMetadataReportsUnreadableFile(@TempDir File tempDir) {
+    File missingFile = new File(tempDir, "missing.json");
+    List<File> metadataFiles = List.of(missingFile);
+    Map<String, String> overrides = Map.of();
+
+    assertThatThrownBy(() -> SonarTask.readIsolatedMetadata(metadataFiles, ":", overrides))
+      .isInstanceOf(AnalysisException.class)
+      .hasMessageContaining(missingFile.toString());
   }
 
   @Test

@@ -1,0 +1,10 @@
+plugins {
+  id 'java'
+  id 'org.sonarqube' version '${version}'
+}
+
+sonar {
+  properties {
+    property 'sonar.projectName', 'Isolated child'
+  }
+}
