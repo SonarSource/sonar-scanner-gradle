@@ -48,6 +48,7 @@ jobs:
       - uses: SonarSource/ci-github-actions/build-gradle@v2
         id: build-gradle
         with:
+          repox-url: https://repox.jfrog.io
           deploy-pull-request: true
           artifactory-reader-role: private-reader    # Override default public-reader
           artifactory-deployer-role: qa-deployer     # Override default public-deployer
@@ -81,6 +82,7 @@ jobs:
       - uses: SonarSource/ci-github-actions/build-gradle@v2
         id: build-step
         with:
+          repox-url: https://repox.jfrog.io
           deploy-pull-request: false
           sonar-platform: 'none'
           artifactory-reader-role: private-reader    # Override for public repo using private access
