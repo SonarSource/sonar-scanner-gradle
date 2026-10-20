@@ -1,0 +1,10 @@
+# Auto-detect text files and normalize line endings to LF in Git
+* text=auto
+
+# Keep Windows batch files using CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Keep Unix wrapper scripts using LF
+gradlew text eol=lf
+*.sh text eol=lf
