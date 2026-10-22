@@ -20,9 +20,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+    - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
       with:
-        version: 2026.4.25
+        version: 2026.10.17
     - name: Expose mise JDKs to Gradle
       if: runner.os == 'Linux'
       shell: bash
@@ -36,11 +36,6 @@ runs:
           "${HOME}/.asdf/installs/java"
     - uses: ./.github/actions/setup-android
       if: runner.os == 'Linux' && inputs.android-gradle-version != 'NOT_AVAILABLE'
-    - name: Set Java version
-      shell: bash
-      env:
-        JAVA_VERSION: ${{ inputs.java-version }}
-      run: mise use java@${JAVA_VERSION}
     - name: Get Vault secrets
       id: secrets
       uses: SonarSource/vault-action-wrapper@v3
@@ -78,13 +73,15 @@ runs:
         GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
         ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
         SONARSOURCE_QA: true
+        JAVA_VERSION: ${{ inputs.java-version }}
         GRADLE_VERSION: ${{ inputs.gradle-version }}
         ANDROID_GRADLE_VERSION: ${{ inputs.android-gradle-version }}
         SONAR_RUNTIME_VERSION: ${{ inputs.sonar-runtime-version }}
       shell: bash
       run: |
         source ./.github/scripts/set-version-from-build-number.sh
-        mvn -f property-dump-plugin/pom.xml --batch-mode install
+        mise exec java@"${JAVA_VERSION}" -- java -version
+        mise exec java@"${JAVA_VERSION}" -- mvn -f property-dump-plugin/pom.xml --batch-mode install
         cd integrationTests
-        mvn --errors --batch-mode --no-transfer-progress org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion="${NEW_VERSION}" -DgenerateBackupPoms=false
-        mvn --errors --batch-mode --no-transfer-progress clean verify -Dgradle.version="${GRADLE_VERSION}" -DandroidGradle.version="${ANDROID_GRADLE_VERSION}" -Dsonar.runtimeVersion="${SONAR_RUNTIME_VERSION}"
+        mise exec java@"${JAVA_VERSION}" -- mvn --errors --batch-mode --no-transfer-progress org.codehaus.mojo:versions-maven-plugin:2.7:set -DnewVersion="${NEW_VERSION}" -DgenerateBackupPoms=false
+        mise exec java@"${JAVA_VERSION}" -- mvn --errors --batch-mode --no-transfer-progress clean verify -Dgradle.version="${GRADLE_VERSION}" -DandroidGradle.version="${ANDROID_GRADLE_VERSION}" -Dsonar.runtimeVersion="${SONAR_RUNTIME_VERSION}"
