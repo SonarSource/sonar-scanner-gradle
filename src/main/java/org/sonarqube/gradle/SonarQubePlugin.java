@@ -80,7 +80,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   /**
    * Register Sonar extensions on a project.
    */
-  private static void registerSonarExtensions(Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
+  static void registerSonarExtensions(Project project, Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap) {
     ActionBroadcast<SonarProperties> actionBroadcast = addBroadcaster(actionBroadcastMap, project);
 
     LOGGER.debug("Adding " + SonarExtension.SONAR_EXTENSION_NAME + " extension to " + project.getName());
@@ -93,7 +93,11 @@ public class SonarQubePlugin implements Plugin<Project> {
   /**
    * Register and configure the Sonar resolver task for a project.
    */
-  private static TaskProvider<SonarResolverTask> registerResolverTask(Project topLevelProject, Project project, Set<File> resolverFiles) {
+  static TaskProvider<SonarResolverTask> registerResolverTask(Project topLevelProject, Project project, Set<File> resolverFiles) {
+    return registerResolverTask(topLevelProject, project, resolverFiles, false);
+  }
+
+  static TaskProvider<SonarResolverTask> registerResolverTask(Project topLevelProject, Project project, Set<File> resolverFiles, boolean useArtifactDependencies) {
     return project.getTasks().register(SonarResolverTask.TASK_NAME, SonarResolverTask.class, resolverTask -> {
       resolverTask.setDescription(SonarResolverTask.TASK_DESCRIPTION);
       resolverTask.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
@@ -103,8 +107,8 @@ public class SonarQubePlugin implements Plugin<Project> {
       if (project == topLevelProject) {
         resolverTask.getTopLevelProject().set(true);
       }
-      resolverTask.setCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME)));
-      resolverTask.setTestCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.TEST_SOURCE_SET_NAME)));
+      resolverTask.setCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME)), useArtifactDependencies);
+      resolverTask.setTestCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.TEST_SOURCE_SET_NAME)), useArtifactDependencies);
       resolverTask.mustRunAfter(getJavaCompileTasksForProject(project));
       if (!isAndroidProject(project)) {
         resolverTask.getMainLibraries().from(project.provider(() -> project.files(SonarUtils.getRuntimeJars())));
@@ -119,7 +123,7 @@ public class SonarQubePlugin implements Plugin<Project> {
   /**
    * Configure Android specific properties and classpath information for a project if it uses the Android Gradle plugin.
    */
-  private static void configureAndroid(Project project, Map<String, AndroidConfig> androidConfigMap, TaskProvider<SonarResolverTask> resolverTaskProvider) {
+  static void configureAndroid(Project project, Map<String, AndroidConfig> androidConfigMap, TaskProvider<SonarResolverTask> resolverTaskProvider) {
     try {
       if (AndroidConfig.usesAndroidGradlePlugin9OrGreater()) {
         SonarUtils.ANDROID_PLUGIN_IDS.forEach(pluginId ->

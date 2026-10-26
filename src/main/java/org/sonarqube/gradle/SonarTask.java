@@ -33,7 +33,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,15 +44,20 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -146,6 +153,9 @@ public class SonarTask extends ConventionTask {
   private Provider<Set<String>> userDefinedKeys;
   private Provider<Directory> buildSonar;
   private Set<File> resolverFiles;
+  private final ConfigurableFileCollection modulePropertiesFiles;
+  private final ConfigurableFileCollection isolatedResolverFiles;
+  private final Property<String> rootBuildScript;
 
   private static void logEnvironmentInformation() {
     if (LOGGER.isInfoEnabled()) {
@@ -539,6 +549,9 @@ public class SonarTask extends ConventionTask {
   @Inject
   public SonarTask() {
     super();
+    modulePropertiesFiles = getProject().files();
+    isolatedResolverFiles = getProject().files();
+    rootBuildScript = getProject().getObjects().property(String.class).convention("");
     // Some inputs are annotated with internal, thus grade cannot correctly compute if the task is up to date or not.
     this.getOutputs().upToDateWhen(task -> false);
   }
@@ -550,6 +563,23 @@ public class SonarTask extends ConventionTask {
   @Input
   public Provider<Map<String, String>> getProperties() {
     return properties;
+  }
+
+  @InputFiles
+  @PathSensitive(PathSensitivity.NONE)
+  public ConfigurableFileCollection getModulePropertiesFiles() {
+    return modulePropertiesFiles;
+  }
+
+  @InputFiles
+  @PathSensitive(PathSensitivity.NONE)
+  public ConfigurableFileCollection getIsolatedResolverFiles() {
+    return isolatedResolverFiles;
+  }
+
+  @Input
+  public Property<String> getRootBuildScript() {
+    return rootBuildScript;
   }
 
   @Internal
@@ -633,8 +663,9 @@ public class SonarTask extends ConventionTask {
       return;
     }
 
-    mapProperties = resolveFiles(mapProperties);
-    filterPathProperties(mapProperties, this.userDefinedKeys.get());
+    Set<String> explicitKeys = new HashSet<>(this.userDefinedKeys.get());
+    mapProperties = resolveFiles(mapProperties, explicitKeys);
+    filterPathProperties(mapProperties, explicitKeys);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
       .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
@@ -662,15 +693,32 @@ public class SonarTask extends ConventionTask {
    * were attached to the task at configuration time.
    * The analysis parameters are added to a copy of the properties given as input.
    */
-  private Map<String, String> resolveFiles(Map<String, String> properties) {
+  private Map<String, String> resolveFiles(Map<String, String> properties, Set<String> explicitKeys) {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Resolving sources and classpath entries");
     }
 
     final Map<String, String> result = new HashMap<>(properties);
 
-    LOGGER.info("About to look at resolver files: {}", getResolverFiles());
-    for (File resolverFile : getResolverFiles()) {
+    boolean isolated = !rootBuildScript.get().isEmpty();
+    if (isolated) {
+      SonarModuleProperties.merge(result, explicitKeys, modulePropertiesFiles.getFiles(), rootBuildScript.get());
+    }
+    Set<File> allResolverFiles = new LinkedHashSet<>(getResolverFiles());
+    allResolverFiles.addAll(isolatedResolverFiles.getFiles());
+    LOGGER.info("About to look at resolver files: {}", allResolverFiles);
+    for (File resolverFile : allResolverFiles) {
+      if (isolated) {
+        try {
+          var resolved = ResolutionSerializer.read(resolverFile);
+          if (resolved.isEmpty() || (!resolved.get().isRootProject &&
+            !result.containsKey(resolved.get().projectName + "." + SonarProperty.PROJECT_BASE_DIR))) {
+            continue;
+          }
+        } catch (IOException e) {
+          throw new IllegalStateException("Cannot read Sonar resolver file: " + resolverFile, e);
+        }
+      }
       processResolverFile(resolverFile, result);
     }
 

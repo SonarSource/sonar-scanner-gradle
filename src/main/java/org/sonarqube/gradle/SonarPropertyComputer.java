@@ -88,11 +88,48 @@ public class SonarPropertyComputer {
   private final Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap;
   private final Map<String, AndroidConfig> androidConfigMap;
   private final Project targetProject;
+  private boolean isolatedProject;
 
   public SonarPropertyComputer(Map<String, ActionBroadcast<SonarProperties>> actionBroadcastMap, Map<String, AndroidConfig> androidConfigMap, Project targetProject) {
     this.actionBroadcastMap = actionBroadcastMap;
     this.androidConfigMap = androidConfigMap;
     this.targetProject = targetProject;
+  }
+
+  /** Computes only the owning project's properties for artifact-based aggregation. */
+  ComputedProperties computeIsolatedProperties() {
+    isolatedProject = true;
+    Map<String, Object> raw = new LinkedHashMap<>();
+    Set<String> userKeys = new LinkedHashSet<>();
+    if (SonarUtils.isSkipped(targetProject)) {
+      return new ComputedProperties(raw, userKeys);
+    }
+    addGradleDefaults(targetProject, raw);
+    if (isAndroidProject(targetProject)) {
+      if (AndroidConfig.usesAndroidGradlePlugin9OrGreater()) {
+        androidConfigMap.get(targetProject.getPath()).configureProperties(raw);
+      } else {
+        LegacyAndroidConfig.configureForAndroid(targetProject, SonarUtils.getConfiguredAndroidVariant(targetProject), raw);
+      }
+    }
+    if (isRootProject(targetProject)) {
+      addGithubFolder(targetProject, raw);
+      // Module build scripts are appended after resolving the project artifacts.
+      SonarUtils.appendSourcesProp(raw, List.of(new File(targetProject.getProjectDir(), "settings.gradle.kts")), false);
+    }
+    overrideWithUserDefinedProperties(targetProject, raw, userKeys);
+    raw.putIfAbsent(SonarProperty.PROJECT_SOURCE_DIRS, "");
+    raw.putIfAbsent(SonarProperty.PROJECT_TEST_DIRS, "");
+    if (isRootProject(targetProject)) {
+      raw.putIfAbsent(SonarProperty.PROJECT_KEY, computeProjectKey());
+      raw.put(SonarProperty.KOTLIN_GRADLE_PROJECT_ROOT, targetProject.getProjectDir().getAbsolutePath());
+      if ("true".equalsIgnoreCase(String.valueOf(raw.get(SonarProperty.GRADLE_SCAN_ALL)))) {
+        throw new IllegalArgumentException("sonar.gradle.scanAll is not yet supported by org.sonarqube.settings");
+      }
+    }
+    Map<String, Object> properties = new LinkedHashMap<>();
+    convertProperties(raw, "", properties);
+    return new ComputedProperties(properties, userKeys);
   }
 
   public ComputedProperties computeSonarProperties() {
@@ -333,7 +370,7 @@ public class SonarPropertyComputer {
   }
 
   private boolean isRootProject(Project project) {
-    return project.equals(targetProject);
+    return isolatedProject ? project.getPath().equals(":") : project.equals(targetProject);
   }
 
   private static void evaluateSonarPropertiesBlocks(ActionBroadcast<? super SonarProperties> propertiesActions, Map<String, Object> properties) {
@@ -560,7 +597,7 @@ public class SonarPropertyComputer {
     properties.put(SonarProperty.PROJECT_VERSION, project.getVersion());
     properties.put(SonarProperty.PROJECT_BASE_DIR, project.getProjectDir());
 
-    if (project.equals(targetProject)) {
+    if (isRootProject(project)) {
       // Root project of the analysis
       Provider<Directory> workingDir = project.getLayout().getBuildDirectory().dir(SONAR);
       properties.put(SonarProperty.WORKING_DIRECTORY, workingDir.get().getAsFile());

@@ -106,6 +106,22 @@ The task depends on all compile and test tasks of all projects (except for skipp
 If all projects are skipped (by adding `skipProject=true` to the sonar DSL), the analysis won't execute.
 
 
+### Isolated Projects (experimental)
+
+Apply `org.sonarqube.settings` in `settings.gradle.kts` to configure each project independently:
+
+```kotlin
+plugins {
+    id("org.sonarqube.settings") version "<plugin-version>"
+}
+```
+
+This plugin requires Gradle 8.8 or later. It adds the `sonar` and `sonarqube` extensions to each project and the analysis tasks to the root project. Configure each extension in its owning project's build script or convention plugin.
+
+Each project publishes its analysis properties and resolved classpath through Gradle artifacts. The root task combines those artifacts at execution time. Classpath dependencies can build missing producer outputs. Skipping a project also excludes its descendants from analysis.
+
+The settings plugin does not yet support `sonar.gradle.scanAll=true`. It fails explicitly when that option is enabled.
+
 ### Using the plugin directly in a project (no need to build/install it in advance)
 A composite build can be used to substitute plugins with an included build.
 

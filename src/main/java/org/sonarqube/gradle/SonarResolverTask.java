@@ -83,15 +83,31 @@ public abstract class SonarResolverTask extends DefaultTask {
   public abstract Property<Boolean> getTopLevelProject();
 
   public void setCompileClasspath(Provider<FileCollection> compileClasspath) {
+    setCompileClasspath(compileClasspath, false);
+  }
+
+  void setCompileClasspath(Provider<FileCollection> compileClasspath, boolean useArtifactDependencies) {
     this.compileClasspath = compileClasspath;
-    this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getClasspathEntries));
-    this.mustRunAfter(getClasspathProducerOrdering(compileClasspath));
+    if (useArtifactDependencies) {
+      this.getCompileClasspath().setFrom(compileClasspath);
+    } else {
+      this.getCompileClasspath().setFrom(compileClasspath.map(SonarResolverTask::getClasspathEntries));
+      this.mustRunAfter(getClasspathProducerOrdering(compileClasspath));
+    }
   }
 
   public void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath) {
+    setTestCompileClasspath(testCompileClasspath, false);
+  }
+
+  void setTestCompileClasspath(Provider<FileCollection> testCompileClasspath, boolean useArtifactDependencies) {
     this.testCompileClasspath = testCompileClasspath;
-    this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getClasspathEntries));
-    this.mustRunAfter(getClasspathProducerOrdering(testCompileClasspath));
+    if (useArtifactDependencies) {
+      this.getTestCompileClasspath().setFrom(testCompileClasspath);
+    } else {
+      this.getTestCompileClasspath().setFrom(testCompileClasspath.map(SonarResolverTask::getClasspathEntries));
+      this.mustRunAfter(getClasspathProducerOrdering(testCompileClasspath));
+    }
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {

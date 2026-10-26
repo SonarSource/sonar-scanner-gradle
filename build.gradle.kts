@@ -90,6 +90,10 @@ dependencies {
 
 gradlePlugin {
     plugins {
+        create("sonarSettingsPlugin") {
+            id = "org.sonarqube.settings"
+            implementationClass = "org.sonarqube.gradle.SonarSettingsPlugin"
+        }
         create("sonarqubePlugin") {
             id = "org.sonarqube"
             group = project.group as String
