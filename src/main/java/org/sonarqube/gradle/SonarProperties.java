@@ -61,7 +61,7 @@ import java.util.Map;
  */
 public class SonarProperties {
 
-  private Map<String, Object> properties;
+  private final Map<String, Object> properties;
 
   public SonarProperties(Map<String, Object> properties) {
     this.properties = properties;
