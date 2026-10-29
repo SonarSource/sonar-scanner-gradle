@@ -71,13 +71,13 @@
     <dependency>
       <groupId>org.sonarsource.orchestrator</groupId>
       <artifactId>sonar-orchestrator</artifactId>
-      <version>6.4.3.4676</version>
+      <version>6.4.4.4797</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.sonarsource.orchestrator</groupId>
       <artifactId>sonar-orchestrator-junit4</artifactId>
-      <version>6.4.3.4676</version>
+      <version>6.4.4.4797</version>
       <scope>test</scope>
     </dependency>
     <dependency>
