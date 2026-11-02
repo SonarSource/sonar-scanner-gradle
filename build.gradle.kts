@@ -134,7 +134,7 @@ tasks.getByName("sonar").dependsOn(tasks.jacocoTestReport)
 
 val bomFile = layout.buildDirectory.file("reports/bom.json")
 tasks.cyclonedxBom {
-    setIncludeConfigs(includeConfigs + listOf("runtimeClasspath"))
+    setIncludeConfigs(listOf("runtimeClasspath"))
     outputs.file(bomFile)
     outputs.upToDateWhen { false }
 }

@@ -13,5 +13,34 @@
     "integrationTests/**",
     "property-dump-plugin/**",
     "src/test/projects/**"
+  ],
+  "packageRules": [
+    {
+      "description": [
+        "Replace built-in artifact updates with a write-locks command so stale buildSrc/buildscript locks do not block configuration.",
+        "Install Java explicitly for custom tasks and constrain it to Java 21, which this build requires.",
+        "Run per dependency update to preserve the Java constraint during tool installation."
+      ],
+      "matchManagers": ["gradle", "gradle-wrapper"],
+      "constraints": {
+        "java": "21"
+      },
+      "skipArtifactsUpdate": true,
+      "postUpgradeTasks": {
+        "commands": [
+          "./gradlew --no-daemon --console=plain --write-locks :buildSrc:dependencies dependencies buildEnvironment cyclonedxBom wrapper"
+        ],
+        "fileFilters": [
+          "**/*.lockfile",
+          "gradle/wrapper/**",
+          "gradlew",
+          "gradlew.bat"
+        ],
+        "executionMode": "update",
+        "installTools": {
+          "java": {}
+        }
+      }
+    }
   ]
 }
