@@ -16,7 +16,7 @@
   ],
   "packageRules": [
     {
-      "description": "Refresh all Gradle locks in write mode, including buildSrc and the buildscript classpath",
+      "description": "Refresh all Gradle locks in write mode; per-update execution preserves Java constraints with Renovate 43",
       "matchManagers": ["gradle", "gradle-wrapper"],
       "constraints": {
         "java": "21"
@@ -32,7 +32,7 @@
           "gradlew",
           "gradlew.bat"
         ],
-        "executionMode": "branch",
+        "executionMode": "update",
         "installTools": {
           "java": {}
         }
