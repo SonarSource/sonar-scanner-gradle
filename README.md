@@ -91,7 +91,7 @@ buildscript and plugin classpath, `buildSrc` dependencies, and CycloneDX configu
 git diff -- gradle.lockfile buildscript-gradle.lockfile buildSrc/gradle.lockfile
 ```
 Self-hosted Renovate runs these resolution tasks in write mode with Java 21, together with the
-`wrapper` task. Per-update execution preserves the Java constraint with Renovate 43.
+`wrapper` task. Per-update execution preserves the Java constraint during tool installation.
 This lets the updated build resolve dependencies while refreshing the `buildSrc`
 and buildscript locks, and includes all three lockfiles and regenerated wrapper files in the update.
 

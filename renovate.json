@@ -16,7 +16,11 @@
   ],
   "packageRules": [
     {
-      "description": "Refresh all Gradle locks in write mode; per-update execution preserves Java constraints with Renovate 43",
+      "description": [
+        "Replace built-in artifact updates with a write-locks command so stale buildSrc/buildscript locks do not block configuration.",
+        "Install Java explicitly for custom tasks and constrain it to Java 21, which this build requires.",
+        "Run per dependency update to preserve the Java constraint during tool installation."
+      ],
       "matchManagers": ["gradle", "gradle-wrapper"],
       "constraints": {
         "java": "21"
