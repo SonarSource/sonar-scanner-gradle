@@ -18,6 +18,9 @@
     {
       "description": "Refresh all Gradle locks in write mode, including buildSrc and the buildscript classpath",
       "matchManagers": ["gradle", "gradle-wrapper"],
+      "constraints": {
+        "java": "21"
+      },
       "skipArtifactsUpdate": true,
       "postUpgradeTasks": {
         "commands": [
