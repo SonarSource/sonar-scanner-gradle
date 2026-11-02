@@ -13,5 +13,27 @@
     "integrationTests/**",
     "property-dump-plugin/**",
     "src/test/projects/**"
+  ],
+  "packageRules": [
+    {
+      "description": "Refresh all Gradle locks in write mode, including buildSrc and the buildscript classpath",
+      "matchManagers": ["gradle", "gradle-wrapper"],
+      "skipArtifactsUpdate": true,
+      "postUpgradeTasks": {
+        "commands": [
+          "./gradlew --no-daemon --console=plain --write-locks :buildSrc:dependencies dependencies buildEnvironment cyclonedxBom wrapper"
+        ],
+        "fileFilters": [
+          "**/*.lockfile",
+          "gradle/wrapper/**",
+          "gradlew",
+          "gradlew.bat"
+        ],
+        "executionMode": "branch",
+        "installTools": {
+          "java": {}
+        }
+      }
+    }
   ]
 }

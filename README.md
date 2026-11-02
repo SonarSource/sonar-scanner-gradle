@@ -90,6 +90,10 @@ buildscript and plugin classpath, `buildSrc` dependencies, and CycloneDX configu
 ./gradlew :buildSrc:dependencies dependencies buildEnvironment cyclonedxBom --write-locks
 git diff -- gradle.lockfile buildscript-gradle.lockfile buildSrc/gradle.lockfile
 ```
+Self-hosted Renovate runs these resolution tasks in write mode once per Gradle update branch, together
+with the `wrapper` task. This lets the updated build resolve dependencies while refreshing the `buildSrc`
+and buildscript locks, and includes all three lockfiles and regenerated wrapper files in the update.
+
 Maven Local is excluded from build dependency resolution so normal builds, CI, and lockfile generation use
 consistent published metadata rather than POM-only metadata that may be present in a developer's local repository.
 
