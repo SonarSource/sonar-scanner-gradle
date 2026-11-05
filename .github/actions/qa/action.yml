@@ -57,6 +57,12 @@ runs:
         CACHE_MONTH=$(date +'%Y-%m')
         echo "ORCHESTRATOR_CACHE_MONTH=$CACHE_MONTH" >> $GITHUB_ENV
         echo "ORCHESTRATOR_HOME=${{ github.workspace }}/orchestrator" >> $GITHUB_ENV
+    - name: Configure Repox for QA Gradle processes
+      shell: bash
+      run: |
+        GRADLE_INIT_DIRECTORY="${GRADLE_USER_HOME:-$HOME/.gradle}/init.d"
+        mkdir -p "$GRADLE_INIT_DIRECTORY"
+        cp .github/gradle/repox-qa.init.gradle "$GRADLE_INIT_DIRECTORY/repox-qa.init.gradle"
     - name: Cache Orchestrator
       uses: SonarSource/gh-action_cache@v1
       with:
