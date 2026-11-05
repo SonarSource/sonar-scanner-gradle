@@ -20,7 +20,6 @@ jobs:
       - name: Configure Maven
         uses: SonarSource/ci-github-actions/config-maven@v2
         with:
-          repox-url: https://repox.jfrog.io
           artifactory-reader-role: private-reader
           working-directory: .
       - name: Install Property Dump Plugin
@@ -36,7 +35,6 @@ jobs:
       - name: Build and analyze
         uses: SonarSource/ci-github-actions/build-gradle@v2
         with:
-          repox-url: https://repox.jfrog.io
           run-shadow-scans: true
           artifactory-reader-role: private-reader
           artifactory-deployer-role: qa-deployer
