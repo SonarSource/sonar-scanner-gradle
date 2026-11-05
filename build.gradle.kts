@@ -66,12 +66,13 @@ tasks.withType<Test> {
     useJUnitPlatform()
     if (providers.environmentVariable("CI").isPresent) {
         val repoxInitScript = gradle.gradleUserHomeDir.resolve("init.d/repoxAuth.init.gradle.kts")
+        val testKitInitScript = layout.projectDirectory.file(".github/gradle/repox-testkit.init.gradle.kts")
         val testKitDirectory = layout.buildDirectory.dir("test-kit")
-        inputs.file(repoxInitScript)
+        inputs.files(repoxInitScript, testKitInitScript)
         systemProperty("org.gradle.testkit.dir", testKitDirectory.get().asFile.absolutePath)
         doFirst {
             copy {
-                from(repoxInitScript)
+                from(repoxInitScript, testKitInitScript)
                 into(testKitDirectory.map { it.dir("init.d") })
             }
         }
