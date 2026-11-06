@@ -1,1 +1,29 @@
+pluginManagement {
+    repositories {
+        def repoxBaseUrl = System.getenv('ARTIFACTORY_RESOLVE_URL') ?: System.getenv('ARTIFACTORY_URL')
+        def repoxRepositoryUrl = System.getenv('SONARSOURCE_REPOSITORY_URL') ?: (repoxBaseUrl ? repoxBaseUrl.replaceAll('/+$', '') + '/' + (System.getenv('SONARSOURCE_REPOSITORY') ?: 'sonarsource-qa') : null)
+        if (repoxRepositoryUrl) {
+            def repox = findByName('Repox') ?: maven { name = 'Repox' }
+            repox.with {
+                url = uri(repoxRepositoryUrl)
+                credentials(org.gradle.api.credentials.HttpHeaderCredentials) {
+                    name = 'Authorization'
+                    def tokenProperties = ['RepoxAuthHeaderValue', 'RepoxAuthAccessToken', 'artifactoryPassword']
+                    def tokenVariables = ['ARTIFACTORY_ACCESS_TOKEN', 'ARTIFACTORY_DEPLOY_ACCESS_TOKEN', 'ARTIFACTORY_PASSWORD', 'ARTIFACTORY_PRIVATE_READER_TOKEN', 'ARTIFACTORY_PRIVATE_PASSWORD', 'ARTIFACTORY_DEPLOY_PASSWORD']
+                    def token = (tokenProperties.collect { settings.hasProperty(it) ? settings.getProperty(it) : null } +
+                        tokenVariables.collect { System.getenv(it) }).find { it != null }
+                    value = token == null ? null : 'Bearer ' + token.toString().split(' ', 2).last()
+                }
+                authentication {
+                    if (findByName('header') == null) {
+                        header(org.gradle.authentication.http.HttpHeaderAuthentication)
+                    }
+                }
+            }
+        } else {
+            gradlePluginPortal()
+        }
+    }
+}
+
 include ':app'

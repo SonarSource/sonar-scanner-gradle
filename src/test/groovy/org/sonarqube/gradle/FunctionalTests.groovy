@@ -1065,7 +1065,11 @@ class FunctionalTests extends Specification {
   def "sonarResolver tracks a Kotlin Multiplatform JVM artifact through jvmJar"() {
     given:
     settingsFile << """
-        pluginManagement { repositories { gradlePluginPortal(); mavenCentral() } }
+        pluginManagement {
+            repositories {
+                ${RepoxRepositories.pluginRepositories('gradlePluginPortal(); mavenCentral()')}
+            }
+        }
         rootProject.name = 'root'
         include 'consumer', 'subdependency'
         """
@@ -1075,7 +1079,11 @@ class FunctionalTests extends Specification {
             id 'org.jetbrains.kotlin.multiplatform' version '2.2.20' apply false
         }
 
-        allprojects { repositories { mavenCentral() } }
+        allprojects {
+            repositories {
+                ${RepoxRepositories.projectRepositories('mavenCentral()')}
+            }
+        }
 
         project(':subdependency') {
             apply plugin: 'org.jetbrains.kotlin.multiplatform'
