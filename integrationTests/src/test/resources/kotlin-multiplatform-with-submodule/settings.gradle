@@ -1,22 +1,3 @@
-pluginManagement {
-    repositories {
-        def repoxBaseUrl = System.getenv('ARTIFACTORY_RESOLVE_URL') ?: System.getenv('ARTIFACTORY_URL') ?: 'https://repox.jfrog.io/artifactory'
-        def repoxRepositoryUrl = System.getenv('SONARSOURCE_REPOSITORY_URL') ?: repoxBaseUrl.replaceAll('/+$', '') + '/' + (System.getenv('SONARSOURCE_REPOSITORY') ?: 'sonarsource-qa')
-        def repox = findByName('Repox') ?: maven {
-            name = 'Repox'
-            def artifactoryUsername = System.getenv('ARTIFACTORY_USERNAME') ?: settings.extensions.extraProperties.properties['artifactoryUsername']
-            def artifactoryPassword = System.getenv('ARTIFACTORY_ACCESS_TOKEN') ?: System.getenv('ARTIFACTORY_PASSWORD') ?: settings.extensions.extraProperties.properties['artifactoryPassword']
-            if (artifactoryUsername && artifactoryPassword) {
-                credentials {
-                    username = artifactoryUsername
-                    password = artifactoryPassword
-                }
-            }
-        }
-        repox.url = uri(repoxRepositoryUrl)
-    }
-}
-
 rootProject.name = 'kotlin-multiplatform-with-submodule'
 
 include 'submodule'

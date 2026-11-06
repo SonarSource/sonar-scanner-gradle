@@ -2,23 +2,6 @@ import com.gradle.publish.DownloadMavenArtifactsAndPublishToGradlePluginPortal
 import com.hierynomus.gradle.license.tasks.LicenseCheck
 
 buildscript {
-    repositories {
-        val repoxBaseUrl = System.getenv("ARTIFACTORY_RESOLVE_URL") ?: System.getenv("ARTIFACTORY_URL") ?: "https://repox.jfrog.io/artifactory"
-        val repoxRepositoryUrl = repoxBaseUrl.trimEnd('/') + "/" + (System.getenv("SONARSOURCE_REPOSITORY") ?: "sonarsource")
-        val repox = (findByName("Repox") as? org.gradle.api.artifacts.repositories.MavenArtifactRepository)
-            ?: maven {
-                name = "Repox"
-                val artifactoryUsername = System.getenv("ARTIFACTORY_USERNAME") ?: providers.gradleProperty("artifactoryUsername").orNull
-                val artifactoryPassword = System.getenv("ARTIFACTORY_ACCESS_TOKEN") ?: System.getenv("ARTIFACTORY_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").orNull
-                if (!artifactoryUsername.isNullOrEmpty() && !artifactoryPassword.isNullOrEmpty()) {
-                    credentials {
-                        username = artifactoryUsername
-                        password = artifactoryPassword
-                    }
-                }
-            }
-        repox.url = uri(repoxRepositoryUrl)
-    }
     configurations.classpath {
         resolutionStrategy.activateDependencyLocking()
     }
@@ -81,6 +64,19 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    val repoxInitScript = gradle.gradleUserHomeDir.resolve("init.d/repoxAuth.init.gradle.kts")
+    if (providers.environmentVariable("CI").isPresent && repoxInitScript.isFile) {
+        val testKitInitScript = layout.projectDirectory.file(".github/gradle/repox-testkit.init.gradle.kts")
+        val testKitDirectory = layout.buildDirectory.dir("test-kit")
+        inputs.files(repoxInitScript, testKitInitScript)
+        systemProperty("org.gradle.testkit.dir", testKitDirectory.get().asFile.absolutePath)
+        doFirst {
+            copy {
+                from(repoxInitScript, testKitInitScript)
+                into(testKitDirectory.map { it.dir("init.d") })
+            }
+        }
+    }
 }
 
 tasks.withType<Javadoc> {

@@ -58,7 +58,7 @@ class ConfigurationCacheIT extends Specification {
             }
 
             repositories {
-                ${RepoxRepositories.projectRepositories()}
+                mavenCentral()
             }
 
             sonarqube {
@@ -168,7 +168,7 @@ class ConfigurationCacheIT extends Specification {
             }
 
             repositories {
-                ${RepoxRepositories.projectRepositories()}
+                mavenCentral()
             }
 
             dependencies {
@@ -238,8 +238,8 @@ class ConfigurationCacheIT extends Specification {
 
             allprojects {
                 repositories {
-                ${RepoxRepositories.projectRepositories()}
-            }
+                    mavenCentral()
+                }
             }
 
             subprojects {
@@ -315,8 +315,8 @@ class ConfigurationCacheIT extends Specification {
                 apply plugin: 'org.sonarqube'
 
                 repositories {
-                ${RepoxRepositories.projectRepositories()}
-            }
+                    mavenCentral()
+                }
             }
         """
 

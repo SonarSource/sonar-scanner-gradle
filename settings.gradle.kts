@@ -1,22 +1,28 @@
 rootProject.name = "sonarqube-gradle-plugin"
 
 pluginManagement {
+    // The environment variables ARTIFACTORY_PRIVATE_USERNAME and ARTIFACTORY_PRIVATE_PASSWORD are used on CI env
+    // If you have access to "repox.jfrog.io" you can add artifactoryUsername and artifactoryPassword to ~/.gradle/gradle.properties
+    val artifactoryUsername: String =
+        System.getenv("ARTIFACTORY_PRIVATE_USERNAME") ?: providers.gradleProperty("artifactoryUsername").getOrElse("")
+    val artifactoryPassword: String =
+        System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
+    val repoxRepository: java.net.URI =
+        uri("https://repox.jfrog.io/repox/" + (if (providers.gradleProperty("qa").isPresent()) "sonarsource-qa" else "sonarsource"))
     repositories {
-        val repoxBaseUrl = System.getenv("ARTIFACTORY_RESOLVE_URL") ?: System.getenv("ARTIFACTORY_URL") ?: "https://repox.jfrog.io/artifactory"
-        val repoxRepositoryUrl = repoxBaseUrl.trimEnd('/') + "/" + (System.getenv("SONARSOURCE_REPOSITORY") ?: if (providers.gradleProperty("qa").isPresent) "sonarsource-qa" else "sonarsource")
-        val repox = (findByName("Repox") as? org.gradle.api.artifacts.repositories.MavenArtifactRepository)
-            ?: maven {
-                name = "Repox"
-                val artifactoryUsername = System.getenv("ARTIFACTORY_USERNAME") ?: providers.gradleProperty("artifactoryUsername").orNull
-                val artifactoryPassword = System.getenv("ARTIFACTORY_ACCESS_TOKEN") ?: System.getenv("ARTIFACTORY_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").orNull
-                if (!artifactoryUsername.isNullOrEmpty() && !artifactoryPassword.isNullOrEmpty()) {
-                    credentials {
-                        username = artifactoryUsername
-                        password = artifactoryPassword
-                    }
+        if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
+            maven {
+                url = repoxRepository
+                credentials {
+                    username = artifactoryUsername
+                    password = artifactoryPassword
                 }
             }
-        repox.url = uri(repoxRepositoryUrl)
+        } else {
+            mavenCentral()
+        }
+        gradlePluginPortal()
+        google()
     }
 }
 
