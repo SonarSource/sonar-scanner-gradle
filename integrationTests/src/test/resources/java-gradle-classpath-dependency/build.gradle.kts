@@ -18,7 +18,7 @@ repositories {
                 name = "Authorization"
                 val tokenProperties = listOf("RepoxAuthHeaderValue", "RepoxAuthAccessToken", "artifactoryPassword")
                 val tokenVariables = listOf("ARTIFACTORY_ACCESS_TOKEN", "ARTIFACTORY_DEPLOY_ACCESS_TOKEN", "ARTIFACTORY_PASSWORD", "ARTIFACTORY_PRIVATE_READER_TOKEN", "ARTIFACTORY_PRIVATE_PASSWORD", "ARTIFACTORY_DEPLOY_PASSWORD")
-                val token = (tokenProperties.map { providers.gradleProperty(it).orNull } +
+                val token = (tokenProperties.map { project.findProperty(it)?.toString() } +
                     tokenVariables.map { System.getenv(it) }).firstOrNull { it != null }
                 value = token?.let { "Bearer ${it.substringAfter(' ')}" }
             }
