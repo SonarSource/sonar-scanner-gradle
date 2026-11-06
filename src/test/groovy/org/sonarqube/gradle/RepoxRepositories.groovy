@@ -29,23 +29,18 @@ final class RepoxRepositories {
             def repoxRepositoryUrl = (repoxBaseUrl ? repoxBaseUrl.replaceAll('/+$', '') + '/' + (System.getenv('SONARSOURCE_REPOSITORY') ?: 'sonarsource') : null)
             if (repoxRepositoryUrl) {
                 LOCAL_REPOSITORIES
-                def repox = findByName('Repox') ?: maven { name = 'Repox' }
-                repox.with {
-                    url = uri(repoxRepositoryUrl)
-                    credentials(org.gradle.api.credentials.HttpHeaderCredentials) {
-                        name = 'Authorization'
-                        def tokenProperties = ['RepoxAuthHeaderValue', 'RepoxAuthAccessToken', 'artifactoryPassword']
-                        def tokenVariables = ['ARTIFACTORY_ACCESS_TOKEN', 'ARTIFACTORY_DEPLOY_ACCESS_TOKEN', 'ARTIFACTORY_PASSWORD', 'ARTIFACTORY_PRIVATE_READER_TOKEN', 'ARTIFACTORY_PRIVATE_PASSWORD', 'ARTIFACTORY_DEPLOY_PASSWORD']
-                        def token = (tokenProperties.collect { project.findProperty(it) } +
-                            tokenVariables.collect { System.getenv(it) }).find { it != null }
-                        value = token == null ? null : 'Bearer ' + token.toString().split(' ', 2).last()
-                    }
-                    authentication {
-                        if (findByName('header') == null) {
-                            header(org.gradle.authentication.http.HttpHeaderAuthentication)
+                def repox = findByName('Repox') ?: maven {
+                    name = 'Repox'
+                    def artifactoryUsername = System.getenv('ARTIFACTORY_USERNAME') ?: project.findProperty('artifactoryUsername')
+                    def artifactoryPassword = System.getenv('ARTIFACTORY_ACCESS_TOKEN') ?: System.getenv('ARTIFACTORY_PASSWORD') ?: project.findProperty('artifactoryPassword')
+                    if (artifactoryUsername && artifactoryPassword) {
+                        credentials {
+                            username = artifactoryUsername
+                            password = artifactoryPassword
                         }
                     }
                 }
+                repox.url = uri(repoxRepositoryUrl)
             } else {
                 PUBLIC_REPOSITORIES
             }
@@ -59,23 +54,18 @@ final class RepoxRepositories {
             def repoxRepositoryUrl = (repoxBaseUrl ? repoxBaseUrl.replaceAll('/+$', '') + '/' + (System.getenv('SONARSOURCE_REPOSITORY') ?: 'sonarsource') : null)
             if (repoxRepositoryUrl) {
                 LOCAL_REPOSITORIES
-                def repox = findByName('Repox') ?: maven { name = 'Repox' }
-                repox.with {
-                    url = uri(repoxRepositoryUrl)
-                    credentials(org.gradle.api.credentials.HttpHeaderCredentials) {
-                        name = 'Authorization'
-                        def tokenProperties = ['RepoxAuthHeaderValue', 'RepoxAuthAccessToken', 'artifactoryPassword']
-                        def tokenVariables = ['ARTIFACTORY_ACCESS_TOKEN', 'ARTIFACTORY_DEPLOY_ACCESS_TOKEN', 'ARTIFACTORY_PASSWORD', 'ARTIFACTORY_PRIVATE_READER_TOKEN', 'ARTIFACTORY_PRIVATE_PASSWORD', 'ARTIFACTORY_DEPLOY_PASSWORD']
-                        def token = (tokenProperties.collect { settings.hasProperty(it) ? settings.getProperty(it) : null } +
-                            tokenVariables.collect { System.getenv(it) }).find { it != null }
-                        value = token == null ? null : 'Bearer ' + token.toString().split(' ', 2).last()
-                    }
-                    authentication {
-                        if (findByName('header') == null) {
-                            header(org.gradle.authentication.http.HttpHeaderAuthentication)
+                def repox = findByName('Repox') ?: maven {
+                    name = 'Repox'
+                    def artifactoryUsername = System.getenv('ARTIFACTORY_USERNAME') ?: settings.extensions.extraProperties.properties['artifactoryUsername']
+                    def artifactoryPassword = System.getenv('ARTIFACTORY_ACCESS_TOKEN') ?: System.getenv('ARTIFACTORY_PASSWORD') ?: settings.extensions.extraProperties.properties['artifactoryPassword']
+                    if (artifactoryUsername && artifactoryPassword) {
+                        credentials {
+                            username = artifactoryUsername
+                            password = artifactoryPassword
                         }
                     }
                 }
+                repox.url = uri(repoxRepositoryUrl)
             } else {
                 PUBLIC_REPOSITORIES
             }

@@ -3,9 +3,9 @@ rootProject.name = "sonarqube-gradle-plugin"
 pluginManagement {
     // Preserve existing local credentials when the shared actions have not configured Repox.
     val artifactoryUsername: String =
-        System.getenv("ARTIFACTORY_PRIVATE_USERNAME") ?: providers.gradleProperty("artifactoryUsername").getOrElse("")
+        System.getenv("ARTIFACTORY_USERNAME") ?: providers.gradleProperty("artifactoryUsername").getOrElse("")
     val artifactoryPassword: String =
-        System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
+        System.getenv("ARTIFACTORY_ACCESS_TOKEN") ?: System.getenv("ARTIFACTORY_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
     val repoxRepository: java.net.URI =
         uri("https://repox.jfrog.io/repox/" + (if (providers.gradleProperty("qa").isPresent()) "sonarsource-qa" else "sonarsource"))
     repositories {
@@ -13,23 +13,16 @@ pluginManagement {
         val repoxRepositoryUrl = repoxBaseUrl?.let { it.trimEnd('/') + "/" + (System.getenv("SONARSOURCE_REPOSITORY") ?: "sonarsource") }
         if (repoxRepositoryUrl != null) {
             val repox = (findByName("Repox") as? org.gradle.api.artifacts.repositories.MavenArtifactRepository)
-                ?: maven { name = "Repox" }
-            repox.apply {
-                url = uri(repoxRepositoryUrl)
-                credentials(org.gradle.api.credentials.HttpHeaderCredentials::class) {
-                    name = "Authorization"
-                    val tokenProperties = listOf("RepoxAuthHeaderValue", "RepoxAuthAccessToken", "artifactoryPassword")
-                    val tokenVariables = listOf("ARTIFACTORY_ACCESS_TOKEN", "ARTIFACTORY_DEPLOY_ACCESS_TOKEN", "ARTIFACTORY_PASSWORD", "ARTIFACTORY_PRIVATE_READER_TOKEN", "ARTIFACTORY_PRIVATE_PASSWORD", "ARTIFACTORY_DEPLOY_PASSWORD")
-                    val token = (tokenProperties.map { providers.gradleProperty(it).orNull } +
-                        tokenVariables.map { System.getenv(it) }).firstOrNull { it != null }
-                    value = token?.let { "Bearer ${it.substringAfter(' ')}" }
-                }
-                authentication {
-                    if (findByName("header") == null) {
-                        create<org.gradle.authentication.http.HttpHeaderAuthentication>("header")
+                ?: maven {
+                    name = "Repox"
+                    if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
+                        credentials {
+                            username = artifactoryUsername
+                            password = artifactoryPassword
+                        }
                     }
                 }
-            }
+            repox.url = uri(repoxRepositoryUrl)
         } else {
             if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
                 maven {

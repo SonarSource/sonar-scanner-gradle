@@ -12,23 +12,18 @@ allprojects {
       if (repoxRepositoryUrl != null) {
           mavenLocal()
           val repox = (findByName("Repox") as? org.gradle.api.artifacts.repositories.MavenArtifactRepository)
-              ?: maven { name = "Repox" }
-          repox.apply {
-              url = uri(repoxRepositoryUrl)
-              credentials(org.gradle.api.credentials.HttpHeaderCredentials::class) {
-                  name = "Authorization"
-                  val tokenProperties = listOf("RepoxAuthHeaderValue", "RepoxAuthAccessToken", "artifactoryPassword")
-                  val tokenVariables = listOf("ARTIFACTORY_ACCESS_TOKEN", "ARTIFACTORY_DEPLOY_ACCESS_TOKEN", "ARTIFACTORY_PASSWORD", "ARTIFACTORY_PRIVATE_READER_TOKEN", "ARTIFACTORY_PRIVATE_PASSWORD", "ARTIFACTORY_DEPLOY_PASSWORD")
-                  val token = (tokenProperties.map { project.findProperty(it)?.toString() } +
-                      tokenVariables.map { System.getenv(it) }).firstOrNull { it != null }
-                  value = token?.let { "Bearer ${it.substringAfter(' ')}" }
-              }
-              authentication {
-                  if (findByName("header") == null) {
-                      create<org.gradle.authentication.http.HttpHeaderAuthentication>("header")
+              ?: maven {
+                  name = "Repox"
+                  val artifactoryUsername = System.getenv("ARTIFACTORY_USERNAME") ?: project.findProperty("artifactoryUsername")?.toString()
+                  val artifactoryPassword = System.getenv("ARTIFACTORY_ACCESS_TOKEN") ?: System.getenv("ARTIFACTORY_PASSWORD") ?: project.findProperty("artifactoryPassword")?.toString()
+                  if (!artifactoryUsername.isNullOrEmpty() && !artifactoryPassword.isNullOrEmpty()) {
+                      credentials {
+                          username = artifactoryUsername
+                          password = artifactoryPassword
+                      }
                   }
               }
-          }
+          repox.url = uri(repoxRepositoryUrl)
       } else {
           mavenLocal()
           mavenCentral()
