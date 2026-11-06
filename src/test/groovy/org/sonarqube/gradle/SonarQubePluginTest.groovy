@@ -191,13 +191,16 @@ class SonarQubePluginTest extends Specification {
 
     when:
     childProject.extensions.getByName(extensionName).skipProject = true
-    leafProject.extensions.getByName(extensionName).skipProject = true
 
     then:
     sonarTask.taskDependencies.getDependencies(sonarTask)*.path as Set == [
       ":parent:sonarResolver",
       ":parent:child2:sonarResolver",
     ] as Set
+    childProject.tasks.sonarResolver.skipProject.get()
+    leafProject.tasks.sonarResolver.skipProject.get()
+    !childProject2.tasks.sonarResolver.skipProject.get()
+    !leafProject.sonar.skipProject
 
     where:
     taskName    | extensionName
@@ -205,6 +208,40 @@ class SonarQubePluginTest extends Specification {
     "sonar"     | "sonarqube"
     "sonarqube" | "sonar"
     "sonarqube" | "sonarqube"
+  }
+
+  def "#taskName excludes every resolver when the analysis root is skipped"() {
+    given:
+    def sonarTask = parentProject.tasks.getByName(taskName)
+
+    when:
+    parentProject.sonar.skipProject = true
+
+    then:
+    sonarTask.taskDependencies.getDependencies(sonarTask).isEmpty()
+    parentProject.allprojects.every { it.tasks.sonarResolver.skipProject.get() }
+
+    where:
+    taskName << ["sonar", "sonarqube"]
+  }
+
+  def "#taskName ignores skipped ancestors outside the analysis root"() {
+    given:
+    def enclosingProject = ProjectBuilder.builder().withName("enclosing").build()
+    enclosingProject.pluginManager.apply(SonarQubePlugin)
+    def scanProject = ProjectBuilder.builder().withName("scan").withParent(enclosingProject).build()
+    scanProject.pluginManager.apply(SonarQubePlugin)
+    def sonarTask = scanProject.tasks.getByName(taskName)
+
+    when:
+    enclosingProject.sonar.skipProject = true
+
+    then:
+    sonarTask.taskDependencies.getDependencies(sonarTask)*.path == [":scan:sonarResolver"]
+    !scanProject.tasks.sonarResolver.skipProject.get()
+
+    where:
+    taskName << ["sonar", "sonarqube"]
   }
 
   def "sonar resolver retains the complete source set classpaths"() {

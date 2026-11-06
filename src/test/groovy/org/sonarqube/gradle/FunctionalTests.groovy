@@ -98,10 +98,10 @@ class FunctionalTests extends Specification {
         given:
         settingsFile << """
         rootProject.name = 'skip-resolver-inputs'
-        include 'included', 'skipped'
+        include 'included', 'skipped:child'
         """
         projectDir.resolve('included').toFile().mkdir()
-        projectDir.resolve('skipped').toFile().mkdir()
+        projectDir.resolve('skipped/child').toFile().mkdirs()
         buildFile << """
         plugins {
             id 'org.sonarqube'
@@ -111,7 +111,7 @@ class FunctionalTests extends Specification {
             def compileGenerated = tasks.register('compileGenerated') {
                 outputs.dir(generatedClasses)
                 doLast {
-                    if (project.name == 'skipped') {
+                    if (project.path.startsWith(':skipped')) {
                         throw new GradleException('Skipped project was compiled')
                     }
                     generatedClasses.get().asFile.mkdirs()
@@ -137,6 +137,8 @@ class FunctionalTests extends Specification {
         then:
         result.task(":skipped:sonarResolver") == null
         result.task(":skipped:compileGenerated") == null
+        result.task(":skipped:child:sonarResolver") == null
+        result.task(":skipped:child:compileGenerated") == null
         result.task(":included:compileGenerated").outcome == SUCCESS
         result.task(":included:sonarResolver").outcome == SUCCESS
         result.task(":" + taskName).outcome == SUCCESS
