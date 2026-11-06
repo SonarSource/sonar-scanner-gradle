@@ -185,6 +185,28 @@ class SonarQubePluginTest extends Specification {
     dependsOnTasks(skippedChildResolverTask).isEmpty()
   }
 
+  def "#taskName only depends on resolvers of projects included through #extensionName"() {
+    given:
+    def sonarTask = parentProject.tasks.getByName(taskName)
+
+    when:
+    childProject.extensions.getByName(extensionName).skipProject = true
+    leafProject.extensions.getByName(extensionName).skipProject = true
+
+    then:
+    sonarTask.taskDependencies.getDependencies(sonarTask)*.path as Set == [
+      ":parent:sonarResolver",
+      ":parent:child2:sonarResolver",
+    ] as Set
+
+    where:
+    taskName    | extensionName
+    "sonar"     | "sonar"
+    "sonar"     | "sonarqube"
+    "sonarqube" | "sonar"
+    "sonarqube" | "sonarqube"
+  }
+
   def "sonar resolver retains the complete source set classpaths"() {
     when:
     def project = ProjectBuilder.builder().withName("root").withProjectDir(new File("src/test/projects/java-project")).build()

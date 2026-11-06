@@ -179,8 +179,8 @@ public class SonarQubePlugin implements Plugin<Project> {
     sonarTask.mustRunAfter(getJavaCompileTasks(project));
     sonarTask.mustRunAfter(getJavaTestTasks(project));
     sonarTask.mustRunAfter(getJacocoTasks(project));
-    // The Sonar task depends on the Sonar resolver tasks for every project, which must themselves run after all Android tasks, so the Sonar task doesn't need to explicitly depend
-    // on Android tasks.
+    // The Sonar task depends on resolver tasks for projects included in analysis. These are ordered after Android tasks,
+    // so the Sonar task doesn't need to explicitly depend on Android tasks.
     sonarTask.dependsOn(getClassPathResolverTasks(project));
   }
 
@@ -222,6 +222,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getClassPathResolverTasks(Project project) {
     return () -> project.getAllprojects().stream()
+      .filter(SonarUtils::notSkipped)
       .map(p -> p.getTasks().getByName(SonarResolverTask.TASK_NAME))
       .collect(Collectors.toList());
   }
