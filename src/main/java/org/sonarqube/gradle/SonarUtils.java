@@ -91,6 +91,17 @@ public class SonarUtils {
     return getSonarExtensions(p).stream().anyMatch(SonarExtension::isSkipProject);
   }
 
+  /**
+   * Returns whether a project or an ancestor up to and including the analysis root is skipped.
+   */
+  static boolean isSkipped(Project project, Project topLevelProject) {
+    for (Project current = project; current != null; current = current.getParent()) {
+      if (isSkipped(current)) return true;
+      if (current == topLevelProject) break;
+    }
+    return false;
+  }
+
   static boolean notSkipped(Project p) {
     return !isSkipped(p);
   }

@@ -94,6 +94,59 @@ class FunctionalTests extends Specification {
         props.containsKey("sonar.java.jdkHome")
     }
 
+    def "#taskName does not run resolver input producers of skipped projects"() {
+        given:
+        settingsFile << """
+        rootProject.name = 'skip-resolver-inputs'
+        include 'included', 'skipped:child'
+        """
+        projectDir.resolve('included').toFile().mkdir()
+        projectDir.resolve('skipped/child').toFile().mkdirs()
+        buildFile << """
+        plugins {
+            id 'org.sonarqube'
+        }
+        subprojects {
+            def generatedClasses = layout.buildDirectory.dir('generated-classes')
+            def compileGenerated = tasks.register('compileGenerated') {
+                outputs.dir(generatedClasses)
+                doLast {
+                    if (project.path.startsWith(':skipped')) {
+                        throw new GradleException('Skipped project was compiled')
+                    }
+                    generatedClasses.get().asFile.mkdirs()
+                }
+            }
+            tasks.named('sonarResolver') {
+                mainLibraries.from(files(generatedClasses).builtBy(compileGenerated))
+            }
+        }
+        project(':skipped') {
+            sonar { skipProject = true }
+        }
+        """
+
+        when:
+        def result = GradleRunner.create()
+          .withProjectDir(projectDir.toFile())
+          .forwardOutput()
+          .withArguments(taskName, '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withPluginClasspath()
+          .build()
+
+        then:
+        result.task(":skipped:sonarResolver") == null
+        result.task(":skipped:compileGenerated") == null
+        result.task(":skipped:child:sonarResolver") == null
+        result.task(":skipped:child:compileGenerated") == null
+        result.task(":included:compileGenerated").outcome == SUCCESS
+        result.task(":included:sonarResolver").outcome == SUCCESS
+        result.task(":" + taskName).outcome == SUCCESS
+
+        where:
+        taskName << ['sonar', 'sonarqube']
+    }
+
     def "no jdkHome, source and target for non 'java' projects"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"
