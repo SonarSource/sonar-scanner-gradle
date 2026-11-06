@@ -42,7 +42,6 @@ runs:
       with:
         secrets: |
           development/github/token/licenses-ro token | GITHUB_TOKEN;
-          development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
     - name: Configure Maven
       uses: SonarSource/ci-github-actions/config-maven@v2
       with:
@@ -76,7 +75,6 @@ runs:
     - name: Run QA
       env:
         GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
-        ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
         SONARSOURCE_QA: true
         JAVA_VERSION: ${{ inputs.java-version }}
         GRADLE_VERSION: ${{ inputs.gradle-version }}
