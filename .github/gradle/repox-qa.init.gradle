@@ -40,7 +40,11 @@ def configureRepositories = { repositories ->
 }
 
 settingsEvaluated { settings ->
-    configureRepositories(settings.pluginManagement.repositories)
+    def pluginRepositories = settings.pluginManagement.repositories
+    if (pluginRepositories.isEmpty()) {
+        pluginRepositories.maven { url = System.getenv('SONARSOURCE_REPOSITORY_URL') }
+    }
+    configureRepositories(pluginRepositories)
     if (GradleVersion.current() >= GradleVersion.version('6.8')) {
         configureRepositories(settings.dependencyResolutionManagement.repositories)
     }
