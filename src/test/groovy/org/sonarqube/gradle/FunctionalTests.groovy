@@ -1067,7 +1067,7 @@ class FunctionalTests extends Specification {
     settingsFile << """
         pluginManagement {
             repositories {
-                ${RepoxRepositories.pluginRepositories('gradlePluginPortal(); mavenCentral()')}
+                ${RepoxRepositories.pluginRepositories()}
             }
         }
         rootProject.name = 'root'
@@ -1081,7 +1081,7 @@ class FunctionalTests extends Specification {
 
         allprojects {
             repositories {
-                ${RepoxRepositories.projectRepositories('mavenCentral()')}
+                ${RepoxRepositories.projectRepositories()}
             }
         }
 

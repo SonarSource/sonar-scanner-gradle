@@ -87,7 +87,7 @@ class LegacyAndroidConfigIT extends Specification {
 
         buildscript {
             repositories {
-                ${RepoxRepositories.projectRepositories('mavenCentral(); mavenLocal(); google()')}
+                ${RepoxRepositories.projectRepositories(true)}
             }
             dependencies {
                 classpath "com.android.tools.build:gradle:8.1.1"
@@ -99,7 +99,7 @@ class LegacyAndroidConfigIT extends Specification {
         apply plugin: 'com.android.application'
 
         repositories {
-                ${RepoxRepositories.projectRepositories('mavenCentral(); mavenLocal(); google()')}
+                ${RepoxRepositories.projectRepositories(true)}
             }
         dependencies {
             implementation 'joda-time:joda-time:2.7'

@@ -59,9 +59,6 @@ class SonarQubePluginTest extends Specification {
 
   def setup() {
     parentProject.apply plugin: SonarQubePlugin
-    parentProject.repositories {
-      mavenCentral()
-    }
     (parentProject as ProjectInternal).services.get(GradlePropertiesController.class).loadGradlePropertiesFrom(parentProject.rootDir, false)
 
     rootProject.allprojects {

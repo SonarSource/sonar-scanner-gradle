@@ -1,43 +1,22 @@
 rootProject.name = "sonarqube-gradle-plugin"
 
 pluginManagement {
-    // Preserve existing local credentials when the shared actions have not configured Repox.
-    val artifactoryUsername: String =
-        System.getenv("ARTIFACTORY_USERNAME") ?: providers.gradleProperty("artifactoryUsername").getOrElse("")
-    val artifactoryPassword: String =
-        System.getenv("ARTIFACTORY_ACCESS_TOKEN") ?: System.getenv("ARTIFACTORY_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
-    val repoxRepository: java.net.URI =
-        uri("https://repox.jfrog.io/repox/" + (if (providers.gradleProperty("qa").isPresent()) "sonarsource-qa" else "sonarsource"))
     repositories {
-        val repoxBaseUrl = System.getenv("ARTIFACTORY_RESOLVE_URL") ?: System.getenv("ARTIFACTORY_URL")
-        val repoxRepositoryUrl = repoxBaseUrl?.let { it.trimEnd('/') + "/" + (System.getenv("SONARSOURCE_REPOSITORY") ?: "sonarsource") }
-        if (repoxRepositoryUrl != null) {
-            val repox = (findByName("Repox") as? org.gradle.api.artifacts.repositories.MavenArtifactRepository)
-                ?: maven {
-                    name = "Repox"
-                    if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
-                        credentials {
-                            username = artifactoryUsername
-                            password = artifactoryPassword
-                        }
-                    }
-                }
-            repox.url = uri(repoxRepositoryUrl)
-        } else {
-            if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
-                maven {
-                    url = repoxRepository
+        val repoxBaseUrl = System.getenv("ARTIFACTORY_RESOLVE_URL") ?: System.getenv("ARTIFACTORY_URL") ?: "https://repox.jfrog.io/artifactory"
+        val repoxRepositoryUrl = repoxBaseUrl.trimEnd('/') + "/" + (System.getenv("SONARSOURCE_REPOSITORY") ?: if (providers.gradleProperty("qa").isPresent) "sonarsource-qa" else "sonarsource")
+        val repox = (findByName("Repox") as? org.gradle.api.artifacts.repositories.MavenArtifactRepository)
+            ?: maven {
+                name = "Repox"
+                val artifactoryUsername = System.getenv("ARTIFACTORY_USERNAME") ?: providers.gradleProperty("artifactoryUsername").orNull
+                val artifactoryPassword = System.getenv("ARTIFACTORY_ACCESS_TOKEN") ?: System.getenv("ARTIFACTORY_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").orNull
+                if (!artifactoryUsername.isNullOrEmpty() && !artifactoryPassword.isNullOrEmpty()) {
                     credentials {
                         username = artifactoryUsername
                         password = artifactoryPassword
                     }
                 }
-            } else {
-                mavenCentral()
             }
-            gradlePluginPortal()
-            google()
-        }
+        repox.url = uri(repoxRepositoryUrl)
     }
 }
 

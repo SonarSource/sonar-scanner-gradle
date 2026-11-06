@@ -23,53 +23,42 @@ final class RepoxRepositories {
     private RepoxRepositories() {
     }
 
-    static String projectRepositories(String publicRepositories) {
+    static String projectRepositories(boolean includeMavenLocal = false) {
         return '''
-            def repoxBaseUrl = System.getenv('ARTIFACTORY_RESOLVE_URL') ?: System.getenv('ARTIFACTORY_URL')
-            def repoxRepositoryUrl = (repoxBaseUrl ? repoxBaseUrl.replaceAll('/+$', '') + '/' + (System.getenv('SONARSOURCE_REPOSITORY') ?: 'sonarsource') : null)
-            if (repoxRepositoryUrl) {
-                LOCAL_REPOSITORIES
-                def repox = findByName('Repox') ?: maven {
-                    name = 'Repox'
-                    def artifactoryUsername = System.getenv('ARTIFACTORY_USERNAME') ?: project.findProperty('artifactoryUsername')
-                    def artifactoryPassword = System.getenv('ARTIFACTORY_ACCESS_TOKEN') ?: System.getenv('ARTIFACTORY_PASSWORD') ?: project.findProperty('artifactoryPassword')
-                    if (artifactoryUsername && artifactoryPassword) {
-                        credentials {
-                            username = artifactoryUsername
-                            password = artifactoryPassword
-                        }
+            def repoxBaseUrl = System.getenv('ARTIFACTORY_RESOLVE_URL') ?: System.getenv('ARTIFACTORY_URL') ?: 'https://repox.jfrog.io/artifactory'
+            def repoxRepositoryUrl = repoxBaseUrl.replaceAll('/+$', '') + '/' + (System.getenv('SONARSOURCE_REPOSITORY') ?: 'sonarsource')
+            LOCAL_REPOSITORIES
+            def repox = findByName('Repox') ?: maven {
+                name = 'Repox'
+                def artifactoryUsername = System.getenv('ARTIFACTORY_USERNAME') ?: project.findProperty('artifactoryUsername')
+                def artifactoryPassword = System.getenv('ARTIFACTORY_ACCESS_TOKEN') ?: System.getenv('ARTIFACTORY_PASSWORD') ?: project.findProperty('artifactoryPassword')
+                if (artifactoryUsername && artifactoryPassword) {
+                    credentials {
+                        username = artifactoryUsername
+                        password = artifactoryPassword
                     }
                 }
-                repox.url = uri(repoxRepositoryUrl)
-            } else {
-                PUBLIC_REPOSITORIES
             }
-        '''.stripIndent().replace('PUBLIC_REPOSITORIES', publicRepositories)
-            .replace('LOCAL_REPOSITORIES', publicRepositories.contains('mavenLocal()') ? 'mavenLocal()' : '')
+            repox.url = uri(repoxRepositoryUrl)
+        '''.stripIndent().replace('LOCAL_REPOSITORIES', includeMavenLocal ? 'mavenLocal()' : '')
     }
 
-    static String pluginRepositories(String publicRepositories) {
+    static String pluginRepositories() {
         return '''
-            def repoxBaseUrl = System.getenv('ARTIFACTORY_RESOLVE_URL') ?: System.getenv('ARTIFACTORY_URL')
-            def repoxRepositoryUrl = (repoxBaseUrl ? repoxBaseUrl.replaceAll('/+$', '') + '/' + (System.getenv('SONARSOURCE_REPOSITORY') ?: 'sonarsource') : null)
-            if (repoxRepositoryUrl) {
-                LOCAL_REPOSITORIES
-                def repox = findByName('Repox') ?: maven {
-                    name = 'Repox'
-                    def artifactoryUsername = System.getenv('ARTIFACTORY_USERNAME') ?: settings.extensions.extraProperties.properties['artifactoryUsername']
-                    def artifactoryPassword = System.getenv('ARTIFACTORY_ACCESS_TOKEN') ?: System.getenv('ARTIFACTORY_PASSWORD') ?: settings.extensions.extraProperties.properties['artifactoryPassword']
-                    if (artifactoryUsername && artifactoryPassword) {
-                        credentials {
-                            username = artifactoryUsername
-                            password = artifactoryPassword
-                        }
+            def repoxBaseUrl = System.getenv('ARTIFACTORY_RESOLVE_URL') ?: System.getenv('ARTIFACTORY_URL') ?: 'https://repox.jfrog.io/artifactory'
+            def repoxRepositoryUrl = repoxBaseUrl.replaceAll('/+$', '') + '/' + (System.getenv('SONARSOURCE_REPOSITORY') ?: 'sonarsource')
+            def repox = findByName('Repox') ?: maven {
+                name = 'Repox'
+                def artifactoryUsername = System.getenv('ARTIFACTORY_USERNAME') ?: settings.extensions.extraProperties.properties['artifactoryUsername']
+                def artifactoryPassword = System.getenv('ARTIFACTORY_ACCESS_TOKEN') ?: System.getenv('ARTIFACTORY_PASSWORD') ?: settings.extensions.extraProperties.properties['artifactoryPassword']
+                if (artifactoryUsername && artifactoryPassword) {
+                    credentials {
+                        username = artifactoryUsername
+                        password = artifactoryPassword
                     }
                 }
-                repox.url = uri(repoxRepositoryUrl)
-            } else {
-                PUBLIC_REPOSITORIES
             }
-        '''.stripIndent().replace('PUBLIC_REPOSITORIES', publicRepositories)
-            .replace('LOCAL_REPOSITORIES', publicRepositories.contains('mavenLocal()') ? 'mavenLocal()' : '')
+            repox.url = uri(repoxRepositoryUrl)
+        '''.stripIndent()
     }
 }
