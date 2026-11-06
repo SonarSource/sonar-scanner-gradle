@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.gradle.api.Plugin;
@@ -223,7 +222,7 @@ public class SonarQubePlugin implements Plugin<Project> {
 
   private static Callable<Iterable<? extends Task>> getClassPathResolverTasks(Project project) {
     return () -> project.getAllprojects().stream()
-      .filter(Predicate.not(p -> SonarUtils.isSkipped(p, project)))
+      .filter(p -> !SonarUtils.isSkipped(p, project))
       .map(p -> p.getTasks().getByName(SonarResolverTask.TASK_NAME))
       .collect(Collectors.toList());
   }
