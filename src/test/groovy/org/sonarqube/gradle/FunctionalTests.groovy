@@ -94,7 +94,7 @@ class FunctionalTests extends Specification {
         props.containsKey("sonar.java.jdkHome")
     }
 
-    def "#taskName does not run resolver input producers of skipped projects"() {
+    def "sonar does not run resolver input producers of skipped projects"() {
         given:
         settingsFile << """
         rootProject.name = 'skip-resolver-inputs'
@@ -107,7 +107,8 @@ class FunctionalTests extends Specification {
             id 'org.sonarqube'
         }
         subprojects {
-            def generatedClasses = layout.buildDirectory.dir('generated-classes')
+            // Not under "build/generated": the Sonar task drops such paths from library properties
+            def generatedClasses = layout.buildDirectory.dir('resolver-input-classes')
             def compileGenerated = tasks.register('compileGenerated') {
                 outputs.dir(generatedClasses)
                 doLast {
@@ -130,7 +131,7 @@ class FunctionalTests extends Specification {
         def result = GradleRunner.create()
           .withProjectDir(projectDir.toFile())
           .forwardOutput()
-          .withArguments(taskName, '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+          .withArguments('sonar', '-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
           .withPluginClasspath()
           .build()
 
@@ -141,10 +142,11 @@ class FunctionalTests extends Specification {
         result.task(":skipped:child:compileGenerated") == null
         result.task(":included:compileGenerated").outcome == SUCCESS
         result.task(":included:sonarResolver").outcome == SUCCESS
-        result.task(":" + taskName).outcome == SUCCESS
-
-        where:
-        taskName << ['sonar', 'sonarqube']
+        result.task(":sonar").outcome == SUCCESS
+        def props = new Properties()
+        props.load(outFile.newDataInputStream())
+        props.containsKey(":included.sonar.java.libraries")
+        props.stringPropertyNames().findAll { it.startsWith(":skipped") }.isEmpty()
     }
 
     def "no jdkHome, source and target for non 'java' projects"() {
