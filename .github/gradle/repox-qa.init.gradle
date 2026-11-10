@@ -18,18 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
 
-import org.gradle.api.artifacts.repositories.MavenArtifactRepository
-import org.gradle.api.credentials.HttpHeaderCredentials
-import org.gradle.authentication.http.HttpHeaderAuthentication
+// Routes every remote repository of the QA Gradle builds through Repox. The Kotlin init script of
+// SonarSource/ci-github-actions/config-gradle cannot be used here: it does not compile with Gradle 5.x and 6.x,
+// which are part of the QA matrix.
+
 import org.gradle.util.GradleVersion
+
+def requiredEnvironmentVariable = { String name ->
+    def value = System.getenv(name)
+    if (!value) {
+        throw new GradleException("Environment variable ${name} is required by the Repox init script, it is set by SonarSource/ci-github-actions/config-maven")
+    }
+    value
+}
+def repoxRepositoryUrl = requiredEnvironmentVariable('SONARSOURCE_REPOSITORY_URL')
+def repoxAccessToken = requiredEnvironmentVariable('ARTIFACTORY_ACCESS_TOKEN')
 
 def configureRepositories = { repositories ->
     repositories.withType(MavenArtifactRepository).all { repository ->
-        if (repository.url.scheme != 'file') {
-            repository.setUrl(System.getenv('SONARSOURCE_REPOSITORY_URL'))
+        if (repository.url?.scheme != 'file') {
+            logger.info("Repox: redirecting repository '${repository.name}' from ${repository.url} to ${repoxRepositoryUrl}")
+            repository.setUrl(repoxRepositoryUrl)
             repository.credentials(HttpHeaderCredentials) {
                 name = 'Authorization'
-                value = "Bearer ${System.getenv('ARTIFACTORY_ACCESS_TOKEN')}"
+                value = "Bearer ${repoxAccessToken}"
             }
             repository.authentication {
                 clear()
@@ -42,7 +54,8 @@ def configureRepositories = { repositories ->
 settingsEvaluated { settings ->
     def pluginRepositories = settings.pluginManagement.repositories
     if (pluginRepositories.isEmpty()) {
-        pluginRepositories.maven { url = System.getenv('SONARSOURCE_REPOSITORY_URL') }
+        // Without plugin repositories, Gradle resolves plugins {} from the Gradle Plugin Portal directly
+        pluginRepositories.maven { url = repoxRepositoryUrl }
     }
     configureRepositories(pluginRepositories)
     if (GradleVersion.current() >= GradleVersion.version('6.8')) {

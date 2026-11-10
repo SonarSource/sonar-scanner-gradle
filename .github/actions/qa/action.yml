@@ -58,6 +58,8 @@ runs:
     - name: Configure Repox for QA Gradle processes
       shell: bash
       run: |
+        # The integration tests start Gradle builds of test projects that declare public repositories. Route them
+        # through Repox, with a Groovy init script that also compiles with the Gradle 5.x and 6.x of the QA matrix.
         GRADLE_INIT_DIRECTORY="${GRADLE_USER_HOME:-$HOME/.gradle}/init.d"
         mkdir -p "$GRADLE_INIT_DIRECTORY"
         cp .github/gradle/repox-qa.init.gradle "$GRADLE_INIT_DIRECTORY/repox-qa.init.gradle"

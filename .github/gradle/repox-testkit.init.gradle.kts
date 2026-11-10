@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
  */
 
+// The Repox init script of config-gradle also adds repositories to projects, which FAIL_ON_PROJECT_REPOS rejects
+// in TestKit fixtures. PREFER_SETTINGS keeps the settings repositories and ignores the project ones.
 settingsEvaluated {
     dependencyResolutionManagement {
         if (repositoriesMode.get() == RepositoriesMode.FAIL_ON_PROJECT_REPOS) {
