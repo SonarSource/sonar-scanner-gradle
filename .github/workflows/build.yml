@@ -35,6 +35,11 @@ jobs:
         with:
           version: 2026.10.17
       - uses: ./.github/actions/setup-android
+      - name: Configure Maven
+        uses: SonarSource/ci-github-actions/config-maven@v2
+        with:
+          artifactory-reader-role: private-reader
+          working-directory: .
       - name: Install Property Dump Plugin
         run: |
           mvn -f property-dump-plugin/pom.xml -B install
@@ -48,13 +53,22 @@ jobs:
       - uses: SonarSource/ci-github-actions/build-gradle@v2
         id: build-gradle
         with:
-          repox-url: https://repox.jfrog.io
           deploy-pull-request: true
           artifactory-reader-role: private-reader    # Override default public-reader
           artifactory-deployer-role: qa-deployer     # Override default public-deployer
           gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: test-reports
+          path: |
+            build/test-results/**/*.xml
+            build/reports/tests/**/*
+          retention-days: 7
+          if-no-files-found: ignore
 
   build-windows:
     name: Build Windows
@@ -82,7 +96,6 @@ jobs:
       - uses: SonarSource/ci-github-actions/build-gradle@v2
         id: build-step
         with:
-          repox-url: https://repox.jfrog.io
           deploy-pull-request: false
           sonar-platform: 'none'
           artifactory-reader-role: private-reader    # Override for public repo using private access
@@ -90,6 +103,17 @@ jobs:
           gradle-args: "-Dsonar.sca.exclusions=integrationTests/src/test/resources/**,src/test/projects/**"
           use-develocity: ${{ env.USE_DEVELOCITY }}
           develocity-url: ${{ env.DEVELOCITY_URL }}
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: test-reports-windows
+          path: |
+            build/test-results/**/*.xml
+            build/reports/tests/**/*
+          retention-days: 7
+          if-no-files-found: ignore
 
   qa:
     if: ${{ needs.build.outputs.deployed }}

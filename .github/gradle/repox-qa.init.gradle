@@ -1,0 +1,69 @@
+/*
+ * SonarQube Scanner for Gradle
+ * Copyright (C) 2015-2025 SonarSource
+ * mailto:info AT sonarsource DOT com
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02
+ */
+
+// Routes every remote repository of the QA Gradle builds through Repox. The Kotlin init script of
+// SonarSource/ci-github-actions/config-gradle cannot be used here: it does not compile with Gradle 5.x and 6.x,
+// which are part of the QA matrix.
+
+import org.gradle.util.GradleVersion
+
+def requiredEnvironmentVariable = { String name ->
+    def value = System.getenv(name)
+    if (!value) {
+        throw new GradleException("Environment variable ${name} is required by the Repox init script, it is set by SonarSource/ci-github-actions/config-maven")
+    }
+    value
+}
+def repoxRepositoryUrl = requiredEnvironmentVariable('SONARSOURCE_REPOSITORY_URL')
+def repoxAccessToken = requiredEnvironmentVariable('ARTIFACTORY_ACCESS_TOKEN')
+
+def configureRepositories = { repositories ->
+    repositories.withType(MavenArtifactRepository).all { repository ->
+        if (repository.url?.scheme != 'file') {
+            logger.info("Repox: redirecting repository '${repository.name}' from ${repository.url} to ${repoxRepositoryUrl}")
+            repository.setUrl(repoxRepositoryUrl)
+            repository.credentials(HttpHeaderCredentials) {
+                name = 'Authorization'
+                value = "Bearer ${repoxAccessToken}"
+            }
+            repository.authentication {
+                clear()
+                header(HttpHeaderAuthentication)
+            }
+        }
+    }
+}
+
+settingsEvaluated { settings ->
+    def pluginRepositories = settings.pluginManagement.repositories
+    if (pluginRepositories.isEmpty()) {
+        // Without plugin repositories, Gradle resolves plugins {} from the Gradle Plugin Portal directly
+        pluginRepositories.maven { url = repoxRepositoryUrl }
+    }
+    configureRepositories(pluginRepositories)
+    if (GradleVersion.current() >= GradleVersion.version('6.8')) {
+        configureRepositories(settings.dependencyResolutionManagement.repositories)
+    }
+}
+
+beforeProject { project ->
+    configureRepositories(project.buildscript.repositories)
+    configureRepositories(project.repositories)
+}

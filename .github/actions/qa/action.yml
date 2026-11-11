@@ -42,11 +42,9 @@ runs:
       with:
         secrets: |
           development/github/token/licenses-ro token | GITHUB_TOKEN;
-          development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_ACCESS_TOKEN;
     - name: Configure Maven
       uses: SonarSource/ci-github-actions/config-maven@v2
       with:
-        repox-url: https://repox.jfrog.io
         artifactory-reader-role: private-reader
         working-directory: integrationTests
         use-develocity: ${{ inputs.use-develocity }}
@@ -57,6 +55,14 @@ runs:
         CACHE_MONTH=$(date +'%Y-%m')
         echo "ORCHESTRATOR_CACHE_MONTH=$CACHE_MONTH" >> $GITHUB_ENV
         echo "ORCHESTRATOR_HOME=${{ github.workspace }}/orchestrator" >> $GITHUB_ENV
+    - name: Configure Repox for QA Gradle processes
+      shell: bash
+      run: |
+        # The integration tests start Gradle builds of test projects that declare public repositories. Route them
+        # through Repox, with a Groovy init script that also compiles with the Gradle 5.x and 6.x of the QA matrix.
+        GRADLE_INIT_DIRECTORY="${GRADLE_USER_HOME:-$HOME/.gradle}/init.d"
+        mkdir -p "$GRADLE_INIT_DIRECTORY"
+        cp .github/gradle/repox-qa.init.gradle "$GRADLE_INIT_DIRECTORY/repox-qa.init.gradle"
     - name: Cache Orchestrator
       uses: SonarSource/gh-action_cache@v1
       with:
@@ -71,7 +77,6 @@ runs:
     - name: Run QA
       env:
         GITHUB_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).GITHUB_TOKEN }}
-        ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).ARTIFACTORY_ACCESS_TOKEN }}
         SONARSOURCE_QA: true
         JAVA_VERSION: ${{ inputs.java-version }}
         GRADLE_VERSION: ${{ inputs.gradle-version }}
