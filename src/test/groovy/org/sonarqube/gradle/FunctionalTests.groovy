@@ -149,6 +149,98 @@ class FunctionalTests extends Specification {
         props.stringPropertyNames().findAll { it.startsWith(":skipped") }.isEmpty()
     }
 
+    def "sonar ignores resolver output left by a previous build of a now skipped project"() {
+        given:
+        settingsFile << """
+        rootProject.name = 'stale-resolver-output'
+        include 'parent:child'
+        """
+        projectDir.resolve('parent/child').toFile().mkdirs()
+        buildFile << """
+        plugins {
+            id 'org.sonarqube'
+        }
+        subprojects {
+            // Not under "build/generated": the Sonar task drops such paths from library properties
+            def resolverInputClasses = layout.buildDirectory.dir('resolver-input-classes')
+            def compileClasses = tasks.register('compileClasses') {
+                outputs.dir(resolverInputClasses)
+                doLast { resolverInputClasses.get().asFile.mkdirs() }
+            }
+            tasks.named('sonarResolver') {
+                mainLibraries.from(files(resolverInputClasses).builtBy(compileClasses))
+            }
+        }
+        if (providers.gradleProperty('skipParent').isPresent()) {
+            project(':parent') {
+                sonar { skipProject = true }
+            }
+            // Realize every resolver task, as an eager "tasks.all {}" in a user build would
+            allprojects { tasks.named('sonarResolver').get() }
+        }
+        """
+        def firstDump = projectDir.resolve('first.properties')
+        def secondDump = projectDir.resolve('second.properties')
+
+        when:
+        runSonar('-Dsonar.scanner.internal.dumpToFile=' + firstDump.toAbsolutePath())
+        runSonar('-PskipParent', '-Dsonar.scanner.internal.dumpToFile=' + secondDump.toAbsolutePath())
+
+        then:
+        loadProperties(firstDump).stringPropertyNames().any { it.startsWith(":parent.:parent:child.sonar.java.libraries") }
+        projectDir.resolve('parent/child/build/sonar-resolver/properties').toFile().exists()
+        loadProperties(secondDump).stringPropertyNames().findAll { it.startsWith(":parent") }.isEmpty()
+    }
+
+    def "sonar reads the resolver output where the resolver task wrote it"() {
+        given:
+        settingsFile << """
+        rootProject.name = 'moved-build-directory'
+        include 'module'
+        """
+        projectDir.resolve('module').toFile().mkdir()
+        buildFile << """
+        plugins {
+            id 'org.sonarqube'
+        }
+        project(':module') {
+            def resolverInputClasses = file('resolver-input-classes')
+            def compileClasses = tasks.register('compileClasses') {
+                outputs.dir(resolverInputClasses)
+                doLast { resolverInputClasses.mkdirs() }
+            }
+            tasks.named('sonarResolver') {
+                mainLibraries.from(files(resolverInputClasses).builtBy(compileClasses))
+            }
+            // Realize the resolver task before moving the build directory, as an eager "tasks.all {}" would
+            tasks.named('sonarResolver').get()
+            layout.buildDirectory.set(file('moved-build'))
+        }
+        """
+
+        when:
+        runSonar('-Dsonar.scanner.internal.dumpToFile=' + outFile.toAbsolutePath())
+
+        then:
+        projectDir.resolve('module/build/sonar-resolver/properties').toFile().exists()
+        loadProperties(outFile).containsKey(':module.sonar.java.libraries')
+    }
+
+    private void runSonar(String... arguments) {
+        GradleRunner.create()
+          .withProjectDir(projectDir.toFile())
+          .forwardOutput()
+          .withArguments(['sonar'] + arguments.toList())
+          .withPluginClasspath()
+          .build()
+    }
+
+    private static Properties loadProperties(Path file) {
+        def properties = new Properties()
+        file.withInputStream { properties.load(it) }
+        properties
+    }
+
     def "no jdkHome, source and target for non 'java' projects"() {
         given:
         settingsFile << "rootProject.name = 'java-task-toolchains'"
