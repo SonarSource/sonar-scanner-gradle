@@ -85,12 +85,14 @@ jobs:
         uses: SonarSource/vault-action-wrapper@v3
         with:
           secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader username | ARTIFACTORY_READER_USERNAME;
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_READER_TOKEN;
             development/kv/data/gradle/publish key | PUBLISH_KEY;
             development/kv/data/gradle/publish secret | PUBLISH_SECRET;
 
       - name: Simulate release
         env:
+          ARTIFACTORY_PRIVATE_USERNAME: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_READER_USERNAME }}
           ARTIFACTORY_PRIVATE_PASSWORD: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_READER_TOKEN }}
           PUBLISH_KEY: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_KEY }}
           PUBLISH_SECRET: ${{ fromJSON(steps.vault-secrets.outputs.vault).PUBLISH_SECRET }}
@@ -153,6 +155,7 @@ jobs:
         uses: SonarSource/vault-action-wrapper@v3
         with:
           secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader username | ARTIFACTORY_READER_USERNAME;
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader access_token | ARTIFACTORY_READER_TOKEN;
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter access_token | ARTIFACTORY_PROMOTER_TOKEN;
             development/kv/data/repox url | ARTIFACTORY_URL;
@@ -181,6 +184,7 @@ jobs:
       - name: Publish to Gradle Plugin Portal
         env:
           ARTIFACTORY_URL: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_URL }}
+          ARTIFACTORY_PRIVATE_USERNAME: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_READER_USERNAME }}
           ARTIFACTORY_PRIVATE_PASSWORD: ${{ fromJSON(steps.vault-secrets.outputs.vault).ARTIFACTORY_READER_TOKEN }}
           ORG_GRADLE_PROJECT_signingKey: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ fromJSON(steps.vault-secrets.outputs.vault).SIGNING_PASSWORD }}
