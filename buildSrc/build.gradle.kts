@@ -1,6 +1,21 @@
+val artifactoryUsername: String =
+    System.getenv("ARTIFACTORY_PRIVATE_USERNAME") ?: providers.gradleProperty("artifactoryUsername").getOrElse("")
+val artifactoryPassword: String =
+    System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
+
 repositories {
-    gradlePluginPortal()
-    mavenCentral()
+    if (artifactoryUsername.isNotEmpty() && artifactoryPassword.isNotEmpty()) {
+        maven {
+            url = uri("https://repox.jfrog.io/repox/sonarsource")
+            credentials {
+                username = artifactoryUsername
+                password = artifactoryPassword
+            }
+        }
+    } else {
+        gradlePluginPortal()
+        mavenCentral()
+    }
 }
 
 dependencyLocking {
