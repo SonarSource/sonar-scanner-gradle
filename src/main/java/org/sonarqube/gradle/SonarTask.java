@@ -145,7 +145,7 @@ public class SonarTask extends ConventionTask {
   private Provider<Map<String, String>> properties;
   private Provider<Set<String>> userDefinedKeys;
   private Provider<Directory> buildSonar;
-  private Set<File> resolverFiles;
+  private Provider<Set<File>> resolverFiles;
 
   private static void logEnvironmentInformation() {
     if (LOGGER.isInfoEnabled()) {
@@ -554,10 +554,10 @@ public class SonarTask extends ConventionTask {
 
   @Internal
   public Set<File> getResolverFiles() {
-    return resolverFiles;
+    return resolverFiles.get();
   }
 
-  public void setResolverFiles(Set<File> resolverFiles) {
+  public void setResolverFiles(Provider<Set<File>> resolverFiles) {
     this.resolverFiles = resolverFiles;
   }
 

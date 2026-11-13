@@ -24,12 +24,85 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.gradle.api.Project;
+import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SonarUtilsTest {
+
+  private static final class SkipHierarchy {
+    // The plugin is applied to "analysisRoot", not to the Gradle root, so "gradleRoot" has no Sonar extension
+    final Project gradleRoot = ProjectBuilder.builder().withName("gradleRoot").build();
+    final Project analysisRoot = ProjectBuilder.builder().withName("analysisRoot").withParent(gradleRoot).build();
+    final Project module = ProjectBuilder.builder().withName("module").withParent(analysisRoot).build();
+    final Project submodule = ProjectBuilder.builder().withName("submodule").withParent(module).build();
+
+    SkipHierarchy() {
+      analysisRoot.getPluginManager().apply(SonarQubePlugin.class);
+    }
+
+    static void skip(Project project, String extensionName) {
+      ((SonarExtension) project.getExtensions().getByName(extensionName)).setSkipProject(true);
+    }
+  }
+
+  @Test
+  void is_skipped_is_false_when_nothing_is_skipped() {
+    SkipHierarchy hierarchy = new SkipHierarchy();
+
+    assertThat(SonarUtils.isSkipped(hierarchy.submodule, hierarchy.analysisRoot)).isFalse();
+    assertThat(SonarUtils.notSkipped(hierarchy.analysisRoot, hierarchy.analysisRoot)).isTrue();
+  }
+
+  @Test
+  void is_skipped_when_the_project_itself_is_skipped() {
+    SkipHierarchy hierarchy = new SkipHierarchy();
+    SkipHierarchy.skip(hierarchy.submodule, SonarExtension.SONAR_EXTENSION_NAME);
+
+    assertThat(SonarUtils.isSkipped(hierarchy.submodule, hierarchy.analysisRoot)).isTrue();
+    assertThat(SonarUtils.isSkipped(hierarchy.module, hierarchy.analysisRoot)).isFalse();
+  }
+
+  @Test
+  void is_skipped_when_an_ancestor_is_skipped_with_the_deprecated_extension() {
+    SkipHierarchy hierarchy = new SkipHierarchy();
+    SkipHierarchy.skip(hierarchy.module, SonarExtension.SONAR_DEPRECATED_EXTENSION_NAME);
+
+    assertThat(SonarUtils.isSkipped(hierarchy.submodule, hierarchy.analysisRoot)).isTrue();
+    assertThat(SonarUtils.notSkipped(hierarchy.submodule, hierarchy.analysisRoot)).isFalse();
+  }
+
+  @Test
+  void is_skipped_when_the_analysis_root_is_skipped() {
+    SkipHierarchy hierarchy = new SkipHierarchy();
+    SkipHierarchy.skip(hierarchy.analysisRoot, SonarExtension.SONAR_EXTENSION_NAME);
+
+    assertThat(SonarUtils.isSkipped(hierarchy.submodule, hierarchy.analysisRoot)).isTrue();
+  }
+
+  @Test
+  void is_skipped_does_not_look_above_the_analysis_root_when_ancestors_have_no_sonar_extension() {
+    SkipHierarchy hierarchy = new SkipHierarchy();
+
+    assertThat(hierarchy.gradleRoot.getExtensions().findByName(SonarExtension.SONAR_EXTENSION_NAME)).isNull();
+    assertThat(SonarUtils.isSkipped(hierarchy.submodule, hierarchy.analysisRoot)).isFalse();
+  }
+
+  @Test
+  void is_skipped_ignores_skipped_ancestors_above_the_analysis_root() {
+    Project enclosing = ProjectBuilder.builder().withName("enclosing").build();
+    enclosing.getPluginManager().apply(SonarQubePlugin.class);
+    // Created after the plugin was applied to "enclosing", so it is not part of the "enclosing" analysis
+    Project scan = ProjectBuilder.builder().withName("scan").withParent(enclosing).build();
+    scan.getPluginManager().apply(SonarQubePlugin.class);
+    SkipHierarchy.skip(enclosing, SonarExtension.SONAR_EXTENSION_NAME);
+
+    assertThat(SonarUtils.isSkipped(scan, scan)).isFalse();
+    assertThat(SonarUtils.isSkipped(scan, enclosing)).isTrue();
+  }
 
   @Test
   void test_construct_prefixed_project_name() {
