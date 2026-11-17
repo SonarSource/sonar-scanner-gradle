@@ -16,6 +16,16 @@
   ],
   "packageRules": [
     {
+      "description": "Use stable Kotlin Gradle plugin releases; exclude IntelliJ-specific and prerelease builds.",
+      "matchPackageNames": ["org.jetbrains.kotlin:kotlin-gradle-plugin"],
+      "allowedVersions": "/^\\d+\\.\\d+\\.\\d+$/"
+    },
+    {
+      "description": "Keep Spock on the same Groovy variant used by Gradle's localGroovy().",
+      "matchPackageNames": ["org.spockframework:spock-core"],
+      "versionCompatibility": "^(?<version>.+)-(?<compatibility>groovy-.+)$"
+    },
+    {
       "description": [
         "Replace built-in artifact updates with a write-locks command so stale buildSrc/buildscript locks do not block configuration.",
         "Install Java explicitly for custom tasks and constrain it to Java 21, which this build requires.",
