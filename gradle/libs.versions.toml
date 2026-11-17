@@ -8,7 +8,7 @@ junit = "5.14.4"
 kotlin-gradle = "2.5.0-ij263-58"
 mockito = "5.24.0"
 sonar-scanner = "4.3.0.11766"
-spock = "2.5-groovy-6.0"
+spock = "2.5-groovy-3.0"
 
 [libraries]
 android-gradle = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }

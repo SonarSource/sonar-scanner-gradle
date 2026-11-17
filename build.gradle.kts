@@ -96,6 +96,7 @@ dependencies {
     testImplementation(libs.assertj.core)
     testImplementation(libs.jupiter.engine)
     testImplementation(libs.jupiter.params)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(libs.hamcrest.all)
     testImplementation(libs.mockito.core)
     testImplementation(libs.spock.core) {
