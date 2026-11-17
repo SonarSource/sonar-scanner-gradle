@@ -16,6 +16,19 @@
   ],
   "packageRules": [
     {
+      "description": "Defer major upgrades requiring Gradle/Android API, publishing, SBOM, or Develocity server migrations.",
+      "matchPackageNames": [
+        "gradle",
+        "com.android.tools.build:gradle",
+        "com.gradle.publish:plugin-publish-plugin",
+        "org.cyclonedx.bom:org.cyclonedx.bom.gradle.plugin",
+        "com.gradle.develocity:com.gradle.develocity.gradle.plugin",
+        "org.codehaus.plexus:plexus-utils"
+      ],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "description": "Use stable Kotlin Gradle plugin releases; exclude IntelliJ-specific and prerelease builds.",
       "matchPackageNames": ["org.jetbrains.kotlin:kotlin-gradle-plugin"],
       "allowedVersions": "/^\\d+\\.\\d+\\.\\d+$/"

@@ -26,5 +26,5 @@ dependencyLocking {
 dependencies {
     implementation("com.gradle.publish:plugin-publish-plugin:1.3.1")
     implementation("org.apache.maven:maven-model:3.10.0")
-    implementation("org.codehaus.plexus:plexus-utils:4.1.0")
+    implementation("org.codehaus.plexus:plexus-utils:3.6.2")
 }

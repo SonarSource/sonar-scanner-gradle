@@ -1,5 +1,5 @@
 [versions]
-agp = "9.5.1"
+agp = "8.13.2"
 archunit = "1.5.1"
 assertj = "3.27.7"
 findbugs = "3.0.2"
