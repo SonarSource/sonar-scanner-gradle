@@ -35,7 +35,7 @@ plugins {
 }
 
 develocity {
-    server = "https://develocity-public.sonar.build"
+    server = "https://develocity.sonar.build"
     buildScan {
         capture {
             buildLogging.set(!startParameter.taskNames.contains("properties"))
