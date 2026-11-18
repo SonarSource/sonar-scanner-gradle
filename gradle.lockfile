@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :dependencies --write-locks
 androidx.databinding:databinding-common:8.13.2=testRuntimeClasspath
 androidx.databinding:databinding-compiler-common:8.13.2=testRuntimeClasspath
 com.android.databinding:baseLibrary:8.13.2=testRuntimeClasspath
