@@ -234,7 +234,7 @@ public abstract class DownloadMavenArtifactsAndPublishToGradlePluginPortal exten
     try {
       LOGGER.info("Invoke 'publishPlugins' task (validationOnly: {})", validationOnly);
       PublishTask publishTask = (PublishTask) getProject().getTasks().getByName("publishPlugins");
-      publishTask.setValidate(validationOnly);
+      publishTask.getValidateOnly().set(validationOnly);
       publishTask.executeTask();
     } catch (Exception e) {
       throw new GradleException("Failed to invoke task 'publishPlugins': " + e.getMessage(), e);
