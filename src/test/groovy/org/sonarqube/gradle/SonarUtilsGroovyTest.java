@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.gradle.internal.impldep.com.google.common.collect.ImmutableMap;
-import org.gradle.internal.impldep.org.apache.commons.lang.SystemUtils;
+import org.junit.jupiter.api.condition.OS;
 import org.gradle.util.GradleVersion;
 import org.junit.jupiter.api.Test;
 import org.sonarqube.gradle.SonarUtils.InputFileType;
@@ -74,7 +74,7 @@ class SonarUtilsGroovyTest {
 
   @Test
   void get_project_base_dir_with_different_roots() {
-    assumeTrue(SystemUtils.IS_OS_WINDOWS);
+    assumeTrue(OS.WINDOWS.isCurrentOs());
 
     Map<String, Object> properties = ImmutableMap.of(
       "sonar.projectBaseDir", "C:\\project\\build",
