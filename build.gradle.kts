@@ -63,6 +63,10 @@ tasks.withType<JavaCompile> {
 }
 
 tasks.withType<Test> {
+    // TestKit exercises older Gradle versions that cannot run on the build's Java 25 runtime.
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    })
     useJUnitPlatform()
     // On CI, public repositories are only used through Repox (Maven Central rate-limits CI runners). TestKit builds
     // have their own Gradle user home, so they do not see the Repox init script installed by config-gradle: copy it
@@ -80,6 +84,14 @@ tasks.withType<Test> {
             }
         }
     }
+}
+
+tasks.compileTestGroovy {
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    })
+    sourceCompatibility = "21"
+    targetCompatibility = "21"
 }
 
 tasks.withType<Javadoc> {
