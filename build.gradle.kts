@@ -20,7 +20,7 @@ plugins {
     id("com.jfrog.artifactory") version "6.0.5"
     id("com.github.hierynomus.license") version "0.16.1"
     id("pl.droidsonroids.jacoco.testkit") version "1.0.12"
-    id("org.cyclonedx.bom") version "1.10.0"
+    id("org.cyclonedx.bom") version "3.6.0"
     signing
 }
 
@@ -150,9 +150,11 @@ apply(from = "sonarqube-build.gradle.kts")
 tasks.getByName("sonar").dependsOn(tasks.jacocoTestReport)
 
 val bomFile = layout.buildDirectory.file("reports/bom.json")
+tasks.cyclonedxDirectBom {
+    includeConfigs.set(listOf("runtimeClasspath"))
+}
 tasks.cyclonedxBom {
-    setIncludeConfigs(listOf("runtimeClasspath"))
-    outputs.file(bomFile)
+    jsonOutput.set(bomFile)
     outputs.upToDateWhen { false }
 }
 
