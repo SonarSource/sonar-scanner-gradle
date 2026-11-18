@@ -150,9 +150,11 @@ apply(from = "sonarqube-build.gradle.kts")
 tasks.getByName("sonar").dependsOn(tasks.jacocoTestReport)
 
 val bomFile = layout.buildDirectory.file("reports/bom.json")
+tasks.cyclonedxDirectBom {
+    includeConfigs.set(listOf("runtimeClasspath"))
+}
 tasks.cyclonedxBom {
-    setIncludeConfigs(listOf("runtimeClasspath"))
-    outputs.file(bomFile)
+    jsonOutput.set(bomFile)
     outputs.upToDateWhen { false }
 }
 
