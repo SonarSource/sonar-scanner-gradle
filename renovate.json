@@ -3,6 +3,9 @@
   "extends": [
     "github>SonarSource/renovate-config"
   ],
+  "minimumReleaseAge": "5 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "prCreation": "immediate",
   "enabledManagers": [
     "github-actions",
     "gradle",
