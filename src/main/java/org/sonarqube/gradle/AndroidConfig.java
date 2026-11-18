@@ -173,7 +173,7 @@ public class AndroidConfig {
   public FileCollection getAndroidTests() {
     List<Component> testComponents = getTestComponents();
     if (testComponents.isEmpty()) {
-      var sourceSet = project.getExtensions().getByType(CommonExtension.class).getSourceSets().findByName("test");
+      Object sourceSet = project.getExtensions().getByType(CommonExtension.class).getSourceSets().findByName("test");
       if (sourceSet == null) {
         return project.files();
       }

@@ -398,15 +398,27 @@ class LegacyAndroidConfig {
   private static List<File> getFilesFromSourceSet(SourceProvider sourceSet) {
     List<File> srcDirs = new ArrayList<>();
     srcDirs.add(sourceSet.getManifestFile());
-    srcDirs.addAll(sourceSet.getCDirectories());
+    srcDirs.addAll(getNativeSourceDirectories(sourceSet, "getCDirectories"));
     srcDirs.addAll(sourceSet.getAidlDirectories());
     srcDirs.addAll(sourceSet.getAssetsDirectories());
-    srcDirs.addAll(sourceSet.getCppDirectories());
+    srcDirs.addAll(getNativeSourceDirectories(sourceSet, "getCppDirectories"));
     srcDirs.addAll(sourceSet.getJavaDirectories());
     srcDirs.addAll(sourceSet.getRenderscriptDirectories());
     srcDirs.addAll(sourceSet.getResDirectories());
     srcDirs.addAll(sourceSet.getResourcesDirectories());
     return srcDirs;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Collection<File> getNativeSourceDirectories(SourceProvider sourceSet, String methodName) {
+    try {
+      // These legacy methods were removed from the model API in AGP 9.
+      return (Collection<File>) SourceProvider.class.getMethod(methodName).invoke(sourceSet);
+    } catch (NoSuchMethodException e) {
+      return Collections.emptyList();
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new IllegalStateException("Unable to read Android native source directories", e);
+    }
   }
 
   static class AndroidVariantAndExtension {
