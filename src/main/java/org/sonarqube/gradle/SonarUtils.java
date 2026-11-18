@@ -42,7 +42,6 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.plugins.DslObject;
-import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.JavaPluginExtension;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.util.GradleVersion;
@@ -154,13 +153,9 @@ public class SonarUtils {
   }
 
   @Nullable
-  @SuppressWarnings("java:S1874")
   private static SourceSetContainer getSourceSetsGradleLegacy(Project project) {
-    JavaPluginConvention javaPluginConvention = new DslObject(project).getConvention().findPlugin(JavaPluginConvention.class);
-    if (javaPluginConvention == null) {
-      return null;
-    }
-    return javaPluginConvention.getSourceSets();
+    // Legacy Java conventions expose sourceSets as a project property. Avoid linking to convention APIs removed in Gradle 9.
+    return (SourceSetContainer) project.findProperty("sourceSets");
   }
 
   static boolean isCompatibleWithJavaPluginExtension(GradleVersion version) {
