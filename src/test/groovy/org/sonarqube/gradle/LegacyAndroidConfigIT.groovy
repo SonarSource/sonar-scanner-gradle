@@ -48,30 +48,14 @@ class LegacyAndroidConfigIT extends Specification {
         manifestFile = manifestDir.resolve('AndroidManifest.xml')
     }
 
-    /**
-     * Gets the combined classpath including both the plugin under test and Android Gradle Plugin.
-     * This is needed because Android classes must be visible to the SonarQube plugin during the test.
-     */
     private List<File> getPluginClasspathWithAndroid() {
-        def pluginClasspath = getClass().classLoader.getResource("plugin-under-test-metadata.properties")
-            .withInputStream { stream ->
-                def props = new Properties()
-                props.load(stream)
-                props.getProperty("implementation-classpath")
-                    .split(File.pathSeparator)
-                    .collect { new File(it) }
-            }
-
-        // Add ALL jars from the test classpath to ensure Android plugin has all its dependencies
-        def testClasspath = System.getProperty("java.class.path")
-            .split(File.pathSeparator)
-            .collect { new File(it) }
-            .findAll { file ->
-                // Only include jar files and class directories (exclude gradle wrapper, etc.)
-                file.name.endsWith(".jar") || file.isDirectory()
-            }
-
-        return (pluginClasspath + testClasspath).unique()
+        def metadata = new Properties()
+        getClass().classLoader.getResource("plugin-under-test-metadata.properties").withInputStream {
+            metadata.load(it)
+        }
+        // Keep this legacy fixture on its declared AGP version, independently of the unit-test classpath.
+        return (metadata.getProperty("implementation-classpath") + File.pathSeparator +
+            System.getProperty("legacyAndroidClasspath")).split(File.pathSeparator).collect { new File(it) }.unique()
     }
 
     @Requires({ System.getenv("JAVA_HOME") != null && System.getenv("ANDROID_HOME") != null })
