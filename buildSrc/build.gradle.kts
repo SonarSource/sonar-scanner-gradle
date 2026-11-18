@@ -28,5 +28,5 @@ dependencies {
     implementation("org.apache.maven:maven-model:3.10.1")
     implementation("org.codehaus.plexus:plexus-utils:4.1.0")
     // XML classes were extracted from plexus-utils 4; the publishing task still uses Maven 3's model reader.
-    implementation("org.codehaus.plexus:plexus-xml:3.1.1")
+    implementation("org.codehaus.plexus:plexus-xml:3.1.0")
 }
