@@ -1,5 +1,5 @@
 [tools]
-java = ["21", "17", "11"]
+java = ["25.0.5+8.0.LTS", "21", "17", "11"]
 maven = "3.9"
 gradle = "9"
 android-sdk = { version = "20.0", os = ["linux"] }
