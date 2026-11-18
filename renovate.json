@@ -3,6 +3,9 @@
   "extends": [
     "github>SonarSource/renovate-config"
   ],
+  "minimumReleaseAge": "5 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "prCreation": "immediate",
   "enabledManagers": [
     "github-actions",
     "gradle",
@@ -15,6 +18,12 @@
     "src/test/projects/**"
   ],
   "packageRules": [
+    {
+      "description": "Review major dependency upgrades in separate PRs.",
+      "matchUpdateTypes": ["major"],
+      "groupName": null,
+      "groupSlug": null
+    },
     {
       "description": "Use stable Kotlin Gradle plugin releases; exclude IntelliJ-specific and prerelease builds.",
       "matchPackageNames": ["org.jetbrains.kotlin:kotlin-gradle-plugin"],
