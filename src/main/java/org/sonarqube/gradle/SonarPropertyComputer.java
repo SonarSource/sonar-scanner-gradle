@@ -256,7 +256,9 @@ public class SonarPropertyComputer {
       .map(Paths::get)
       .collect(Collectors.toSet());
 
-    Set<Path> skippedDirs = skippedProjects(project)
+    Set<Path> skippedDirs = project.getAllprojects()
+      .stream()
+      .filter(p -> SonarUtils.isSkipped(p, project))
       .map(Project::getProjectDir)
       .map(File::toPath)
       .collect(Collectors.toSet());
@@ -578,11 +580,9 @@ public class SonarPropertyComputer {
   }
 
   private static void addKotlinBuildScriptsToSources(Project project, Map<String, Object> properties) {
-    Set<Project> skippedProjects = skippedProjects(project).collect(Collectors.toSet());
-
     List<File> buildScripts = project.getAllprojects()
       .stream()
-      .filter(Predicate.not(skippedProjects::contains))
+      .filter(p -> SonarUtils.notSkipped(p, project))
       .map(Project::getBuildFile)
       .filter(file -> file.getAbsolutePath().endsWith("kts"))
       .collect(Collectors.toList());
@@ -658,30 +658,5 @@ public class SonarPropertyComputer {
   private static File getDestinationOldApi(Report report) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Method getDestinationGradle5 = report.getClass().getMethod("getDestination");
     return (File) getDestinationGradle5.invoke(report);
-  }
-
-  /**
-   * Returns the stream of projects that are marked as skipped or have an ancestor marked as skipped
-   */
-  private static Stream<Project> skippedProjects(Project project) {
-    Set<Project> projectsMarkedAsSkipped = project.getAllprojects()
-      .stream()
-      .filter(SonarUtils::isSkipped)
-      .collect(Collectors.toSet());
-
-    return project.getAllprojects().stream().filter(p -> hasSkippedAncestor(p, projectsMarkedAsSkipped));
-  }
-
-  /**
-   * Traverse the project hierarchy to find if the project or any of its ancestors are skipped
-   */
-  private static boolean hasSkippedAncestor(Project project, Set<Project> skippedProjects) {
-    while (project != null) {
-      if (skippedProjects.contains(project)) {
-        return true;
-      }
-      project = project.getParent();
-    }
-    return false;
   }
 }

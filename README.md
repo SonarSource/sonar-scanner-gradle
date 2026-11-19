@@ -145,6 +145,8 @@ By default, Integration Tests are skipped during the build. To run them, you nee
     ```
     # unset environment variables that could interfere with the test execution
     unset SONAR_SCANNER_OPTS
+    # activate the "qa" Maven profile, which adds the plugin SNAPSHOT (and the scanner library it brings) to the test classpath
+    export SONARSOURCE_QA=true
 
     # mvn --errors clean verify -Dgradle.version="<gradle-version>" -DandroidGradle.version="<android-gradle-version>" -Dsonar.runtimeVersion="sonar-runtime-version"
     # for example:

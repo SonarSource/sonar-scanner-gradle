@@ -91,8 +91,30 @@ public class SonarUtils {
     return getSonarExtensions(p).stream().anyMatch(SonarExtension::isSkipProject);
   }
 
+  /**
+   * Returns whether a project or an ancestor up to and including the analysis root is skipped.
+   * <p>
+   * The walk must stop at the analysis root: ancestors above it do not have the Sonar extensions when the plugin is
+   * applied to a subproject, and they are not part of the analysis anyway.
+   */
+  static boolean isSkipped(Project project, Project analysisRoot) {
+    for (Project current = project; current != null; current = current.getParent()) {
+      if (isSkipped(current)) {
+        return true;
+      }
+      if (current == analysisRoot) {
+        break;
+      }
+    }
+    return false;
+  }
+
   static boolean notSkipped(Project p) {
     return !isSkipped(p);
+  }
+
+  static boolean notSkipped(Project project, Project analysisRoot) {
+    return !isSkipped(project, analysisRoot);
   }
 
   static List<SonarExtension> getSonarExtensions(Project p) {

@@ -185,6 +185,80 @@ class SonarQubePluginTest extends Specification {
     dependsOnTasks(skippedChildResolverTask).isEmpty()
   }
 
+  def "#taskName only depends on resolvers of projects included through #extensionName"() {
+    given:
+    def sonarTask = parentProject.tasks.getByName(taskName)
+
+    when:
+    childProject.extensions.getByName(extensionName).skipProject = true
+
+    then:
+    sonarTask.taskDependencies.getDependencies(sonarTask)*.path as Set == [
+      ":parent:sonarResolver",
+      ":parent:child2:sonarResolver",
+    ] as Set
+    childProject.tasks.sonarResolver.skipProject.get()
+    leafProject.tasks.sonarResolver.skipProject.get()
+    !childProject2.tasks.sonarResolver.skipProject.get()
+    // The leaf inherits the skip from its parent: the resolver computes it, it is not written back to the leaf's extension
+    !leafProject.sonar.skipProject
+
+    where:
+    taskName    | extensionName
+    "sonar"     | "sonar"
+    "sonar"     | "sonarqube"
+    "sonarqube" | "sonar"
+    "sonarqube" | "sonarqube"
+  }
+
+  def "sonar only excludes the resolver of a skipped leaf project"() {
+    given:
+    def sonarTask = parentSonarTask()
+
+    when:
+    leafProject.sonar.skipProject = true
+
+    then:
+    sonarTask.taskDependencies.getDependencies(sonarTask)*.path as Set == [
+      ":parent:sonarResolver",
+      ":parent:child:sonarResolver",
+      ":parent:child2:sonarResolver",
+    ] as Set
+    leafProject.tasks.sonarResolver.skipProject.get()
+    !childProject.tasks.sonarResolver.skipProject.get()
+  }
+
+  def "sonar does not run after compile and test tasks of projects inheriting a skip"() {
+    when:
+    parentProject.allprojects { pluginManager.apply(JavaPlugin) }
+    childProject.sonar.skipProject = true
+
+    then:
+    def mustRunAfter = mustRunAfterTasks(parentSonarTask())
+    mustRunAfter.containsAll([
+      "parent:compileJava",
+      "parent:test",
+      "child2:compileJava",
+      "child2:test",
+    ])
+    mustRunAfter.findAll { it.startsWith("child:") || it.startsWith("leaf:") }.isEmpty()
+  }
+
+  def "#taskName excludes every resolver when the analysis root is skipped"() {
+    given:
+    def sonarTask = parentProject.tasks.getByName(taskName)
+
+    when:
+    parentProject.sonar.skipProject = true
+
+    then:
+    sonarTask.taskDependencies.getDependencies(sonarTask).isEmpty()
+    parentProject.allprojects.every { it.tasks.sonarResolver.skipProject.get() }
+
+    where:
+    taskName << ["sonar", "sonarqube"]
+  }
+
   def "sonar resolver retains the complete source set classpaths"() {
     when:
     def project = ProjectBuilder.builder().withName("root").withProjectDir(new File("src/test/projects/java-project")).build()
