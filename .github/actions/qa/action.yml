@@ -20,9 +20,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+    - uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
       with:
-        version: 2026.11.7
+        version: 2026.11.8
     - name: Expose mise JDKs to Gradle
       if: runner.os == 'Linux'
       shell: bash
