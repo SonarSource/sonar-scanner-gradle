@@ -95,7 +95,7 @@ gradlePlugin {
             group = project.group as String
             displayName = projectTitle
             description = project.description
-            implementationClass = "org.sonarqube.gradle.SonarQubePlugin"
+            implementationClass = "org.sonarqube.gradle.SonarEntryPointPlugin"
             tags.set(listOf("sonarqube", "sonar", "quality", "qa"))
             website.set(docUrl)
             vcsUrl.set(githubUrl)

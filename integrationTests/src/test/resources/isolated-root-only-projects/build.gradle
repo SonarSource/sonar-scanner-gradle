@@ -1,0 +1,10 @@
+// Configuration documented before Isolated Projects support: the plugin is only applied in the root build script.
+plugins {
+  id 'org.sonarqube' version '${version}'
+}
+
+sonar {
+  properties {
+    property 'sonar.projectKey', 'isolated-root-only'
+  }
+}

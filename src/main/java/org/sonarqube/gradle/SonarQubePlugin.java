@@ -31,12 +31,12 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.StartParameterInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -56,6 +56,10 @@ import static org.sonarqube.gradle.SonarUtils.isAndroidProject;
 /**
  * A plugin for analyzing projects with the <a href="http://redirect.sonarsource.com/doc/analyzing-with-sq-gradle.html">SonarScanner for Gradle</a>.
  * When applied to a project, both the project itself and its subprojects will be analyzed (in a single run).
+ * <p>
+ * Under Gradle Isolated Projects, a project can no longer configure its subprojects: the plugin must be applied to
+ * every project, which {@link SonarSettingsPlugin} does from the settings script. Each project then publishes its own
+ * data and only the root project runs the analysis.
  */
 public class SonarQubePlugin implements Plugin<Project> {
   private static final Logger LOGGER = Logging.getLogger(SonarQubePlugin.class);
@@ -110,7 +114,7 @@ public class SonarQubePlugin implements Plugin<Project> {
       resolverTask.getSkipProject().convention(project.provider(() -> SonarUtils.isSkipped(project)));
       resolverTask.getProjectName().convention(SonarUtils.constructPrefixedProjectName(project.getPath()));
       resolverTask.getTopLevelProject().convention(false);
-      if (project == topLevelProject && (!isIsolatedProjects(project) || project.getPath().equals(":"))) {
+      if (project == topLevelProject && (!IsolatedProjects.isEnabled(project.getGradle()) || project.getPath().equals(":"))) {
         resolverTask.getTopLevelProject().set(true);
       }
       resolverTask.setCompileClasspath(project.provider(() -> querySourceSet(project, SourceSet.MAIN_SOURCE_SET_NAME)));
@@ -149,12 +153,29 @@ public class SonarQubePlugin implements Plugin<Project> {
         resolverTaskProvider.configure(resolverTask -> {
           resolverTask.setLegacyMainLibraries(project.provider(() -> LegacyAndroidConfig.findMainLibraries(project)));
           resolverTask.setLegacyTestLibraries(project.provider(() -> LegacyAndroidConfig.findTestLibraries(project)));
-          resolverTask.mustRunAfter(isIsolatedProjects(project) ? getAndroidTasksForProject(project) : getAndroidTasks(project));
+          resolverTask.mustRunAfter(IsolatedProjects.isEnabled(project.getGradle()) ? getAndroidTasksForProject(project) : getAndroidTasks(project));
         });
       }
     } catch (NoClassDefFoundError ignored) {
-      // The Android plugin is not available in the project, so we do not configure Android.
+      // The Android Gradle plugin is not visible from the class loader of this plugin.
+      reportAndroidPluginNotVisible(project);
     }
+  }
+
+  /**
+   * The Android Gradle plugin classes are invisible either because the project does not use Android, or because the
+   * Android Gradle plugin is declared in a build script while this plugin is declared in the settings script, which
+   * loads it in a parent class loader. In the second case, analyzing the project without its Android configuration
+   * would silently produce a wrong analysis.
+   */
+  private static void reportAndroidPluginNotVisible(Project project) {
+    SonarUtils.ANDROID_PLUGIN_IDS.forEach(pluginId -> project.getPluginManager().withPlugin(pluginId, applied -> {
+      String message = IsolatedProjectsMigrationGuide.androidPluginNotVisibleMessage(project.getPath(), pluginId, PluginVersion.get());
+      if (IsolatedProjects.isEnabled(project.getGradle())) {
+        throw new InvalidUserDataException(message);
+      }
+      LOGGER.warn(message);
+    }));
   }
 
   private static FileCollection querySourceSet(Project project, String sourceSetName) {
@@ -286,14 +307,6 @@ public class SonarQubePlugin implements Plugin<Project> {
     return allTasks;
   }
 
-  /** Gradle 9.7 exposes this option through StartParameterInternal, but not through the public StartParameter API. */
-  private static boolean isIsolatedProjects(Project project) {
-    if (!isGradleVersionGreaterOrEqualTo("9.7")) {
-      return false;
-    }
-    return Boolean.TRUE.equals(((StartParameterInternal) project.getGradle().getStartParameter()).getIsolatedProjects().get());
-  }
-
   private static Configuration createOutgoing(Project project, String name) {
     Configuration configuration = project.getConfigurations().create(name);
     configuration.setCanBeConsumed(true);
@@ -301,23 +314,39 @@ public class SonarQubePlugin implements Plugin<Project> {
     return configuration;
   }
 
-  private static Configuration createIncoming(Project project, String name, String elements, Set<String> childPaths) {
+  /**
+   * Lenient, so that a subproject without the plugin does not fail dependency resolution with a generic Gradle error.
+   * {@link SonarTask} reports the missing projects itself, with migration instructions.
+   */
+  private static FileCollection createLenientIncoming(Project project, String name, String elements, Collection<String> childPaths) {
     Configuration configuration = project.getConfigurations().create(name);
     configuration.setCanBeConsumed(false);
     configuration.setCanBeResolved(true);
     for (String path : childPaths) {
       project.getDependencies().add(name, project.getDependencies().project(Map.of("path", path, "configuration", elements)));
     }
-    return configuration;
+    return configuration.getIncoming().artifactView(view -> view.setLenient(true)).getFiles();
   }
 
+  /**
+   * Under Isolated Projects every project applies the plugin to itself (see {@link SonarSettingsPlugin}) and publishes its
+   * own Sonar data. Only the root project aggregates that data and owns the analysis task, so that running
+   * {@code ./gradlew sonar} starts a single analysis.
+   */
   private static void configureIsolatedProjects(Project project) {
+    IsolatedProducer producer = registerIsolatedProducer(project);
+    if (project.getPath().equals(":")) {
+      registerIsolatedAnalysisTasks(project, producer);
+      IsolatedProjectsMigrationHint.register(project);
+    }
+  }
+
+  private static IsolatedProducer registerIsolatedProducer(Project project) {
     Map<String, ActionBroadcast<SonarProperties>> broadcasters = new HashMap<>();
     Map<String, AndroidConfig> androidConfigs = new HashMap<>();
     registerSonarExtensions(project, broadcasters);
 
-    Set<File> resolverFiles = new HashSet<>();
-    TaskProvider<SonarResolverTask> resolver = registerResolverTask(project, project, resolverFiles);
+    TaskProvider<SonarResolverTask> resolver = registerResolverTask(project, project, new HashSet<>());
     configureAndroid(project, androidConfigs, resolver);
     resolver.configure(task -> {
       task.mustRunAfter(getJavaTestTasksForProject(project));
@@ -328,68 +357,93 @@ public class SonarQubePlugin implements Plugin<Project> {
       task.mustRunAfter(project.getTasks().withType(Jar.class));
     });
 
+    TaskProvider<SonarMetadataTask> metadata = registerMetadataTask(project, broadcasters, androidConfigs);
+    createOutgoing(project, METADATA_ELEMENTS).getOutgoing()
+      .artifact(metadata.flatMap(SonarMetadataTask::getMetadataFile), artifact -> artifact.builtBy(metadata));
+    createOutgoing(project, RESOLVER_ELEMENTS).getOutgoing()
+      .artifact(project.provider(() -> resolver.get().getOutputFile()), artifact -> artifact.builtBy(resolver));
+
+    Provider<Map<String, String>> sensitiveProperties = project.provider(() ->
+      new SonarPropertyComputer(broadcasters, androidConfigs, project).computeLocalSensitiveProperties());
+    return new IsolatedProducer(resolver, metadata, sensitiveProperties);
+  }
+
+  private static TaskProvider<SonarMetadataTask> registerMetadataTask(Project project, Map<String, ActionBroadcast<SonarProperties>> broadcasters,
+    Map<String, AndroidConfig> androidConfigs) {
     Provider<ComputedProperties> moduleProperties = project.provider(() ->
       new SonarPropertyComputer(broadcasters, androidConfigs, project).computeLocalSonarProperties(false));
     Provider<ComputedProperties> rootProperties = project.provider(() ->
       new SonarPropertyComputer(broadcasters, androidConfigs, project).computeLocalSonarProperties(true));
-    Provider<Map<String, String>> sensitiveProperties = project.provider(() ->
-      new SonarPropertyComputer(broadcasters, androidConfigs, project).computeLocalSensitiveProperties());
-    TaskProvider<SonarMetadataTask> metadata = project.getTasks().register(SonarMetadataTask.TASK_NAME, SonarMetadataTask.class, task -> {
+    return project.getTasks().register(SonarMetadataTask.TASK_NAME, SonarMetadataTask.class, task -> {
       task.getProjectPath().set(project.getPath());
       task.getProjectDirectory().set(project.getProjectDir().getAbsolutePath());
       task.getBuildFile().set(project.getBuildFile().getAbsolutePath());
       task.getSkipped().set(project.provider(() -> SonarUtils.isSkipped(project)));
-      task.getProperties().set(moduleProperties.map(computed -> computed.properties.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()))));
+      task.getProperties().set(moduleProperties.map(SonarQubePlugin::stringProperties));
       task.getUserDefinedKeys().set(moduleProperties.map(computed -> new ArrayList<>(computed.userDefinedKeys)));
-      task.getRootProperties().set(rootProperties.map(computed -> computed.properties.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()))));
+      task.getRootProperties().set(rootProperties.map(SonarQubePlugin::stringProperties));
       task.getRootUserDefinedKeys().set(rootProperties.map(computed -> new ArrayList<>(computed.userDefinedKeys)));
       task.getScanAllSourcesOverridden().set(project.provider(() ->
         new SonarPropertyComputer(broadcasters, androidConfigs, project).hasExplicitSourceOverride()));
-      task.getDefaultProjectKey().set(project.provider(() -> {
-        if (!project.getPath().equals(":")) {
-          return "";
-        }
-        String group = project.getGroup().toString();
-        return group.isEmpty() ? project.getName() : (group + ":" + project.getName());
-      }));
+      task.getDefaultProjectKey().set(project.provider(() -> defaultProjectKey(project)));
       task.getMetadataFile().set(project.getLayout().getBuildDirectory().file("sonar-metadata/properties.json"));
     });
+  }
 
-    createOutgoing(project, METADATA_ELEMENTS).getOutgoing().artifact(metadata.flatMap(SonarMetadataTask::getMetadataFile), artifact -> artifact.builtBy(metadata));
-    createOutgoing(project, RESOLVER_ELEMENTS).getOutgoing().artifact(project.provider(() -> resolver.get().getOutputFile()), artifact -> artifact.builtBy(resolver));
+  private static Map<String, String> stringProperties(ComputedProperties computed) {
+    return computed.properties.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()));
+  }
 
-    // Reading only project paths is safe in Gradle's isolated mode. Each child must apply this plugin locally.
-    Set<String> childPaths = project.getAllprojects().stream().map(Project::getPath)
-      .filter(path -> !path.equals(project.getPath())).collect(Collectors.toSet());
-    Set<String> metadataPaths = new HashSet<>(childPaths);
+  private static String defaultProjectKey(Project project) {
     if (!project.getPath().equals(":")) {
-      metadataPaths.add(":");
+      return "";
     }
-    Configuration metadataInputs = createIncoming(project, METADATA_INPUTS, METADATA_ELEMENTS, metadataPaths);
-    Configuration resolverInputs = createIncoming(project, RESOLVER_INPUTS, RESOLVER_ELEMENTS, childPaths);
+    String group = project.getGroup().toString();
+    return group.isEmpty() ? project.getName() : (group + ":" + project.getName());
+  }
 
-    TaskContainer tasks = project.getTasks();
+  private static void registerIsolatedAnalysisTasks(Project root, IsolatedProducer producer) {
+    // Reading only project paths is safe in Gradle's isolated mode.
+    List<String> childPaths = root.getAllprojects().stream().map(Project::getPath)
+      .filter(path -> !path.equals(root.getPath())).sorted().collect(Collectors.toList());
+    FileCollection metadataInputs = createLenientIncoming(root, METADATA_INPUTS, METADATA_ELEMENTS, childPaths);
+    FileCollection resolverInputs = createLenientIncoming(root, RESOLVER_INPUTS, RESOLVER_ELEMENTS, childPaths);
+
+    TaskContainer tasks = root.getTasks();
     for (String taskName : List.of(SonarExtension.SONAR_TASK_NAME, SonarExtension.SONAR_DEPRECATED_TASK_NAME)) {
       tasks.register(taskName, SonarTask.class, task -> {
-        task.setDescription(ANALYSIS_DESCRIPTION_PREFIX + project + " and its subprojects with Sonar."
+        task.setDescription(ANALYSIS_DESCRIPTION_PREFIX + root + " and its subprojects with Sonar."
           + (taskName.equals(SonarExtension.SONAR_DEPRECATED_TASK_NAME) ? " This task is deprecated. Use 'sonar' instead." : ""));
         task.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
-        task.setBuildSonar(project.getLayout().getBuildDirectory().dir(SONAR_BUILD_DIRECTORY));
-        task.setProperties(project.provider(Collections::emptyMap), project.provider(Collections::emptySet));
+        task.setBuildSonar(root.getLayout().getBuildDirectory().dir(SONAR_BUILD_DIRECTORY));
+        task.setProperties(root.provider(Collections::emptyMap), root.provider(Collections::emptySet));
         task.setResolverFiles(Collections.emptySet());
-        task.setIsolatedAnalysisRootPath(project.getPath());
-        task.setIsolatedSensitiveProperties(sensitiveProperties);
-        task.getIsolatedMetadataFiles().from(metadata, metadataInputs);
-        task.getIsolatedResolverFiles().from(resolver, resolverInputs);
+        task.setIsolatedAnalysisRootPath(root.getPath());
+        task.setIsolatedSensitiveProperties(producer.sensitiveProperties);
+        task.getIsolatedExpectedProjectPaths().set(childPaths);
+        task.getIsolatedMetadataFiles().from(producer.metadata, metadataInputs);
+        task.getIsolatedResolverFiles().from(producer.resolver, resolverInputs);
       });
+    }
+  }
+
+  /** The tasks and values a project publishes for the isolated analysis. */
+  private static final class IsolatedProducer {
+    private final TaskProvider<SonarResolverTask> resolver;
+    private final TaskProvider<SonarMetadataTask> metadata;
+    private final Provider<Map<String, String>> sensitiveProperties;
+
+    private IsolatedProducer(TaskProvider<SonarResolverTask> resolver, TaskProvider<SonarMetadataTask> metadata,
+      Provider<Map<String, String>> sensitiveProperties) {
+      this.resolver = resolver;
+      this.metadata = metadata;
+      this.sensitiveProperties = sensitiveProperties;
     }
   }
 
   @Override
   public void apply(Project project) {
-    if (isIsolatedProjects(project)) {
+    if (IsolatedProjects.isEnabled(project.getGradle())) {
       configureIsolatedProjects(project);
       return;
     }

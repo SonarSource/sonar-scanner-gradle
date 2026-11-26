@@ -127,6 +127,42 @@ project(":project2") {
 }
 ```
 
+## Analyzing builds that use Gradle Isolated Projects
+
+Gradle 9.7 and newer can run with [Isolated Projects](https://docs.gradle.org/current/userguide/isolated_projects.html)
+(`org.gradle.isolated-projects=true` or `--isolated-projects`). In this mode, the root project is not allowed to configure its
+subprojects, so applying the plugin in the root build script only is not enough. Apply the plugin in the settings script instead:
+
+```
+// settings.gradle.kts
+plugins {
+    id("org.sonarqube") version "versionNumber"
+}
+```
+
+```
+// settings.gradle
+plugins {
+    id "org.sonarqube" version "versionNumber"
+}
+```
+
+The `sonar` blocks of your build scripts do not change, and you still run `./gradlew sonar`: only the root project owns the
+analysis task. The same configuration also works without Isolated Projects, so you can migrate before enabling it.
+Applying `org.sonarqube` in a convention plugin that every project applies is equivalent.
+
+What else changes under Isolated Projects:
+
+* Configuration of a subproject written in the root build script (`subprojects { sonar { ... } }`, `allprojects { ... }` or
+  `project(":project1") { sonar { ... } }`) is rejected by Gradle. Move it to the `sonar` block of that subproject's build script,
+  or to a convention plugin.
+* For Android modules, declare the Android Gradle plugin in the settings script too, without applying it:
+  `id("com.android.application") version "agpVersion" apply false`.
+* Analyzing only a subproject hierarchy, with `./gradlew :project1:sonar`, is not available.
+
+If the plugin is still applied in the root build script only, the build fails and prints these instructions, instead of
+analyzing part of the build.
+
 ## [Task dependencies](https://docs.sonarsource.com/sonarqube/latest/analyzing-source-code/scanners/sonarscanner-for-gradle/#task-dependencies "Task dependencies")
 
 All tasks that produce output that should be included in the SonarScanner analysis need to be executed before the `sonar` task runs.

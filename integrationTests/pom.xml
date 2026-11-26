@@ -33,6 +33,7 @@
           <include>**/gradle/wrapper/gradle-wrapper.properties</include>
           <include>**/build.gradle</include>
           <include>**/build.gradle.kts</include>
+          <include>isolated-*/settings.gradle</include>
           <include>gradleversion.txt</include>
           <include>androidgradleversion.txt</include>
         </includes>
@@ -44,6 +45,7 @@
           <exclude>**/gradle/wrapper/gradle-wrapper.properties</exclude>
           <exclude>**/build.gradle</exclude>
           <exclude>**/build.gradle.kts</exclude>
+          <exclude>isolated-*/settings.gradle</exclude>
           <exclude>gradleversion.txt</exclude>
           <exclude>androidgradleversion.txt</exclude>
         </excludes>

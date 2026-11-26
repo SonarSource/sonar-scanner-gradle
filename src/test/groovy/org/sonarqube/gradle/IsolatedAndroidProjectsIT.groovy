@@ -39,16 +39,19 @@ class IsolatedAndroidProjectsIT extends Specification {
 
   def setup() {
     TestKitGradleProperties.configure(projectDir)
-    write('settings.gradle', "rootProject.name = 'isolated-android'\ninclude 'app', 'library'\n")
-    write('build.gradle', """
-      ${androidAndSonarClasspath()}
+    // Both plugins are declared in the settings script, so they share its class loader. A real build declares
+    // them in the settings plugins block: id 'com.android.application' version '...' apply false; id 'org.sonarqube'.
+    write('settings.gradle', """
+      ${settingsClasspath(true)}
       apply plugin: 'org.sonarqube'
+      rootProject.name = 'isolated-android'
+      include 'app', 'library'
+    """)
+    write('build.gradle', """
       sonar { properties { property 'sonar.projectKey', 'isolated-android' } }
     """)
     write('app/build.gradle', """
-      ${androidAndSonarClasspath()}
       apply plugin: 'com.android.application'
-      apply plugin: 'org.sonarqube'
       repositories { google(); mavenCentral() }
       android {
         namespace 'org.example.app'
@@ -58,9 +61,7 @@ class IsolatedAndroidProjectsIT extends Specification {
       dependencies { implementation project(':library') }
     """)
     write('library/build.gradle', """
-      ${androidAndSonarClasspath()}
       apply plugin: 'com.android.library'
-      apply plugin: 'org.sonarqube'
       repositories { google(); mavenCentral() }
       android {
         namespace 'org.example.library'
@@ -122,13 +123,38 @@ class IsolatedAndroidProjectsIT extends Specification {
     taskIndex(result, ':library:sonarResolver') < taskIndex(result, ':sonar')
   }
 
-  private String androidAndSonarClasspath() {
+  def 'Android Gradle plugin declared below the settings plugin fails under isolation with instructions'() {
+    given: 'org.sonarqube in the settings script, the Android Gradle plugin in the root build script'
+    write('settings.gradle', """
+      ${settingsClasspath(false)}
+      apply plugin: 'org.sonarqube'
+      rootProject.name = 'isolated-android'
+      include 'app', 'library'
+    """)
+    write('build.gradle', """
+      buildscript {
+        repositories { google(); mavenCentral() }
+        dependencies { classpath 'com.android.tools.build:gradle:9.2.1' }
+      }
+      sonar { properties { property 'sonar.projectKey', 'isolated-android' } }
+    """)
+
+    when:
+    def result = runner(':sonar', '--isolated-projects').buildAndFail()
+
+    then: 'the Android modules are not silently analyzed as plain projects'
+    // Projects are configured in parallel under isolation, so either module may report first.
+    result.output =~ /The Android Gradle plugin 'com\.android\.(application|library)' is applied to project ':(app|library)', but the 'org\.sonarqube' plugin/
+    result.output =~ /id\("com\.android\.(application|library)"\) version "<android-gradle-plugin-version>" apply false/
+  }
+
+  private static String settingsClasspath(boolean withAndroidGradlePlugin) {
     """
       buildscript {
         repositories { google(); mavenCentral() }
         dependencies {
           classpath files(System.getProperty('sonarPluginClasspath').split(File.pathSeparator))
-          classpath 'com.android.tools.build:gradle:9.2.1'
+          ${withAndroidGradlePlugin ? "classpath 'com.android.tools.build:gradle:9.2.1'" : ''}
         }
       }
     """

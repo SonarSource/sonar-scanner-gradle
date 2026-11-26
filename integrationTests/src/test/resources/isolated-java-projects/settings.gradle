@@ -13,5 +13,9 @@ pluginManagement {
   }
 }
 
+plugins {
+  id 'org.sonarqube' version '${version}'
+}
+
 rootProject.name = 'isolated-java-projects'
 include 'child'

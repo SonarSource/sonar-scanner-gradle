@@ -28,7 +28,10 @@ import org.sonarqube.gradle.support.AbstractGradleIT;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Gradle 9.7 contract tests for project isolation, run by the matching QA job. */
+/**
+ * Gradle 9.7 contract tests for project isolation, run by the matching QA job. The supported configuration applies
+ * {@code org.sonarqube} in the settings script only.
+ */
 public class IsolatedProjectsTest extends AbstractGradleIT {
   private static final String ISOLATION = "--isolated-projects";
 
@@ -55,12 +58,13 @@ public class IsolatedProjectsTest extends AbstractGradleIT {
 
     String dumpArg = "-Dsonar.scanner.internal.dumpToFile=" + temp.newFile().getAbsolutePath();
     RunResult first = runGradlewWithEnvQuietly("/isolated-java-projects", env, noExtraConfiguration(),
-      ":child:classes", ":sonar", ISOLATION, dumpArg);
+      ":child:classes", "sonar", ISOLATION, dumpArg);
     RunResult second = runGradlewWithEnvQuietly("/isolated-java-projects", env, noExtraConfiguration(),
-      ":child:classes", ":sonar", ISOLATION, dumpArg);
+      ":child:classes", "sonar", ISOLATION, dumpArg);
 
     assertThat(first.getExitValue()).as(first.getLog()).isZero();
-    assertThat(first.getLog()).contains("> Task :child:sonarResolver", "> Task :sonar");
+    assertThat(first.getLog()).contains("> Task :child:sonarResolver", "> Task :sonar")
+      .doesNotContain("> Task :child:sonar\n");
     assertThat(second.getExitValue()).isZero();
     assertThat(second.getLog()).contains("Reusing configuration cache");
 
@@ -71,6 +75,22 @@ public class IsolatedProjectsTest extends AbstractGradleIT {
       .containsEntry(":child.sonar.moduleKey", "isolated-java-root:child");
     assertThat(properties.getProperty(":child.sonar.sources").replace('\\', '/')).contains("src/main/java");
     assertThat(properties.getProperty(":child.sonar.java.binaries")).contains("classes");
+  }
+
+  @Test
+  public void rootOnlyApplicationExplainsHowToMigrateUnderIsolation() throws Exception {
+    ignoreThisTestIfGradleVersionIsLessThan("9.7.0");
+    Map<String, String> env = Map.of("GRADLE_USER_HOME", temp.newFolder("isolated-gradle-home").getAbsolutePath());
+
+    RunResult result = runGradlewWithEnvQuietly("/isolated-root-only-projects", env, noExtraConfiguration(),
+      "sonar", ISOLATION);
+
+    assertThat(result.getExitValue()).as(result.getLog()).isNotZero();
+    assertThat(result.getLog()).contains(
+      "Could not find method sonar()",
+      "A subproject build script uses the 'sonar { }' block, but the 'org.sonarqube' plugin is not applied to that subproject.",
+      "// settings.gradle",
+      "id 'org.sonarqube' version '");
   }
 
   private static RunConfigurationList noExtraConfiguration() {

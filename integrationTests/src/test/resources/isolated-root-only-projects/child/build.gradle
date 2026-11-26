@@ -1,0 +1,9 @@
+plugins {
+  id 'java'
+}
+
+sonar {
+  properties {
+    property 'sonar.projectName', 'Isolated child'
+  }
+}

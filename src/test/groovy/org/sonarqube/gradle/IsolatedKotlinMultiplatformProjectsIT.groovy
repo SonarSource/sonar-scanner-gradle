@@ -39,12 +39,15 @@ class IsolatedKotlinMultiplatformProjectsIT extends Specification {
     TestKitGradleProperties.configure(projectDir)
     write('settings.gradle', """
       pluginManagement { repositories { gradlePluginPortal(); mavenCentral() } }
+      // Same class loader layout as plugins { id 'org.sonarqube' version '...' } in a real settings script.
+      // TestKit's injected plugin classpath would load the Kotlin Gradle plugin build services twice.
+      buildscript { dependencies { classpath files(System.getProperty('sonarPluginClasspath').split(File.pathSeparator)) } }
+      apply plugin: 'org.sonarqube'
       rootProject.name = 'isolated-kmp'
       include 'consumer', 'producer'
     """)
     write('build.gradle', """
       plugins {
-        id 'org.sonarqube'
         id 'org.jetbrains.kotlin.multiplatform' version '2.4.20' apply false
       }
       sonar { properties { property 'sonar.projectKey', 'isolated-kmp' } }
@@ -52,13 +55,12 @@ class IsolatedKotlinMultiplatformProjectsIT extends Specification {
     write('producer/build.gradle', """
       plugins {
         id 'org.jetbrains.kotlin.multiplatform'
-        id 'org.sonarqube'
       }
       repositories { mavenCentral() }
       kotlin { jvm() }
     """)
     write('consumer/build.gradle', """
-      plugins { id 'java-library'; id 'org.sonarqube' }
+      plugins { id 'java-library' }
       repositories { mavenCentral() }
       dependencies { implementation project(':producer') }
     """)
@@ -124,8 +126,15 @@ class IsolatedKotlinMultiplatformProjectsIT extends Specification {
       .withGradleVersion('9.7.0')
       .withProjectDir(projectDir.toFile())
       .withEnvironment(System.getenv() + ['GRADLE_USER_HOME': projectDir.resolve('gradle-user-home').toString()])
-      .withArguments(arguments + ['--stacktrace'])
-      .withPluginClasspath()
+      .withArguments(arguments + ['-DsonarPluginClasspath=' + pluginClasspath(), '--stacktrace'])
+  }
+
+  private String pluginClasspath() {
+    getClass().classLoader.getResource('plugin-under-test-metadata.properties').withInputStream { stream ->
+      def properties = new Properties()
+      properties.load(stream)
+      properties.getProperty('implementation-classpath')
+    }
   }
 
   private static int taskIndex(BuildResult result, String path) {

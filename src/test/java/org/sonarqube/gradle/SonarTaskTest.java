@@ -369,6 +369,30 @@ class SonarTaskTest {
   }
 
   @Test
+  void checkEveryProjectProvidesMetadata_accepts_complete_metadata() {
+    List<SonarProjectMetadata> metadata = List.of(metadata(":"), metadata(":app"), metadata(":lib"));
+
+    SonarTask.checkEveryProjectProvidesMetadata(metadata, List.of(":app", ":lib"));
+
+    assertThat(metadata).hasSize(3);
+  }
+
+  @Test
+  void checkEveryProjectProvidesMetadata_names_projects_without_the_plugin() {
+    List<SonarProjectMetadata> metadata = List.of(metadata(":"), metadata(":app"));
+    List<String> expectedPaths = List.of(":app", ":lib", ":lib:core");
+
+    assertThatThrownBy(() -> SonarTask.checkEveryProjectProvidesMetadata(metadata, expectedPaths))
+      .isInstanceOf(org.gradle.api.InvalidUserDataException.class)
+      .hasMessageContaining("the 'org.sonarqube' plugin is not applied to 2 project(s) of the build: :lib, :lib:core.")
+      .hasMessageContaining("// settings.gradle.kts");
+  }
+
+  private static SonarProjectMetadata metadata(String path) {
+    return SonarProjectMetadata.builder(path, "/work" + path.replace(':', '/'), "/work/build.gradle").build();
+  }
+
+  @Test
   void processResolverFile_processes_when_file_exists_with_valid_data(@TempDir File tempDir) throws IOException {
     Map<String, String> result = new HashMap<>();
     File resolverFile = new File(tempDir, "resolver.json");

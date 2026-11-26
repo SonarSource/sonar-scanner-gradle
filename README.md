@@ -94,22 +94,41 @@ Maven Local is excluded from build dependency resolution so normal builds, CI, a
 consistent published metadata rather than POM-only metadata that may be present in a developer's local repository.
 
 ### How the plugin works
-In a conventional build, applying the plugin to a project adds a Sonar task to that project and a Sonar extension to that project and its subprojects. This keeps the existing root-only application pattern for builds without Gradle Isolated Projects.
+In a conventional build, applying the plugin to a project adds a Sonar task to that project and a Sonar extension to that project and its subprojects. This root-only application keeps working for builds without Gradle Isolated Projects.
 
-With Gradle 9.7 or newer and `--isolated-projects`, apply the plugin in the build script of **every project** that contributes to the analysis, including intermediate projects with children. Gradle does not permit a root project's plugin to register tasks or extensions in another project during isolated configuration. For example:
+The plugin id `org.sonarqube` can also be applied in the settings script. This is the only configuration change required to use Gradle 9.7 or newer with `--isolated-projects`: it applies the plugin to every project before its build script is evaluated, because under isolation the root project is no longer allowed to register tasks or extensions in its subprojects.
 
-```groovy
-// Root build.gradle and each subproject's build.gradle
+```kotlin
+// settings.gradle.kts
 plugins {
-  id 'org.sonarqube'
+    id("org.sonarqube") version "<version>"
 }
 ```
 
-The isolated path is validated on Gradle 9.7.0 multi-project Java and Android builds and a Kotlin Multiplatform JVM build. The Android fixture uses Android Gradle Plugin 9.2.1 and Android SDK 36; the Kotlin fixture uses Kotlin Gradle Plugin 2.4.20. Selected local custom classpath producers and Kotlin JVM Jar tasks run before analysis without being added as task dependencies.
+```kotlin
+// build.gradle.kts of any project, unchanged
+sonar {
+    properties {
+        property("sonar.projectKey", "my-project")
+    }
+}
+```
 
-Run the root analysis explicitly with `./gradlew :sonar --isolated-projects`. The leading `:` selects the root task; an unqualified `sonar` command can select the task in every project where the plugin is applied. Root-only application in an isolated multi-project build is unsupported and reports the missing project application instead of analyzing an incomplete module set. Builds without Isolated Projects retain the root-only behavior above.
+* Without Isolated Projects, the settings plugin behaves exactly like a root-only application. The same build therefore works with and without `--isolated-projects`.
+* Under Isolated Projects, each project publishes its own metadata and resolver output, and only the root project owns the `sonar` task, so `./gradlew sonar` starts a single analysis.
+* A convention plugin applied to every project (buildSrc or build-logic) that applies `org.sonarqube` is equivalent.
+* Android modules: the Android Gradle plugin must be visible to `org.sonarqube`, so declare it next to it in the settings script, for example `id("com.android.application") version "<agp-version>" apply false`.
 
-If Gradle reports that a child project has no `sonarResolverElements` or `sonarMetadataElements` variant, apply `org.sonarqube` in that child's build script (and in any intermediate project with children). This error means the root analysis cannot receive that project's data.
+Migration assistance under Isolated Projects, so that users who enable the flag without reading the documentation get an actionable message instead of a partial analysis or a generic Gradle error:
+
+| Situation | Result |
+| --- | --- |
+| Plugin applied in the root build script only, no `sonar { }` block in subprojects | The `sonar` task fails before any analysis, names the projects without the plugin and prints the settings configuration. |
+| Plugin applied in the root build script only, a subproject build script contains `sonar { }` | Gradle reports `Could not find method sonar()` (or `Unresolved reference` in Kotlin DSL); the plugin prints the same migration instructions at the end of the build. |
+| `subprojects { sonar { } }`, `allprojects { sonar { } }` or `project(":x") { sonar { } }` in the root build script | Gradle reports the cross-project access with its location; the plugin explains that the block must move to the subproject build script or a convention plugin. |
+| Android Gradle plugin declared in a build script while `org.sonarqube` is declared in settings | Configuration fails with instructions to declare the Android Gradle plugin in settings, instead of silently analyzing Android modules as plain projects. Without isolation this is a warning. |
+
+The isolated path is validated on Gradle 9.7.0 with multi-project Java builds, Android application and library modules (Android Gradle Plugin 9.2.1 and Android SDK 36) and a Kotlin Multiplatform JVM build (Kotlin Gradle Plugin 2.4.20). Selected local custom classpath producers and Kotlin JVM Jar tasks run before analysis without being added as task dependencies. Analyzing a subtree of the build (`:nested:sonar`) is not supported under isolation.
 
 **Sonar extension**
 The `sonar` extension enables an easy configuration of a project with the Domain Specific Language.

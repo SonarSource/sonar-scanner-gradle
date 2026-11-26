@@ -19,12 +19,8 @@
  */
 package org.sonarqube.gradle;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -42,12 +38,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
@@ -156,7 +154,7 @@ public abstract class SonarTask extends ConventionTask {
 
   private static void logEnvironmentInformation() {
     if (LOGGER.isInfoEnabled()) {
-      LOGGER.info("org.sonarqube Gradle plugin {}", getPluginVersion());
+      LOGGER.info("org.sonarqube Gradle plugin {}", PluginVersion.get());
       LOGGER.info("Java {} {} ({}-bit)",
         System.getProperty("java.version"),
         System.getProperty("java.vm.vendor"),
@@ -170,16 +168,6 @@ public abstract class SonarTask extends ConventionTask {
         LOGGER.info("GRADLE_OPTS={}", gradleOptions);
       }
     }
-  }
-
-  private static String getPluginVersion() {
-    InputStream inputStream = SonarTask.class.getResourceAsStream("/org/sonarqube/gradle/sonarqube-gradle-plugin-version.txt");
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-      return reader.readLine();
-    } catch (IOException e) {
-      LOGGER.warn("Failed to find the version of the plugin", e);
-    }
-    return "";
   }
 
   /**
@@ -593,6 +581,10 @@ public abstract class SonarTask extends ConventionTask {
   @PathSensitive(PathSensitivity.NONE)
   public abstract ConfigurableFileCollection getIsolatedResolverFiles();
 
+  /** Paths of the projects that must provide Sonar metadata to the isolated analysis. */
+  @Input
+  public abstract ListProperty<String> getIsolatedExpectedProjectPaths();
+
   @Internal
   public String getIsolatedAnalysisRootPath() {
     return isolatedAnalysisRootPath;
@@ -670,7 +662,9 @@ public abstract class SonarTask extends ConventionTask {
     Map<String, String> mapProperties;
     Set<String> explicitKeys;
     if (isolatedAnalysisRootPath != null) {
-      ComputedProperties aggregate = readIsolatedMetadata(getIsolatedMetadataFiles().getFiles(), isolatedAnalysisRootPath, isolatedGlobalOverrides());
+      List<SonarProjectMetadata> metadata = readIsolatedMetadata(getIsolatedMetadataFiles().getFiles());
+      checkEveryProjectProvidesMetadata(metadata, getIsolatedExpectedProjectPaths().get());
+      ComputedProperties aggregate = SonarPropertyComputer.aggregateIsolatedProperties(metadata, isolatedAnalysisRootPath, isolatedGlobalOverrides());
       mapProperties = aggregate.properties.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()));
       explicitKeys = aggregate.userDefinedKeys;
@@ -697,7 +691,7 @@ public abstract class SonarTask extends ConventionTask {
     filterPathProperties(mapProperties, explicitKeys);
 
     ScannerEngineBootstrapper scanner = ScannerEngineBootstrapper
-      .create("ScannerGradle", getPluginVersion() + "/" + GradleVersion.current())
+      .create("ScannerGradle", PluginVersion.get() + "/" + GradleVersion.current())
       .addBootstrapProperties(mapProperties);
     try (ScannerEngineBootstrapResult boostrapping = scanner.bootstrap()) {
       // implement behavior according to SCANJLIB-169
@@ -730,6 +724,20 @@ public abstract class SonarTask extends ConventionTask {
 
   @VisibleForTesting
   static ComputedProperties readIsolatedMetadata(Collection<File> files, String analysisRootPath, Map<String, String> globalOverrides) {
+    return SonarPropertyComputer.aggregateIsolatedProperties(readIsolatedMetadata(files), analysisRootPath, globalOverrides);
+  }
+
+  /** Fails before any analysis when a subproject did not publish its data, instead of silently analyzing part of the build. */
+  @VisibleForTesting
+  static void checkEveryProjectProvidesMetadata(Collection<SonarProjectMetadata> metadata, Collection<String> expectedProjectPaths) {
+    Set<String> providedPaths = metadata.stream().map(project -> project.projectPath).collect(Collectors.toSet());
+    List<String> missingPaths = expectedProjectPaths.stream().filter(path -> !providedPaths.contains(path)).collect(Collectors.toList());
+    if (!missingPaths.isEmpty()) {
+      throw new InvalidUserDataException(IsolatedProjectsMigrationGuide.missingProjectsMessage(missingPaths, PluginVersion.get()));
+    }
+  }
+
+  private static List<SonarProjectMetadata> readIsolatedMetadata(Collection<File> files) {
     List<SonarProjectMetadata> metadata = new ArrayList<>();
     for (File file : files) {
       try {
@@ -738,7 +746,7 @@ public abstract class SonarTask extends ConventionTask {
         throw new AnalysisException(new IOException("Could not read Sonar project metadata from " + file, e));
       }
     }
-    return SonarPropertyComputer.aggregateIsolatedProperties(metadata, analysisRootPath, globalOverrides);
+    return metadata;
   }
 
   /**

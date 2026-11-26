@@ -36,7 +36,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Task;
-import org.gradle.api.internal.StartParameterInternal;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.invocation.Gradle;
@@ -51,7 +50,6 @@ import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskCollection;
 import org.gradle.api.tasks.TaskDependency;
-import org.gradle.util.GradleVersion;
 
 
 public abstract class SonarResolverTask extends DefaultTask {
@@ -102,8 +100,7 @@ public abstract class SonarResolverTask extends DefaultTask {
   }
 
   private boolean isIsolatedProjects() {
-    return GradleVersion.current().compareTo(GradleVersion.version("9.7")) >= 0
-      && Boolean.TRUE.equals(((StartParameterInternal) getProject().getGradle().getStartParameter()).getIsolatedProjects().get());
+    return IsolatedProjects.isEnabled(getProject().getGradle());
   }
 
   public void setLegacyMainLibraries(Provider<FileCollection> legacyMainLibraries) {
