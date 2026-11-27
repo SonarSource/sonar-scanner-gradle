@@ -2,8 +2,8 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 com.gradle.publish:plugin-publish-plugin:2.2.1=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-org.apache.maven:maven-model:3.10.1=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-org.codehaus.plexus:plexus-utils:3.6.2=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.apache.maven:maven-model:3.10.2=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.codehaus.plexus:plexus-utils:3.6.4=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.gradle.plugin:compatibility-plugin:1.1.0=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.jetbrains.kotlin:kotlin-stdlib-common:1.8.0=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=buildScriptClasspath,compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
