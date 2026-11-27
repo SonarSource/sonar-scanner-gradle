@@ -86,7 +86,17 @@ tasks.withType<Javadoc> {
     options.encoding = "UTF-8"
 }
 
+val legacyAndroidTestClasspath by configurations.creating
+
+tasks.withType<Test> {
+    inputs.files(legacyAndroidTestClasspath)
+    doFirst {
+        systemProperty("legacyAndroidClasspath", legacyAndroidTestClasspath.asPath)
+    }
+}
+
 dependencies {
+    legacyAndroidTestClasspath("com.android.tools.build:gradle:8.1.1")
     implementation(libs.sonar.scanner.library)
     compileOnly(libs.findbugs.jsr305)
     compileOnly(libs.android.gradle)

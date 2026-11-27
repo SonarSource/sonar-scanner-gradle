@@ -241,7 +241,7 @@ class AndroidConfigTest {
    * Wires up the CommonExtension and NamedDomainObjectContainer chain so that getAndroidTests() can reach the legacy "test" source set.
    */
   private void stubLegacySourceSet(Object testSourceSet) {
-    CommonExtension<?, ?, ?, ?, ?, ?> commonExt = mock(CommonExtension.class);
+    CommonExtension commonExt = mock(CommonExtension.class);
     NamedDomainObjectContainer<?> sourceSets = mock(NamedDomainObjectContainer.class);
     when(extensionContainer.getByType(CommonExtension.class)).thenReturn(commonExt);
     doReturn(sourceSets).when(commonExt).getSourceSets();
